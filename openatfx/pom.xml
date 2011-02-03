@@ -1,10 +1,28 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>OpenATFX</name>
 	<version>0.0.1-SNAPSHOT</version>
 	<description>Open source ASAM ODS ATFX driver</description>
+	<url>http://openatfx.sourceforge.net</url>
+
+	<developers>
+		<developer>
+			<name>Christian Rechner</name>
+		</developer>
+	</developers>
+
+	<scm>
+		<url>https://openatfx.svn.sourceforge.net/svnroot/openatfx/</url>
+		<connection>scm:svn:https://openatfx.svn.sourceforge.net/svnroot/openatfx/trunk</connection>
+		<developerConnection>scm:svn:https://openatfx.svn.sourceforge.net/svnroot/openatfx/trunk</developerConnection>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<build>
 		<plugins>
@@ -13,13 +31,6 @@
 				<configuration>
 					<source>1.5</source>
 					<target>1.5</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<configuration>
-					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -49,5 +60,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	<modules>
+	</modules>
 
 </project>
