@@ -23,16 +23,26 @@ import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplAttr;
 import org.asam.ods.ApplElem;
+import org.asam.ods.ApplElemAccess;
 import org.asam.ods.ApplRel;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructureValue;
+import org.asam.ods.AttrType;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
 import org.asam.ods.DataType;
+import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationAttributeStructure;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -83,6 +93,7 @@ public class AtfxWriter {
             // application model
             writeApplicationModel(streamWriter, aoSession);
             // instance data
+            writeInstanceData(streamWriter, aoSession);
 
             streamWriter.writeEndElement();
             streamWriter.writeEndDocument();
@@ -315,6 +326,215 @@ public class AtfxWriter {
     /***************************************************************************************
      * methods for writing the instance data
      ***************************************************************************************/
+
+    /**
+     * Writes the instance data to the XML stream.
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param aoSession The session.
+     * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading instances.
+     */
+    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
+            AoException {
+        streamWriter.writeStartElement(AtfxTagConstants.INSTANCE_DATA);
+
+        // iterate over all application elements/instance elements
+        ApplElemAccess aea = aoSession.getApplElemAccess();
+        for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
+            InstanceElementIterator iter = ae.getInstances("*");
+            for (InstanceElement ie : iter.nextN(iter.getCount())) {
+                writeInstanceElement(streamWriter, aea, ie);
+            }
+            iter.destroy();
+        }
+
+        streamWriter.writeEndElement();
+    }
+
+    /**
+     * Writes the data of an instance element to
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param aea The ApplElemAccess interface.
+     * @param ie The instance element.
+     * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading instance data.
+     */
+    private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElemAccess aea, InstanceElement ie)
+            throws XMLStreamException, AoException {
+        streamWriter.writeStartElement(ie.getApplicationElement().getName());
+        // write attribute data
+        for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.ALL))) {
+            if (nvu.value.flag == 15) {
+                writeApplAttrValue(streamWriter, nvu);
+            }
+        }
+        // write relations
+        ElemId elemId = new ElemId(ie.getApplicationElement().getId(), ie.getId());
+        for (ApplicationRelation rel : ie.getApplicationElement().getAllRelations()) {
+            String relName = rel.getRelationName();
+            T_LONGLONG[] relInsts = aea.getRelInst(elemId, rel.getRelationName());
+            if (relInsts.length > 0) {
+                writeElement(streamWriter, relName, AtfxExportUtil.createLongLongSeqString(relInsts));
+            }
+        }
+
+        streamWriter.writeEndElement();
+    }
+
+    private void writeApplAttrValue(XMLStreamWriter streamWriter, NameValueUnit nvu) throws XMLStreamException,
+            AoException {
+        streamWriter.writeStartElement(nvu.valName);
+
+        TS_Union u = nvu.value.u;
+        DataType dataType = u.discriminator();
+
+        // DT_BLOB
+        if (dataType == DataType.DT_BLOB) {
+            // tsValue.u.blobVal(parseBlob(aa, attrElem));
+        }
+        // DT_BOOLEAN
+        else if (dataType == DataType.DT_BOOLEAN) {
+            // tsValue.u.booleanVal(AtfxParseUtil.parseBoolean(str));
+        }
+        // DT_BYTE
+        else if (dataType == DataType.DT_BYTE) {
+            // tsValue.u.byteVal(AtfxParseUtil.parseByte(str));
+        }
+        // DT_BYTESTR
+        else if (dataType == DataType.DT_BYTESTR) {
+            // tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(str));
+        }
+        // DT_COMPLEX
+        else if (dataType == DataType.DT_COMPLEX) {
+            // tsValue.u.complexVal(AtfxParseUtil.parseComplex(str));
+        }
+        // DT_DATE
+        else if (dataType == DataType.DT_DATE) {
+            streamWriter.writeCharacters(u.dateVal());
+        }
+        // DT_COMPLEX
+        else if (dataType == DataType.DT_DCOMPLEX) {
+            // tsValue.u.dcomplexVal(AtfxParseUtil.parseDComplex(str));
+        }
+        // DT_DOUBLE
+        else if (dataType == DataType.DT_DOUBLE) {
+            // tsValue.u.doubleVal(AtfxParseUtil.parseDouble(str));
+        }
+        // DT_ENUM
+        else if (dataType == DataType.DT_ENUM) {
+            // EnumerationDefinition ed = aa.getEnumerationDefinition();
+            // tsValue.u.enumVal(ed.getItem(str));
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dataType == DataType.DT_EXTERNALREFERENCE) {
+            // T_ExternalReference[] extRefs = parseExtRefs(attrElem);
+            // if (extRefs.length > 1) {
+            // throw new AoException(ErrorCode.AO_INVALID_LENGTH, SeverityFlag.ERROR, 0,
+            // "Multiple references for datatype DT_EXTERNALREFERENCE FOUND");
+            // }
+            // tsValue.u.extRefVal(extRefs[0]);
+        }
+        // DT_FLOAT
+        else if (dataType == DataType.DT_FLOAT) {
+            // tsValue.u.floatVal(AtfxParseUtil.parseFloat(str));
+        }
+        // DT_ID
+        else if (dataType == DataType.DT_ID) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DT_ID' not supported for application attribute");
+        }
+        // DT_LONG
+        else if (dataType == DataType.DT_LONG) {
+            // tsValue.u.longVal(AtfxParseUtil.parseLong(str));
+        }
+        // DT_LONGLONG
+        else if (dataType == DataType.DT_LONGLONG) {
+            streamWriter.writeCharacters(AtfxExportUtil.createLongLongString(u.longlongVal()));
+        }
+        // DT_SHORT
+        else if (dataType == DataType.DT_SHORT) {
+            // tsValue.u.shortVal(AtfxParseUtil.parseShort(str));
+        }
+        // DT_STRING
+        else if (dataType == DataType.DT_STRING) {
+            streamWriter.writeCharacters(u.stringVal());
+        }
+        // DS_BOOLEAN
+        else if (dataType == DataType.DS_BOOLEAN) {
+            // tsValue.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(str));
+        }
+        // DS_BYTE
+        else if (dataType == DataType.DS_BYTE) {
+            // tsValue.u.byteSeq(AtfxParseUtil.parseByteSeq(str));
+        }
+        // DS_BYTESTR
+        else if (dataType == DataType.DS_BYTESTR) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DS_BYTESTR' not supported for application attribute");
+        }
+        // DS_COMPLEX
+        else if (dataType == DataType.DS_COMPLEX) {
+            // tsValue.u.complexSeq(AtfxParseUtil.parseComplexSeq(str));
+        }
+        // DS_DATE
+        else if (dataType == DataType.DS_DATE) {
+            // tsValue.u.dateSeq(parseStringSeq(attrElem));
+        }
+        // DS_DCOMPLEX
+        else if (dataType == DataType.DS_DCOMPLEX) {
+            // tsValue.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(str));
+        }
+        // DS_DOUBLE
+        else if (dataType == DataType.DS_DOUBLE) {
+            // tsValue.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(str));
+        }
+        // DS_ENUM
+        else if (dataType == DataType.DS_ENUM) {
+            // String[] enumValues = parseStringSeq(attrElem);
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dataType == DataType.DS_EXTERNALREFERENCE) {
+            // tsValue.u.extRefSeq(parseExtRefs(attrElem));
+        }
+        // DS_FLOAT
+        else if (dataType == DataType.DS_FLOAT) {
+            // tsValue.u.floatSeq(AtfxParseUtil.parseFloatSeq(str));
+        }
+        // DS_ID
+        else if (dataType == DataType.DS_ID) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DS_ID' not supported for application attribute");
+        }
+        // DS_LONG
+        else if (dataType == DataType.DS_LONG) {
+            // streamWriter.writeCharacters(A)
+        }
+        // DS_LONGLONG
+        else if (dataType == DataType.DS_LONGLONG) {
+            streamWriter.writeCharacters(AtfxExportUtil.createLongLongSeqString(u.longlongSeq()));
+        }
+        // DS_SHORT
+        else if (dataType == DataType.DS_SHORT) {
+            // tsValue.u.shortSeq(AtfxParseUtil.parseShortSeq(str));
+        }
+        // DS_STRING
+        else if (dataType == DataType.DS_STRING) {
+            // tsValue.u.stringSeq(parseStringSeq(attrElem));
+        }
+        // DT_UNKNOWN: only for the values of a LocalColumn
+        else if (dataType == DataType.DT_UNKNOWN) {
+            // tsValue.u = parseMeasurementData(attrElem);
+        }
+        // unsupported data type
+        else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType " + dataType.value()
+                    + " not yet implemented");
+        }
+
+        streamWriter.writeEndElement();
+    }
 
     private void writeElement(XMLStreamWriter streamWriter, String elemName, String textContent)
             throws XMLStreamException {
