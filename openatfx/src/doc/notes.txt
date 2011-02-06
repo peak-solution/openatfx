@@ -1,1 +1,5 @@
 - The ATFX file is read completely into memory
+- One session per file
+- Not implemented:
+  * Security 
+  * Inheritance

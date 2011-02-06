@@ -329,10 +329,21 @@ class AtfxCache {
      * application relations
      ***********************************************************************************/
 
+    /**
+     * Returns all application relations.
+     * 
+     * @return Collection of application relations.
+     */
     public Collection<ApplicationRelation> getApplicationRelations() {
         return this.applicationRelations;
     }
 
+    /**
+     * Returns all application relations of an application element.
+     * 
+     * @param aid The application element id.
+     * @return Collection of application relations.
+     */
     public Collection<ApplicationRelation> getApplicationRelations(long aid) {
         return this.applicationRelationMap.get(aid);
     }
@@ -368,6 +379,28 @@ class AtfxCache {
 
         // TODO: remove from instance relation cache
 
+    }
+
+    /**
+     * Returns the inverse relation for given application relation.
+     * 
+     * @param applRel The application relation.
+     * @return The inverse application relation.
+     * @throws AoException Unable to find inverse application relation.
+     */
+    public ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
+        if (applRel.getElem2() != null) {
+            long elem1Aid = ODSHelper.asJLong(applRel.getElem1().getId());
+            long elem2Aid = ODSHelper.asJLong(applRel.getElem2().getId());
+            for (ApplicationRelation invRel : this.applicationRelationMap.get(elem2Aid)) {
+                if ((elem1Aid == ODSHelper.asJLong(invRel.getElem2().getId()))
+                        && applRel.getRelationName().equals(invRel.getInverseRelationName())) {
+                    return invRel;
+                }
+            }
+        }
+        throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                              "Unable to find inverse relation for '" + applRel.getRelationName() + "'");
     }
 
     /***********************************************************************************
@@ -513,7 +546,7 @@ class AtfxCache {
             relMap = new HashSet<Long>();
             relsMap.put(applRel, relMap);
         } else if (applRel.getRelationRange().max != -1) {
-            // relMap.clear();
+            relMap.clear();
         }
         relMap.add(otherIid);
 
@@ -526,14 +559,22 @@ class AtfxCache {
             invRelMap = new HashSet<Long>();
             invRelsMap.put(invApplRel, invRelMap);
         } else if (invApplRel.getRelationRange().max != -1) {
-            // invRelMap.clear();
+            invRelMap.clear();
         }
         invRelMap.add(iid);
     }
 
-    public void removeInstanceRelation(long aid, long iid, ApplicationRelation rel, long otherIid) {
+    /**
+     * Removes an instance relation
+     * 
+     * @param aid The source application element id.
+     * @param iid The source instance id.
+     * @param applRel The application relation.
+     * @param otherIid The target instance element id.
+     */
+    public void removeInstanceRelation(long aid, long iid, ApplicationRelation applRel, long otherIid) {
         Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
-        Set<Long> relMap = relsMap.get(rel);
+        Set<Long> relMap = relsMap.get(applRel);
         if (relMap != null) {
             relMap.remove(otherIid);
         }
@@ -559,28 +600,6 @@ class AtfxCache {
             return relInstIds;
         }
         return Collections.emptySet();
-    }
-
-    /**
-     * Returns the inverse relation for given application relation.
-     * 
-     * @param applRel The application relation.
-     * @return The inverse application relation.
-     * @throws AoException Unable to find inverse application relation.
-     */
-    public ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
-        if (applRel.getElem2() != null) {
-            long elem1Aid = ODSHelper.asJLong(applRel.getElem1().getId());
-            long elem2Aid = ODSHelper.asJLong(applRel.getElem2().getId());
-            for (ApplicationRelation invRel : getApplicationRelations(elem2Aid)) {
-                if ((elem1Aid == ODSHelper.asJLong(invRel.getElem2().getId()))
-                        && applRel.getRelationName().equals(invRel.getInverseRelationName())) {
-                    return invRel;
-                }
-            }
-        }
-        throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
-                              "Unable to find inverse relation for '" + applRel.getRelationName() + "'");
     }
 
 }

@@ -44,9 +44,9 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
+import de.rechner.openatfx.io.AtfxWriter;
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
-
 
 
 /**
@@ -402,6 +402,9 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#commitTransaction()
      */
     public void commitTransaction() throws AoException {
+        File xmlFile = new File("/home/chris/Desktop/written.xml");
+        AtfxWriter.getInstance().writeXML(xmlFile, _this());
+
         // TODO To be implemented
     }
 
@@ -441,14 +444,15 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplicationStructureValue getApplicationStructureValue() throws AoException {
         List<ApplElem> applElemList = new ArrayList<ApplElem>();
         List<ApplRel> applRelList = new ArrayList<ApplRel>();
-        for (ApplicationElement ae : getApplicationStructure().getElements("*")) {
+
+        for (ApplicationElement ae : this.atfxCache.getApplicationElements()) {
             ApplElem applElem = new ApplElem();
             applElem.aid = ae.getId();
             applElem.aeName = ae.getName();
             applElem.beName = ae.getBaseElement().getType();
 
             List<ApplAttr> applAttrList = new ArrayList<ApplAttr>();
-            for (ApplicationAttribute aa : ae.getAttributes("*")) {
+            for (ApplicationAttribute aa : this.atfxCache.getApplicationAttributes(ODSHelper.asJLong(ae.getId()))) {
                 ApplAttr applAttr = new ApplAttr();
                 applAttr.aaName = aa.getName();
                 applAttr.baName = aa.getBaseAttribute() == null ? "" : aa.getBaseAttribute().getName();
@@ -457,6 +461,7 @@ class AoSessionImpl extends AoSessionPOA {
                 applAttr.isObligatory = aa.isObligatory();
                 applAttr.isUnique = aa.isUnique();
                 applAttr.unitId = aa.getUnit();
+                applAttrList.add(applAttr);
             }
             applElem.attributes = applAttrList.toArray(new ApplAttr[0]);
             for (ApplicationRelation ar : ae.getAllRelations()) {

@@ -7,6 +7,17 @@ package de.rechner.openatfx.io;
  */
 class AtfxTagConstants {
 
+    public static final String ATFX_FILE = "atfx_file";
+
+    public static final String DOCUMENTATION = "documentation";
+    public static final String EXPORTED_BY = "exported_by";
+    public static final String EXPORTER = "exporter";
+    public static final String EXPORT_DATETIME = "export_date_time";
+    public static final String EXPORTER_VERSION = "exporter_version";
+    public static final String SHORT_DESCRIPTION = "short_description";
+    public static final String LONG_DESCRIPTION = "long description";
+    public static final String ESCAPE_SPECIAL_CHARS = "escape_special_chars";
+
     public static final String BASE_MODEL_VERSION = "base_model_version";
 
     public static final String FILES = "files";

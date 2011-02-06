@@ -540,7 +540,7 @@ public class AtfxReader {
                 }
                 // values of 'LocalColumn'
                 else if (valuesAttr != null && valuesAttr.equals(nodeName)) {
-                    System.out.println(nodeName);
+                    // TODO: implement me
                 }
             }
         }
@@ -684,9 +684,6 @@ public class AtfxReader {
             if (node.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
             }
-
-            System.out.println(node.getTextContent());
-
         }
 
         TS_Union u = new TS_Union();
