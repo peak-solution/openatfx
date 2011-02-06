@@ -1,4 +1,4 @@
-package de.rechner.openatfx;
+package de.rechner.openatfx.io;
 
 /**
  * Abstract class holding the constants for the XML element and attribute names in an ATFX file.
@@ -13,6 +13,12 @@ class AtfxTagConstants {
     public static final String COMPONENT = "component";
     public static final String COMPONENT_IDENTIFIER = "identifier";
     public static final String COMPONENT_FILENAME = "filename";
+    public static final String COMPONENT_DATATYPE = "datatype";
+    public static final String COMPONENT_LENGTH = "length";
+    public static final String COMPONENT_INIOFFSET = "inioffset";
+    public static final String COMPONENT_BLOCKSIZE = "blocksize";
+    public static final String COMPONENT_VALPERBLOCK = "valperblock";
+    public static final String COMPONENT_VALOFFSETS = "valoffsets";
 
     public static final String APPLICATION_MODEL = "application_model";
 
@@ -57,13 +63,28 @@ class AtfxTagConstants {
     public static final String INST_ATTR_INT64 = "inst_attr_int64";
     public static final String INST_ATTR_TIME = "inst_attr_time";
 
-    public static final String BLOB_TEXT = "text";
-    public static final String BLOB_BYTEFIELD = "bytefield";
-    public static final String BLOB_SEQUENCE = "sequence";
+    public static final String VALUES_ATTR_UTF8STRING = "A_UTF8STRING";
+    public static final String VALUES_ATTR_INT8 = "A_INT8";
+    public static final String VALUES_ATTR_INT16 = "A_INT16";
+    public static final String VALUES_ATTR_INT32 = "A_INT32";
+    public static final String VALUES_ATTR_INT64 = "A_INT64";
+    public static final String VALUES_ATTR_FLOAT32 = "A_FLOAT32";
+    public static final String VALUES_ATTR_FLOAT64 = "A_FLOAT64";
+    public static final String VALUES_ATTR_BOOLEAN = "A_BOOLEAN";
+    public static final String VALUES_ATTR_COMPLEX32 = "A_COMPLEX32";
+    public static final String VALUES_ATTR_COMPLEX64 = "A_COMPLEX64";
+    public static final String VALUES_ATTR_TIMESTRING = "A_TIMESTRING";
+    public static final String VALUES_ATTR_BYTEFIELD = "A_BYTEFIELD";
+    public static final String VALUES_ATTR_BLOB = "A_BLOB";
+    public static final String VALUES_ATTR_EXTERNALREFERENCE = "A_EXTERNALREFERENCE";
 
     public static final String EXTREF = "external_reference";
     public static final String EXTREF_DESCRIPTION = "description";
     public static final String EXTREF_MIMETYPE = "mimetype";
     public static final String EXTREF_LOCATION = "location";
+
+    public static final String BLOB_TEXT = "text";
+    public static final String BLOB_BYTEFIELD = "bytefield";
+    public static final String BLOB_SEQUENCE = "sequence";
 
 }

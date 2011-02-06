@@ -1,4 +1,10 @@
-package de.rechner.openatfx;
+package de.rechner.openatfx.io;
+
+import java.io.File;
+
+import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
+
 
 /**
  * Object for writing ATFX files.
@@ -14,6 +20,17 @@ class AtfxWriter {
      * Non visible constructor.
      */
     private AtfxWriter() {}
+
+    /**
+     * Writes the complete content of given aoSession to specified XML file.
+     * 
+     * @param xmlFile The XML file.
+     * @param aoSession The session.
+     * @throws AoException Error writing XML file.
+     */
+    public void writeXML(File xmlFile, AoSession aoSession) throws AoException {
+
+    }
 
     /**
      * Returns the singleton instance.

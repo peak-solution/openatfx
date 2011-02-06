@@ -1,4 +1,4 @@
-package de.rechner.openatfx;
+package de.rechner.openatfx.io;
 
 import org.asam.ods.AoException;
 import org.asam.ods.ErrorCode;

@@ -10,7 +10,6 @@ import de.rechner.openatfx.AoServiceFactoryTest;
 import de.rechner.openatfx.AoSessionImplTest;
 import de.rechner.openatfx.ApplicationAttributeImplTest;
 import de.rechner.openatfx.ApplicationElementImplTest;
-import de.rechner.openatfx.AtfxParseUtilTest;
 import de.rechner.openatfx.BlobImplTest;
 import de.rechner.openatfx.EnumerationDefinitionImplTest;
 import de.rechner.openatfx.NameIteratorImplTest;
@@ -20,6 +19,7 @@ import de.rechner.openatfx.basestructure.BaseElementImplTest;
 import de.rechner.openatfx.basestructure.BaseEnumerationDefinitionImplTest;
 import de.rechner.openatfx.basestructure.BaseRelationImplTest;
 import de.rechner.openatfx.basestructure.BaseStructureImplTest;
+import de.rechner.openatfx.io.AtfxParseUtilTest;
 import de.rechner.openatfx.util.ODSHelperTest;
 
 

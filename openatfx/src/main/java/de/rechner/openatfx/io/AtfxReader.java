@@ -1,4 +1,4 @@
-package de.rechner.openatfx;
+package de.rechner.openatfx.io;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +47,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -55,7 +56,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-class AtfxReader {
+public class AtfxReader {
 
     private static final Log LOG = LogFactory.getLog(AtfxReader.class);
 
@@ -102,6 +103,9 @@ class AtfxReader {
 
             // parse the ATFX file
             parseATFX(aoSession, rootElement);
+
+            // clear memory
+            System.gc();
 
             return aoSession;
         } catch (ParserConfigurationException e) {
@@ -485,8 +489,13 @@ class AtfxReader {
         // collect all possible attributes and relations
         Map<String, ApplicationAttribute> applAttrs = new HashMap<String, ApplicationAttribute>();
         Map<String, ApplicationRelation> applRels = new HashMap<String, ApplicationRelation>();
+        String valuesAttr = null;
         for (ApplicationAttribute applAttr : applElem.getAttributes("*")) {
-            applAttrs.put(applAttr.getName(), applAttr);
+            if (applAttr.getBaseAttribute() != null && applAttr.getBaseAttribute().getName().equals("values")) {
+                valuesAttr = applAttr.getName();
+            } else {
+                applAttrs.put(applAttr.getName(), applAttr);
+            }
         }
         for (ApplicationRelation applRel : applElem.getAllRelations()) {
             applRels.put(applRel.getRelationName(), applRel);
@@ -496,7 +505,6 @@ class AtfxReader {
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
         Map<ApplicationRelation, T_LONGLONG[]> relMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
-
         NodeList nodeList = instanceNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
@@ -529,6 +537,10 @@ class AtfxReader {
                             relMap.put(applRel, relInstIids);
                         }
                     }
+                }
+                // values of 'LocalColumn'
+                else if (valuesAttr != null && valuesAttr.equals(nodeName)) {
+                    System.out.println(nodeName);
                 }
             }
         }
@@ -655,6 +667,33 @@ class AtfxReader {
         }
 
         return instAttrs;
+    }
+
+    /**
+     * Parse the inline measurement data found in the XML element of the 'values' application attribute of an instance
+     * of LocalColumn.
+     * 
+     * @param attrElem The XML element.
+     * @return The value.
+     * @throws AoException
+     */
+    private TS_Union parseMeasurementData(Element attrElem) throws AoException {
+        NodeList nodeList = attrElem.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (node.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
+
+            System.out.println(node.getTextContent());
+
+        }
+
+        TS_Union u = new TS_Union();
+
+        u.floatSeq(new float[] { 0, 2, 3, 3, 3, });
+
+        return u;
     }
 
     /***************************************************************************************
@@ -813,10 +852,9 @@ class AtfxReader {
             else if (dataType == DataType.DS_STRING) {
                 tsValue.u.stringSeq(parseStringSeq(attrElem));
             }
-            // DT_UNKNOWN
+            // DT_UNKNOWN: only for the values of a LocalColumn
             else if (dataType == DataType.DT_UNKNOWN) {
-                // TODO: this is just fake, implement mass data!
-                tsValue.u.floatSeq(new float[] { 0, 1, 2, 3 });
+                tsValue.u = parseMeasurementData(attrElem);
             }
             // unsupported data type
             else {

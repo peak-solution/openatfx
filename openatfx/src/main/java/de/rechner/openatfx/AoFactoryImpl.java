@@ -11,6 +11,8 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
 
+import de.rechner.openatfx.io.AtfxReader;
+
 
 /**
  * Implementation of <code>org.asam.ods.AoFactory</code>.

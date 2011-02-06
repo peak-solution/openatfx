@@ -1,0 +1,1 @@
+- The ATFX file is read completely into memory

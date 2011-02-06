@@ -32,6 +32,7 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.basestructure.BaseStructureFactory;
+import de.rechner.openatfx.io.AtfxReader;
 
 
 

@@ -1,4 +1,4 @@
-package de.rechner.openatfx;
+package de.rechner.openatfx.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -15,7 +15,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.AtfxParseUtil</code>.
+ * Test case for <code>de.rechner.openatfx.io.AtfxParseUtil</code>.
  * 
  * @author Christian Rechner
  */

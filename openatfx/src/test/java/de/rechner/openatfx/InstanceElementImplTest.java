@@ -10,7 +10,6 @@ import java.util.Arrays;
 
 import junit.framework.JUnit4TestAdapter;
 
-import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -43,7 +42,6 @@ public class InstanceElementImplTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        BasicConfigurator.configure();
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
