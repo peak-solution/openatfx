@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
@@ -28,6 +30,8 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
+
+    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
 
     /** application elements */
     private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ae>
@@ -328,6 +332,15 @@ class AtfxCache {
         return this.applicationRelationMap.get(aid);
     }
 
+    public ApplicationRelation getApplicationRelationbyName(long aid, String relName) throws AoException {
+        for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
+            if (ar.getRelationName().equals(relName)) {
+                return ar;
+            }
+        }
+        return null;
+    }
+
     public void setApplicationRelationElem1(long aid, ApplicationRelation applRel) {
         this.applicationRelationMap.get(aid).add(applRel);
     }
@@ -390,6 +403,16 @@ class AtfxCache {
      */
     public InstanceElement getInstanceById(long aid, long iid) {
         return this.instanceElementMap.get(aid).get(iid);
+    }
+
+    /**
+     * Returns all instance ids for given application element id.
+     * 
+     * @param aid The application element id.
+     * @return The instance ids.
+     */
+    public Set<Long> getInstanceIds(long aid) {
+        return this.instanceElementMap.get(aid).keySet();
     }
 
     /**
@@ -506,19 +529,23 @@ class AtfxCache {
         if (relMap == null) {
             relMap = new HashSet<Long>();
             relsMap.put(applRel, relMap);
+        } else if (applRel.getRelationRange().max != -1) {
+            relMap.clear();
         }
         relMap.add(otherIid);
 
         // add inverse relation
-        // ApplicationRelation invApplRel = getInverseRelation(applRel);
-        // long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
-        // Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
-        // Set<Long> invRelMap = invRelsMap.get(invApplRel);
-        // if (invRelMap == null) {
-        // invRelMap = new TreeSet<Long>();
-        // invRelsMap.put(invApplRel, invRelMap);
-        // }
-        // invRelMap.add(iid);
+        ApplicationRelation invApplRel = getInverseRelation(applRel);
+        long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
+        Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
+        Set<Long> invRelMap = invRelsMap.get(invApplRel);
+        if (invRelMap == null) {
+            invRelMap = new HashSet<Long>();
+            invRelsMap.put(invApplRel, invRelMap);
+        } else if (invApplRel.getRelationRange().max != -1) {
+            invRelMap.clear();
+        }
+        invRelMap.add(iid);
     }
 
     public void removeInstanceRelation(long aid, long iid, ApplicationRelation rel, long otherIid) {
@@ -540,8 +567,10 @@ class AtfxCache {
                 if (instanceExists(otherAid, otherIid)) {
                     relInstIds.add(otherIid);
                 } else {
-                    System.out.println("Instance not found [otherAe=" + applRel.getElem2().getName() + ",otherAid="
-                            + otherAid + "],relName=" + applRel.getRelationName() + ", otherIid=" + otherIid);
+                    String aeName = applRel.getElem1().getName();
+                    String otherAeName = applRel.getElem2().getName();
+                    LOG.warn("Related instance not found [fromAe=" + aeName + ",fromId=" + iid + " - toAe="
+                            + otherAeName + ",toId=" + otherIid + "],relName=" + applRel.getRelationName());
                 }
             }
             return relInstIds;
@@ -549,7 +578,7 @@ class AtfxCache {
         return Collections.emptySet();
     }
 
-    private ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
+    public ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
         if (applRel.getElem2() != null) {
             long elem2Aid = ODSHelper.asJLong(applRel.getElem2().getId());
             for (ApplicationRelation invRel : getApplicationRelations(elem2Aid)) {

@@ -191,11 +191,11 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
             return this.baseRelation.getRelationship();
         }
         // m:n
-        if (getRelationRange().max == -1 && getInverseRelationRange().max == -1) {
+        else if (getRelationRange().max == -1 && getInverseRelationRange().max == -1) {
             return Relationship.INFO_REL;
         }
         // 0:1 or 1:0
-        if (getRelationRange().min == 1 || getRelationRange().min == 0) {
+        else if (getRelationRange().min == 1 || getRelationRange().min == 0) {
             return Relationship.INFO_FROM;
         } else {
             return Relationship.INFO_TO;
@@ -208,7 +208,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getInverseRelationship()
      */
     public Relationship getInverseRelationship() throws AoException {
-        return getInverseRelation().getRelationship();
+        return this.atfxCache.getInverseRelation(_this()).getRelationship();
     }
 
     /**
@@ -217,26 +217,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getInverseRelationRange()
      */
     public RelationRange getInverseRelationRange() throws AoException {
-        return getInverseRelation().getRelationRange();
-    }
-
-    private ApplicationRelation getInverseRelation() throws AoException {
-        if (this.inverseRelation == null) {
-            if (this.elem2 != null) {
-                long elem2Aid = ODSHelper.asJLong(this.elem2.getId());
-                for (ApplicationRelation invRel : this.atfxCache.getApplicationRelations(elem2Aid)) {
-                    if (this.relationName.equals(invRel.getInverseRelationName())) {
-                        this.inverseRelation = invRel;
-                        break;
-                    }
-                }
-            }
-            if (this.inverseRelation == null) {
-                throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
-                                      "Unable to find inverse relation for '" + getRelationName() + "'");
-            }
-        }
-        return this.inverseRelation;
+        return this.atfxCache.getInverseRelation(_this()).getRelationRange();
     }
 
     /**

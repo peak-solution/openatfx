@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import junit.framework.JUnit4TestAdapter;
 
+import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -42,6 +43,7 @@ public class InstanceElementImplTest {
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
+        BasicConfigurator.configure();
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
@@ -436,11 +438,22 @@ public class InstanceElementImplTest {
         try {
             ApplicationStructure as = aoSession.getApplicationStructure();
 
-            // 'dts'->'pas'
+            // dts->pas
             ApplicationElement aeDts = as.getElementByName("dts");
             ApplicationElement aePas = as.getElementByName("pas");
             ApplicationRelation applRel = as.getRelations(aeDts, aePas)[0];
             assertEquals(1, ieMeasurement.getRelatedInstances(applRel, "*").getCount());
+            // pas->dts
+            InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
+            assertEquals(1, iePas.getRelatedInstances(applRel, "*").getCount());
+
+            // mea->audifm_iid
+            ApplicationElement aeMea = as.getElementByName("mea");
+            ApplicationElement aeAudiFm = as.getElementByName("audifm");
+            InstanceElement ieMea = aeMea.getInstanceById(ODSHelper.asODSLongLong(22));
+            applRel = as.getRelations(aeMea, aeAudiFm)[0];
+            assertEquals(1, ieMea.getRelatedInstances(applRel, "*").getCount());
+
         } catch (AoException e) {
             fail(e.reason);
         }

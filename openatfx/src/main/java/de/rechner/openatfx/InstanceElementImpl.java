@@ -381,8 +381,6 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private Collection<InstanceElement> collectRelatedInstances(ApplicationRelation applRel, String iePattern)
             throws AoException {
-        System.out.println("collectRelatedInstances(" + applRel.getRelationName() + "," + iePattern);
-
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
         List<InstanceElement> list = new ArrayList<InstanceElement>();
         for (long otherIid : this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel)) {
@@ -446,20 +444,12 @@ class InstanceElementImpl extends InstanceElementPOA {
         for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(this.aid)) {
             Relationship relShip = rel.getRelationship();
             if (ieRelationship.value() == Relationship._ALL_REL) {
-                // System.out.println("CHECK ALL RELS: " + rel.getRelationName() + " for " + ieRelationship.value());
                 relList.add(rel);
-                // } else if (ieRelationship == Relationship.INFO_REL) {
-                // if (relShip == Relationship.INFO_FROM || relShip == Relationship.INFO_TO) {
-                // relList.add(rel);
-                // }
             } else if (ieRelationship.value() == relShip.value()) {
                 relList.add(rel);
             }
         }
         // collect related instances
-
-        // System.out.println("QUERY ApplicationRelations: " + relList.size());
-
         List<InstanceElement> ieList = new ArrayList<InstanceElement>();
         for (ApplicationRelation applRel : relList) {
             ieList.addAll(collectRelatedInstances(applRel, iePattern));
@@ -496,6 +486,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElement[] createRelatedInstances(ApplicationRelation applRel, NameValueSeqUnit[] attributes,
             ApplicationRelationInstanceElementSeq[] relatedInstances) throws AoException {
+
         // TODO Auto-generated method stub
         return null;
     }
