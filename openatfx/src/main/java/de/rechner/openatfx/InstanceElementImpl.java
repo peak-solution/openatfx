@@ -233,9 +233,11 @@ class InstanceElementImpl extends InstanceElementPOA {
             // check if id has been updated
             BaseAttribute baseAttr = applAttr.getBaseAttribute();
             if (baseAttr != null && baseAttr.getName().equals("id")) {
-                long newIid = ODSHelper.getLongLongVal(nvu);
-                this.atfxCache.updateInstanceId(aid, this.iid, newIid);
-                this.iid = newIid;
+                throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                                      "Updating the id of an instance element is not allowed!");
+//
+//                this.atfxCache.updateInstanceId(aid, this.iid, newIid);
+//                this.iid = newIid;
             }
             this.atfxCache.setInstanceValue(aid, this.iid, nvu.valName, nvu.value);
         }

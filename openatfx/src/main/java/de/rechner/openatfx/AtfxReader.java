@@ -13,6 +13,8 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asam.ods.AIDName;
+import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplElemAccess;
@@ -491,8 +493,7 @@ class AtfxReader {
         }
 
         // parse application attribute and instance attribute values
-        String ieName = "";
-        List<NameValueUnit> applAttrValues = new ArrayList<NameValueUnit>();
+        List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
         Map<ApplicationRelation, T_LONGLONG[]> relMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
 
@@ -504,14 +505,13 @@ class AtfxReader {
                 // application attribute
                 if (applAttrs.containsKey(nodeName)) {
                     ApplicationAttribute aa = applAttrs.get(node.getNodeName());
-                    NameValueUnit nvu = new NameValueUnit();
-                    nvu.valName = nodeName;
-                    nvu.unit = "";
-                    nvu.value = parseTextContent(aa, (Element) node);
-                    if (aa.getBaseAttribute() != null && aa.getBaseAttribute().getName().equals("name")) {
-                        ieName = ODSHelper.getStringVal(nvu);
-                    }
-                    applAttrValues.add(nvu);
+                    AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
+                    applAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    applAttrValue.attr = new AIDName();
+                    applAttrValue.attr.aid = applElem.getId();
+                    applAttrValue.attr.aaName = nodeName;
+                    applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseTextContent(aa, (Element) node));
+                    applAttrValues.add(applAttrValue);
                 }
                 // instance attribute
                 else if (node.getNodeName().equals(AtfxTagConstants.INST_ATTR)) {
@@ -519,24 +519,27 @@ class AtfxReader {
                 }
                 // relation
                 else if (applRels.containsKey(nodeName)) {
-                    // only read the non inverse rels!
+                    // only read the non inverse relations for performance reasons!
                     ApplicationRelation applRel = applRels.get(nodeName);
-                    // short relMax = applRel.getRelationRange().max;
-                    // short invMax = applRel.getInverseRelationRange().max;
-                    // if (relMax == -1 && invMax == -1) {
-                    String textContent = node.getTextContent();
-                    if (textContent.length() > 0) {
-                        relMap.put(applRel, AtfxParseUtil.parseLongLongSeq(node.getTextContent()));
+                    short invMax = applRel.getInverseRelationRange().max;
+                    if (invMax == -1) {
+                        String textContent = node.getTextContent();
+                        if (textContent.length() > 0) {
+                            T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(node.getTextContent());
+                            relMap.put(applRel, relInstIids);
+                        }
                     }
-                    // }
                 }
             }
         }
 
         // create instance element
-        InstanceElement ie = applElem.createInstance(ieName);
-        ie.setValueSeq(applAttrValues.toArray(new NameValueUnit[0]));
+        ApplElemAccess aea = as.getSession().getApplElemAccess();
+        ElemId elemId = aea.insertInstances(applAttrValues.toArray(new AIDNameValueSeqUnitId[0]))[0];
+
+        // set instance attributes
         if (!instAttrValues.isEmpty()) {
+            InstanceElement ie = applElem.getInstanceById(elemId.iid);
             for (NameValueUnit nvu : instAttrValues) {
                 ie.addInstanceAttribute(nvu);
             }
@@ -544,7 +547,7 @@ class AtfxReader {
 
         // create relation map
         Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<ApplicationRelation, T_LONGLONG[]>>();
-        retMap.put(new ElemId(applElem.getId(), ie.getId()), relMap);
+        retMap.put(new ElemId(applElem.getId(), elemId.iid), relMap);
 
         return retMap;
     }
@@ -812,7 +815,8 @@ class AtfxReader {
             }
             // DT_UNKNOWN
             else if (dataType == DataType.DT_UNKNOWN) {
-                // TODO:???
+                // TODO: this is just fake, implement mass data!
+                tsValue.u.floatSeq(new float[] { 0, 1, 2, 3 });
             }
             // unsupported data type
             else {

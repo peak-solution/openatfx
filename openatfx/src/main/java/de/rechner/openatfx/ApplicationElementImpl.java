@@ -394,12 +394,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElement createInstance(String ieName) throws AoException {
         try {
-            long newIid = this.atfxCache.nextIid();
-            InstanceElementImpl impl = new InstanceElementImpl(this.poa, this.atfxCache, this.aid, newIid);
+            long iid = this.atfxCache.nextIid(this.aid);
+            InstanceElementImpl impl = new InstanceElementImpl(this.poa, this.atfxCache, this.aid, iid);
             InstanceElement ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
             String idValName = ie.getApplicationElement().getAttributeByBaseName("id").getName();
-            this.atfxCache.addInstance(this.aid, newIid, ie);
-            ie.setValue(ODSHelper.createLongLongNVU(idValName, newIid));
+            this.atfxCache.addInstance(this.aid, iid, ie);
+            this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
             ie.setName(ieName);
             return ie;
         } catch (ServantNotActive e) {

@@ -13,6 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.asam.ods.AoException;
+import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.NameValue;
@@ -1441,61 +1442,9 @@ public abstract class ODSHelper {
     public static TS_UnionSeq tsUnion2tsUnionSeq(TS_Union u) throws AoException {
         TS_UnionSeq uSeq = new TS_UnionSeq();
         DataType dt = u.discriminator();
-        // DS_BOOLEAN
-        if (dt == DataType.DS_BOOLEAN) {
-            uSeq.booleanSeq(new boolean[][] { u.booleanSeq() });
-        }
-        // DS_BYTE
-        else if (dt == DataType.DS_BYTE) {
-            uSeq.byteSeq(new byte[][] { u.byteSeq() });
-        }
-        // DS_BYTESTR
-        else if (dt == DataType.DS_BYTESTR) {
-            uSeq.bytestrSeq(new byte[][][] { u.bytestrSeq() });
-        }
-        // DS_COMPLEX
-        else if (dt == DataType.DS_COMPLEX) {
-            uSeq.complexSeq(new T_COMPLEX[][] { u.complexSeq() });
-        }
-        // DS_DATE
-        else if (dt == DataType.DS_DATE) {
-            uSeq.dateSeq(new String[][] { u.dateSeq() });
-        }
-        // DS_DCOMPLEX
-        else if (dt == DataType.DS_DCOMPLEX) {
-            uSeq.dcomplexSeq(new T_DCOMPLEX[][] { u.dcomplexSeq() });
-        }
-        // DS_DOUBLE
-        else if (dt == DataType.DS_DOUBLE) {
-            uSeq.doubleSeq(new double[][] { u.doubleSeq() });
-        }
-        // DS_ENUM
-        else if (dt == DataType.DS_ENUM) {
-            uSeq.enumSeq(new int[][] { u.enumSeq() });
-        }
-        // DS_EXTERNALREFERENCE
-        else if (dt == DataType.DS_EXTERNALREFERENCE) {
-            uSeq.extRefSeq(new T_ExternalReference[][] { u.extRefSeq() });
-        }
-        // DS_FLOAT
-        else if (dt == DataType.DS_FLOAT) {
-            uSeq.floatSeq(new float[][] { u.floatSeq() });
-        }
-        // DS_LONG
-        else if (dt == DataType.DS_LONG) {
-            uSeq.longSeq(new int[][] { u.longSeq() });
-        }
-        // DS_LONGLONG
-        else if (dt == DataType.DS_LONGLONG) {
-            uSeq.longlongSeq(new T_LONGLONG[][] { u.longlongSeq() });
-        }
-        // DS_SHORT
-        else if (dt == DataType.DS_SHORT) {
-            uSeq.shortSeq(new short[][] { u.shortSeq() });
-        }
-        // DS_STRING
-        else if (dt == DataType.DS_STRING) {
-            uSeq.stringSeq(new String[][] { u.stringSeq() });
+        // DT_BLOB
+        if (dt == DataType.DT_BLOB) {
+            uSeq.blobVal(new Blob[] { u.blobVal() });
         }
         // DT_BOOLEAN
         else if (dt == DataType.DT_BOOLEAN) {
@@ -1553,6 +1502,62 @@ public abstract class ODSHelper {
         else if (dt == DataType.DT_STRING) {
             uSeq.stringVal(new String[] { u.stringVal() });
         }
+        // DS_BOOLEAN
+        else if (dt == DataType.DS_BOOLEAN) {
+            uSeq.booleanSeq(new boolean[][] { u.booleanSeq() });
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            uSeq.byteSeq(new byte[][] { u.byteSeq() });
+        }
+        // DS_BYTESTR
+        else if (dt == DataType.DS_BYTESTR) {
+            uSeq.bytestrSeq(new byte[][][] { u.bytestrSeq() });
+        }
+        // DS_COMPLEX
+        else if (dt == DataType.DS_COMPLEX) {
+            uSeq.complexSeq(new T_COMPLEX[][] { u.complexSeq() });
+        }
+        // DS_DATE
+        else if (dt == DataType.DS_DATE) {
+            uSeq.dateSeq(new String[][] { u.dateSeq() });
+        }
+        // DS_DCOMPLEX
+        else if (dt == DataType.DS_DCOMPLEX) {
+            uSeq.dcomplexSeq(new T_DCOMPLEX[][] { u.dcomplexSeq() });
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            uSeq.doubleSeq(new double[][] { u.doubleSeq() });
+        }
+        // DS_ENUM
+        else if (dt == DataType.DS_ENUM) {
+            uSeq.enumSeq(new int[][] { u.enumSeq() });
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dt == DataType.DS_EXTERNALREFERENCE) {
+            uSeq.extRefSeq(new T_ExternalReference[][] { u.extRefSeq() });
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            uSeq.floatSeq(new float[][] { u.floatSeq() });
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            uSeq.longSeq(new int[][] { u.longSeq() });
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            uSeq.longlongSeq(new T_LONGLONG[][] { u.longlongSeq() });
+        }
+        // DS_SHORT
+        else if (dt == DataType.DS_SHORT) {
+            uSeq.shortSeq(new short[][] { u.shortSeq() });
+        }
+        // DS_STRING
+        else if (dt == DataType.DS_STRING) {
+            uSeq.stringSeq(new String[][] { u.stringSeq() });
+        }
         // unknown dataType
         else {
             throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: "
@@ -1571,8 +1576,68 @@ public abstract class ODSHelper {
     public static TS_Union tsUnionSeq2tsUnion(TS_UnionSeq uSeq, int pos) throws AoException {
         TS_Union u = new TS_Union();
         DataType dt = uSeq.discriminator();
+        // DT_BLOB
+        if (dt == DataType.DT_BLOB) {
+            u.blobVal(uSeq.blobVal()[pos]);
+        }
+        // DT_BOOLEAN
+        else if (dt == DataType.DT_BOOLEAN) {
+            u.booleanVal(uSeq.booleanVal()[pos]);
+        }
+        // DT_BYTE
+        else if (dt == DataType.DT_BYTE) {
+            u.byteVal(uSeq.byteVal()[pos]);
+        }
+        // DT_BYTESTR
+        else if (dt == DataType.DT_BYTESTR) {
+            u.bytestrVal(uSeq.bytestrVal()[pos]);
+        }
+        // DT_COMPLEX
+        else if (dt == DataType.DT_COMPLEX) {
+            u.complexVal(uSeq.complexVal()[pos]);
+        }
+        // DT_DATE
+        else if (dt == DataType.DT_DATE) {
+            u.dateVal(uSeq.dateVal()[pos]);
+        }
+        // DT_DCOMPLEX
+        else if (dt == DataType.DT_DCOMPLEX) {
+            u.dcomplexVal(uSeq.dcomplexVal()[pos]);
+        }
+        // DT_DOUBLE
+        else if (dt == DataType.DT_DOUBLE) {
+            u.doubleVal(uSeq.doubleVal()[pos]);
+        }
+        // DT_ENUM
+        else if (dt == DataType.DT_ENUM) {
+            u.enumVal(uSeq.enumVal()[pos]);
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dt == DataType.DT_EXTERNALREFERENCE) {
+            u.extRefVal(uSeq.extRefVal()[pos]);
+        }
+        // DT_FLOAT
+        else if (dt == DataType.DT_FLOAT) {
+            u.floatVal(uSeq.floatVal()[pos]);
+        }
+        // DT_LONG
+        else if (dt == DataType.DT_LONG) {
+            u.longVal(uSeq.longVal()[pos]);
+        }
+        // DT_LONGLONG
+        else if (dt == DataType.DT_LONGLONG) {
+            u.longlongVal(uSeq.longlongVal()[pos]);
+        }
+        // DT_SHORT
+        else if (dt == DataType.DT_SHORT) {
+            u.shortVal(uSeq.shortVal()[pos]);
+        }
+        // DT_STRING
+        else if (dt == DataType.DT_STRING) {
+            u.stringVal(uSeq.stringVal()[pos]);
+        }
         // DS_BOOLEAN
-        if (dt == DataType.DS_BOOLEAN) {
+        else if (dt == DataType.DS_BOOLEAN) {
             u.booleanSeq(uSeq.booleanSeq()[pos]);
         }
         // DS_BYTE

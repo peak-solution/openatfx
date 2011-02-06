@@ -445,6 +445,7 @@ public class InstanceElementImplTest {
             assertEquals(1, ieMeasurement.getRelatedInstances(applRel, "*").getCount());
             // pas->dts
             InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
+            applRel = as.getRelations(aePas, aeDts)[0];
             assertEquals(1, iePas.getRelatedInstances(applRel, "*").getCount());
 
             // mea->audifm_iid

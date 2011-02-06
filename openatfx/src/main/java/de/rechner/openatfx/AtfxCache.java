@@ -57,8 +57,8 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** The counters for ids */
+    private final Map<Long, Long> nextIids;
     private int nextAid;
-    private int nextIid;
 
     /**
      * Constructor.
@@ -75,8 +75,8 @@ class AtfxCache {
         this.instanceElementMap = new HashMap<Long, Map<Long, InstanceElement>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
+        this.nextIids = new HashMap<Long, Long>();
         this.nextAid = 1;
-        this.nextIid = 1;
     }
 
     /**
@@ -89,12 +89,16 @@ class AtfxCache {
     }
 
     /**
-     * Returns the next free instance element id.
+     * Returns the next free instance element id for an application element.
      * 
+     * @param aid The application element id.
      * @return The instance element id.
      */
-    public long nextIid() {
-        return this.nextIid;
+    public long nextIid(long aid) {
+        Long l = this.nextIids.get(aid);
+        l++;
+        this.nextIids.put(aid, l);
+        return l;
     }
 
     /***********************************************************************************
@@ -119,6 +123,7 @@ class AtfxCache {
         this.instanceElementMap.put(aid, new HashMap<Long, InstanceElement>());
         this.instanceValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
+        this.nextIids.put(aid, (long) 0);
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
         if (applElems == null) {
@@ -332,7 +337,7 @@ class AtfxCache {
         return this.applicationRelationMap.get(aid);
     }
 
-    public ApplicationRelation getApplicationRelationbyName(long aid, String relName) throws AoException {
+    public ApplicationRelation getApplicationRelationByName(long aid, String relName) throws AoException {
         for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
             if (ar.getRelationName().equals(relName)) {
                 return ar;
@@ -426,28 +431,6 @@ class AtfxCache {
     }
 
     /**
-     * Updates an instance id.
-     * 
-     * @param aid The application element id.
-     * @param oldIid The old instance id.
-     * @param newIid The new instance id.
-     */
-    public void updateInstanceId(long aid, long oldIid, long newIid) {
-        if (oldIid != newIid) {
-            // update instance map
-            Map<Long, InstanceElement> iMap = this.instanceElementMap.get(aid);
-            iMap.put(newIid, iMap.remove(oldIid));
-            // update instance value map
-            Map<Long, Map<String, TS_Value>> vMap = this.instanceValueMap.get(aid);
-            vMap.put(newIid, vMap.remove(oldIid));
-            // update instance rel map
-            Map<Long, Map<ApplicationRelation, Set<Long>>> rMap = this.instanceRelMap.get(aid);
-            rMap.put(newIid, rMap.get(oldIid));
-            // TODO: update related instance ids
-        }
-    }
-
-    /**
      * Returns whether an instance element exists.
      * 
      * @param aid The application element id.
@@ -530,7 +513,7 @@ class AtfxCache {
             relMap = new HashSet<Long>();
             relsMap.put(applRel, relMap);
         } else if (applRel.getRelationRange().max != -1) {
-            relMap.clear();
+            // relMap.clear();
         }
         relMap.add(otherIid);
 
@@ -543,7 +526,7 @@ class AtfxCache {
             invRelMap = new HashSet<Long>();
             invRelsMap.put(invApplRel, invRelMap);
         } else if (invApplRel.getRelationRange().max != -1) {
-            invRelMap.clear();
+            // invRelMap.clear();
         }
         invRelMap.add(iid);
     }
@@ -569,7 +552,7 @@ class AtfxCache {
                 } else {
                     String aeName = applRel.getElem1().getName();
                     String otherAeName = applRel.getElem2().getName();
-                    LOG.warn("Related instance not found [fromAe=" + aeName + ",fromId=" + iid + " - toAe="
+                    LOG.warn("Related instance not found [fromAid=" + aeName + ",fromId=" + iid + " - toAe="
                             + otherAeName + ",toId=" + otherIid + "],relName=" + applRel.getRelationName());
                 }
             }
@@ -578,11 +561,20 @@ class AtfxCache {
         return Collections.emptySet();
     }
 
+    /**
+     * Returns the inverse relation for given application relation.
+     * 
+     * @param applRel The application relation.
+     * @return The inverse application relation.
+     * @throws AoException Unable to find inverse application relation.
+     */
     public ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
         if (applRel.getElem2() != null) {
+            long elem1Aid = ODSHelper.asJLong(applRel.getElem1().getId());
             long elem2Aid = ODSHelper.asJLong(applRel.getElem2().getId());
             for (ApplicationRelation invRel : getApplicationRelations(elem2Aid)) {
-                if (applRel.getRelationName().equals(invRel.getInverseRelationName())) {
+                if ((elem1Aid == ODSHelper.asJLong(invRel.getElem2().getId()))
+                        && applRel.getRelationName().equals(invRel.getInverseRelationName())) {
                     return invRel;
                 }
             }
