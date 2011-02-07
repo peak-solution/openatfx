@@ -96,6 +96,9 @@ class AtfxTagConstants {
 
     public static final String BLOB_TEXT = "text";
     public static final String BLOB_BYTEFIELD = "bytefield";
+    public static final String BLOB_LENGTH = "length";
     public static final String BLOB_SEQUENCE = "sequence";
+
+    public static final String STRING_SEQ = "s";
 
 }

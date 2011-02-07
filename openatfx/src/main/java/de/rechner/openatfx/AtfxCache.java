@@ -57,7 +57,7 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** The counters for ids */
-    private final Map<Long, Long> nextIids;
+    // private final Map<Long, Long> nextIids;
     private int nextAid;
 
     /**
@@ -75,7 +75,7 @@ class AtfxCache {
         this.instanceElementMap = new HashMap<Long, Map<Long, InstanceElement>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
-        this.nextIids = new HashMap<Long, Long>();
+        // this.nextIids = new HashMap<Long, Long>();
         this.nextAid = 1;
     }
 
@@ -95,10 +95,7 @@ class AtfxCache {
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        Long l = this.nextIids.get(aid);
-        l++;
-        this.nextIids.put(aid, l);
-        return l;
+        return Collections.max(this.instanceElementMap.get(aid).keySet()) + 1;
     }
 
     /***********************************************************************************
@@ -123,7 +120,7 @@ class AtfxCache {
         this.instanceElementMap.put(aid, new HashMap<Long, InstanceElement>());
         this.instanceValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
-        this.nextIids.put(aid, (long) 0);
+        // this.nextIids.put(aid, (long) 0);
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
         if (applElems == null) {

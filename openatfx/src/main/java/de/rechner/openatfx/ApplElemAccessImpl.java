@@ -202,9 +202,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         long aid = ODSHelper.asJLong(elem.aid);
         long iid = ODSHelper.asJLong(elem.iid);
         if (!this.atfxCache.instanceExists(aid, iid)) {
-            LOG.warn("InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
-            // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-            // "InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
         }
 
         // check relation
@@ -224,11 +223,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 this.atfxCache.removeInstanceRelation(otherAid, iid, applRel, otherIid);
             }
         }
-
-        // System.out.println("SET RELATIONS FROM " + this.atfxCache.getApplicationElementNameById(aid) + "[" + aid
-        // + "] to " + this.atfxCache.getApplicationElementNameById(otherAid) + "[" + otherAid + "] with relName "
-        // + relName + ": " + Arrays.toString(ODSHelper.asJLong(instIds)));
-
     }
 
     /***********************************************************************************

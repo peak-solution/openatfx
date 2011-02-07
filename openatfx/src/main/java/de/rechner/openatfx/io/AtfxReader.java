@@ -890,7 +890,7 @@ public class AtfxReader {
      */
     private String[] parseStringSeq(Element attrElem) {
         List<String> list = new ArrayList<String>();
-        NodeList nodeList = attrElem.getElementsByTagName("s");
+        NodeList nodeList = attrElem.getElementsByTagName(AtfxTagConstants.STRING_SEQ);
         for (int i = 0; i < nodeList.getLength(); i++) {
             Element extRefElem = (Element) nodeList.item(i);
             list.add(extRefElem.getTextContent());
