@@ -622,7 +622,7 @@ public class AtfxReader {
                     nvu.value.flag = (short) 0;
                 }
             }
-            // DT_BYTE
+            // DT_SHORT
             else if (nodeName.equals(AtfxTagConstants.INST_ATTR_INT16)) {
                 if (textContent.trim().length() > 0) {
                     nvu.value.u.shortVal(AtfxParseUtil.parseShort(textContent));

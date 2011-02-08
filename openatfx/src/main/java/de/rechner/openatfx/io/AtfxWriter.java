@@ -45,10 +45,9 @@ import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -378,10 +377,17 @@ public class AtfxWriter {
                 writeApplAttrValue(streamWriter, applElem, nvu);
             }
         }
-        // write instance attribute data
-        for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.INSTATTR_ONLY))) {
 
+        // write instance attribute data
+        String[] instAttrNames = ie.listAttributes("*", AttrType.INSTATTR_ONLY);
+        if (instAttrNames.length > 0) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR);
+            for (NameValueUnit nvu : ie.getValueSeq(instAttrNames)) {
+                writeInstAttrValue(streamWriter, nvu);
+            }
+            streamWriter.writeEndElement();
         }
+
         // write relations
         ElemId elemId = new ElemId(ie.getApplicationElement().getId(), ie.getId());
         for (ApplicationRelation rel : ie.getApplicationElement().getAllRelations()) {
@@ -393,6 +399,101 @@ public class AtfxWriter {
         }
 
         streamWriter.writeEndElement();
+    }
+
+    /**
+     * Writes the value of an instance attribute to the XML stream.
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param instAttrValue The instance attribute value.
+     * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Invalid attribute data type.
+     */
+    private void writeInstAttrValue(XMLStreamWriter streamWriter, NameValueUnit instAttrValue)
+            throws XMLStreamException, AoException {
+        DataType dataType = instAttrValue.value.u.discriminator();
+        String attrName = instAttrValue.valName;
+        TS_Value value = instAttrValue.value;
+
+        // DT_STRING
+        if (dataType == DataType.DT_STRING) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_ASCIISTRING);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(value.u.stringVal());
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_FLOAT
+        else if (dataType == DataType.DT_FLOAT) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_FLOAT32);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createFloatString(value.u.floatVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_DOUBLE
+        else if (dataType == DataType.DT_DOUBLE) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_FLOAT64);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createDoubleString(value.u.doubleVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_BYTE
+        else if (dataType == DataType.DT_BYTE) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT8);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createByteString(value.u.byteVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_SHORT
+        else if (dataType == DataType.DT_SHORT) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT16);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createShortString(value.u.shortVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_LONG
+        else if (dataType == DataType.DT_LONG) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT32);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createLongString(value.u.longVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_LONGLONG
+        else if (dataType == DataType.DT_LONGLONG) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT64);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(AtfxExportUtil.createLongLongString(value.u.longlongVal()));
+            }
+            streamWriter.writeEndElement();
+        }
+        // DT_DATE
+        else if (dataType == DataType.DT_DATE) {
+            streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_TIME);
+            streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (instAttrValue.value.flag == 15) {
+                streamWriter.writeCharacters(value.u.dateVal());
+            }
+            streamWriter.writeEndElement();
+        }
+        // unsupported data type
+        else {
+            String msg = "DataType '" + ODSHelper.dataType2String(dataType)
+                    + "' is not allowed for instance attributes";
+            LOG.error(msg);
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, msg);
+        }
     }
 
     /**
@@ -509,7 +610,13 @@ public class AtfxWriter {
         }
         // DS_ENUM
         else if (dataType == DataType.DS_ENUM) {
-            // String[] enumValues = parseStringSeq(attrElem);
+            ApplicationAttribute applAttr = applElem.getAttributeByName(nvu.valName);
+            EnumerationDefinition ed = applAttr.getEnumerationDefinition();
+            List<String> list = new ArrayList<String>();
+            for (int i : u.enumSeq()) {
+                list.add(ed.getItemName(i));
+            }
+            writeStringSeq(streamWriter, list.toArray(new String[0]));
         }
         // DS_EXTERNALREFERENCE
         else if (dataType == DataType.DS_EXTERNALREFERENCE) {
@@ -609,16 +716,6 @@ public class AtfxWriter {
         for (String s : stringSeq) {
             writeElement(streamWriter, AtfxTagConstants.STRING_SEQ, s);
         }
-    }
-
-    private String[] parseStringSeq(Element attrElem) {
-        List<String> list = new ArrayList<String>();
-        NodeList nodeList = attrElem.getElementsByTagName(AtfxTagConstants.STRING_SEQ);
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Element extRefElem = (Element) nodeList.item(i);
-            list.add(extRefElem.getTextContent());
-        }
-        return list.toArray(new String[0]);
     }
 
     private void writeElement(XMLStreamWriter streamWriter, String elemName, String textContent)
