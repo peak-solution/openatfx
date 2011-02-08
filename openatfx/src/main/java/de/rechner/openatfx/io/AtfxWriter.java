@@ -249,8 +249,11 @@ public class AtfxWriter {
         }
 
         // applicaton relations
-        for (ApplRel applRel : applRelsMap.get(aid)) {
-            writeApplRel(streamWriter, applRel, applElemMap);
+        List<ApplRel> applRels = applRelsMap.get(aid);
+        if (applRels != null) {
+            for (ApplRel applRel : applRels) {
+                writeApplRel(streamWriter, applRel, applElemMap);
+            }
         }
 
         streamWriter.writeEndElement();

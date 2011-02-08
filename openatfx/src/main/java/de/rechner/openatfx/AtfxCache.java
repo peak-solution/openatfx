@@ -95,7 +95,11 @@ class AtfxCache {
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        return Collections.max(this.instanceElementMap.get(aid).keySet()) + 1;
+        Set<Long> iids = this.instanceElementMap.get(aid).keySet();
+        if (iids.size() < 1) {
+            return 1;
+        }
+        return Collections.max(iids) + 1;
     }
 
     /***********************************************************************************

@@ -460,7 +460,7 @@ public class AtfxReader {
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
-                relMap.putAll(parseInstanceElement(as, (Element) node));
+                relMap.putAll(parseInstanceElement(as, componentMap, (Element) node));
             }
         }
 
@@ -478,12 +478,13 @@ public class AtfxReader {
      * Read the instance attributes from the instance element XML element.
      * 
      * @param as The application structure.
+     * @param componentMap The mapping between external file identifier and file name.
      * @param instanceNode The instance element XML element.
      * @return
      * @throws AoException Error parsing instance element.
      */
     private Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as,
-            Element instanceNode) throws AoException {
+            Map<String, String> componentMap, Element instanceNode) throws AoException {
         ApplicationElement applElem = as.getElementByName(instanceNode.getNodeName());
 
         // collect all possible attributes and relations
@@ -502,6 +503,7 @@ public class AtfxReader {
         }
 
         // parse application attribute and instance attribute values
+        Element valuesElement = null;
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
         Map<ApplicationRelation, T_LONGLONG[]> relMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
@@ -540,7 +542,7 @@ public class AtfxReader {
                 }
                 // values of 'LocalColumn'
                 else if (valuesAttr != null && valuesAttr.equals(nodeName)) {
-                    // TODO: implement me
+                    valuesElement = (Element) node;
                 }
             }
         }
@@ -555,6 +557,12 @@ public class AtfxReader {
             for (NameValueUnit nvu : instAttrValues) {
                 ie.addInstanceAttribute(nvu);
             }
+        }
+
+        // parse measurement values
+        if (valuesElement != null) {
+            InstanceElement localColumnIe = applElem.getInstanceById(elemId.iid);
+            parseMeasurementData(componentMap, localColumnIe, valuesElement);
         }
 
         // create relation map
@@ -673,24 +681,126 @@ public class AtfxReader {
      * Parse the inline measurement data found in the XML element of the 'values' application attribute of an instance
      * of LocalColumn.
      * 
+     * @param localColumnIe The LocalColumn instance element.
      * @param attrElem The XML element.
-     * @return The value.
      * @throws AoException
      */
-    private TS_Union parseMeasurementData(Element attrElem) throws AoException {
+    private void parseMeasurementData(Map<String, String> componentMap, InstanceElement localColumnIe, Element attrElem)
+            throws AoException {
         NodeList nodeList = attrElem.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
             if (node.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
             }
+            String nodeName = node.getNodeName();
+            // external component
+            if (nodeName.equals(AtfxTagConstants.COMPONENT)) {
+                parseComponent(localColumnIe, (Element) node);
+            }
+            // explicit values
+            else {
+                NameValueUnit nvu = new NameValueUnit();
+                nvu.valName = localColumnIe.getApplicationElement().getAttributeByBaseName("values").getName();
+                nvu.unit = "";
+                nvu.value = new TS_Value();
+                nvu.value.flag = (short) 15;
+                nvu.value.u = new TS_Union();
+
+                // DT_BLOB
+                if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_BLOB)) {
+                    // nvu.value.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(node.getTextContent()));
+                }
+                // DT_BOOLEAN
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_BOOLEAN)) {
+                    nvu.value.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(node.getTextContent()));
+                }
+                // DT_BYTESTR
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_BYTEFIELD)) {
+                    // nvu.value.u.byteSeq(AtfxParseUtil.parseByteSeq(node.getTextContent()));
+                }
+                // DT_COMPLEX
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_COMPLEX32)) {
+                    nvu.value.u.complexSeq(AtfxParseUtil.parseComplexSeq(node.getTextContent()));
+                }
+                // DT_DCOMPLEX
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_COMPLEX64)) {
+                    nvu.value.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(node.getTextContent()));
+                }
+                // DT_EXTERNALREFERENCE
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE)) {
+                    nvu.value.u.extRefSeq(parseExtRefs((Element) node));
+                }
+                // DT_BYTE
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_INT8)) {
+                    nvu.value.u.byteSeq(AtfxParseUtil.parseByteSeq(node.getTextContent()));
+                }
+                // DT_SHORT
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_INT16)) {
+                    nvu.value.u.shortSeq(AtfxParseUtil.parseShortSeq(node.getTextContent()));
+                }
+                // DT_LONG
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_INT32)) {
+                    nvu.value.u.longSeq(AtfxParseUtil.parseLongSeq(node.getTextContent()));
+                }
+                // DT_LONGLONG
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_INT64)) {
+                    nvu.value.u.longlongSeq(AtfxParseUtil.parseLongLongSeq(node.getTextContent()));
+                }
+                // DT_FLOAT
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_FLOAT32)) {
+                    nvu.value.u.floatSeq(AtfxParseUtil.parseFloatSeq(node.getTextContent()));
+                }
+                // DT_DOUBLE
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_FLOAT64)) {
+                    nvu.value.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(node.getTextContent()));
+                }
+                // DT_DATE
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_TIMESTRING)) {
+                    nvu.value.u.dateSeq(parseStringSeq((Element) node));
+                }
+                // DT_STRING
+                else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_UTF8STRING)) {
+                    nvu.value.u.stringSeq(parseStringSeq((Element) node));
+                }
+                // not supported
+                else {
+                    throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                          "Unsupported values datatype: " + nodeName);
+                }
+
+                // set values
+                localColumnIe.setValue(nvu);
+            }
+        }
+    }
+
+    private void parseComponent(InstanceElement localColumnIe, Element attrElem) throws AoException {
+        NodeList nodeList = attrElem.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            Node node = nodeList.item(i);
+            if (node.getNodeType() != Node.ELEMENT_NODE) {
+                continue;
+            }
+            String nodeName = node.getNodeName();
+
+            // external component configuration
+            if (nodeName.equals(AtfxTagConstants.COMPONENT_IDENTIFIER)) {
+
+            } else if (nodeName.equals(AtfxTagConstants.COMPONENT_DATATYPE)) {
+
+            } else if (nodeName.equals(AtfxTagConstants.COMPONENT_LENGTH)) {
+
+            }
         }
 
-        TS_Union u = new TS_Union();
-
-        u.floatSeq(new float[] { 0, 2, 3, 3, 3, });
-
-        return u;
+        // insert external component
+        ApplicationStructure as = localColumnIe.getApplicationElement().getApplicationStructure();
+        ApplicationElement aeLc = as.getElementsByBaseType("AoExternalComponent")[0];
+        ApplicationRelation relLc2ExtComp = localColumnIe.getApplicationElement()
+                                                         .getRelationsByBaseName("external_component")[0];
+        InstanceElement ieExtComp = aeLc.createInstance("ExtComp");
+        localColumnIe.createRelation(relLc2ExtComp, ieExtComp);
     }
 
     /***************************************************************************************
@@ -851,7 +961,7 @@ public class AtfxReader {
             }
             // DT_UNKNOWN: only for the values of a LocalColumn
             else if (dataType == DataType.DT_UNKNOWN) {
-                tsValue.u = parseMeasurementData(attrElem);
+                // tsValue.u = parseMeasurementData(attrElem);
             }
             // unsupported data type
             else {
