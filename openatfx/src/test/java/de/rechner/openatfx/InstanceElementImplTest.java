@@ -38,7 +38,7 @@ import de.rechner.openatfx.util.ODSHelper;
 public class InstanceElementImplTest {
 
     private static AoSession aoSession;
-    private static InstanceElement ieMeasurement;
+    private static InstanceElement ieDts;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -47,7 +47,7 @@ public class InstanceElementImplTest {
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
         ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
         ApplicationElement applicationElement = applicationStructure.getElementByName("dts");
-        ieMeasurement = applicationElement.getInstanceById(ODSHelper.asODSLongLong(32));
+        ieDts = applicationElement.getInstanceById(ODSHelper.asODSLongLong(32));
     }
 
     @AfterClass
@@ -58,7 +58,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetApplicationElement() {
         try {
-            assertEquals("dts", ieMeasurement.getApplicationElement().getName());
+            assertEquals("dts", ieDts.getApplicationElement().getName());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -73,8 +73,8 @@ public class InstanceElementImplTest {
             InstanceElement ieS3 = aeUnit.getInstanceById(ODSHelper.asODSLongLong(42));
 
             // different application elements
-            assertEquals(-1, ODSHelper.asJLong(ieS2.compare(ieMeasurement)));
-            assertEquals(1, ODSHelper.asJLong(ieMeasurement.compare(ieS2)));
+            assertEquals(-1, ODSHelper.asJLong(ieS2.compare(ieDts)));
+            assertEquals(1, ODSHelper.asJLong(ieDts.compare(ieS2)));
 
             // different instances
             assertEquals(-1, ODSHelper.asJLong(ieS1.compare(ieS2)));
@@ -91,7 +91,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetId() {
         try {
-            assertEquals(32, ODSHelper.asJLong(ieMeasurement.getId()));
+            assertEquals(32, ODSHelper.asJLong(ieDts.getId()));
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -100,7 +100,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetName() {
         try {
-            assertEquals("Detector;rms A fast - Zusammenfassung", ieMeasurement.getName());
+            assertEquals("Detector;rms A fast - Zusammenfassung", ieDts.getName());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -109,11 +109,11 @@ public class InstanceElementImplTest {
     @Test
     public void testSetName() {
         try {
-            assertEquals("Detector;rms A fast - Zusammenfassung", ieMeasurement.getName());
-            ieMeasurement.setName("new name");
-            assertEquals("new name", ieMeasurement.getName());
-            ieMeasurement.setName("Detector;rms A fast - Zusammenfassung");
-            assertEquals("Detector;rms A fast - Zusammenfassung", ieMeasurement.getName());
+            assertEquals("Detector;rms A fast - Zusammenfassung", ieDts.getName());
+            ieDts.setName("new name");
+            assertEquals("new name", ieDts.getName());
+            ieDts.setName("Detector;rms A fast - Zusammenfassung");
+            assertEquals("Detector;rms A fast - Zusammenfassung", ieDts.getName());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -122,18 +122,18 @@ public class InstanceElementImplTest {
     @Test
     public void testListAttributes() {
         try {
-            assertEquals(6, ieMeasurement.listAttributes("*", AttrType.ALL).length);
-            assertEquals(1, ieMeasurement.listAttributes("*iid", AttrType.ALL).length);
-            assertEquals(6, ieMeasurement.listAttributes("*", AttrType.APPLATTR_ONLY).length);
-            assertEquals(1, ieMeasurement.listAttributes("*iid", AttrType.APPLATTR_ONLY).length);
-            assertEquals(0, ieMeasurement.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+            assertEquals(6, ieDts.listAttributes("*", AttrType.ALL).length);
+            assertEquals(1, ieDts.listAttributes("*iid", AttrType.ALL).length);
+            assertEquals(6, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
+            assertEquals(1, ieDts.listAttributes("*iid", AttrType.APPLATTR_ONLY).length);
+            assertEquals(0, ieDts.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
             // test listing of instance attributes
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
-            assertEquals(7, ieMeasurement.listAttributes("*", AttrType.ALL).length);
-            assertEquals(6, ieMeasurement.listAttributes("*", AttrType.APPLATTR_ONLY).length);
-            assertEquals(1, ieMeasurement.listAttributes("*", AttrType.INSTATTR_ONLY).length);
-            ieMeasurement.removeInstanceAttribute("instattr");
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+            assertEquals(7, ieDts.listAttributes("*", AttrType.ALL).length);
+            assertEquals(6, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
+            assertEquals(1, ieDts.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+            ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -232,15 +232,15 @@ public class InstanceElementImplTest {
             // DS_SHORT
 
             // instance attribute
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
-            assertEquals("test", ieMeasurement.getValue("instattr").value.u.stringVal());
-            ieMeasurement.removeInstanceAttribute("instattr");
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+            assertEquals("test", ieDts.getValue("instattr").value.u.stringVal());
+            ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing value
         try {
-            ieMeasurement.getValue("non_existing_attr");
+            ieDts.getValue("non_existing_attr");
             fail("AoException expected");
         } catch (AoException e) {
         }
@@ -250,22 +250,22 @@ public class InstanceElementImplTest {
     public void testGetValueSeq() {
         try {
             // application attribute
-            NameValueUnit[] values = ieMeasurement.getValueSeq(new String[] { "iname", "dts_iid", "version" });
+            NameValueUnit[] values = ieDts.getValueSeq(new String[] { "iname", "dts_iid", "version" });
             assertEquals("Detector;rms A fast - Zusammenfassung", ODSHelper.getStringVal(values[0]));
             assertEquals(32, ODSHelper.getLongLongVal(values[1]));
             assertEquals(0, values[2].value.flag);
 
             // instance attribute
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
-            values = ieMeasurement.getValueSeq(new String[] { "iname", "dts_iid", "instattr" });
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+            values = ieDts.getValueSeq(new String[] { "iname", "dts_iid", "instattr" });
             assertEquals("test", ODSHelper.getStringVal(values[2]));
-            ieMeasurement.removeInstanceAttribute("instattr");
+            ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing value
         try {
-            ieMeasurement.getValueSeq(new String[] { "iname", "non_existing_attr", "version" });
+            ieDts.getValueSeq(new String[] { "iname", "non_existing_attr", "version" });
             fail("AoException expected");
         } catch (AoException e) {
         }
@@ -274,15 +274,14 @@ public class InstanceElementImplTest {
     @Test
     public void testGetValueByBaseName() {
         try {
-            assertEquals(32, ODSHelper.asJLong(ieMeasurement.getValueByBaseName("id").value.u.longlongVal()));
-            assertEquals("Detector;rms A fast - Zusammenfassung",
-                         ieMeasurement.getValueByBaseName("name").value.u.stringVal());
+            assertEquals(32, ODSHelper.asJLong(ieDts.getValueByBaseName("id").value.u.longlongVal()));
+            assertEquals("Detector;rms A fast - Zusammenfassung", ieDts.getValueByBaseName("name").value.u.stringVal());
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing base name
         try {
-            ieMeasurement.getValueByBaseName("non_existing_basename");
+            ieDts.getValueByBaseName("non_existing_basename");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_FOUND, e.errCode);
@@ -292,7 +291,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetValueInUnit() {
         try {
-            ieMeasurement.getValueInUnit(new NameUnit("aaa", "unit"));
+            ieDts.getValueInUnit(new NameUnit("aaa", "unit"));
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -303,21 +302,21 @@ public class InstanceElementImplTest {
     public void testSetValue() {
         try {
             // application attribute
-            ieMeasurement.setValue(ODSHelper.createStringNVU("version", "aaa"));
-            assertEquals("aaa", ieMeasurement.getValue("version").value.u.stringVal());
+            ieDts.setValue(ODSHelper.createStringNVU("version", "aaa"));
+            assertEquals("aaa", ieDts.getValue("version").value.u.stringVal());
 
             // instance attribute
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
-            assertEquals("test", ieMeasurement.getValue("instattr").value.u.stringVal());
-            ieMeasurement.setValue(ODSHelper.createStringNVU("instattr", "aaa"));
-            assertEquals("aaa", ieMeasurement.getValue("instattr").value.u.stringVal());
-            ieMeasurement.removeInstanceAttribute("instattr");
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+            assertEquals("test", ieDts.getValue("instattr").value.u.stringVal());
+            ieDts.setValue(ODSHelper.createStringNVU("instattr", "aaa"));
+            assertEquals("aaa", ieDts.getValue("instattr").value.u.stringVal());
+            ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing value
         try {
-            ieMeasurement.getValue("non_existing_attr");
+            ieDts.getValue("non_existing_attr");
             fail("AoException expected");
         } catch (AoException e) {
         }
@@ -326,17 +325,17 @@ public class InstanceElementImplTest {
     @Test
     public void testSetValueSeq() {
         try {
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
 
             NameValueUnit[] nvu = new NameValueUnit[2];
             nvu[0] = ODSHelper.createStringNVU("version", "version1"); // applAttr
             nvu[1] = ODSHelper.createStringNVU("instattr", "aaa"); // instAttr
-            ieMeasurement.setValueSeq(nvu);
+            ieDts.setValueSeq(nvu);
 
-            assertEquals("version1", ieMeasurement.getValue("version").value.u.stringVal());
-            assertEquals("aaa", ieMeasurement.getValue("instattr").value.u.stringVal());
+            assertEquals("version1", ieDts.getValue("version").value.u.stringVal());
+            assertEquals("aaa", ieDts.getValue("instattr").value.u.stringVal());
 
-            ieMeasurement.setValue(ODSHelper.createStringNVU("version", ""));
+            ieDts.setValue(ODSHelper.createStringNVU("version", ""));
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -346,26 +345,26 @@ public class InstanceElementImplTest {
     public void testAddInstanceAttribute() {
         try {
             // add attribute of each supported data type
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr_dt_string", "test"));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createFloatNVU("inst_attr_dt_float", 123.321f));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createDoubleNVU("inst_attr_dt_double", -456.654));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createByteNVU("inst_attr_dt_byte", (byte) 222));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createShortNVU("inst_attr_dt_short", (short) 333));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createLongNVU("inst_attr_dt_long", 999999));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createLongLongNVU("inst_attr_dt_longlong", 2));
-            ieMeasurement.addInstanceAttribute(ODSHelper.createDateNVU("inst_attr_dt_date", "20100101"));
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr_dt_string", "test"));
+            ieDts.addInstanceAttribute(ODSHelper.createFloatNVU("inst_attr_dt_float", 123.321f));
+            ieDts.addInstanceAttribute(ODSHelper.createDoubleNVU("inst_attr_dt_double", -456.654));
+            ieDts.addInstanceAttribute(ODSHelper.createByteNVU("inst_attr_dt_byte", (byte) 222));
+            ieDts.addInstanceAttribute(ODSHelper.createShortNVU("inst_attr_dt_short", (short) 333));
+            ieDts.addInstanceAttribute(ODSHelper.createLongNVU("inst_attr_dt_long", 999999));
+            ieDts.addInstanceAttribute(ODSHelper.createLongLongNVU("inst_attr_dt_longlong", 2));
+            ieDts.addInstanceAttribute(ODSHelper.createDateNVU("inst_attr_dt_date", "20100101"));
         } catch (AoException e) {
             fail(e.reason);
         }
         // existing application attribute
         try {
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("version", ""));
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("version", ""));
             fail("AoException expected");
         } catch (AoException e) {
         }
         // not allowed data type
         try {
-            ieMeasurement.addInstanceAttribute(ODSHelper.createExtRefNVU("xxx", new T_ExternalReference()));
+            ieDts.addInstanceAttribute(ODSHelper.createExtRefNVU("xxx", new T_ExternalReference()));
             fail("AoException expected");
         } catch (AoException e) {
         }
@@ -374,14 +373,14 @@ public class InstanceElementImplTest {
     @Test
     public void testRemoveInstanceAttribute() {
         try {
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr", "test"));
-            ieMeasurement.removeInstanceAttribute("inst_attr");
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr", "test"));
+            ieDts.removeInstanceAttribute("inst_attr");
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing instance attribute
         try {
-            ieMeasurement.removeInstanceAttribute("xxx_yyy");
+            ieDts.removeInstanceAttribute("xxx_yyy");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_FOUND, e.errCode);
@@ -391,17 +390,17 @@ public class InstanceElementImplTest {
     @Test
     public void testRenameInstanceAttribute() {
         try {
-            ieMeasurement.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr", "test"));
-            assertEquals("test", ieMeasurement.getValue("inst_attr").value.u.stringVal());
-            ieMeasurement.renameInstanceAttribute("inst_attr", "new_inst_attr");
-            assertEquals("test", ieMeasurement.getValue("new_inst_attr").value.u.stringVal());
-            ieMeasurement.removeInstanceAttribute("new_inst_attr");
+            ieDts.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr", "test"));
+            assertEquals("test", ieDts.getValue("inst_attr").value.u.stringVal());
+            ieDts.renameInstanceAttribute("inst_attr", "new_inst_attr");
+            assertEquals("test", ieDts.getValue("new_inst_attr").value.u.stringVal());
+            ieDts.removeInstanceAttribute("new_inst_attr");
         } catch (AoException e) {
             fail(e.reason);
         }
         // non existing instance attribute
         try {
-            ieMeasurement.renameInstanceAttribute("xxx_yyy", "aaa");
+            ieDts.renameInstanceAttribute("xxx_yyy", "aaa");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_FOUND, e.errCode);
@@ -416,16 +415,16 @@ public class InstanceElementImplTest {
     public void testListRelatedInstances() {
         try {
             // father 'test'
-            ApplicationRelation rel = ieMeasurement.getApplicationElement().getRelationsByBaseName("test")[0];
-            assertEquals(1, ieMeasurement.listRelatedInstances(rel, "*").getCount());
+            ApplicationRelation rel = ieDts.getApplicationElement().getRelationsByBaseName("test")[0];
+            assertEquals(1, ieDts.listRelatedInstances(rel, "*").getCount());
 
             // child 'measurement_quantities'
-            rel = ieMeasurement.getApplicationElement().getRelationsByBaseName("measurement_quantities")[0];
-            assertEquals(3, ieMeasurement.listRelatedInstances(rel, "*").getCount());
+            rel = ieDts.getApplicationElement().getRelationsByBaseName("measurement_quantities")[0];
+            assertEquals(3, ieDts.listRelatedInstances(rel, "*").getCount());
 
             // child 'submatrices'
-            rel = ieMeasurement.getApplicationElement().getRelationsByBaseName("submatrices")[0];
-            assertEquals(1, ieMeasurement.listRelatedInstances(rel, "*").getCount());
+            rel = ieDts.getApplicationElement().getRelationsByBaseName("submatrices")[0];
+            assertEquals(1, ieDts.listRelatedInstances(rel, "*").getCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -440,7 +439,7 @@ public class InstanceElementImplTest {
             ApplicationElement aeDts = as.getElementByName("dts");
             ApplicationElement aePas = as.getElementByName("pas");
             ApplicationRelation applRel = as.getRelations(aeDts, aePas)[0];
-            assertEquals(1, ieMeasurement.getRelatedInstances(applRel, "*").getCount());
+            assertEquals(1, ieDts.getRelatedInstances(applRel, "*").getCount());
             // pas->dts
             InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
             applRel = as.getRelations(aePas, aeDts)[0];
@@ -461,11 +460,11 @@ public class InstanceElementImplTest {
     @Test
     public void testListRelatedInstancesByRelationship() {
         try {
-            assertEquals(8, ieMeasurement.listRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
-            assertEquals(1, ieMeasurement.listRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
-            assertEquals(4, ieMeasurement.listRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
-            assertEquals(2, ieMeasurement.listRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
-            assertEquals(1, ieMeasurement.listRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
+            assertEquals(8, ieDts.listRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
+            assertEquals(1, ieDts.listRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+            assertEquals(4, ieDts.listRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
+            assertEquals(2, ieDts.listRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
+            assertEquals(1, ieDts.listRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -474,11 +473,11 @@ public class InstanceElementImplTest {
     @Test
     public void testGetRelatedInstancesByRelationship() {
         try {
-            assertEquals(8, ieMeasurement.getRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
-            assertEquals(1, ieMeasurement.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
-            assertEquals(4, ieMeasurement.getRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
-            assertEquals(2, ieMeasurement.getRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
-            assertEquals(1, ieMeasurement.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
+            assertEquals(8, ieDts.getRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
+            assertEquals(1, ieDts.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+            assertEquals(4, ieDts.getRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
+            assertEquals(2, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
+            assertEquals(1, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -486,12 +485,62 @@ public class InstanceElementImplTest {
 
     @Test
     public void testCreateRelation() {
-        fail("Not yet implemented");
+        try {
+            ApplicationElement aeDts = aoSession.getApplicationStructure().getElementByName("dts");
+            ApplicationElement aeMeaQua = aoSession.getApplicationStructure().getElementByName("meq");
+            ApplicationElement aePas = aoSession.getApplicationStructure().getElementByName("pas");
+            InstanceElement ieMeaQua = aeMeaQua.createInstance("NewMeaQua");
+
+            // adding a child (1:n)
+            ApplicationRelation arChild = aeDts.getRelationsByBaseName("measurement_quantities")[0];
+            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(0, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+            ieDts.createRelation(arChild, ieMeaQua);
+            assertEquals(4, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(1, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+
+            // changing the parent (1:1)
+            ApplicationRelation arParent = aeMeaQua.getRelationsByBaseName("measurement")[0];
+            assertEquals(1, ieMeaQua.getRelatedInstances(arParent, "*").getCount());
+            assertEquals("Detector;rms A fast - Zusammenfassung", ieMeaQua.getRelatedInstances(arParent, "*").nextOne()
+                                                                          .getName());
+            InstanceElement otherMeasurement = aeDts.getInstanceByName("Slow quantity - Zusammenfassung");
+            ieMeaQua.createRelation(arParent, otherMeasurement);
+            assertEquals(1, ieMeaQua.getRelatedInstances(arParent, "*").getCount());
+            assertEquals("Slow quantity - Zusammenfassung", ieMeaQua.getRelatedInstances(arParent, "*").nextOne()
+                                                                    .getName());
+
+            // adding a info relation (m:n)
+            ApplicationRelation arPas = aoSession.getApplicationStructure().getRelations(aeDts, aePas)[0];
+            assertEquals(1, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
+            InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
+            ieDts.createRelation(arPas, iePas);
+            assertEquals(2, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     @Test
     public void testRemoveRelation() {
-        fail("Not yet implemented");
+        try {
+            ApplicationElement aeDts = aoSession.getApplicationStructure().getElementByName("dts");
+            ApplicationElement aeMeaQua = aoSession.getApplicationStructure().getElementByName("meq");
+            // ApplicationElement aePas = aoSession.getApplicationStructure().getElementByName("pas");
+            InstanceElement ieMeaQua = aeMeaQua.getInstanceById(ODSHelper.asODSLongLong(46));
+
+            // removing a child (1:n)
+            ApplicationRelation arChild = aeDts.getRelationsByBaseName("measurement_quantities")[0];
+            assertEquals(4, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(1, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+            ieDts.removeRelation(arChild, ieMeaQua);
+            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(0, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     @Test
@@ -504,7 +553,7 @@ public class InstanceElementImplTest {
         try {
             // dts
             assertEquals("/[prj]no_project/[tstser]Test_Vorbeifahrt/[mea]Run_middEng_FINAL_RES/[dts]Detector\\;rms A fast - Zusammenfassung",
-                         ieMeasurement.getAsamPath());
+                         ieDts.getAsamPath());
 
             // pas
             InstanceElement iePas = aoSession.getApplicationStructure().getElementByName("par")
@@ -524,7 +573,7 @@ public class InstanceElementImplTest {
     @Test
     public void testUpcastMeasurement() {
         try {
-            ieMeasurement.upcastMeasurement();
+            ieDts.upcastMeasurement();
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -534,7 +583,7 @@ public class InstanceElementImplTest {
     @Test
     public void testUpcastSubMatrix() {
         try {
-            ieMeasurement.upcastSubMatrix();
+            ieDts.upcastSubMatrix();
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -544,7 +593,7 @@ public class InstanceElementImplTest {
     @Test
     public void testShallowCopy() {
         try {
-            ieMeasurement.shallowCopy("", "");
+            ieDts.shallowCopy("", "");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -554,7 +603,7 @@ public class InstanceElementImplTest {
     @Test
     public void testDeepCopy() {
         try {
-            ieMeasurement.deepCopy("", "");
+            ieDts.deepCopy("", "");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -564,7 +613,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetRights() {
         try {
-            ieMeasurement.getRights();
+            ieDts.getRights();
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -574,7 +623,7 @@ public class InstanceElementImplTest {
     @Test
     public void testSetRights() {
         try {
-            ieMeasurement.setRights(null, 0, null);
+            ieDts.setRights(null, 0, null);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -584,7 +633,7 @@ public class InstanceElementImplTest {
     @Test
     public void testGetInitialRights() {
         try {
-            ieMeasurement.getInitialRights();
+            ieDts.getInitialRights();
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -594,7 +643,7 @@ public class InstanceElementImplTest {
     @Test
     public void testSetInitialRights() {
         try {
-            ieMeasurement.setInitialRights(null, 0, null, null);
+            ieDts.setInitialRights(null, 0, null, null);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);

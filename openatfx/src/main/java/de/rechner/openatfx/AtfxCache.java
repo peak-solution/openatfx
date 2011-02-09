@@ -586,15 +586,25 @@ class AtfxCache {
      * @param iid The source instance id.
      * @param applRel The application relation.
      * @param otherIid The target instance element id.
+     * @throws AoException Error removing instance relation.
      */
-    public void removeInstanceRelation(long aid, long iid, ApplicationRelation applRel, long otherIid) {
+    public void removeInstanceRelation(long aid, long iid, ApplicationRelation applRel, long otherIid)
+            throws AoException {
+        // add relation
         Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
         Set<Long> relMap = relsMap.get(applRel);
         if (relMap != null) {
             relMap.remove(otherIid);
         }
 
-        // TODO: remove inverse relation
+        // remove inverse relation
+        ApplicationRelation invApplRel = getInverseRelation(applRel);
+        long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
+        Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
+        Set<Long> invRelMap = invRelsMap.get(invApplRel);
+        if (invRelMap != null) {
+            invRelMap.remove(iid);
+        }
     }
 
     /**

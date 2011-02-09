@@ -3,6 +3,9 @@ package de.rechner.openatfx.main;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.omg.CORBA.ORB;
@@ -18,8 +21,13 @@ import de.rechner.openatfx.AoServiceFactory;
 
 public class Main {
 
+    private static final Log LOG = LogFactory.getLog(Main.class);
+
     public static void main(String[] args) {
         try {
+            BasicConfigurator.configure();
+
+            // configure ORB
             ORB orb = ORB.init(new String[0], System.getProperties());
             AoFactory aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
 
@@ -31,7 +39,7 @@ public class Main {
             NameComponent path[] = ncRef.to_name("ATFX");
             ncRef.rebind(path, aoFactory);
 
-            System.out.println("ATFX Server started");
+            LOG.info("ATFX Server started");
             orb.run();
         } catch (InvalidName e) {
             System.err.println(e.getMessage());

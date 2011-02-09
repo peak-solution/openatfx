@@ -235,9 +235,6 @@ class InstanceElementImpl extends InstanceElementPOA {
             if (baseAttr != null && baseAttr.getName().equals("id")) {
                 throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
                                       "Updating the id of an instance element is not allowed!");
-//
-//                this.atfxCache.updateInstanceId(aid, this.iid, newIid);
-//                this.iid = newIid;
             }
             this.atfxCache.setInstanceValue(aid, this.iid, nvu.valName, nvu.value);
         }
@@ -381,6 +378,14 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
     }
 
+    /**
+     * Collect related instances by given application relation.
+     * 
+     * @param applRel The application relation.
+     * @param iePattern The name pattern.
+     * @return Collection of instance elements.
+     * @throws AoException Error fetching related instances.
+     */
     private Collection<InstanceElement> collectRelatedInstances(ApplicationRelation applRel, String iePattern)
             throws AoException {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
@@ -439,6 +444,14 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
     }
 
+    /**
+     * Collect related instances by given relationship.
+     * 
+     * @param ieRelationship The relationship.
+     * @param iePattern The name pattern.
+     * @return Collection of instance elements.
+     * @throws AoException Error fetching related instances.
+     */
     private Collection<InstanceElement> collectRelatedInstancesByRelationship(Relationship ieRelationship,
             String iePattern) throws AoException {
         // collect relations
@@ -465,8 +478,21 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#createRelation(org.asam.ods.ApplicationRelation,
      *      org.asam.ods.InstanceElement)
      */
-    public void createRelation(ApplicationRelation relation, InstanceElement instElem) throws AoException {
-        this.atfxCache.createInstanceRelation(this.aid, this.iid, relation, ODSHelper.asJLong(instElem.getId()));
+    public void createRelation(ApplicationRelation applRel, InstanceElement instElem) throws AoException {
+        // check if relation belongs to instance application element
+        if (aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getRelationName() + "' is not defined at application element '"
+                    + getApplicationElement().getName() + "'");
+        }
+        // check if inverse relation belongs to other instance application element
+        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2().getId())) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getInverseRelationName() + "' is not defined at application element '"
+                    + instElem.getApplicationElement().getName() + "'");
+        }
+        // create relation
+        this.atfxCache.createInstanceRelation(this.aid, this.iid, applRel, ODSHelper.asJLong(instElem.getId()));
     }
 
     /**
@@ -475,9 +501,31 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#removeRelation(org.asam.ods.ApplicationRelation,
      *      org.asam.ods.InstanceElement)
      */
-    public void removeRelation(ApplicationRelation applRel, InstanceElement instElem_nm) throws AoException {
-        // TODO Auto-generated method stub
-
+    public void removeRelation(ApplicationRelation applRel, InstanceElement instElem) throws AoException {
+        // check if relation belongs to instance application element
+        if (aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getRelationName() + "' is not defined at application element '"
+                    + getApplicationElement().getName() + "'");
+        }
+        // remove all other relation
+        if (instElem == null) {
+            for (Long otherIid : this.atfxCache.getRelatedInstanceIds(aid, iid, applRel)) {
+                this.atfxCache.removeInstanceRelation(aid, iid, applRel, otherIid);
+            }
+        }
+        // remove a certain relation
+        else {
+            // check if inverse relation belongs to other instance application element
+            if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2()
+                                                                                                        .getId())) {
+                throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                        + applRel.getInverseRelationName() + "' is not defined at application element '"
+                        + instElem.getApplicationElement().getName() + "'");
+            }
+            long otherIid = ODSHelper.asJLong(instElem.getId());
+            this.atfxCache.removeInstanceRelation(aid, iid, applRel, otherIid);
+        }
     }
 
     /**

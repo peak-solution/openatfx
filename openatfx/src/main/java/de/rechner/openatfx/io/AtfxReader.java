@@ -84,7 +84,7 @@ public class AtfxReader {
             long start = System.currentTimeMillis();
             Document doc = builder.parse(atfxFile);
             Element rootElement = doc.getDocumentElement();
-            System.out.println("Read XML in " + (System.currentTimeMillis() - start) + "ms");
+            LOG.info("Read XML in " + (System.currentTimeMillis() - start) + "ms");
 
             // read base model version
             String baseModelVersion = "";
@@ -141,11 +141,11 @@ public class AtfxReader {
                 } else if (nodeName.equals(AtfxTagConstants.APPLICATION_MODEL)) {
                     long start = System.currentTimeMillis();
                     parseApplicationModel(as, (Element) node);
-                    System.out.println("Parsed ApplicationModel in " + (System.currentTimeMillis() - start) + "ms");
+                    LOG.info("Parsed ApplicationModel in " + (System.currentTimeMillis() - start) + "ms");
                 } else if (nodeName.equals(AtfxTagConstants.INSTANCE_DATA)) {
                     long start = System.currentTimeMillis();
                     parseInstanceElements(as, componentMap, (Element) node);
-                    System.out.println("Parsed InstanceElements in " + (System.currentTimeMillis() - start) + "ms");
+                    LOG.info("Parsed InstanceElements in " + (System.currentTimeMillis() - start) + "ms");
                 }
             }
         }
