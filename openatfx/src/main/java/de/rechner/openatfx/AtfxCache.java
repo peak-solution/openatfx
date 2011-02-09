@@ -349,6 +349,14 @@ class AtfxCache {
         return this.applicationRelationMap.get(aid);
     }
 
+    /**
+     * Returns an application relation by given relation name.
+     * 
+     * @param aid The application element id.
+     * @param relName The application relation name.
+     * @return The application relation, null if relation not found.
+     * @throws AoException Error getting relation name.
+     */
     public ApplicationRelation getApplicationRelationByName(long aid, String relName) throws AoException {
         for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
             if (ar.getRelationName().equals(relName)) {
@@ -358,6 +366,12 @@ class AtfxCache {
         return null;
     }
 
+    /**
+     * Sets the application element
+     * 
+     * @param aid
+     * @param applRel
+     */
     public void setApplicationRelationElem1(long aid, ApplicationRelation applRel) {
         this.applicationRelationMap.get(aid).add(applRel);
     }
@@ -583,6 +597,15 @@ class AtfxCache {
         // TODO: remove inverse relation
     }
 
+    /**
+     * Returns the instance ids of the related instances by given application relation.
+     * 
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @param applRel The application relation.s
+     * @return Set of instance ids.
+     * @throws AoException Error getting inverse relation.
+     */
     public Set<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
         Set<Long> relInstIds = new HashSet<Long>();
         Set<Long> set = this.instanceRelMap.get(aid).get(iid).get(applRel);
@@ -591,11 +614,6 @@ class AtfxCache {
             for (Long otherIid : set) {
                 if (instanceExists(otherAid, otherIid)) {
                     relInstIds.add(otherIid);
-                } else {
-                    String aeName = applRel.getElem1().getName();
-                    String otherAeName = applRel.getElem2().getName();
-                    LOG.warn("Related instance not found [fromAid=" + aeName + ",fromId=" + iid + " - toAe="
-                            + otherAeName + ",toId=" + otherIid + "],relName=" + applRel.getRelationName());
                 }
             }
             return relInstIds;

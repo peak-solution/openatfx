@@ -402,8 +402,8 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#commitTransaction()
      */
     public void commitTransaction() throws AoException {
-//        File xmlFile = new File("D:/written.xml");
-        File xmlFile = new File("/home/chris/Desktop/written.xml");
+        File xmlFile = new File("D:/written.xml");
+        // File xmlFile = new File("/home/chris/Desktop/written.xml");
         AtfxWriter.getInstance().writeXML(xmlFile, _this());
 
         // TODO To be implemented
