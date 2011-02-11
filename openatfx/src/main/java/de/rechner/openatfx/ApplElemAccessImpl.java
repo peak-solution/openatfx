@@ -9,7 +9,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
-import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplElemAccessPOA;
@@ -24,7 +23,6 @@ import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.RightsSet;
-import org.asam.ods.SelValue;
 import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
@@ -170,9 +168,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         long aid = ODSHelper.asJLong(elem.aid);
         long iid = ODSHelper.asJLong(elem.iid);
         if (!this.atfxCache.instanceExists(aid, iid)) {
-            LOG.warn("InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
-            // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-            // "InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "InstanceElement not found ElemId aid=" + aid + ",iid=" + iid);
         }
         // lookup relation
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, relName);
@@ -235,37 +232,13 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstances(org.asam.ods.QueryStructure, int)
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
-        QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache);
-        for (AIDNameUnitId anui : aoq.anuSeq) {
-            queryBuilder.addAid(ODSHelper.asJLong(anui.attr.aid));
-        }
-        for (SelValue selValue : aoq.condSeq) {
-            queryBuilder.applySelValue(selValue);
-        }
+        // retrieve start aid
+        long startAid = ODSHelper.asJLong(aoq.anuSeq[0].attr.aid);
 
-        // for (AIDNameUnitId anui : aoq.anuSeq) {
-        // String aeName = this.atfxCache.getApplicationElementNameById(ODSHelper.asJLong(anui.attr.aid));
-        // System.out.println("anuSeq: " + aeName + " - " + anui.attr.aaName);
-        // }
-        // for (SelValue selValue : aoq.condSeq) {
-        // String aeName = this.atfxCache.getApplicationElementNameById(ODSHelper.asJLong(selValue.attr.attr.aid));
-        // System.out.println("selValue: " + aeName + " - " + selValue.attr.attr.aaName + ": " + selValue.oper);
-        // }
-        // for (SelOperator selOperator : aoq.operSeq) {
-        // System.out.println("selOperator: " + selOperator);
-        // }
-        // for (SelOrder selOrder : aoq.orderBy) {
-        // System.out.println("selOrder: " + selOrder);
-        // }
-        // System.out.println("relName: " + aoq.relName);
-        // System.out.println("relInst: "
-        // + this.atfxCache.getApplicationElementNameById(ODSHelper.asJLong(aoq.relInst.aid)) + ","
-        // + ODSHelper.asJLong(aoq.relInst.iid));
-        //
-        // System.out.println("-----------------------");
+        QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache, startAid);
 
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getInstances' not implemented");
+        System.out.println(queryBuilder);
+        return queryBuilder.getElemResultSet(aoq.anuSeq);
     }
 
     /**

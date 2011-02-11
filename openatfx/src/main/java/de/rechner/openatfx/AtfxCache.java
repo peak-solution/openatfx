@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
@@ -30,8 +28,6 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
-
-    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
 
     /** application elements */
     private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ae>
@@ -214,7 +210,7 @@ class AtfxCache {
      * @param aid The application element id.
      * @param aa The application attribute.
      */
-    public void addApplicationAttribute(long aid, ApplicationAttribute aa) throws AoException {
+    public void addApplicationAttribute(long aid, ApplicationAttribute aa) {
         this.applicationAttributeMap.get(aid).put("", aa);
     }
 

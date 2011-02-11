@@ -169,19 +169,19 @@ class InstanceElementImpl extends InstanceElementPOA {
      * 
      * @see org.asam.ods.InstanceElementOperations#getValue(java.lang.String)
      */
-    public NameValueUnit getValue(String attrName) throws AoException {
+    public NameValueUnit getValue(String aaName) throws AoException {
         // check if instance attribute
-        TS_Value value = this.instanceAttributes.get(attrName);
+        TS_Value value = this.instanceAttributes.get(aaName);
         // no instance attribute, check application attribute
         if (value == null) {
-            value = this.atfxCache.getInstanceValue(this.aid, this.iid, attrName);
+            value = this.atfxCache.getInstanceValue(this.aid, this.iid, aaName);
+            if (value == null) {
+                ApplicationAttribute aa = getApplicationElement().getAttributeByName(aaName);
+                value = ODSHelper.createEmptyTS_Value(aa.getDataType());
+                this.atfxCache.setInstanceValue(aid, iid, aaName, value);
+            }
         }
-        // value not yet set
-        if (value == null) {
-            value = ODSHelper.createEmptyTS_Value(getApplicationElement().getAttributeByName(attrName).getDataType());
-            this.atfxCache.setInstanceValue(this.aid, this.iid, attrName, value);
-        }
-        return new NameValueUnit(attrName, value, "");
+        return new NameValueUnit(aaName, value, "");
     }
 
     /**
@@ -531,19 +531,6 @@ class InstanceElementImpl extends InstanceElementPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.InstanceElementOperations#createRelatedInstances(org.asam.ods.ApplicationRelation,
-     *      org.asam.ods.NameValueSeqUnit[], org.asam.ods.ApplicationRelationInstanceElementSeq[])
-     */
-    public InstanceElement[] createRelatedInstances(ApplicationRelation applRel, NameValueSeqUnit[] attributes,
-            ApplicationRelationInstanceElementSeq[] relatedInstances) throws AoException {
-
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
      * @see org.asam.ods.InstanceElementOperations#getAsamPath()
      */
     public String getAsamPath() throws AoException {
@@ -643,6 +630,18 @@ class InstanceElementImpl extends InstanceElementPOA {
     public SubMatrix upcastSubMatrix() throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'upcastSubMatrix' not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.InstanceElementOperations#createRelatedInstances(org.asam.ods.ApplicationRelation,
+     *      org.asam.ods.NameValueSeqUnit[], org.asam.ods.ApplicationRelationInstanceElementSeq[])
+     */
+    public InstanceElement[] createRelatedInstances(ApplicationRelation applRel, NameValueSeqUnit[] attributes,
+            ApplicationRelationInstanceElementSeq[] relatedInstances) throws AoException {
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                              "Method 'createRelatedInstances' not implemented");
     }
 
     /**

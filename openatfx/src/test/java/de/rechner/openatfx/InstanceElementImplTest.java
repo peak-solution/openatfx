@@ -545,7 +545,12 @@ public class InstanceElementImplTest {
 
     @Test
     public void testCreateRelatedInstances() {
-        fail("Not yet implemented");
+        try {
+            ieDts.createRelatedInstances(null, null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
