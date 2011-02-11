@@ -118,7 +118,7 @@ public class AtfxWriter {
             }
         }
 
-        LOG.info("Wrote XML in " + (System.currentTimeMillis() - start) + "ms");
+        LOG.info("Wrote XML in " + (System.currentTimeMillis() - start) + "ms to '" + xmlFile.getAbsolutePath() + "'");
     }
 
     /**

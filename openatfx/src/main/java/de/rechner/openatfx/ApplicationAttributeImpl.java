@@ -251,7 +251,8 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         if (this.obligatory == aaIsObligatory) {
             return;
         }
-        if (this.baseAttribute != null) {
+        // obligatory flag of obligatory base attribute is not reducable
+        if (this.baseAttribute != null && this.baseAttribute.isObligatory() && !aaIsObligatory) {
             throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
                                   "Unable to set obligatory flag for application attribute derived from a base attribute");
         }
