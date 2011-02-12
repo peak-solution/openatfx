@@ -12,6 +12,7 @@ import org.asam.ods.AIDName;
 import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AIDNameValueUnitId;
+import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplElemAccess;
@@ -20,9 +21,15 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ElemId;
 import org.asam.ods.ElemResultSet;
+import org.asam.ods.JoinDef;
 import org.asam.ods.QueryStructure;
+import org.asam.ods.QueryStructureExt;
+import org.asam.ods.ResultSetExt;
+import org.asam.ods.SelAIDNameUnitId;
+import org.asam.ods.SelItem;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelOperator;
+import org.asam.ods.SelOrder;
 import org.asam.ods.SelValue;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
@@ -211,7 +218,35 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testGetInstancesExt() {
-        fail("Not yet implemented");
+        try {
+            // 1: empty query
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[0];
+            qse.joinSeq = new JoinDef[0];
+            qse.condSeq = new SelItem[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(0, resSetExt[0].firstElems.length);
+
+            // 2. only 'SELECT'
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(ODSHelper.asODSLongLong(21), "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(ODSHelper.asODSLongLong(21), "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(21, ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(21, resSetExt[0].firstElems[0].values.length); // no of attrs
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     @Test

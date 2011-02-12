@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,24 +13,34 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.AttrResultSet;
+import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemResultSet;
+import org.asam.ods.ElemResultSetExt;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.ResultSetExt;
+import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.T_COMPLEX;
+import org.asam.ods.T_DCOMPLEX;
+import org.asam.ods.T_ExternalReference;
+import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
 
 
 /**
+ * Helper class to provide query functionality in memory.
  * <ul>
  * <li>Step 1: perform joins, collect instance ids</li>
+ * <li>Step 2: apply filters to each row</li>
+ * <li>Step x: collect result data and convert to column data</li>
  * </ul>
  * 
  * @author Christian Rechner
@@ -42,8 +53,10 @@ class QueryBuilder {
     private final List<Map<Long, Long>> rows;
 
     /**
-     * @param atfxCache
-     * @param startAid
+     * Constructor.
+     * 
+     * @param atfxCache The cache.
+     * @param startAid The application element id to start with building the query.
      */
     public QueryBuilder(AtfxCache atfxCache, long startAid) {
         this.atfxCache = atfxCache;
@@ -60,9 +73,24 @@ class QueryBuilder {
     }
 
     /**
+     * Constructor.
+     * 
+     * @param atfxCache The cache.
+     */
+    public QueryBuilder(AtfxCache atfxCache) {
+        this.atfxCache = atfxCache;
+        this.rows = new ArrayList<Map<Long, Long>>();
+        this.columns = new TreeSet<Long>();
+    }
+
+    /******************************************************************
+     * methods for building the result set.
+     ******************************************************************/
+
+    /**
      * Returns the query result for an ODS 'query'.
      * 
-     * @param anuSeq
+     * @param anuSeq The attributes to select.
      * @return
      * @throws AoException
      */
@@ -95,8 +123,44 @@ class QueryBuilder {
      * @return
      * @throws AoException
      */
-    public ResultSetExt[] getResultSetExt() throws AoException {
-        return null;
+    public ResultSetExt[] getResultSetExt(SelAIDNameUnitId[] anuSeq) throws AoException {
+        Map<Long, List<SelAIDNameUnitId>> map = groupSelAIDNameUnitIdByAid(anuSeq);
+
+        // one ElemResultSetExt per requested aid
+        ResultSetExt resSet = new ResultSetExt();
+        resSet.firstElems = new ElemResultSetExt[map.size()];
+        Long[] aids = map.keySet().toArray(new Long[0]);
+        for (int i = 0; i < aids.length; i++) {
+            resSet.firstElems[i] = new ElemResultSetExt();
+            resSet.firstElems[i].aid = ODSHelper.asODSLongLong(aids[i]);
+            // attributes
+            SelAIDNameUnitId[] attrs = map.get(aids[i]).toArray(new SelAIDNameUnitId[0]);
+            for (int x = 0; x < attrs.length; x++) {
+                
+            }
+        }
+
+        return new ResultSetExt[] { resSet };
+    }
+
+    /**
+     * Groups given array of select attributes by their application element id.
+     * 
+     * @param anuSeq Array of attributes.
+     * @return Map with the aid as key.
+     */
+    private Map<Long, List<SelAIDNameUnitId>> groupSelAIDNameUnitIdByAid(SelAIDNameUnitId[] anuSeq) {
+        Map<Long, List<SelAIDNameUnitId>> map = new LinkedHashMap<Long, List<SelAIDNameUnitId>>();
+        for (SelAIDNameUnitId anu : anuSeq) {
+            long aid = ODSHelper.asJLong(anu.attr.aid);
+            List<SelAIDNameUnitId> l = map.get(aid);
+            if (l == null) {
+                l = new ArrayList<SelAIDNameUnitId>();
+                map.put(aid, l);
+            }
+            l.add(anu);
+        }
+        return map;
     }
 
     /**
@@ -135,11 +199,25 @@ class QueryBuilder {
         throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Column '" + colName + "' not existing");
     }
 
+    /**
+     * Converts a list reates a <code>org.asam.ods.TS_ValueSeq</code> column data object
+     * 
+     * @param aid
+     * @param colName
+     * @return
+     * @throws AoException
+     */
     private TS_ValueSeq getTsValueSeq(long aid, String colName) throws AoException {
+        // determine datatype
+        DataType dt = DataType.DT_LONGLONG;
+        ApplicationAttribute applAttr = this.atfxCache.getApplicationAttributeByName(aid, colName);
+        if (applAttr != null) {
+            dt = applAttr.getDataType();
+        }
+
         TS_ValueSeq valueSeq = new TS_ValueSeq();
         valueSeq.flag = new short[rows.size()];
         valueSeq.u = new TS_UnionSeq();
-
         // collect values from cache
         List<TS_Value> tsValueList = new ArrayList<TS_Value>();
         for (int rowNo = 0; rowNo < this.rows.size(); rowNo++) {
@@ -148,12 +226,257 @@ class QueryBuilder {
             valueSeq.flag[rowNo] = tsValue.flag;
         }
 
-        // build list
-        
+        return createTsValueSeq(tsValueList, dt);
+    }
+
+    /**
+     * Converts a list of <code>org.asam.ods.TS_Value</code> objects to a <code>org.asam.ods.TS_ValueSeq</code> result
+     * column object.
+     * <p>
+     * All value must have the same data type.
+     * 
+     * @param values The list of values.
+     * @param dt The data type.
+     * @return The TS_ValueSeq object.
+     */
+    private TS_ValueSeq createTsValueSeq(List<TS_Value> values, DataType dt) {
+        TS_ValueSeq valueSeq = new TS_ValueSeq();
+        valueSeq.flag = new short[rows.size()];
+        valueSeq.u = new TS_UnionSeq();
+
+        // DT_BLOB
+        if (dt == DataType.DT_BLOB) {
+            Blob[] ar = new Blob[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.blobVal();
+            }
+            valueSeq.u.blobVal(ar);
+        }
         // DT_BOOLEAN
-        // if (dt == DataType.DT_LONGLONG) {
-        // boolean[] bAr = new boolean[rows.size()];
-        // }
+        else if (dt == DataType.DT_BOOLEAN) {
+            boolean[] ar = new boolean[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.booleanVal();
+            }
+            valueSeq.u.booleanVal(ar);
+        }
+        // DT_BYTE
+        else if (dt == DataType.DT_BYTE) {
+            byte[] ar = new byte[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.byteVal();
+            }
+            valueSeq.u.byteVal(ar);
+        }
+        // DT_BYTESTR
+        else if (dt == DataType.DT_BYTESTR) {
+            byte[][] ar = new byte[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.bytestrVal();
+            }
+            valueSeq.u.bytestrVal(ar);
+        }
+        // DT_COMPLEX
+        else if (dt == DataType.DT_COMPLEX) {
+            T_COMPLEX[] ar = new T_COMPLEX[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.complexVal();
+            }
+            valueSeq.u.complexVal(ar);
+        }
+        // DT_DATE
+        else if (dt == DataType.DT_DATE) {
+            String[] ar = new String[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.dateVal();
+            }
+            valueSeq.u.dateVal(ar);
+        }
+        // DT_DCOMPLEX
+        else if (dt == DataType.DT_DCOMPLEX) {
+            T_DCOMPLEX[] ar = new T_DCOMPLEX[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.dcomplexVal();
+            }
+            valueSeq.u.dcomplexVal(ar);
+        }
+        // DT_DOUBLE
+        else if (dt == DataType.DT_DOUBLE) {
+            double[] ar = new double[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.doubleVal();
+            }
+            valueSeq.u.doubleVal(ar);
+        }
+        // DT_ENUM
+        else if (dt == DataType.DT_ENUM) {
+            int[] ar = new int[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.enumVal();
+            }
+            valueSeq.u.enumVal(ar);
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dt == DataType.DT_EXTERNALREFERENCE) {
+            T_ExternalReference[] ar = new T_ExternalReference[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.extRefVal();
+            }
+            valueSeq.u.extRefVal(ar);
+        }
+        // DT_FLOAT
+        else if (dt == DataType.DT_FLOAT) {
+            float[] ar = new float[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.floatVal();
+            }
+            valueSeq.u.floatVal(ar);
+        }
+        // DT_LONG
+        else if (dt == DataType.DT_LONG) {
+            int[] ar = new int[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.longVal();
+            }
+            valueSeq.u.longVal(ar);
+        }
+        // DT_LONGLONG
+        else if (dt == DataType.DT_LONGLONG) {
+            T_LONGLONG[] ar = new T_LONGLONG[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.longlongVal();
+            }
+            valueSeq.u.longlongVal(ar);
+        }
+        // DT_SHORT
+        else if (dt == DataType.DT_SHORT) {
+            short[] ar = new short[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.shortVal();
+            }
+            valueSeq.u.shortVal(ar);
+        }
+        // DT_STRING
+        else if (dt == DataType.DT_STRING) {
+            String[] ar = new String[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.stringVal();
+            }
+            valueSeq.u.stringVal(ar);
+        }
+        // DS_BOOLEAN
+        else if (dt == DataType.DS_BOOLEAN) {
+            boolean[][] ar = new boolean[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.booleanSeq();
+            }
+            valueSeq.u.booleanSeq(ar);
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            byte[][] ar = new byte[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.byteSeq();
+            }
+            valueSeq.u.byteSeq(ar);
+        }
+        // DS_BYTESTR
+        else if (dt == DataType.DS_BYTESTR) {
+            byte[][][] ar = new byte[values.size()][][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.bytestrSeq();
+            }
+            valueSeq.u.bytestrSeq(ar);
+        }
+        // DS_COMPLEX
+        else if (dt == DataType.DS_COMPLEX) {
+            T_COMPLEX[][] ar = new T_COMPLEX[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.complexSeq();
+            }
+            valueSeq.u.complexSeq(ar);
+        }
+        // DS_DATE
+        else if (dt == DataType.DS_DATE) {
+            String[][] ar = new String[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.dateSeq();
+            }
+            valueSeq.u.dateSeq(ar);
+        }
+        // DS_DCOMPLEX
+        else if (dt == DataType.DS_DCOMPLEX) {
+            T_DCOMPLEX[][] ar = new T_DCOMPLEX[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.dcomplexSeq();
+            }
+            valueSeq.u.dcomplexSeq(ar);
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            double[][] ar = new double[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.doubleSeq();
+            }
+            valueSeq.u.doubleSeq(ar);
+        }
+        // DS_ENUM
+        else if (dt == DataType.DS_ENUM) {
+            int[][] ar = new int[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.enumSeq();
+            }
+            valueSeq.u.enumSeq(ar);
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dt == DataType.DS_EXTERNALREFERENCE) {
+            T_ExternalReference[][] ar = new T_ExternalReference[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.extRefSeq();
+            }
+            valueSeq.u.extRefSeq(ar);
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            float[][] ar = new float[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.floatSeq();
+            }
+            valueSeq.u.floatSeq(ar);
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            int[][] ar = new int[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.longSeq();
+            }
+            valueSeq.u.longSeq(ar);
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            T_LONGLONG[][] ar = new T_LONGLONG[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.longlongSeq();
+            }
+            valueSeq.u.longlongSeq(ar);
+        }
+        // DS_SHORT
+        else if (dt == DataType.DS_SHORT) {
+            short[][] ar = new short[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.shortSeq();
+            }
+            valueSeq.u.shortSeq(ar);
+        }
+        // DS_STRING
+        else if (dt == DataType.DS_STRING) {
+            String[][] ar = new String[values.size()][];
+            for (int i = 0; i < values.size(); i++) {
+                ar[i] = values.get(i).u.stringSeq();
+            }
+            valueSeq.u.stringSeq(ar);
+        }
+
         return valueSeq;
     }
 

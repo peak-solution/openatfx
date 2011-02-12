@@ -232,13 +232,16 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstances(org.asam.ods.QueryStructure, int)
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
-        // retrieve start aid
+        long start = System.currentTimeMillis();
+
+        // retrieve start aid and build up query
         long startAid = ODSHelper.asJLong(aoq.anuSeq[0].attr.aid);
-
         QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache, startAid);
+        ElemResultSet[] resSet = queryBuilder.getElemResultSet(aoq.anuSeq);
 
-        System.out.println(queryBuilder);
-        return queryBuilder.getElemResultSet(aoq.anuSeq);
+        long duration = System.currentTimeMillis() - start;
+        LOG.debug("Executed query in " + duration + "ms");
+        return resSet;
     }
 
     /**
@@ -247,8 +250,16 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstancesExt(org.asam.ods.QueryStructureExt, int)
      */
     public ResultSetExt[] getInstancesExt(QueryStructureExt aoq, int how_many) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getInstancesExt' not implemented");
+        long start = System.currentTimeMillis();
+
+        // retrieve start aid and build up query
+        QueryBuilder queryBuilder = aoq.anuSeq.length < 1 ? new QueryBuilder(atfxCache)
+                : new QueryBuilder(this.atfxCache, ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
+        ResultSetExt[] resSet = queryBuilder.getResultSetExt(aoq.anuSeq);
+
+        long duration = System.currentTimeMillis() - start;
+        LOG.debug("Executed extendend query in " + duration + "ms");
+        return resSet;
     }
 
     /**
