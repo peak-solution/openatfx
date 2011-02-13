@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.asam.ods.AIDNameUnitId;
+import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationRelation;
@@ -135,8 +136,17 @@ class QueryBuilder {
             resSet.firstElems[i].aid = ODSHelper.asODSLongLong(aids[i]);
             // attributes
             SelAIDNameUnitId[] attrs = map.get(aids[i]).toArray(new SelAIDNameUnitId[0]);
+            resSet.firstElems[i].values = new NameValueSeqUnitId[attrs.length];
             for (int x = 0; x < attrs.length; x++) {
-                
+                resSet.firstElems[i].values[x] = new NameValueSeqUnitId();
+                resSet.firstElems[i].values[x].valName = attrs[x].attr.aaName;
+                resSet.firstElems[i].values[x].unitId = attrs[x].unitId;
+                resSet.firstElems[i].values[x].value = getTsValueSeq(aids[i], attrs[x].attr.aaName);
+                // check for non supported aggregate functions
+                if (attrs[i].aggregate != AggrFunc.NONE) {
+                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                          "Aggregate functions are not yet supported");
+                }
             }
         }
 

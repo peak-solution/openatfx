@@ -229,7 +229,7 @@ public class ApplElemAccessImplTest {
             ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
             assertEquals(0, resSetExt[0].firstElems.length);
 
-            // 2. only 'SELECT'
+            // 2. only 'SELECT' with same application element
             qse.anuSeq = new SelAIDNameUnitId[2];
             qse.anuSeq[0] = new SelAIDNameUnitId();
             qse.anuSeq[0].attr = new AIDName(ODSHelper.asODSLongLong(21), "iname"); // meq
@@ -242,7 +242,15 @@ public class ApplElemAccessImplTest {
             resSetExt = applElemAccess.getInstancesExt(qse, 0);
             assertEquals(1, resSetExt[0].firstElems.length); // no of aes
             assertEquals(21, ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
-            assertEquals(21, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(14, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+
+            // 3. add a join to parent
+            qse.joinSeq = new JoinDef[1];
+            qse.joinSeq[0] = new JoinDef();
+            qse.joinSeq[0].fromAID = ODSHelper.asODSLongLong(19);
+            qse.joinSeq[0].toAID = ODSHelper.asODSLongLong(21);
 
         } catch (AoException e) {
             fail(e.reason);
