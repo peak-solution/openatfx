@@ -255,6 +255,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // retrieve start aid and build up query
         QueryBuilder queryBuilder = aoq.anuSeq.length < 1 ? new QueryBuilder(atfxCache)
                 : new QueryBuilder(this.atfxCache, ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
+        queryBuilder.addJoinDefs(aoq.joinSeq);
         ResultSetExt[] resSet = queryBuilder.getResultSetExt(aoq.anuSeq);
 
         long duration = System.currentTimeMillis() - start;

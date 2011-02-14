@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -19,6 +20,7 @@ import org.asam.ods.DataType;
 import org.asam.ods.ElemResultSet;
 import org.asam.ods.ElemResultSetExt;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.JoinDef;
 import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
@@ -51,7 +53,7 @@ class QueryBuilder {
     private final AtfxCache atfxCache;
 
     private final Set<Long> columns;
-    private final List<Map<Long, Long>> rows;
+    private List<SortedMap<Long, Long>> rows;
 
     /**
      * Constructor.
@@ -61,13 +63,13 @@ class QueryBuilder {
      */
     public QueryBuilder(AtfxCache atfxCache, long startAid) {
         this.atfxCache = atfxCache;
-        this.rows = new ArrayList<Map<Long, Long>>();
+        this.rows = new ArrayList<SortedMap<Long, Long>>();
         this.columns = new TreeSet<Long>();
 
         columns.add(startAid);
         Set<Long> instIids = atfxCache.getInstanceIds(startAid);
         for (Long iid : new TreeSet<Long>(instIids)) {
-            Map<Long, Long> m = new TreeMap<Long, Long>();
+            SortedMap<Long, Long> m = new TreeMap<Long, Long>();
             m.put(startAid, iid);
             rows.add(m);
         }
@@ -80,8 +82,59 @@ class QueryBuilder {
      */
     public QueryBuilder(AtfxCache atfxCache) {
         this.atfxCache = atfxCache;
-        this.rows = new ArrayList<Map<Long, Long>>();
+        this.rows = new ArrayList<SortedMap<Long, Long>>();
         this.columns = new TreeSet<Long>();
+    }
+
+    /******************************************************************
+     * methods for performing the joins
+     * 
+     * @throws AoException
+     ******************************************************************/
+
+    public void addJoinDefs(JoinDef[] joinDefs) throws AoException {
+        // TODO: sort joins
+        for (JoinDef joinDef : joinDefs) {
+            applyJoinDef(joinDef);
+        }
+    }
+
+    /**
+     * The LEFT join ae has to be in the current join list!
+     * 
+     * @param joinDef
+     * @throws AoException
+     */
+    private void applyJoinDef(JoinDef joinDef) throws AoException {
+        List<SortedMap<Long, Long>> newRows = new ArrayList<SortedMap<Long, Long>>();
+        long fromAid = ODSHelper.asJLong(joinDef.fromAID);
+        long toAid = ODSHelper.asJLong(joinDef.toAID);
+        // check if fromAID is already in matrix
+        if (!columns.contains(fromAid)) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "application element not exists in query builder matrix fromAID=" + fromAid);
+        }
+        columns.add(toAid);
+
+        // fetch related instance ids
+        ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(fromAid, joinDef.refName);
+        if (applRel == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation 'elem1="
+                    + fromAid + ",elem2=" + toAid + ",relName=" + joinDef.refName + "' not found");
+        }
+
+        for (SortedMap<Long, Long> row : rows) {
+            long fromIid = row.get(fromAid);
+            // TODO: handle outer JOIN
+            for (long relIid : atfxCache.getRelatedInstanceIds(fromAid, fromIid, applRel)) {
+                SortedMap<Long, Long> newRow = new TreeMap<Long, Long>(row);
+                newRow.put(toAid, relIid);
+                newRows.add(newRow);
+            }
+        }
+
+        this.rows = newRows;
+        System.out.println(this);
     }
 
     /******************************************************************
@@ -498,23 +551,19 @@ class QueryBuilder {
     public String toString() {
         StringBuffer sb = new StringBuffer();
         // headline
-        sb.append("Row    | ");
+        sb.append("Row    |");
         for (Long aid : columns) {
-            sb.append(this.atfxCache.getApplicationElementNameById(aid));
-            sb.append("[");
-            sb.append(aid);
-            sb.append("]");
+            sb.append(String.format(" %6s[%2d] |", this.atfxCache.getApplicationElementNameById(aid), aid));
         }
-        sb.append(" | ");
         sb.append("\n");
-        sb.append("--------------------------------\n");
+        sb.append("-------------------------------------------------------------\n");
         // rows
         int rowNo = 0;
         for (Map<Long, Long> map : rows) {
             sb.append(String.format("%6d", rowNo));
             sb.append(" | ");
             for (Long aid : columns) {
-                sb.append(String.format("%7d", map.get(aid)));
+                sb.append(String.format("%10d", map.get(aid)));
                 sb.append(" | ");
             }
             sb.append("\n");

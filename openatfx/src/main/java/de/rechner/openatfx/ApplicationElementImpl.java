@@ -547,6 +547,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
+        LOG.debug("Removed instance aid=" + aid + ",iid=" + iid);
     }
 
     /***************************************************************************************

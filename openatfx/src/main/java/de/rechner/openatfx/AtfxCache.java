@@ -53,7 +53,6 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** The counters for ids */
-    // private final Map<Long, Long> nextIids;
     private int nextAid;
 
     /**
@@ -71,7 +70,6 @@ class AtfxCache {
         this.instanceElementMap = new HashMap<Long, Map<Long, InstanceElement>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
-        // this.nextIids = new HashMap<Long, Long>();
         this.nextAid = 1;
     }
 
@@ -436,11 +434,19 @@ class AtfxCache {
      * 
      * @param aid The application element id.
      * @param iid The instance id.
+     * @throws AoException
      */
-    public void removeInstance(long aid, long iid) {
-        this.instanceElementMap.get(aid).remove(iid);
+    public void removeInstance(long aid, long iid) throws AoException {
+        // remove relations
+        for (ApplicationRelation applRel : getApplicationRelations(aid)) {
+            for (long otherIid : getRelatedInstanceIds(aid, iid, applRel)) {
+                removeInstanceRelation(aid, iid, applRel, otherIid);
+            }
+        }
+        // remove instance values
         this.instanceValueMap.get(aid).remove(iid);
-        this.instanceRelMap.get(aid).remove(iid);
+        // remove instance reference
+        this.instanceElementMap.get(aid).remove(iid);
     }
 
     /**
@@ -616,11 +622,8 @@ class AtfxCache {
         Set<Long> relInstIds = new HashSet<Long>();
         Set<Long> set = this.instanceRelMap.get(aid).get(iid).get(applRel);
         if (set != null) {
-            long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
             for (Long otherIid : set) {
-                if (instanceExists(otherAid, otherIid)) {
-                    relInstIds.add(otherIid);
-                }
+                relInstIds.add(otherIid);
             }
             return relInstIds;
         }

@@ -22,6 +22,7 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ElemId;
 import org.asam.ods.ElemResultSet;
 import org.asam.ods.JoinDef;
+import org.asam.ods.JoinType;
 import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
@@ -246,11 +247,25 @@ public class ApplElemAccessImplTest {
             assertEquals(14, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
             assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
 
-            // 3. add a join to parent
-            qse.joinSeq = new JoinDef[1];
+            // 3. add a join to parent and to children with default join
+            qse.joinSeq = new JoinDef[3];
             qse.joinSeq[0] = new JoinDef();
-            qse.joinSeq[0].fromAID = ODSHelper.asODSLongLong(19);
-            qse.joinSeq[0].toAID = ODSHelper.asODSLongLong(21);
+            qse.joinSeq[0].fromAID = ODSHelper.asODSLongLong(21); // dts
+            qse.joinSeq[0].toAID = ODSHelper.asODSLongLong(19); // meq
+            qse.joinSeq[0].refName = "dts_iid";
+            qse.joinSeq[0].joiningType = JoinType.JTDEFAULT;
+            qse.joinSeq[1] = new JoinDef();
+            qse.joinSeq[1].fromAID = ODSHelper.asODSLongLong(21); // meq
+            qse.joinSeq[1].toAID = ODSHelper.asODSLongLong(8); // unt
+            qse.joinSeq[1].refName = "unt_iid";
+            qse.joinSeq[1].joiningType = JoinType.JTDEFAULT;
+            qse.joinSeq[2] = new JoinDef();
+            qse.joinSeq[2].fromAID = ODSHelper.asODSLongLong(21); // meq
+            qse.joinSeq[2].toAID = ODSHelper.asODSLongLong(13); // device
+            qse.joinSeq[2].refName = "device_iid";
+            qse.joinSeq[2].joiningType = JoinType.JTDEFAULT;
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
 
         } catch (AoException e) {
             fail(e.reason);
