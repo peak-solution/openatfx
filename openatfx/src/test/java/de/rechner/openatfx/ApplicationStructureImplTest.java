@@ -13,9 +13,9 @@ import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.BaseElement;
 import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
-import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -294,10 +294,34 @@ public class ApplicationStructureImplTest {
     @Test
     public void testRemoveElement() {
         try {
-            applicationStructure.removeElement(null);
-            fail("AoException expected");
+            // create element
+            BaseElement be = aoSession.getBaseStructure().getElementByType("AoAny");
+            ApplicationElement applElem = applicationStructure.createElement(be);
+            applElem.setName("newElement");
+            // create relation
+            ApplicationElement elem2 = applicationStructure.getElementByName("dts");
+            ApplicationRelation rel = applicationStructure.createRelation();
+            rel.setElem1(applElem);
+            rel.setElem2(elem2);
+            rel.setRelationName("rel");
+            rel.setInverseRelationName("inv_rel");
+            ApplicationRelation invRel = applicationStructure.createRelation();
+            invRel.setElem1(elem2);
+            invRel.setElem2(applElem);
+            invRel.setRelationName("inv_rel");
+            invRel.setInverseRelationName("rel");
+
+            assertEquals(34, applicationStructure.getElements("*").length);
+            assertEquals(2, applicationStructure.getElementByName("newElement").getAttributes("*").length);
+            assertEquals(1, applicationStructure.getElementByName("newElement").getAllRelations().length);
+            assertEquals(8, applicationStructure.getElementByName("dts").getAllRelations().length);
+
+            // remove element
+            applicationStructure.removeElement(applElem);
+            assertEquals(33, applicationStructure.getElements("*").length);
+            assertEquals(7, applicationStructure.getElementByName("dts").getAllRelations().length);
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            fail(e.reason);
         }
     }
 

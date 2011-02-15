@@ -58,8 +58,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setBaseRelation(org.asam.ods.BaseRelation)
      */
     public void setBaseRelation(BaseRelation baseRel) throws AoException {
+        // set default values for base relation
         if (baseRel != null) {
             this.relationType = baseRel.getRelationType();
+            this.relationRange = baseRel.getRelationRange();
         }
         this.baseRelation = baseRel;
     }

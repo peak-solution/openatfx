@@ -407,8 +407,37 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      * @see org.asam.ods.ApplicationStructureOperations#removeElement(org.asam.ods.ApplicationElement)
      */
     public void removeElement(ApplicationElement applElem) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'removeElement' not implemented");
+        // check for null ae
+        if (applElem == null) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "ApplicationElement must not be null");
+        }
+        long aid = ODSHelper.asJLong(applElem.getId());
+        // remove all application relations
+        for (ApplicationRelation applRel : applElem.getAllRelations()) {
+            removeRelation(applRel);
+        }
+        // remove all application attributes
+        for (ApplicationAttribute applAttr : applElem.getAttributes("*")) {
+            this.atfxCache.removeApplicationAttribute(aid, applAttr.getName());
+        }
+        // remove application element
+        this.atfxCache.removeApplicationElement(aid);
+        LOG.debug("Removed application element aid=" + aid);
+        // deactivate CORBA object
+        try {
+            byte[] id = poa.reference_to_id(applElem);
+            poa.deactivate_object(id);
+        } catch (WrongAdapter e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ObjectNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /***************************************************************************************
@@ -521,9 +550,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
         String[] strAr = asamPath.split("(?<!\\\\)/");
         for (String str : strAr) {
-//            if (str.isEmpty()) {
-//                continue;
-//            }
+            // if (str.isEmpty()) {
+            // continue;
+            // }
             Matcher m = pattern.matcher(str);
             if (!m.matches()) {
                 throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0,

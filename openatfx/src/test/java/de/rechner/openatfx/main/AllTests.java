@@ -2,9 +2,6 @@ package de.rechner.openatfx.main;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-
-import org.apache.log4j.BasicConfigurator;
-
 import de.rechner.openatfx.AoFactoryImplTest;
 import de.rechner.openatfx.AoServiceFactoryTest;
 import de.rechner.openatfx.AoSessionImplTest;
