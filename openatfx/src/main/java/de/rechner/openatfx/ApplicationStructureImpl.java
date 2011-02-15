@@ -518,25 +518,28 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      * @see org.asam.ods.ApplicationStructureOperations#getInstanceByAsamPath(java.lang.String)
      */
     public InstanceElement getInstanceByAsamPath(String asamPath) throws AoException {
-        Pattern pattern = Pattern.compile("/\\[([^]]*)\\]([^/;]*);?([^/]*)");
-        Matcher m = pattern.matcher(asamPath);
-        while (m.find()) {
+        Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
+        String[] strAr = asamPath.split("(?<!\\\\)/");
+        for (String str : strAr) {
+            if (str.isEmpty()) {
+                continue;
+            }
+            Matcher m = pattern.matcher(str);
+            if (!m.matches()) {
+                throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0,
+                                      "Unable to parse ASAM path: " + asamPath);
+            }
+            String aeName = m.group(1);
+            String ieName = m.group(2);
+            String version = m.group(3);
 
-            // parse attribute values from matcher
-            // String aeName = m.group(1);
-            // String ieName = m.group(2);
-            // String version = m.group(3);
-            //
-            // ApplicationElement ae = getElementByName(aeName);
-
-            // System.out.println(aeName);
-
-            // System.out.println("---------------------------------");
-            // System.out.println(m.group(0));
-            // System.out.println("AE: " + m.group(1));
-            // System.out.println("IE: " + m.group(2));
-            // System.out.println("VE: " + m.group(3));
+            System.out.println("AE: " + aeName);
+            System.out.println("IE: " + ieName);
+            System.out.println("VE: " + version);
+            System.out.println("-");
         }
+        System.out.println("-----------------------------------------------");
+
         // TODO Auto-generated method stub
         return null;
     }

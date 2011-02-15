@@ -32,8 +32,6 @@ import de.rechner.openatfx.util.ODSHelperTest;
 public class AllTests {
 
     public static Test suite() {
-        BasicConfigurator.configure();
-
         TestSuite suite = new TestSuite(AllTests.class.getName());
         suite.addTest(ODSHelperTest.suite());
 
