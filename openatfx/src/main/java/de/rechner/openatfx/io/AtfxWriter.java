@@ -81,9 +81,10 @@ public class AtfxWriter {
 
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
         OutputStream fos = null;
+        XMLStreamWriter streamWriter = null;
         try {
             fos = new BufferedOutputStream(new FileOutputStream(xmlFile));
-            XMLStreamWriter streamWriter = factory.createXMLStreamWriter(fos, "UTF-8");
+            streamWriter = factory.createXMLStreamWriter(fos, "UTF-8");
             streamWriter.writeStartDocument("UTF-8", "1.0");
 
             streamWriter.writeStartElement(AtfxTagConstants.ATFX_FILE);
@@ -109,6 +110,13 @@ public class AtfxWriter {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } finally {
+            if (streamWriter != null) {
+                try {
+                    streamWriter.close();
+                } catch (XMLStreamException e) {
+                    LOG.error(e.getMessage(), e);
+                }
+            }
             if (fos != null) {
                 try {
                     fos.close();

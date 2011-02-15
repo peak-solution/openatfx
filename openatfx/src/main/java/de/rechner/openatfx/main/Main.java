@@ -23,7 +23,7 @@ public class Main {
 
     private static final Log LOG = LogFactory.getLog(Main.class);
 
-    public static void main4(String[] args) {
+    public static void main(String[] args) {
         try {
             BasicConfigurator.configure();
 
@@ -71,14 +71,14 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main14(String[] args) {
         String input = "/[prj]no_pr\\/\\\\\\\\/oject/[tstser]Test_Vorbeifahrt;123/[mea]Run_middEng_FINAL_RES/[dts]Detector\\;rms A fast - Zusammenfassung;123";
         Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
         String[] strAr = input.split("(?<!\\\\)/"); // split by '/', check escaping
         for (String str : strAr) {
-            if (str.isEmpty()) {
-                continue;
-            }
+//            if (str.isEmpty()) {
+//                continue;
+//            }
             Matcher m = pattern.matcher(str);
             if (m.matches()) {
                 String aeName = m.group(1);

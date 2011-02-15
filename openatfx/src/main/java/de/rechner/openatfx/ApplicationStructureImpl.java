@@ -521,9 +521,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
         String[] strAr = asamPath.split("(?<!\\\\)/");
         for (String str : strAr) {
-            if (str.isEmpty()) {
-                continue;
-            }
+//            if (str.isEmpty()) {
+//                continue;
+//            }
             Matcher m = pattern.matcher(str);
             if (!m.matches()) {
                 throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0,
