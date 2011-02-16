@@ -23,7 +23,7 @@ public class Main {
 
     private static final Log LOG = LogFactory.getLog(Main.class);
 
-    public static void main(String[] args) {
+    public static void main22(String[] args) {
         try {
             BasicConfigurator.configure();
 
@@ -54,14 +54,14 @@ public class Main {
         }
     }
 
-    public static void main1(String[] args) {
+    public static void main(String[] args) {
         String input = "/[prj]no_project/[tstser]Test_Vorbeifahrt/[mea]Run_middEng_FINAL_RES/[dts]Detector\\;rms A fast - Zusammenfassung";
-        Pattern pattern = Pattern.compile("/\\[([^]]*)\\]([^/;]*);?([^/]*)");
-        String lookAround = "(?<!\\\\)/";
-
-        /** /[XXX]YYY */
-
+        // (?<!\\)/\[(.*(?<!\\))\](.*(?<!\\));
+        Pattern pattern = Pattern.compile("(?<!\\\\)/\\[(.*(?<!\\\\))\\](.*(?<!\\\\));");
         Matcher m = pattern.matcher(input);
+        
+        System.out.println(m.matches());
+        
         while (m.find()) {
             System.out.println("---------------------------------");
             System.out.println(m.group(0));
@@ -69,28 +69,6 @@ public class Main {
             System.out.println("IE: " + m.group(2));
             // System.out.println("VE: " + m.group(3));
         }
-    }
-
-    public static void main14(String[] args) {
-        String input = "/[prj]no_pr\\/\\\\\\\\/oject/[tstser]Test_Vorbeifahrt;123/[mea]Run_middEng_FINAL_RES/[dts]Detector\\;rms A fast - Zusammenfassung;123";
-        Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
-        String[] strAr = input.split("(?<!\\\\)/"); // split by '/', check escaping
-        for (String str : strAr) {
-//            if (str.isEmpty()) {
-//                continue;
-//            }
-            Matcher m = pattern.matcher(str);
-            if (m.matches()) {
-                String aeName = m.group(1);
-                String ieName = m.group(2);
-                String version = m.group(3);
-                System.out.println("AE: " + aeName);
-                System.out.println("IE: " + ieName);
-                System.out.println("VE: " + version);
-                System.out.println("-");
-            }
-        }
-        System.out.println("-----------------------------------------------");
     }
 
 }
