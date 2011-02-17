@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -547,27 +545,44 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      * @see org.asam.ods.ApplicationStructureOperations#getInstanceByAsamPath(java.lang.String)
      */
     public InstanceElement getInstanceByAsamPath(String asamPath) throws AoException {
-        Pattern pattern = Pattern.compile("\\[(.*)\\]([^;]*);?(.*)");
-        String[] strAr = asamPath.split("(?<!\\\\)/");
-        for (String str : strAr) {
-            // if (str.isEmpty()) {
-            // continue;
-            // }
-            Matcher m = pattern.matcher(str);
-            if (!m.matches()) {
-                throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0,
-                                      "Unable to parse ASAM path: " + asamPath);
+        InstanceElement currentInstance = null;
+
+        // split by '/' considering escaping
+        for (String p : asamPath.split("(?<!\\\\)/")) {
+
+            // split by ']' considering escaping
+            String[] xAr = p.split("(?<!\\\\)]");
+            if (xAr.length != 2) {
+                continue;
             }
-            String aeName = m.group(1);
-            String ieName = m.group(2);
-            String version = m.group(3);
+            // System.out.println("-------------------");
+            // System.out.println("> " + p);
+            String aeName = PatternUtil.unEscapeNameForASAMPath(xAr[0].substring(1, xAr[0].length()));
+
+            // split by ';' considering escaping
+            String[] yAr = xAr[1].split("(?<!\\\\);");
+            if (yAr.length < 1) {
+                continue;
+            }
+            String ieName = PatternUtil.unEscapeNameForASAMPath(yAr[0]);
+            String version = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
+
+            // skip environment instance
+            if (aeName.equals(atfxCache.getEnvironmentInstance().getApplicationElement().getName())) {
+                continue;
+            }
+
+            // top level instanvce
+            if (currentInstance == null) {
+                ApplicationElement ae = getElementByName(aeName);
+//                currentInstance = ae.getInstances(arg0)
+            }
 
             System.out.println("AE: " + aeName);
             System.out.println("IE: " + ieName);
-            System.out.println("VE: " + version);
-            System.out.println("-");
+            System.out.println("VR: " + version);
+
         }
-        System.out.println("-----------------------------------------------");
 
         // TODO Auto-generated method stub
         return null;

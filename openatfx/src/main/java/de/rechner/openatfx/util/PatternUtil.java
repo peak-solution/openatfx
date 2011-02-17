@@ -141,7 +141,7 @@ public abstract class PatternUtil {
      * <ul>
      * <li>[ = \[</li>
      * <li>] = \]</li>
-     * <li>[ = \;</li>
+     * <li>; = \;</li>
      * <li>/ = \/</li>
      * <li>\ = \\</li>
      * </ul>
@@ -150,6 +150,11 @@ public abstract class PatternUtil {
      * @return The escaped string.
      */
     public static String unEscapeNameForASAMPath(String name) {
+        name = name.replace("\\[", "[");
+        name = name.replace("\\]", "]");
+        name = name.replace("\\;", ";");
+        name = name.replace("\\/", "/");
+        name = name.replace("\\\\", "\\");
         return name;
     }
 
