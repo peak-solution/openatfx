@@ -452,9 +452,32 @@ public class InstanceElementImplTest {
             applRel = as.getRelations(aeMea, aeAudiFm)[0];
             assertEquals(1, ieMea.getRelatedInstances(applRel, "*").getCount());
 
+            // sm->sm (self relation)
+            ApplicationElement aeSm = as.getElementByName("sm");
+            ApplicationRelation[] applRels = as.getRelations(aeSm, aeSm);
+            assertEquals(4, applRels.length);
+            // 'y-axis-for-x-axis'
+            ApplicationRelation relYforX = getApplicationRelationByName(applRels, "y-axis-for-x-axis");
+            InstanceElement ie = aeSm.getInstanceById(ODSHelper.asODSLongLong(62));
+            assertEquals(1, ie.getRelatedInstances(relYforX, "*").getCount());
+            // 'x-axis-for-y-axis'
+            ApplicationRelation relXforY = getApplicationRelationByName(applRels, "x-axis-for-y-axis");
+            ie = aeSm.getInstanceById(ODSHelper.asODSLongLong(59));
+            assertEquals(1, ie.getRelatedInstances(relXforY, "*").getCount());
+
         } catch (AoException e) {
             fail(e.reason);
         }
+    }
+
+    private ApplicationRelation getApplicationRelationByName(ApplicationRelation[] applRels, String relName)
+            throws AoException {
+        for (ApplicationRelation rel : applRels) {
+            if (rel.getRelationName().equals(relName)) {
+                return rel;
+            }
+        }
+        return null;
     }
 
     @Test

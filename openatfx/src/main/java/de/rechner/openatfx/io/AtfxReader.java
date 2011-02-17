@@ -531,8 +531,9 @@ public class AtfxReader {
                 else if (applRels.containsKey(nodeName)) {
                     // only read the non inverse relations for performance reasons!
                     ApplicationRelation applRel = applRels.get(nodeName);
+                    short relMax = applRel.getRelationRange().max;
                     short invMax = applRel.getInverseRelationRange().max;
-                    if (invMax == -1) {
+                    if ((invMax == -1) || (relMax == 1 && invMax == 1)) {
                         String textContent = node.getTextContent();
                         if (textContent.length() > 0) {
                             T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(node.getTextContent());
