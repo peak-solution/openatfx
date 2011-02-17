@@ -134,7 +134,7 @@ class QueryBuilder {
         }
 
         this.rows = newRows;
-        System.out.println(this);
+        // System.out.println(this);
     }
 
     /******************************************************************

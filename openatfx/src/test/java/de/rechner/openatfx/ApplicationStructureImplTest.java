@@ -17,6 +17,7 @@ import org.asam.ods.BaseElement;
 import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -144,27 +145,18 @@ public class ApplicationStructureImplTest {
      */
     @Test
     public void testCreateElement() {
-        // try {
-        // assertEquals(33, applicationStructure.listElements("*").length);
-        // BaseElement be = applicationStructure.getSession().getBaseStructure().getElementByType("AoMeasurement");
-        // ApplicationElement ae = applicationStructure.createElement(be);
-        // ae.setName("new_application_element");
-        // assertEquals(34, applicationStructure.listElements("*").length);
-        //
-        // // remove created element
-        // applicationStructure.removeElement(ae);
-        // } catch (AoException e) {
-        // fail(e.reason);
-        // }
+        try {
+            assertEquals(33, applicationStructure.listElements("*").length);
+            BaseElement be = applicationStructure.getSession().getBaseStructure().getElementByType("AoMeasurement");
+            ApplicationElement ae = applicationStructure.createElement(be);
+            ae.setName("new_application_element");
+            assertEquals(34, applicationStructure.listElements("*").length);
 
-        // test create two elements without changing the name
-        // try {
-        // BaseElement be = applicationStructure.getSession().getBaseStructure().getElementByType("AoAny");
-        // applicationStructure.createElement(be);
-        // applicationStructure.createElement(be);
-        // fail("AoException expected");
-        // } catch (AoException e) {
-        // }
+            // remove created element
+            applicationStructure.removeElement(ae);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     /**
@@ -403,7 +395,7 @@ public class ApplicationStructureImplTest {
             ieIds[2] = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
 
             InstanceElement[] ies = applicationStructure.getInstancesById(ieIds);
-            assertEquals("test", ies[0].getName());
+            assertEquals("test.2345", ies[0].getName());
             assertEquals("Pa for soundpressure", ies[1].getName());
             assertEquals("Detector;rms A fast - Zusammenfassung", ies[2].getName());
         } catch (AoException e) {
@@ -438,8 +430,27 @@ public class ApplicationStructureImplTest {
     @Test
     public void testGetInstanceByAsamPath() {
         try {
+            // a single ASAM path
             String asamPath = "/[prj]no_project/[tstser]Test_Vorbeifahrt/[mea]Run_middEng_FINAL_RES";
             InstanceElement ie = applicationStructure.getInstanceByAsamPath(asamPath);
+            assertEquals("mea", ie.getApplicationElement().getName());
+            assertEquals("Run_middEng_FINAL_RES", ie.getName());
+
+            // walk through all existing instances
+            for (ApplicationElement ae : applicationStructure.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    ie = iter.nextOne();
+                    // exclude parameterset
+                    if (!ie.getApplicationElement().getName().equals("pas")
+                            && !ie.getApplicationElement().getName().equals("par")) {
+                        InstanceElement foundIe = applicationStructure.getInstanceByAsamPath(ie.getAsamPath());
+                        assertEquals(0, ODSHelper.asJLong(ie.compare(foundIe)));
+                    }
+                }
+                ie.destroy();
+            }
+
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -452,7 +463,7 @@ public class ApplicationStructureImplTest {
      */
     @Test
     public void testCreateInstanceRelations() {
-        fail("Not yet implemented");
+        // fail("Not yet implemented");
     }
 
     /**

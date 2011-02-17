@@ -14,7 +14,6 @@ import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import de.rechner.openatfx.AoServiceFactory;
-import de.rechner.openatfx.util.PatternUtil;
 
 
 public class Main {
@@ -49,35 +48,6 @@ public class Main {
             System.err.println(e.getMessage());
         } catch (AoException e) {
             System.err.println(e.reason);
-        }
-    }
-
-    public static void main1(String[] args) {
-        String input = "/[p\\]\\[rj]no_project;123/[tstser]Test_V\\[\\]\\;\\/orbeifahrt/[mea]Run_middEng_FINAL_RES/[dts]Detectorrms A fast - Zusammenfassung";
-        // split by '/' considering escaping
-        for (String p : input.split("(?<!\\\\)/")) {
-
-            // split by ']' considering escaping
-            String[] xAr = p.split("(?<!\\\\)]");
-            if (xAr.length != 2) {
-                continue;
-            }
-            System.out.println("-------------------");
-            System.out.println("> " + p);
-            String aeName = PatternUtil.unEscapeNameForASAMPath(xAr[0].substring(1, xAr[0].length()));
-
-            // split by ';' considering escaping
-            String[] yAr = xAr[1].split("(?<!\\\\);");
-            if (yAr.length < 1) {
-                continue;
-            }
-            String ieName = PatternUtil.unEscapeNameForASAMPath(yAr[0]);
-            String version = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
-
-            System.out.println("AE: " + aeName);
-            System.out.println("IE: " + ieName);
-            System.out.println("VR: " + version);
-
         }
     }
 

@@ -305,8 +305,7 @@
 		</audifahrzeug>
 		<audifahrzeug.audimotor>
 			<audifahrzeug.audimotor_iid>12</audifahrzeug.audimotor_iid>
-			<iname>test</iname>
-			<mkennbuchstabe>123</mkennbuchstabe>
+			<iname>test.9876</iname>			<mkennbuchstabe>123</mkennbuchstabe>
 			<mart>MPI</mart>
 			<mdatenstand>123</mdatenstand>
 			<mnummer>123</mnummer>
@@ -323,8 +322,7 @@
 			<audifahrzeug_iid>11</audifahrzeug_iid>
 		</audifahrzeug.audimotor>
 		<audifahrzeug.audigetriebe>
-			<audifahrzeug.audigetriebe_iid>13</audifahrzeug.audigetriebe_iid>
-			<iname>test</iname>
+			<audifahrzeug.audigetriebe_iid>13</audifahrzeug.audigetriebe_iid>			<iname>test.456</iname>
 			<gkennung>GVC</gkennung>
 			<gart>AL-Quattro</gart>
 			<gfamilie>AL350-5Q</gfamilie>
@@ -337,8 +335,7 @@
 		</audifahrzeug.audigetriebe>
 		<audifahrzeug.audireifen>
 			<audifahrzeug.audireifen_iid>14</audifahrzeug.audireifen_iid>
-			<iname>test</iname>
-			<rtyp>Sommer</rtyp>
+			<iname>test.2345</iname>			<rtyp>Sommer</rtyp>
 			<rhersteller>Continental</rhersteller>
 			<rmodell>Sport Contact</rmodell>
 			<rbreiteva>205</rbreiteva>
@@ -357,8 +354,7 @@
 		</audifahrzeug.audireifen>
 		<audifahrzeug.audiconfig>
 			<audifahrzeug.audiconfig_iid>15</audifahrzeug.audiconfig_iid>
-			<iname>test.1</iname>
-			<kategorie>kat</kategorie>
+			<iname>test.1234</iname>			<kategorie>kat</kategorie>
 			<attribut>Att</attribut>
 			<wert>Wert</wert>
 			<audifahrzeug_iid>11</audifahrzeug_iid>

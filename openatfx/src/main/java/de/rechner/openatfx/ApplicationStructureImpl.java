@@ -24,6 +24,7 @@ import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationDefinitionHelper;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
@@ -555,8 +556,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             if (xAr.length != 2) {
                 continue;
             }
-            // System.out.println("-------------------");
-            // System.out.println("> " + p);
             String aeName = PatternUtil.unEscapeNameForASAMPath(xAr[0].substring(1, xAr[0].length()));
 
             // split by ';' considering escaping
@@ -565,27 +564,73 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
                 continue;
             }
             String ieName = PatternUtil.unEscapeNameForASAMPath(yAr[0]);
-            String version = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
+            String ieVersion = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
 
             // skip environment instance
-            if (aeName.equals(atfxCache.getEnvironmentInstance().getApplicationElement().getName())) {
+            InstanceElement environmentInstance = atfxCache.getEnvironmentInstance();
+            if (environmentInstance != null && aeName.equals(environmentInstance.getApplicationElement().getName())) {
                 continue;
             }
 
             // top level instanvce
             if (currentInstance == null) {
-                ApplicationElement ae = getElementByName(aeName);
-//                currentInstance = ae.getInstances(arg0)
+                InstanceElementIterator iter = getElementByName(aeName).getInstances("*");
+                currentInstance = getSingleInstanceByNameAndVersion(iter, ieName, ieVersion);
+                iter.destroy();
             }
-
-            System.out.println("AE: " + aeName);
-            System.out.println("IE: " + ieName);
-            System.out.println("VR: " + version);
-
+            // child instance
+            else {
+                InstanceElementIterator iter = currentInstance.getRelatedInstancesByRelationship(Relationship.CHILD,
+                                                                                                 "*");
+                currentInstance = getSingleInstanceByNameAndVersion(iter, ieName, ieVersion);
+                iter.destroy();
+            }
         }
 
-        // TODO Auto-generated method stub
-        return null;
+        if (currentInstance == null) {
+            throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0, "Invalid ASAMPath: "
+                    + asamPath);
+        }
+
+        LOG.debug("Found instance for ASAMPath: '" + asamPath + "'");
+        return currentInstance;
+    }
+
+    /**
+     * Lookup given array of instances for an instance with given name and version.
+     * <p>
+     * Only a single instance will be returned. If none or multiple instances found, and exception will be thrown.
+     * 
+     * @param instances Collection of instances.
+     * @param name The name to lookup.
+     * @param version The version to lookup.
+     * @return The instance.
+     * @throws AoException Error reading instance values or none or multiple instances found.
+     */
+    private InstanceElement getSingleInstanceByNameAndVersion(InstanceElementIterator iter, String name, String version)
+            throws AoException {
+        List<InstanceElement> found = new ArrayList<InstanceElement>();
+        for (int i = 0; i < iter.getCount(); i++) {
+            InstanceElement ie = iter.nextOne();
+            if (ie.getName().equals(name)) {
+                if (version != null && !version.isEmpty()) {
+                    String v = ODSHelper.getStringVal(ie.getValueByBaseName("version"));
+                    if (v.equals(version)) {
+                        found.add(ie);
+                    }
+                } else {
+                    found.add(ie);
+                }
+            }
+        }
+        if (found.size() < 1) {
+            throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0, "No instance found for name='"
+                    + name + "',version='" + version + "'");
+        } else if (found.size() > 1) {
+            throw new AoException(ErrorCode.AO_INVALID_ASAM_PATH, SeverityFlag.ERROR, 0,
+                                  "Multiple instances found for name='" + name + "',version='" + version + "'");
+        }
+        return found.get(0);
     }
 
     /**

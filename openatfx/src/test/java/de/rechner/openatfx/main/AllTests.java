@@ -7,6 +7,7 @@ import de.rechner.openatfx.AoServiceFactoryTest;
 import de.rechner.openatfx.AoSessionImplTest;
 import de.rechner.openatfx.ApplicationAttributeImplTest;
 import de.rechner.openatfx.ApplicationElementImplTest;
+import de.rechner.openatfx.ApplicationStructureImplTest;
 import de.rechner.openatfx.BlobImplTest;
 import de.rechner.openatfx.EnumerationDefinitionImplTest;
 import de.rechner.openatfx.InstanceElementImplTest;
@@ -46,7 +47,7 @@ public class AllTests {
         // suite.addTest(ApplElemAccessImplTest.suite());
         suite.addTest(ApplicationAttributeImplTest.suite());
         suite.addTest(ApplicationElementImplTest.suite());
-        // suite.addTest(ApplicationStructureImplTest.suite());
+//        suite.addTest(ApplicationStructureImplTest.suite());
         suite.addTest(AtfxParseUtilTest.suite());
         suite.addTest(BlobImplTest.suite());
         suite.addTest(EnumerationDefinitionImplTest.suite());
