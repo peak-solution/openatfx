@@ -173,7 +173,7 @@ public class AtfxWriter {
             AoException {
         ApplicationStructureValue av = aoSession.getApplicationStructureValue();
         EnumerationAttributeStructure[] eas = aoSession.getEnumerationAttributes();
-        streamWriter.writeStartElement(AtfxTagConstants.APPLICATION_MODEL);
+        streamWriter.writeStartElement(AtfxTagConstants.APPL_MODEL);
 
         // enumerations
         Set<String> baseEnums = new HashSet<String>();

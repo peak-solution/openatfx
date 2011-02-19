@@ -138,7 +138,7 @@ public class DOMatfxReader {
                 String nodeName = node.getNodeName();
                 if (nodeName.equals(AtfxTagConstants.FILES)) {
                     parseFiles(componentMap, (Element) node);
-                } else if (nodeName.equals(AtfxTagConstants.APPLICATION_MODEL)) {
+                } else if (nodeName.equals(AtfxTagConstants.APPL_MODEL)) {
                     long start = System.currentTimeMillis();
                     parseApplicationModel(as, (Element) node);
                     LOG.info("Parsed ApplicationModel in " + (System.currentTimeMillis() - start) + "ms");

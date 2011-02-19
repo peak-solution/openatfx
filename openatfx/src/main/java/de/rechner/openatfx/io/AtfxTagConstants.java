@@ -31,7 +31,7 @@ class AtfxTagConstants {
     public static final String COMPONENT_VALPERBLOCK = "valperblock";
     public static final String COMPONENT_VALOFFSETS = "valoffsets";
 
-    public static final String APPLICATION_MODEL = "application_model";
+    public static final String APPL_MODEL = "application_model";
 
     public static final String APPL_ENUM = "application_enumeration";
     public static final String APPL_ENUM_NAME = "name";

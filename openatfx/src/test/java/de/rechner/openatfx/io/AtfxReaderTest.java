@@ -33,6 +33,9 @@ public class AtfxReaderTest {
             reader.createSessionForATFX(orb, new File(url.getFile()));
             reader.createSessionForATFX(orb, new File(url.getFile()));
             reader.createSessionForATFX(orb, new File(url.getFile()));
+
+            url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/mdm.xml");
+            reader.createSessionForATFX(orb, new File(url.getFile()));
         } catch (AoException e) {
             fail(e.reason);
         }

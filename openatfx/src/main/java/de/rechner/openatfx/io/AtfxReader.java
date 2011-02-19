@@ -1,15 +1,18 @@
 package de.rechner.openatfx.io;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,7 +28,6 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
 import org.asam.ods.BaseRelation;
-import org.asam.ods.BaseStructure;
 import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
@@ -41,11 +43,9 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.util.ODSHelper;
@@ -77,119 +77,142 @@ public class AtfxReader {
      * @throws AoException Error getting aoSession.
      */
     public AoSession createSessionForATFX(ORB orb, File atfxFile) throws AoException {
+        long start = System.currentTimeMillis();
+        InputStream in = null;
         try {
-            // parse XML
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            long start = System.currentTimeMillis();
-            Document doc = builder.parse(atfxFile);
-            Element rootElement = doc.getDocumentElement();
-            LOG.info("Read XML in " + (System.currentTimeMillis() - start) + "ms");
+            // open XML file
+            XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+            in = new BufferedInputStream(new FileInputStream(atfxFile));
+            XMLStreamReader reader = inputFactory.createXMLStreamReader(in);
 
-            // read base model version
+            // parse start element 'atfx_file'
+            reader.nextTag();
+            reader.nextTag();
+
+            // parse 'documentation'
+            Map<String, String> documentation = new HashMap<String, String>();
+            if (reader.getLocalName().equals(AtfxTagConstants.DOCUMENTATION)) {
+                documentation.putAll(parseDocumentation(reader));
+                reader.nextTag();
+            }
+
+            // parse 'base_model_version'
             String baseModelVersion = "";
-            NodeList nodeList = rootElement.getChildNodes();
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                Node node = nodeList.item(i);
-                if (node.getNodeType() == Node.ELEMENT_NODE
-                        && node.getNodeName().equals(AtfxTagConstants.BASE_MODEL_VERSION)) {
-                    baseModelVersion = node.getTextContent();
-                    break;
-                }
+            if (reader.getLocalName().equals(AtfxTagConstants.BASE_MODEL_VERSION)) {
+                baseModelVersion = reader.getElementText();
+                reader.nextTag();
+            } else {
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Expected tag '"
+                        + AtfxTagConstants.BASE_MODEL_VERSION + "'");
             }
 
             // create AoSession object
             AoSession aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, atfxFile, baseModelVersion);
 
-            // parse the ATFX file
-            parseATFX(aoSession, rootElement);
+            // parse 'files'
+            Map<String, String> files = new HashMap<String, String>();
+            if (reader.getLocalName().equals(AtfxTagConstants.FILES)) {
+                files.putAll(parseFiles(reader));
+                reader.nextTag();
+            }
 
-            // clear memory
-            System.gc();
+            // parse 'application_model'
+            if (reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL)) {
+                parseApplicationModel(aoSession.getApplicationStructure(), reader);
+                reader.nextTag();
+            }
 
+            // parse 'instance_data'
+            if (reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
+                reader.nextTag();
+            }
+
+            LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms: " + atfxFile.getAbsolutePath());
             return aoSession;
-        } catch (ParserConfigurationException e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (SAXException e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        }
-    }
-
-    /**
-     * Parse the content of the ATFX file.
-     * 
-     * @param aoSession The session.
-     * @param rootElement The root XML element.
-     * @throws AoException Error parsing ATFX file.
-     */
-    private void parseATFX(AoSession aoSession, Element rootElement) throws AoException {
-        ApplicationStructure as = aoSession.getApplicationStructure();
-        Map<String, String> componentMap = new HashMap<String, String>();
-
-        NodeList nodeList = rootElement.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                String nodeName = node.getNodeName();
-                if (nodeName.equals(AtfxTagConstants.FILES)) {
-                    parseFiles(componentMap, (Element) node);
-                } else if (nodeName.equals(AtfxTagConstants.APPLICATION_MODEL)) {
-                    long start = System.currentTimeMillis();
-                    parseApplicationModel(as, (Element) node);
-                    LOG.info("Parsed ApplicationModel in " + (System.currentTimeMillis() - start) + "ms");
-                } else if (nodeName.equals(AtfxTagConstants.INSTANCE_DATA)) {
-                    long start = System.currentTimeMillis();
-                    parseInstanceElements(as, componentMap, (Element) node);
-                    LOG.info("Parsed InstanceElements in " + (System.currentTimeMillis() - start) + "ms");
+        } catch (XMLStreamException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
                 }
             }
         }
     }
 
     /**
-     * Parse the file components and return as map.
+     * Parse the 'documentation' part of the ATFX file.
      * 
-     * @param componentMap The component map to fill.
-     * @param fileElem The file XML element.
-     * @return The mapping between component identifier and component name.
+     * @param reader The XML stream reader.
+     * @return Map containing the key value pairs of the documentation.
+     * @throws XMLStreamException Error parsing XML.
      */
-    private void parseFiles(Map<String, String> componentMap, Element fileElem) {
-        NodeList componentNodeList = fileElem.getChildNodes();
-        for (int i = 0; i < componentNodeList.getLength(); i++) {
-            Node componentNode = componentNodeList.item(i);
-            if ((componentNode.getNodeType() == Node.ELEMENT_NODE)
-                    || componentNode.getNodeName().equals(AtfxTagConstants.COMPONENT)) {
-                parseComponent(componentMap, (Element) componentNode);
+    private Map<String, String> parseDocumentation(XMLStreamReader reader) throws XMLStreamException {
+        reader.nextTag();
+        Map<String, String> map = new HashMap<String, String>();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.DOCUMENTATION))) {
+            if (reader.isStartElement()) {
+                map.put(reader.getLocalName(), reader.getElementText());
             }
+            reader.nextTag();
         }
+        return map;
+    }
+
+    /***************************************************************************************
+     * methods for parsing the component files declaration
+     ***************************************************************************************/
+
+    /**
+     * Parse the 'files' part of the ATFX file.
+     * 
+     * @param reader The XML stream reader.
+     * @return Map containing the key value pairs of the component files.
+     * @throws XMLStreamException Error parsing XML.
+     */
+    private Map<String, String> parseFiles(XMLStreamReader reader) throws XMLStreamException {
+        Map<String, String> map = new HashMap<String, String>();
+        // 'files'
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.FILES))) {
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
+                map.putAll(parseComponent(reader));
+            }
+            reader.next();
+        }
+        return map;
     }
 
     /**
-     * Parse the file component from given XML element.
+     * Parse one 'component' part.
      * 
-     * @param componentMap The component map to fill.
-     * @param componentElem The component XML element.
+     * @param reader The XML stream reader.
+     * @return Map containing the key value pairs of the component files.
+     * @throws XMLStreamException Error parsing XML.
      */
-    private void parseComponent(Map<String, String> componentMap, Element componentElem) {
+    private Map<String, String> parseComponent(XMLStreamReader reader) throws XMLStreamException {
+        Map<String, String> map = new HashMap<String, String>();
         String identifier = "";
         String filename = "";
-        NodeList nodeList = componentElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                if (node.getNodeName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER)) {
-                    identifier = node.getTextContent();
-                } else if (node.getNodeName().equals(AtfxTagConstants.COMPONENT_FILENAME)) {
-                    filename = node.getTextContent();
-                }
+        // 'component'
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+            // 'identifier'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER)) {
+                identifier = reader.getElementText();
             }
+            // 'filename'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT_FILENAME)) {
+                filename = reader.getElementText();
+            }
+            reader.next();
         }
-        componentMap.put(identifier, filename);
+        map.put(identifier, filename);
+        return map;
     }
 
     /***************************************************************************************
@@ -197,85 +220,182 @@ public class AtfxReader {
      ***************************************************************************************/
 
     /**
-     * Parse the application model and build it directory on given application structure.
+     * Parse the application model.
      * 
      * @param as The application structure.
-     * @param applicationModelElem The application model XML element.
-     * @throws AoException Error parsing application structure.
+     * @param reader The XML stream reader.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing application structure.
      */
-    private void parseApplicationModel(ApplicationStructure as, Element applicationModelElem) throws AoException {
-        // first parse application enumerations and application elements
-        NodeList nodeList = applicationModelElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                if (node.getNodeName().equals(AtfxTagConstants.APPL_ENUM)) {
-                    parseEnumerationDefinition(as, (Element) node);
-                } else if (node.getNodeName().equals(AtfxTagConstants.APPL_ELEM)) {
-                    parseApplicationElement(as, (Element) node);
-                }
+    private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL))) {
+            // 'application_enumeration'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM)) {
+                parseEnumerationDefinition(as, reader);
             }
-        }
-
-        // then parse application relations
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                if (node.getNodeName().equals(AtfxTagConstants.APPL_ELEM)) {
-                    parseApplicationRelations(as, (Element) node);
-                }
+            // 'application_element'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM)) {
+                parseApplicationElement(as, reader);
             }
+            reader.next();
         }
     }
 
     /**
-     * Read the enumeration definitions from the enumeration definition XML element.
+     * Parse an enumeration definition.
      * 
      * @param as The application structure.
-     * @param enumDefElem The enumeration definition XML element.
-     * @throws AoException Error parsing enumeration definitions.
+     * @param reader The XML stream reader.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing application structure.
      */
-    private void parseEnumerationDefinition(ApplicationStructure as, Element enumDefElem) throws AoException {
-        String enumName = getSingleChildContent(enumDefElem, AtfxTagConstants.APPL_ENUM_NAME);
-        EnumerationDefinition enumDef = as.createEnumerationDefinition(enumName);
-        NodeList itemNodeList = enumDefElem.getElementsByTagName(AtfxTagConstants.APPL_ENUM_ITEM);
-        for (int x = 0; x < itemNodeList.getLength(); x++) {
-            Element itemElem = (Element) itemNodeList.item(x);
-            String itemName = getSingleChildContent(itemElem, AtfxTagConstants.APPL_ENUM_ITEM_NAME);
-            enumDef.addItem(itemName);
+    private void parseEnumerationDefinition(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
+        // 'name'
+        reader.nextTag();
+        if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_NAME)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Expected enumeration name");
+        }
+        EnumerationDefinition enumDef = as.createEnumerationDefinition(reader.getElementText());
+        // items
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM))) {
+            // 'item'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_ITEM)) {
+                parseEnumerationItem(enumDef, reader);
+            }
+            reader.next();
         }
     }
 
     /**
-     * Read the application elements from the application element XML element.
+     * Parse an enumeration item.
      * 
-     * @param as The application structure.
-     * @param aeElem The application element XML element.
-     * @throws AoException Error parsing application elements.
+     * @param enumDef The enumeration definition.
+     * @param reader The XML stream reader.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to enumeration definition.
      */
-    private void parseApplicationElement(ApplicationStructure as, Element aeElem) throws AoException {
-        BaseStructure bs = as.getSession().getBaseStructure();
-        BaseElement baseElem = bs.getElementByType(getSingleChildContent(aeElem, AtfxTagConstants.APPL_ELEM_BASETYPE));
-        ApplicationElement ae = as.createElement(baseElem);
-        ae.setName(getSingleChildContent(aeElem, AtfxTagConstants.APPL_ELEM_NAME));
-        parseApplicationAttributes(ae, aeElem);
+    private void parseEnumerationItem(EnumerationDefinition enumDef, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_ITEM))) {
+            // 'name'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_NAME)) {
+                enumDef.addItem(reader.getElementText());
+            }
+            reader.next();
+        }
     }
 
     /**
-     * Read the application attributes from the application element node.
+     * Parse an application element.
      * 
      * @param as The application structure.
-     * @param rootElement The root XML element.
-     * @throws AoException Error parsing application elements.
+     * @param reader The XML stream reader.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to enumeration definition.
      */
-    private void parseApplicationAttributes(ApplicationElement applElem, Element aeElem) throws AoException {
-        NodeList nodeList = aeElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if ((node.getNodeType() == Node.ELEMENT_NODE) && node.getNodeName().equals(AtfxTagConstants.APPL_ATTR)) {
-                parseApplicationAttribute(applElem, (Element) node);
+    private void parseApplicationElement(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
+        // 'name'
+        reader.nextTag();
+        if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM_NAME)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Expected application element 'name'");
+        }
+        String aeName = reader.getElementText();
+        // 'basetype'
+        reader.nextTag();
+        if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM_BASETYPE)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Expected application element 'basetype'");
+        }
+        String basetype = reader.getElementText();
+
+        // create application element
+        BaseElement be = as.getSession().getBaseStructure().getElementByType(basetype);
+        ApplicationElement applElem = as.createElement(be);
+        applElem.setName(aeName);
+
+        // cache existing base attributes
+        Map<String, ApplicationAttribute> baToAaMap = new HashMap<String, ApplicationAttribute>();
+        for (ApplicationAttribute existingAa : applElem.getAttributes("*")) {
+            BaseAttribute ba = existingAa.getBaseAttribute();
+            if (ba != null) {
+                baToAaMap.put(ba.getName(), existingAa);
             }
         }
+
+        // attributes and relations
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM))) {
+            // 'application_attribute'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR)) {
+                parseApplicationAttribute(applElem, reader, baToAaMap);
+            }
+            // 'relation_attribute'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL)) {
+
+            }
+            reader.next();
+        }
+    }
+
+    private void parseApplicationAttribute(ApplicationElement applElem, XMLStreamReader reader,
+            Map<String, ApplicationAttribute> baToAaMap) throws XMLStreamException, AoException {
+        String aaNameStr = "";
+        String baseAttrStr = "";
+        String dataTypeStr = "";
+        String lengthStr = "";
+        String obligatoryStr = "";
+        String uniqueStr = "";
+        String autogeneratedStr = "";
+        String enumtypeStr = "";
+        String unitStr = "";
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR))) {
+            // 'name'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_NAME)) {
+                aaNameStr = reader.getElementText();
+            }
+            // 'base_attribute'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_BASEATTR)) {
+                baseAttrStr = reader.getElementText();
+            }
+            // 'datatype'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_DATATYPE)) {
+                dataTypeStr = reader.getElementText();
+            }
+            // 'length'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_LENGTH)) {
+                lengthStr = reader.getElementText();
+            }
+            // 'obligatory'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_OBLIGATORY)) {
+                obligatoryStr = reader.getElementText();
+            }
+            // 'unique'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_UNIQUE)) {
+                uniqueStr = reader.getElementText();
+            }
+            // 'autogenerated'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_AUTOGENERATED)) {
+                autogeneratedStr = reader.getElementText();
+            }
+            // 'enumeration_type'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_ENUMTYPE)) {
+                enumtypeStr = reader.getElementText();
+            }
+            reader.next();
+        }
+
+        // check if base attribute already exists (obligatory base attributes are generated automatically)
+        ApplicationAttribute aa = null;
+        if (baseAttrStr != null && baseAttrStr.length() > 0) {
+            aa = baToAaMap.get(baseAttrStr);
+        }
+        if (aa == null) {
+            aa = applElem.createAttribute();
+        }
+        aa.setName(aaNameStr);
     }
 
     /**
@@ -286,9 +406,8 @@ public class AtfxReader {
      * @throws AoException Error parsing application attribute.
      */
     private void parseApplicationAttribute(ApplicationElement applElem, Element aaElem) throws AoException {
-        BaseElement baseElement = applElem.getBaseElement();
-
         // cache existing base attributes
+        BaseElement baseElement = applElem.getBaseElement();
         Map<String, ApplicationAttribute> baToAaMap = new HashMap<String, ApplicationAttribute>();
         for (ApplicationAttribute existingAa : applElem.getAttributes("*")) {
             BaseAttribute ba = existingAa.getBaseAttribute();
