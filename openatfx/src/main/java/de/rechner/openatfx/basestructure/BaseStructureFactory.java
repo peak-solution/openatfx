@@ -104,6 +104,7 @@ public class BaseStructureFactory {
             }
 
             // parse XML
+            long start = System.currentTimeMillis();
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(in);
@@ -113,6 +114,7 @@ public class BaseStructureFactory {
             baseStructure = parseBaseStructure(poa, doc);
             this.baseStructureCache.put(baseModelVersion, baseStructure);
 
+            LOG.info("Read base model in " + (System.currentTimeMillis() - start) + "ms");
             return baseStructure;
         } catch (ParserConfigurationException e) {
             LOG.error(e.getMessage(), e);

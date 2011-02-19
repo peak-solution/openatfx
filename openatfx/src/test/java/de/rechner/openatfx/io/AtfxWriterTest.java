@@ -5,7 +5,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.junit.AfterClass;
@@ -22,14 +21,12 @@ import de.rechner.openatfx.AoSessionImplTest;
  * 
  * @author Christian Rechner
  */
-
 public class AtfxWriterTest {
 
     private static AoSession aoSession;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        BasicConfigurator.configure();
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
