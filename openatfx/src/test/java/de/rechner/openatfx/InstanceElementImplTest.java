@@ -540,6 +540,10 @@ public class InstanceElementImplTest {
             ieDts.createRelation(arPas, iePas);
             assertEquals(2, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
 
+            // cleanup
+            ieDts.removeRelation(arChild, ieMeaQua);
+            ieMeaQua.removeRelation(arParent, otherMeasurement);
+            ieDts.removeRelation(arPas, iePas);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -550,17 +554,18 @@ public class InstanceElementImplTest {
         try {
             ApplicationElement aeDts = aoSession.getApplicationStructure().getElementByName("dts");
             ApplicationElement aeMeaQua = aoSession.getApplicationStructure().getElementByName("meq");
-            // ApplicationElement aePas = aoSession.getApplicationStructure().getElementByName("pas");
             InstanceElement ieMeaQua = aeMeaQua.getInstanceById(ODSHelper.asODSLongLong(46));
 
             // removing a child (1:n)
             ApplicationRelation arChild = aeDts.getRelationsByBaseName("measurement_quantities")[0];
-            assertEquals(4, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(1, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
             ieDts.removeRelation(arChild, ieMeaQua);
-            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(2, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(0, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
 
+            // cleanup
+            ieDts.createRelation(arChild, ieMeaQua);
         } catch (AoException e) {
             fail(e.reason);
         }

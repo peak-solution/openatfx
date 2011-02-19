@@ -47,13 +47,14 @@ public class AllTests {
         // suite.addTest(ApplElemAccessImplTest.suite());
         suite.addTest(ApplicationAttributeImplTest.suite());
         suite.addTest(ApplicationElementImplTest.suite());
-//        suite.addTest(ApplicationStructureImplTest.suite());
-        suite.addTest(AtfxParseUtilTest.suite());
+        suite.addTest(ApplicationStructureImplTest.suite());
         suite.addTest(BlobImplTest.suite());
         suite.addTest(EnumerationDefinitionImplTest.suite());
         suite.addTest(InstanceElementImplTest.suite());
         suite.addTest(NameIteratorImplTest.suite());
         suite.addTest(NameValueIteratorImplTest.suite());
+
+        suite.addTest(AtfxParseUtilTest.suite());
 
         return suite;
     }

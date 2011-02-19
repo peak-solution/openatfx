@@ -3,7 +3,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>OpenATFX</name>
-	<version>0.0.5-SNAPSHOT</version>
+	<version>0.0.6-SNAPSHOT</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://openatfx.sourceforge.net</url>
 
@@ -25,11 +25,22 @@
 
 	<build>
 		<plugins>
+			<!-- compatibility with java 1.5 -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<source>1.5</source>
 					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<!-- build assembly -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>2.2</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>bin</descriptorRef>
+					</descriptorRefs>
 				</configuration>
 			</plugin>
 		</plugins>

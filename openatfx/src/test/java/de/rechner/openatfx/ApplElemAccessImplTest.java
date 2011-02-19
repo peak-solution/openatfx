@@ -21,6 +21,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ElemId;
 import org.asam.ods.ElemResultSet;
+import org.asam.ods.ErrorCode;
 import org.asam.ods.JoinDef;
 import org.asam.ods.JoinType;
 import org.asam.ods.QueryStructure;
@@ -96,12 +97,22 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testUpdateInstances() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.updateInstances(null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testDeleteInstances() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.deleteInstances(null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
@@ -137,7 +148,12 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testSetRelInst() {
-        fail("Not yet implemented");
+//        try {
+//            applElemAccess.getRelInst(null, null);
+//            fail("AoException expected");
+//        } catch (AoException e) {
+//            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+//        }
     }
 
     @Test
@@ -274,72 +290,142 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testGetValueMatrixInMode() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getValueMatrixInMode(null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetValueMatrix() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getValueMatrix(null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetAttributeRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setAttributeRights(null, null, null, 0, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetElementRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setElementRights(null, null, 0, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetInstanceRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setInstanceRights(null, null, null, 0, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetAttributeRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getAttributeRights(null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetElementRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getElementRights(null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetInstanceRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getInstanceRights(null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetElementInitialRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setElementInitialRights(null, null, 0, null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetInstanceInitialRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setInstanceInitialRights(null, null, null, 0, null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testSetInitialRightReference() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.setInitialRightReference(null, null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetInitialRightReference() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getInitialRightReference(null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetElementInitialRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getElementInitialRights(null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetInstanceInitialRights() {
-        fail("Not yet implemented");
+        try {
+            applElemAccess.getInstanceInitialRights(null, null);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     public static junit.framework.Test suite() {
