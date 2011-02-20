@@ -11,7 +11,7 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
 
-import de.rechner.openatfx.io.AtfxReader;
+import de.rechner.openatfx.io.DOMatfxReader;
 
 
 /**
@@ -88,7 +88,7 @@ class AoFactoryImpl extends AoFactoryPOA {
                 throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
                         + auth);
             }
-            return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+            return DOMatfxReader.getInstance().createSessionForATFX(orb, atfxFile);
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;

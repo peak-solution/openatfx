@@ -63,10 +63,18 @@ public class AtfxReader {
     /** The singleton instance */
     private static AtfxReader instance;
 
+    /** cached model information for faster parsing */
+    private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
+    private final Map<String, Map<String, ApplicationRelation>> applRels;
+    private ApplicationAttribute applAttrLocalColumnValues;
+
     /**
      * Non visible constructor.
      */
-    private AtfxReader() {}
+    private AtfxReader() {
+        this.applAttrs = new HashMap<String, Map<String, ApplicationAttribute>>();
+        this.applRels = new HashMap<String, Map<String, ApplicationRelation>>();
+    }
 
     /**
      * Returns the ASAM ODS aoSession object for a ATFX file.
@@ -76,8 +84,12 @@ public class AtfxReader {
      * @return The aoSession object.
      * @throws AoException Error getting aoSession.
      */
-    public AoSession createSessionForATFX(ORB orb, File atfxFile) throws AoException {
+    public synchronized AoSession createSessionForATFX(ORB orb, File atfxFile) throws AoException {
         long start = System.currentTimeMillis();
+        this.applAttrs.clear();
+        this.applRels.clear();
+        this.applAttrLocalColumnValues = null;
+
         InputStream in = null;
         try {
             // open XML file
@@ -124,6 +136,7 @@ public class AtfxReader {
 
             // parse 'instance_data'
             if (reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
+                parseInstanceElements(aoSession, reader, files);
                 reader.nextTag();
             }
 
@@ -334,6 +347,10 @@ public class AtfxReader {
             baseRelMap.put(baseRel.getRelationName(), baseRel);
         }
 
+        // add to global map
+        this.applAttrs.put(aeName, new HashMap<String, ApplicationAttribute>());
+        this.applRels.put(aeName, new HashMap<String, ApplicationRelation>());
+
         // attributes and relations
         Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM))) {
@@ -460,6 +477,12 @@ public class AtfxReader {
         if (unitStr != null && unitStr.length() > 0) {
             aa.setUnit(AtfxParseUtil.parseLongLong(unitStr));
         }
+
+        // add to global map
+        this.applAttrs.get(applElem.getName()).put(aaNameStr, aa);
+        if (baseAttrStr.equals("value") && applElem.getBaseElement().getType().equals("AoLocalColumn")) {
+            this.applAttrLocalColumnValues = aa;
+        }
     }
 
     /**
@@ -527,6 +550,9 @@ public class AtfxReader {
             rel.setBaseRelation(baseRel);
         }
 
+        // add to global map
+        this.applRels.get(applElem.getName()).put(relName, rel);
+
         // return the information of the ref to application element
         Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         applRelElem2Map.put(rel, elem2Name);
@@ -542,26 +568,28 @@ public class AtfxReader {
      * <p>
      * Also the relations are parsed and set.
      * 
-     * @param as The application structure.
+     * @param aoSession The session.
+     * @param reader The XML stream reader.
      * @param componentMap The mapping between external file identifier and file name.
-     * @param instanceDataElement The instance data XML element.
-     * @throws AoException Error parsing instance elements.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
      */
-    private void parseInstanceElements(ApplicationStructure as, Map<String, String> componentMap,
-            Element instanceDataElement) throws AoException {
+    private void parseInstanceElements(AoSession aoSession, XMLStreamReader reader, Map<String, String> componentMap)
+            throws XMLStreamException, AoException {
+        ApplicationStructure as = aoSession.getApplicationStructure();
         Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<ApplicationRelation, T_LONGLONG[]>>();
 
         // parse instances
-        NodeList nodeList = instanceDataElement.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                relMap.putAll(parseInstanceElement(as, componentMap, (Element) node));
+        reader.next();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
+            if (reader.isStartElement()) {
+                parseInstanceElement(as, reader, componentMap);
             }
+            reader.next();
         }
 
         // create relations
-        ApplElemAccess applElemAccess = as.getSession().getApplElemAccess();
+        ApplElemAccess applElemAccess = aoSession.getApplElemAccess();
         for (ElemId elemId : relMap.keySet()) {
             for (ApplicationRelation applRel : relMap.get(elemId).keySet()) {
                 T_LONGLONG[] relIids = relMap.get(elemId).get(applRel);
@@ -571,77 +599,71 @@ public class AtfxReader {
     }
 
     /**
-     * Read the instance attributes from the instance element XML element.
+     * Read the all attributes,relations and security information from the instance element XML element.
      * 
-     * @param as The application structure.
+     * @param as The applications structure.
+     * @param reader The XML stream reader.
      * @param componentMap The mapping between external file identifier and file name.
-     * @param instanceNode The instance element XML element.
      * @return
-     * @throws AoException Error parsing instance element.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
      */
     private Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as,
-            Map<String, String> componentMap, Element instanceNode) throws AoException {
-        ApplicationElement applElem = as.getElementByName(instanceNode.getNodeName());
+            XMLStreamReader reader, Map<String, String> componentMap) throws XMLStreamException, AoException {
+        // 'name'
+        String aeName = reader.getLocalName();
+        ApplicationElement applElem = as.getElementByName(aeName);
 
-        // collect all possible attributes and relations
-        Map<String, ApplicationAttribute> applAttrs = new HashMap<String, ApplicationAttribute>();
-        Map<String, ApplicationRelation> applRels = new HashMap<String, ApplicationRelation>();
-        String valuesAttr = null;
-        for (ApplicationAttribute applAttr : applElem.getAttributes("*")) {
-            if (applAttr.getBaseAttribute() != null && applAttr.getBaseAttribute().getName().equals("values")) {
-                valuesAttr = applAttr.getName();
-            } else {
-                applAttrs.put(applAttr.getName(), applAttr);
-            }
-        }
-        for (ApplicationRelation applRel : applElem.getAllRelations()) {
-            applRels.put(applRel.getRelationName(), applRel);
-        }
-
-        // parse application attribute and instance attribute values
-        Element valuesElement = null;
+        // read attributes
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
-        Map<ApplicationRelation, T_LONGLONG[]> relMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
-        NodeList nodeList = instanceNode.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                String nodeName = node.getNodeName();
-                // application attribute
-                if (applAttrs.containsKey(nodeName)) {
-                    ApplicationAttribute aa = applAttrs.get(node.getNodeName());
-                    AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
-                    applAttrValue.unitId = ODSHelper.asODSLongLong(0);
-                    applAttrValue.attr = new AIDName();
-                    applAttrValue.attr.aid = applElem.getId();
-                    applAttrValue.attr.aaName = nodeName;
-                    applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseTextContent(aa, (Element) node));
-                    applAttrValues.add(applAttrValue);
-                }
-                // instance attribute
-                else if (node.getNodeName().equals(AtfxTagConstants.INST_ATTR)) {
-                    instAttrValues.addAll(parseInstanceAttributes((Element) node));
-                }
-                // relation
-                else if (applRels.containsKey(nodeName)) {
-                    // only read the non inverse relations for performance reasons!
-                    ApplicationRelation applRel = applRels.get(nodeName);
-                    short relMax = applRel.getRelationRange().max;
-                    short invMax = applRel.getInverseRelationRange().max;
-                    if ((invMax == -1) || (relMax == 1 && invMax == 1)) {
-                        String textContent = node.getTextContent();
-                        if (textContent.length() > 0) {
-                            T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(node.getTextContent());
-                            relMap.put(applRel, relInstIids);
-                        }
+        Map<ApplicationRelation, T_LONGLONG[]> instRelMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(aeName))) {
+
+            // application attribute
+            if (reader.isStartElement() && (getApplAttr(aeName, reader.getLocalName()) != null)) {
+                ApplicationAttribute aa = getApplAttr(aeName, reader.getLocalName());
+                AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
+                applAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                applAttrValue.attr = new AIDName();
+                applAttrValue.attr.aid = applElem.getId();
+                applAttrValue.attr.aaName = reader.getLocalName();
+                applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aa, reader));
+                applAttrValues.add(applAttrValue);
+            }
+
+            // application relation
+            else if (reader.isStartElement() && (getApplRel(aeName, reader.getLocalName()) != null)) {
+                // only read the non inverse relations for performance reasons!
+                ApplicationRelation applRel = getApplRel(aeName, reader.getLocalName());
+                short relMax = applRel.getRelationRange().max;
+                short invMax = applRel.getInverseRelationRange().max;
+                if ((invMax == -1) || (relMax == 1 && invMax == 1)) {
+                    String textContent = reader.getElementText();
+                    if (textContent.length() > 0) {
+                        T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);
+                        instRelMap.put(applRel, relInstIids);
                     }
                 }
-                // values of 'LocalColumn'
-                else if (valuesAttr != null && valuesAttr.equals(nodeName)) {
-                    valuesElement = (Element) node;
-                }
             }
+
+            // instance attribute
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
+            }
+
+            // ACLA
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLA))) {
+            }
+
+            // ACLI
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLI))) {
+            }
+
+            // values of 'LocalColumn'
+            else if (reader.isStartElement() && isLocalColumnValue(aeName, reader.getLocalName())) {
+            }
+
+            reader.next();
         }
 
         // create instance element
@@ -657,16 +679,42 @@ public class AtfxReader {
         }
 
         // parse measurement values
-        if (valuesElement != null) {
-            InstanceElement localColumnIe = applElem.getInstanceById(elemId.iid);
-            parseMeasurementData(componentMap, localColumnIe, valuesElement);
-        }
+        // if (valuesElement != null) {
+        // InstanceElement localColumnIe = applElem.getInstanceById(elemId.iid);
+        // parseMeasurementData(componentMap, localColumnIe, valuesElement);
+        // }
 
         // create relation map
         Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<ApplicationRelation, T_LONGLONG[]>>();
-        retMap.put(new ElemId(applElem.getId(), elemId.iid), relMap);
+        retMap.put(new ElemId(applElem.getId(), elemId.iid), instRelMap);
 
         return retMap;
+    }
+
+    private ApplicationAttribute getApplAttr(String aeName, String name) {
+        Map<String, ApplicationAttribute> attrMap = this.applAttrs.get(aeName);
+        if (attrMap != null) {
+            return attrMap.get(name);
+        }
+        return null;
+    }
+
+    private ApplicationRelation getApplRel(String aeName, String name) {
+        Map<String, ApplicationRelation> relMap = this.applRels.get(aeName);
+        if (relMap != null) {
+            return relMap.get(name);
+        }
+        return null;
+    }
+
+    private boolean isLocalColumnValue(String aeName, String name) throws AoException {
+        if (this.applAttrLocalColumnValues != null) {
+            if (this.applAttrLocalColumnValues.getName().equals(name)
+                    && this.applAttrLocalColumnValues.getApplicationElement().getName().equals(aeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -826,7 +874,7 @@ public class AtfxReader {
                 }
                 // DT_EXTERNALREFERENCE
                 else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE)) {
-                    nvu.value.u.extRefSeq(parseExtRefs((Element) node));
+                    // nvu.value.u.extRefSeq(parseExtRefs((Element) node));
                 }
                 // DT_BYTE
                 else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_INT8)) {
@@ -854,11 +902,11 @@ public class AtfxReader {
                 }
                 // DT_DATE
                 else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_TIMESTRING)) {
-                    nvu.value.u.dateSeq(parseStringSeq((Element) node));
+                    // nvu.value.u.dateSeq(parseStringSeq((Element) node));
                 }
                 // DT_STRING
                 else if (nodeName.equals(AtfxTagConstants.VALUES_ATTR_UTF8STRING)) {
-                    nvu.value.u.stringSeq(parseStringSeq((Element) node));
+                    // nvu.value.u.stringSeq(parseStringSeq((Element) node));
                 }
                 // not supported
                 else {
@@ -906,165 +954,164 @@ public class AtfxReader {
 
     /**
      * @param aa
-     * @param attrElem
+     * @param reader
      * @return
+     * @throws XMLStreamException
      * @throws AoException
      */
-    private TS_Value parseTextContent(ApplicationAttribute aa, Element attrElem) throws AoException {
+    private TS_Value parseAttributeContent(ApplicationAttribute aa, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         DataType dataType = aa.getDataType();
         TS_Value tsValue = ODSHelper.createEmptyTS_Value(dataType);
-        String str = attrElem.getTextContent();
-        if (str != null && str.length() > 0) {
-            tsValue.flag = 15;
-            tsValue.u = new TS_Union();
-            // DT_BLOB
-            if (dataType == DataType.DT_BLOB) {
-                tsValue.u.blobVal(parseBlob(aa, attrElem));
+        tsValue.flag = 15;
+        tsValue.u = new TS_Union();
+        // DT_BLOB
+        if (dataType == DataType.DT_BLOB) {
+            tsValue.u.blobVal(parseBlob(aa, reader));
+        }
+        // DT_BOOLEAN
+        else if (dataType == DataType.DT_BOOLEAN) {
+            tsValue.u.booleanVal(AtfxParseUtil.parseBoolean(reader.getElementText()));
+        }
+        // DT_BYTE
+        else if (dataType == DataType.DT_BYTE) {
+            tsValue.u.byteVal(AtfxParseUtil.parseByte(reader.getElementText()));
+        }
+        // DT_BYTESTR
+        else if (dataType == DataType.DT_BYTESTR) {
+            tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+        }
+        // DT_COMPLEX
+        else if (dataType == DataType.DT_COMPLEX) {
+            tsValue.u.complexVal(AtfxParseUtil.parseComplex(reader.getElementText()));
+        }
+        // DT_DATE
+        else if (dataType == DataType.DT_DATE) {
+            tsValue.u.dateVal(reader.getElementText());
+        }
+        // DT_COMPLEX
+        else if (dataType == DataType.DT_DCOMPLEX) {
+            tsValue.u.dcomplexVal(AtfxParseUtil.parseDComplex(reader.getElementText()));
+        }
+        // DT_DOUBLE
+        else if (dataType == DataType.DT_DOUBLE) {
+            tsValue.u.doubleVal(AtfxParseUtil.parseDouble(reader.getElementText()));
+        }
+        // DT_ENUM
+        else if (dataType == DataType.DT_ENUM) {
+            EnumerationDefinition ed = aa.getEnumerationDefinition();
+            tsValue.u.enumVal(ed.getItem(reader.getElementText()));
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dataType == DataType.DT_EXTERNALREFERENCE) {
+            T_ExternalReference[] extRefs = parseExtRefs(aa.getName(), reader);
+            if (extRefs.length > 1) {
+                throw new AoException(ErrorCode.AO_INVALID_LENGTH, SeverityFlag.ERROR, 0,
+                                      "Multiple references for datatype DT_EXTERNALREFERENCE FOUND");
             }
-            // DT_BOOLEAN
-            else if (dataType == DataType.DT_BOOLEAN) {
-                tsValue.u.booleanVal(AtfxParseUtil.parseBoolean(str));
+            tsValue.u.extRefVal(extRefs[0]);
+        }
+        // DT_FLOAT
+        else if (dataType == DataType.DT_FLOAT) {
+            tsValue.u.floatVal(AtfxParseUtil.parseFloat(reader.getElementText()));
+        }
+        // DT_ID
+        else if (dataType == DataType.DT_ID) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DT_ID' not supported for application attribute");
+        }
+        // DT_LONG
+        else if (dataType == DataType.DT_LONG) {
+            tsValue.u.longVal(AtfxParseUtil.parseLong(reader.getElementText()));
+        }
+        // DT_LONGLONG
+        else if (dataType == DataType.DT_LONGLONG) {
+            tsValue.u.longlongVal(AtfxParseUtil.parseLongLong(reader.getElementText()));
+        }
+        // DT_SHORT
+        else if (dataType == DataType.DT_SHORT) {
+            tsValue.u.shortVal(AtfxParseUtil.parseShort(reader.getElementText()));
+        }
+        // DT_STRING
+        else if (dataType == DataType.DT_STRING) {
+            tsValue.u.stringVal(reader.getElementText());
+        }
+        // DS_BOOLEAN
+        else if (dataType == DataType.DS_BOOLEAN) {
+            tsValue.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(reader.getElementText()));
+        }
+        // DS_BYTE
+        else if (dataType == DataType.DS_BYTE) {
+            tsValue.u.byteSeq(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+        }
+        // DS_BYTESTR
+        else if (dataType == DataType.DS_BYTESTR) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DS_BYTESTR' not supported for application attribute");
+        }
+        // DS_COMPLEX
+        else if (dataType == DataType.DS_COMPLEX) {
+            tsValue.u.complexSeq(AtfxParseUtil.parseComplexSeq(reader.getElementText()));
+        }
+        // DS_DATE
+        else if (dataType == DataType.DS_DATE) {
+            tsValue.u.dateSeq(parseStringSeq(aa.getName(), reader));
+        }
+        // DS_DCOMPLEX
+        else if (dataType == DataType.DS_DCOMPLEX) {
+            tsValue.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(reader.getElementText()));
+        }
+        // DS_DOUBLE
+        else if (dataType == DataType.DS_DOUBLE) {
+            tsValue.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(reader.getElementText()));
+        }
+        // DS_ENUM
+        else if (dataType == DataType.DS_ENUM) {
+            String[] enumValues = parseStringSeq(aa.getName(), reader);
+            EnumerationDefinition ed = aa.getEnumerationDefinition();
+            int[] enumItems = new int[enumValues.length];
+            for (int i = 0; i < enumItems.length; i++) {
+                enumItems[i] = ed.getItem(enumValues[i]);
             }
-            // DT_BYTE
-            else if (dataType == DataType.DT_BYTE) {
-                tsValue.u.byteVal(AtfxParseUtil.parseByte(str));
-            }
-            // DT_BYTESTR
-            else if (dataType == DataType.DT_BYTESTR) {
-                tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(str));
-            }
-            // DT_COMPLEX
-            else if (dataType == DataType.DT_COMPLEX) {
-                tsValue.u.complexVal(AtfxParseUtil.parseComplex(str));
-            }
-            // DT_DATE
-            else if (dataType == DataType.DT_DATE) {
-                tsValue.u.dateVal(str);
-            }
-            // DT_COMPLEX
-            else if (dataType == DataType.DT_DCOMPLEX) {
-                tsValue.u.dcomplexVal(AtfxParseUtil.parseDComplex(str));
-            }
-            // DT_DOUBLE
-            else if (dataType == DataType.DT_DOUBLE) {
-                tsValue.u.doubleVal(AtfxParseUtil.parseDouble(str));
-            }
-            // DT_ENUM
-            else if (dataType == DataType.DT_ENUM) {
-                EnumerationDefinition ed = aa.getEnumerationDefinition();
-                tsValue.u.enumVal(ed.getItem(str));
-            }
-            // DT_EXTERNALREFERENCE
-            else if (dataType == DataType.DT_EXTERNALREFERENCE) {
-                T_ExternalReference[] extRefs = parseExtRefs(attrElem);
-                if (extRefs.length > 1) {
-                    throw new AoException(ErrorCode.AO_INVALID_LENGTH, SeverityFlag.ERROR, 0,
-                                          "Multiple references for datatype DT_EXTERNALREFERENCE FOUND");
-                }
-                tsValue.u.extRefVal(extRefs[0]);
-            }
-            // DT_FLOAT
-            else if (dataType == DataType.DT_FLOAT) {
-                tsValue.u.floatVal(AtfxParseUtil.parseFloat(str));
-            }
-            // DT_ID
-            else if (dataType == DataType.DT_ID) {
-                throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                      "DataType 'DT_ID' not supported for application attribute");
-            }
-            // DT_LONG
-            else if (dataType == DataType.DT_LONG) {
-                tsValue.u.longVal(AtfxParseUtil.parseLong(str));
-            }
-            // DT_LONGLONG
-            else if (dataType == DataType.DT_LONGLONG) {
-                tsValue.u.longlongVal(AtfxParseUtil.parseLongLong(str));
-            }
-            // DT_SHORT
-            else if (dataType == DataType.DT_SHORT) {
-                tsValue.u.shortVal(AtfxParseUtil.parseShort(str));
-            }
-            // DT_STRING
-            else if (dataType == DataType.DT_STRING) {
-                tsValue.u.stringVal(str);
-            }
-            // DS_BOOLEAN
-            else if (dataType == DataType.DS_BOOLEAN) {
-                tsValue.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(str));
-            }
-            // DS_BYTE
-            else if (dataType == DataType.DS_BYTE) {
-                tsValue.u.byteSeq(AtfxParseUtil.parseByteSeq(str));
-            }
-            // DS_BYTESTR
-            else if (dataType == DataType.DS_BYTESTR) {
-                throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                      "DataType 'DS_BYTESTR' not supported for application attribute");
-            }
-            // DS_COMPLEX
-            else if (dataType == DataType.DS_COMPLEX) {
-                tsValue.u.complexSeq(AtfxParseUtil.parseComplexSeq(str));
-            }
-            // DS_DATE
-            else if (dataType == DataType.DS_DATE) {
-                tsValue.u.dateSeq(parseStringSeq(attrElem));
-            }
-            // DS_DCOMPLEX
-            else if (dataType == DataType.DS_DCOMPLEX) {
-                tsValue.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(str));
-            }
-            // DS_DOUBLE
-            else if (dataType == DataType.DS_DOUBLE) {
-                tsValue.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(str));
-            }
-            // DS_ENUM
-            else if (dataType == DataType.DS_ENUM) {
-                String[] enumValues = parseStringSeq(attrElem);
-                EnumerationDefinition ed = aa.getEnumerationDefinition();
-                int[] enumItems = new int[enumValues.length];
-                for (int i = 0; i < enumItems.length; i++) {
-                    enumItems[i] = ed.getItem(enumValues[i]);
-                }
-                tsValue.u.enumSeq(enumItems);
-            }
-            // DS_EXTERNALREFERENCE
-            else if (dataType == DataType.DS_EXTERNALREFERENCE) {
-                tsValue.u.extRefSeq(parseExtRefs(attrElem));
-            }
-            // DS_FLOAT
-            else if (dataType == DataType.DS_FLOAT) {
-                tsValue.u.floatSeq(AtfxParseUtil.parseFloatSeq(str));
-            }
-            // DS_ID
-            else if (dataType == DataType.DS_ID) {
-                throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                      "DataType 'DS_ID' not supported for application attribute");
-            }
-            // DS_LONG
-            else if (dataType == DataType.DS_LONG) {
-                tsValue.u.longSeq(AtfxParseUtil.parseLongSeq(str));
-            }
-            // DS_LONGLONG
-            else if (dataType == DataType.DS_LONGLONG) {
-                tsValue.u.longlongSeq(AtfxParseUtil.parseLongLongSeq(str));
-            }
-            // DS_SHORT
-            else if (dataType == DataType.DS_SHORT) {
-                tsValue.u.shortSeq(AtfxParseUtil.parseShortSeq(str));
-            }
-            // DS_STRING
-            else if (dataType == DataType.DS_STRING) {
-                tsValue.u.stringSeq(parseStringSeq(attrElem));
-            }
-            // DT_UNKNOWN: only for the values of a LocalColumn
-            else if (dataType == DataType.DT_UNKNOWN) {
-                // tsValue.u = parseMeasurementData(attrElem);
-            }
-            // unsupported data type
-            else {
-                throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType "
-                        + dataType.value() + " not yet implemented");
-            }
+            tsValue.u.enumSeq(enumItems);
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dataType == DataType.DS_EXTERNALREFERENCE) {
+            tsValue.u.extRefSeq(parseExtRefs(aa.getName(), reader));
+        }
+        // DS_FLOAT
+        else if (dataType == DataType.DS_FLOAT) {
+            tsValue.u.floatSeq(AtfxParseUtil.parseFloatSeq(reader.getElementText()));
+        }
+        // DS_ID
+        else if (dataType == DataType.DS_ID) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "DataType 'DS_ID' not supported for application attribute");
+        }
+        // DS_LONG
+        else if (dataType == DataType.DS_LONG) {
+            tsValue.u.longSeq(AtfxParseUtil.parseLongSeq(reader.getElementText()));
+        }
+        // DS_LONGLONG
+        else if (dataType == DataType.DS_LONGLONG) {
+            tsValue.u.longlongSeq(AtfxParseUtil.parseLongLongSeq(reader.getElementText()));
+        }
+        // DS_SHORT
+        else if (dataType == DataType.DS_SHORT) {
+            tsValue.u.shortSeq(AtfxParseUtil.parseShortSeq(reader.getElementText()));
+        }
+        // DS_STRING
+        else if (dataType == DataType.DS_STRING) {
+            tsValue.u.stringSeq(parseStringSeq(aa.getName(), reader));
+        }
+        // DT_UNKNOWN: only for the values of a LocalColumn
+        else if (dataType == DataType.DT_UNKNOWN) {
+            tsValue.u.floatSeq(new float[0]);
+        }
+        // unsupported data type
+        else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType " + dataType.value()
+                    + " not yet implemented");
         }
         return tsValue;
     }
@@ -1073,52 +1120,43 @@ public class AtfxReader {
      * Parse a BLOB object from given application attribute XML element.
      * 
      * @param aa The application attribute.
-     * @param attrElem The XML element.
+     * @param reader The XML stream reader.
      * @return The Blob.
-     * @throws AoException The Blob.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
      */
-    private Blob parseBlob(ApplicationAttribute aa, Element attrElem) throws AoException {
+    private Blob parseBlob(ApplicationAttribute aa, XMLStreamReader reader) throws XMLStreamException, AoException {
         Blob blob = aa.getApplicationElement().getApplicationStructure().getSession().createBlob();
-        String header = getSingleChildContent(attrElem, AtfxTagConstants.BLOB_TEXT);
-        blob.setHeader(header == null ? "" : header);
-        Element byteFieldElem = getSingleChildElement(attrElem, AtfxTagConstants.BLOB_BYTEFIELD);
-        if (byteFieldElem != null) {
-            String content = getSingleChildContent(byteFieldElem, AtfxTagConstants.BLOB_SEQUENCE);
-            blob.append(AtfxParseUtil.parseByteSeq(content));
+        while (!(reader.isEndElement() && reader.getLocalName().equals(aa.getName()))) {
+            // 'text'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BLOB_TEXT)) {
+                blob.setHeader(reader.getElementText());
+            }
+            // 'sequence'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BLOB_SEQUENCE)) {
+                blob.append(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+            }
+            reader.next();
         }
         return blob;
     }
 
     /**
-     * Parse an array of strings objects from given XML element.
-     * 
-     * @param attrElem The XML element.
-     * @return Array of string objects.
-     */
-    private String[] parseStringSeq(Element attrElem) {
-        List<String> list = new ArrayList<String>();
-        NodeList nodeList = attrElem.getElementsByTagName(AtfxTagConstants.STRING_SEQ);
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Element extRefElem = (Element) nodeList.item(i);
-            list.add(extRefElem.getTextContent());
-        }
-        return list.toArray(new String[0]);
-    }
-
-    /**
      * Parse an array of T_ExternalReference objects from given XML element.
      * 
-     * @param attrElem The XML element.
-     * @return Array of T_ExternalReference objects.
+     * @param attrName The attribute name.
+     * @param reader The XML stream reader.
+     * @return The array T_ExternalReference objects.
+     * @throws XMLStreamException Error parsing XML.
      */
-    private T_ExternalReference[] parseExtRefs(Element attrElem) {
+    private T_ExternalReference[] parseExtRefs(String attrName, XMLStreamReader reader) throws XMLStreamException {
         List<T_ExternalReference> list = new ArrayList<T_ExternalReference>();
-        NodeList nodeList = attrElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if ((node.getNodeType() == Node.ELEMENT_NODE) && (node.getNodeName().equals(AtfxTagConstants.EXTREF))) {
-                list.add(parseExtRef((Element) node));
+        while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
+            // 'external_reference'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.EXTREF)) {
+                list.add(parseExtRef(reader));
             }
+            reader.next();
         }
         return list.toArray(new T_ExternalReference[0]);
     }
@@ -1126,56 +1164,48 @@ public class AtfxReader {
     /**
      * Parse an external reference from the external references node.
      * 
-     * @param extRefElem The external references XML element.
+     * @param reader The XML stream reader.
      * @return The T_ExternalReference object.
+     * @throws XMLStreamException Error parsing XML.
      */
-    private T_ExternalReference parseExtRef(Element extRefElem) {
+    private T_ExternalReference parseExtRef(XMLStreamReader reader) throws XMLStreamException {
         T_ExternalReference extRef = new T_ExternalReference("", "", "");
-        NodeList nodeList = extRefElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                String nodeName = node.getNodeName();
-                if (nodeName.equals(AtfxTagConstants.EXTREF_DESCRIPTION)) {
-                    extRef.description = node.getTextContent();
-                } else if (nodeName.equals(AtfxTagConstants.EXTREF_MIMETYPE)) {
-                    extRef.mimeType = node.getTextContent();
-                } else if (nodeName.equals(AtfxTagConstants.EXTREF_LOCATION)) {
-                    extRef.location = node.getTextContent();
-                }
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.EXTREF))) {
+            // 'description'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.EXTREF_DESCRIPTION)) {
+                extRef.description = reader.getElementText();
             }
+            // 'mimetype'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.EXTREF_MIMETYPE)) {
+                extRef.mimeType = reader.getElementText();
+            }
+            // 'location'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.EXTREF_LOCATION)) {
+                extRef.location = reader.getElementText();
+            }
+            reader.next();
         }
         return extRef;
     }
 
     /**
-     * Returns the text content of a single direct child element.
+     * Parse an array of strings objects from given XML element.
      * 
-     * @param element The parent element.
-     * @param elemName The child element name.
-     * @return Child element not found.
+     * @param attrName The attribute name.
+     * @param reader The XML stream reader.
+     * @return The string sequence.
+     * @throws XMLStreamException Error parsing XML.
      */
-    private static String getSingleChildContent(Element element, String elemName) {
-        Element childElement = getSingleChildElement(element, elemName);
-        return childElement == null ? null : childElement.getTextContent();
-    }
-
-    /**
-     * Returns the single direct child XML element.
-     * 
-     * @param element The parent element.
-     * @param elemName The child element.
-     * @return Child element not found.
-     */
-    private static Element getSingleChildElement(Element element, String elemName) {
-        NodeList nodeList = element.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals(elemName)) {
-                return (Element) node;
+    private String[] parseStringSeq(String attrName, XMLStreamReader reader) throws XMLStreamException {
+        List<String> list = new ArrayList<String>();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
+            // 's'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.STRING_SEQ)) {
+                list.add(reader.getElementText());
             }
+            reader.next();
         }
-        return null;
+        return list.toArray(new String[0]);
     }
 
     /**

@@ -42,6 +42,7 @@ class AtfxTagConstants {
     public static final String APPL_ELEM = "application_element";
     public static final String APPL_ELEM_NAME = "name";
     public static final String APPL_ELEM_BASETYPE = "basetype";
+    public static final String APPL_ELEM_INHERITSFROM = "inherits_from";
 
     public static final String APPL_ATTR = "application_attribute";
     public static final String APPL_ATTR_NAME = "name";
@@ -101,5 +102,11 @@ class AtfxTagConstants {
     public static final String BLOB_SEQUENCE = "sequence";
 
     public static final String STRING_SEQ = "s";
+
+    public static final String SECURITY_ACLA = "ACLA";
+    public static final String SECURITY_ACLI = "ACLI";
+    public static final String SECURITY_ACL_AENAME = "appl_element_name";
+    public static final String SECURITY_ACL_ATTRNAME = "attribute_name";
+    public static final String SECURITY_ACL_RIGHTS = "rights";
 
 }
