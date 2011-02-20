@@ -32,8 +32,7 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.basestructure.BaseStructureFactory;
-import de.rechner.openatfx.io.DOMatfxReader;
-
+import de.rechner.openatfx.io.AtfxReader;
 
 
 /**
@@ -98,7 +97,7 @@ public class AoServiceFactory {
      * @throws AoException Error creating session.
      */
     public AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
-        return DOMatfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+        return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
     }
 
     /**

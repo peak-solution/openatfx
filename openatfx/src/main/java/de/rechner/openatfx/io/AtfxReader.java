@@ -229,6 +229,7 @@ public class AtfxReader {
      */
     private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
             AoException {
+        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL))) {
             // 'application_enumeration'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM)) {
@@ -236,9 +237,14 @@ public class AtfxReader {
             }
             // 'application_element'
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM)) {
-                parseApplicationElement(as, reader);
+                applRelElem2Map.putAll(parseApplicationElement(as, reader));
             }
             reader.next();
+        }
+
+        // set the elem2 of all application relations (this has to be done after parsing all elements)
+        for (ApplicationRelation rel : applRelElem2Map.keySet()) {
+            rel.setElem2(as.getElementByName(applRelElem2Map.get(rel)));
         }
     }
 
@@ -292,11 +298,12 @@ public class AtfxReader {
      * 
      * @param as The application structure.
      * @param reader The XML stream reader.
+     * @return Map containing the elem2 ae name for the relations.
      * @throws XMLStreamException Error parsing XML.
-     * @throws AoException Error writing to enumeration definition.
+     * @throws AoException Error writing to application model.
      */
-    private void parseApplicationElement(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
-            AoException {
+    private Map<ApplicationRelation, String> parseApplicationElement(ApplicationStructure as, XMLStreamReader reader)
+            throws XMLStreamException, AoException {
         // 'name'
         reader.nextTag();
         if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM_NAME)) {
@@ -317,31 +324,44 @@ public class AtfxReader {
         ApplicationElement applElem = as.createElement(be);
         applElem.setName(aeName);
 
-        // cache existing base attributes
-        Map<String, ApplicationAttribute> baToAaMap = new HashMap<String, ApplicationAttribute>();
-        for (ApplicationAttribute existingAa : applElem.getAttributes("*")) {
-            BaseAttribute ba = existingAa.getBaseAttribute();
-            if (ba != null) {
-                baToAaMap.put(ba.getName(), existingAa);
-            }
+        // cache base attributes and base relations
+        Map<String, BaseAttribute> baseAttrMap = new HashMap<String, BaseAttribute>();
+        Map<String, BaseRelation> baseRelMap = new HashMap<String, BaseRelation>();
+        for (BaseAttribute baseAttr : applElem.getBaseElement().getAttributes("*")) {
+            baseAttrMap.put(baseAttr.getName(), baseAttr);
+        }
+        for (BaseRelation baseRel : applElem.getBaseElement().getAllRelations()) {
+            baseRelMap.put(baseRel.getRelationName(), baseRel);
         }
 
         // attributes and relations
+        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM))) {
             // 'application_attribute'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR)) {
-                parseApplicationAttribute(applElem, reader, baToAaMap);
+                parseApplicationAttribute(applElem, reader, baseAttrMap);
             }
             // 'relation_attribute'
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL)) {
-
+                applRelElem2Map.putAll(parseApplicationRelation(applElem, reader, baseRelMap));
             }
             reader.next();
         }
+
+        return applRelElem2Map;
     }
 
+    /**
+     * Parse an application attribute.
+     * 
+     * @param applElem The application element.
+     * @param reader The XML stream reader.
+     * @param baseAttrMap Map containing all base attributes of the application element.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
+     */
     private void parseApplicationAttribute(ApplicationElement applElem, XMLStreamReader reader,
-            Map<String, ApplicationAttribute> baToAaMap) throws XMLStreamException, AoException {
+            Map<String, BaseAttribute> baseAttrMap) throws XMLStreamException, AoException {
         String aaNameStr = "";
         String baseAttrStr = "";
         String dataTypeStr = "";
@@ -384,76 +404,25 @@ public class AtfxReader {
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_ENUMTYPE)) {
                 enumtypeStr = reader.getElementText();
             }
+            // 'unit'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR_UNIT)) {
+                unitStr = reader.getElementText();
+            }
             reader.next();
         }
 
         // check if base attribute already exists (obligatory base attributes are generated automatically)
         ApplicationAttribute aa = null;
+        BaseAttribute baseAttr = null;
         if (baseAttrStr != null && baseAttrStr.length() > 0) {
-            aa = baToAaMap.get(baseAttrStr);
-        }
-        if (aa == null) {
-            aa = applElem.createAttribute();
-        }
-        aa.setName(aaNameStr);
-    }
-
-    /**
-     * Read the application attribute from the application attribute node.
-     * 
-     * @param as The application structure.
-     * @param aaElem The root application attribute XML element.
-     * @throws AoException Error parsing application attribute.
-     */
-    private void parseApplicationAttribute(ApplicationElement applElem, Element aaElem) throws AoException {
-        // cache existing base attributes
-        BaseElement baseElement = applElem.getBaseElement();
-        Map<String, ApplicationAttribute> baToAaMap = new HashMap<String, ApplicationAttribute>();
-        for (ApplicationAttribute existingAa : applElem.getAttributes("*")) {
-            BaseAttribute ba = existingAa.getBaseAttribute();
-            if (ba != null) {
-                baToAaMap.put(ba.getName(), existingAa);
+            baseAttr = baseAttrMap.get(baseAttrStr);
+            if (baseAttr == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Base attribute '" + baseAttrStr
+                        + "' not found");
             }
-        }
-
-        String aaNameStr = "";
-        String baseAttrStr = "";
-        String dataTypeStr = "";
-        String lengthStr = "";
-        String obligatoryStr = "";
-        String uniqueStr = "";
-        String autogeneratedStr = "";
-        String enumtypeStr = "";
-        NodeList nodeList = aaElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() != Node.ELEMENT_NODE) {
-                continue;
+            if (baseAttr.isObligatory()) {
+                aa = applElem.getAttributeByBaseName(baseAttrStr);
             }
-            String elemName = node.getNodeName();
-            if (elemName.equals(AtfxTagConstants.APPL_ATTR_NAME)) {
-                aaNameStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_BASEATTR)) {
-                baseAttrStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_DATATYPE)) {
-                dataTypeStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_LENGTH)) {
-                lengthStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_OBLIGATORY)) {
-                obligatoryStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_UNIQUE)) {
-                uniqueStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_AUTOGENERATED)) {
-                autogeneratedStr = node.getTextContent();
-            } else if (elemName.equals(AtfxTagConstants.APPL_ATTR_ENUMTYPE)) {
-                enumtypeStr = node.getTextContent();
-            }
-        }
-
-        // check if base attribute already exists
-        ApplicationAttribute aa = null;
-        if (baseAttrStr != null && baseAttrStr.length() > 0) {
-            aa = baToAaMap.get(baseAttrStr);
         }
         if (aa == null) {
             aa = applElem.createAttribute();
@@ -462,12 +431,7 @@ public class AtfxReader {
 
         // base attribute?
         if (baseAttrStr != null && baseAttrStr.length() > 0) {
-            BaseAttribute[] baseAttrs = baseElement.getAttributes(baseAttrStr);
-            if (baseAttrs.length < 1) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Base attribute '" + baseAttrStr
-                        + "' not found");
-            }
-            aa.setBaseAttribute(baseAttrs[0]);
+            aa.setBaseAttribute(baseAttr);
         }
         // datatype & obligatory
         else {
@@ -492,68 +456,81 @@ public class AtfxReader {
             EnumerationDefinition enumDef = applElem.getApplicationStructure().getEnumerationDefinition(enumtypeStr);
             aa.setEnumerationDefinition(enumDef);
         }
-    }
-
-    /**
-     * Read the application relations from the application element node.
-     * 
-     * @param as The application structure.
-     * @param aeElem The application element node.
-     * @throws AoException Error parsing application elements.
-     */
-    private void parseApplicationRelations(ApplicationStructure as, Element aeElem) throws AoException {
-        NodeList nodeList = aeElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if ((node.getNodeType() == Node.ELEMENT_NODE) && node.getNodeName().equals(AtfxTagConstants.APPL_REL)) {
-                parseApplicationRelation(as, (Element) node);
-            }
+        // unit
+        if (unitStr != null && unitStr.length() > 0) {
+            aa.setUnit(AtfxParseUtil.parseLongLong(unitStr));
         }
     }
 
     /**
-     * Read a application relations from the application relation XML element.
+     * Parse an application relation.
      * 
-     * @param as The application structure.
-     * @param arElem The application relation XML element.
-     * @throws AoException Error parsing application relations.
+     * @param applElem The application element
+     * @param reader The XML stream reader.
+     * @param baseRelMap Map containing all base relations. of the application element.
+     * @return Map containing the elem2 ae name for the relations.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
      */
-    private void parseApplicationRelation(ApplicationStructure as, Element arElem) throws AoException {
-        String elem1Name = getSingleChildContent((Element) arElem.getParentNode(), AtfxTagConstants.APPL_ELEM_NAME);
-        String elem2Name = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_REFTO);
-        String relName = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_NAME);
-        String inverseRelname = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_INVNAME);
-        String brName = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_BASEREL);
-        String minStr = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_MIN);
-        String maxStr = getSingleChildContent(arElem, AtfxTagConstants.APPL_REL_MAX);
+    private Map<ApplicationRelation, String> parseApplicationRelation(ApplicationElement applElem,
+            XMLStreamReader reader, Map<String, BaseRelation> baseRelMap) throws XMLStreamException, AoException {
+        String elem2Name = "";
+        String relName = "";
+        String inverseRelName = "";
+        String brName = "";
+        String minStr = "";
+        String maxStr = "";
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL))) {
+            // 'ref_to'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_REFTO)) {
+                elem2Name = reader.getElementText();
+            }
+            // 'name'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_NAME)) {
+                relName = reader.getElementText();
+            }
+            // 'inverse_name'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_INVNAME)) {
+                inverseRelName = reader.getElementText();
+            }
+            // 'base_relation'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_BASEREL)) {
+                brName = reader.getElementText();
+            }
+            // 'min_occurs'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_MIN)) {
+                minStr = reader.getElementText();
+            }
+            // 'max_occurs'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL_MAX)) {
+                maxStr = reader.getElementText();
+            }
+            reader.next();
+        }
 
+        ApplicationStructure as = applElem.getApplicationStructure();
         ApplicationRelation rel = as.createRelation();
-        ApplicationElement elem1 = as.getElementByName(elem1Name);
-        ApplicationElement elem2 = as.getElementByName(elem2Name);
         RelationRange relRange = new RelationRange();
         relRange.min = ODSHelper.string2relRange(minStr);
         relRange.max = ODSHelper.string2relRange(maxStr);
 
-        rel.setElem1(elem1);
-        rel.setElem2(elem2);
+        rel.setElem1(applElem);
         rel.setRelationName(relName);
-        rel.setInverseRelationName(inverseRelname);
+        rel.setInverseRelationName(inverseRelName);
         rel.setRelationRange(relRange);
-
         if (brName != null && brName.length() > 0) {
-            BaseRelation baseRel = null;
-            for (BaseRelation br : elem1.getBaseElement().getAllRelations()) {
-                if (br.getRelationName().equals(brName)) {
-                    baseRel = br;
-                    break;
-                }
-            }
+            BaseRelation baseRel = baseRelMap.get(brName);
             if (baseRel == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "BaseRelation '" + brName
                         + "' not found'");
             }
             rel.setBaseRelation(baseRel);
         }
+
+        // return the information of the ref to application element
+        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
+        applRelElem2Map.put(rel, elem2Name);
+        return applRelElem2Map;
     }
 
     /***************************************************************************************
