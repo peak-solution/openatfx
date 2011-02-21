@@ -17,8 +17,6 @@ import org.asam.ods.ElemId;
 import org.asam.ods.ElemResultSet;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
-import org.asam.ods.InstanceElement;
-import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
@@ -30,8 +28,6 @@ import org.asam.ods.T_LONGLONG;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
 import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAPackage.ServantNotActive;
-import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -45,7 +41,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
     private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
 
-    private final POA poa;
     private final AtfxCache atfxCache;
 
     /**
@@ -55,7 +50,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @param atfxCache The ATFX cache.
      */
     public ApplElemAccessImpl(POA poa, AtfxCache atfxCache) {
-        this.poa = poa;
         this.atfxCache = atfxCache;
     }
 
@@ -69,69 +63,58 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#insertInstances(org.asam.ods.AIDNameValueSeqUnitId[])
      */
     public ElemId[] insertInstances(AIDNameValueSeqUnitId[] val) throws AoException {
-        try {
-            // check for empty data
-            if (val == null || val.length < 1) {
-                return new ElemId[0];
+        // check for empty data
+        if (val == null || val.length < 1) {
+            return new ElemId[0];
+        }
+        int numberOfRows = val[0].values.flag.length;
+
+        // group by application element id and check if id attr is given
+        Map<Long, AIDNameValueSeqUnitId> idColumns = new HashMap<Long, AIDNameValueSeqUnitId>();
+        Map<Long, List<AIDNameValueSeqUnitId>> aeGroupColumns = new HashMap<Long, List<AIDNameValueSeqUnitId>>();
+        for (AIDNameValueSeqUnitId column : val) {
+            long aid = ODSHelper.asJLong(column.attr.aid);
+            String idAttrName = this.atfxCache.getApplicationAttributeByBaName(aid, "id").getName();
+            // add to ae group
+            List<AIDNameValueSeqUnitId> list = aeGroupColumns.get(aid);
+            if (list == null) {
+                list = new ArrayList<AIDNameValueSeqUnitId>();
+                aeGroupColumns.put(aid, list);
             }
-            int numberOfRows = val[0].values.flag.length;
-
-            // group by application element id and check if id attr is given
-            Map<Long, AIDNameValueSeqUnitId> idColumns = new HashMap<Long, AIDNameValueSeqUnitId>();
-            Map<Long, List<AIDNameValueSeqUnitId>> aeGroupColumns = new HashMap<Long, List<AIDNameValueSeqUnitId>>();
-            for (AIDNameValueSeqUnitId column : val) {
-                long aid = ODSHelper.asJLong(column.attr.aid);
-                String idAttrName = this.atfxCache.getApplicationAttributeByBaName(aid, "id").getName();
-                // add to ae group
-                List<AIDNameValueSeqUnitId> list = aeGroupColumns.get(aid);
-                if (list == null) {
-                    list = new ArrayList<AIDNameValueSeqUnitId>();
-                    aeGroupColumns.put(aid, list);
-                }
-                list.add(column);
-                // check for id column
-                if (column.attr.aaName.equals(idAttrName)) {
-                    idColumns.put(aid, column);
-                }
+            list.add(column);
+            // check for id column
+            if (column.attr.aaName.equals(idAttrName)) {
+                idColumns.put(aid, column);
             }
-
-            // create instances per application element
-            List<ElemId> elemIdList = new ArrayList<ElemId>();
-            for (long aid : aeGroupColumns.keySet()) {
-                // iterate over rows
-                for (int row = 0; row < numberOfRows; row++) {
-                    // fetch or create id
-                    long iid = 0;
-                    AIDNameValueSeqUnitId idCol = idColumns.get(aid);
-                    if (idCol != null) {
-                        iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
-                    } else {
-                        iid = this.atfxCache.nextIid(aid);
-                    }
-                    // create instance
-                    InstanceElementImpl impl = new InstanceElementImpl(this.poa, this.atfxCache, aid, iid);
-                    InstanceElement ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
-                    this.atfxCache.addInstance(aid, iid, ie);
-                    // put values
-                    for (AIDNameValueSeqUnitId avsui : aeGroupColumns.get(aid)) {
-                        TS_Value value = ODSHelper.tsValueSeq2tsValue(avsui.values, row);
-                        this.atfxCache.setInstanceValue(aid, iid, avsui.attr.aaName, value);
-                    }
-                    // TODO: create relations
-
-                    elemIdList.add(new ElemId(ODSHelper.asODSLongLong(aid), ODSHelper.asODSLongLong(iid)));
-                }
-            }
-
-            return elemIdList.toArray(new ElemId[0]);
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
 
+        // create instances per application element
+        List<ElemId> elemIdList = new ArrayList<ElemId>();
+        for (long aid : aeGroupColumns.keySet()) {
+            // iterate over rows
+            for (int row = 0; row < numberOfRows; row++) {
+                // fetch or create id
+                long iid = 0;
+                AIDNameValueSeqUnitId idCol = idColumns.get(aid);
+                if (idCol != null) {
+                    iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
+                } else {
+                    iid = this.atfxCache.nextIid(aid);
+                }
+                // create instance
+                this.atfxCache.addInstance(aid, iid);
+                // put values
+                for (AIDNameValueSeqUnitId avsui : aeGroupColumns.get(aid)) {
+                    TS_Value value = ODSHelper.tsValueSeq2tsValue(avsui.values, row);
+                    this.atfxCache.setInstanceValue(aid, iid, avsui.attr.aaName, value);
+                }
+                // TODO: create relations
+
+                elemIdList.add(new ElemId(ODSHelper.asODSLongLong(aid), ODSHelper.asODSLongLong(iid)));
+            }
+        }
+
+        return elemIdList.toArray(new ElemId[0]);
     }
 
     /**

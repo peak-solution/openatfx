@@ -391,7 +391,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
         List<InstanceElement> list = new ArrayList<InstanceElement>();
         for (long otherIid : this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel)) {
-            InstanceElement ie = this.atfxCache.getInstanceById(otherAid, otherIid);
+            InstanceElement ie = this.atfxCache.getInstanceById(this.poa, otherAid, otherIid);
             if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
                 list.add(ie);
             }

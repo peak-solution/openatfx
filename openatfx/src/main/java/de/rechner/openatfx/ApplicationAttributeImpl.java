@@ -13,6 +13,7 @@ import org.asam.ods.InstanceElement;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
+import org.omg.PortableServer.POA;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -24,6 +25,7 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 class ApplicationAttributeImpl extends ApplicationAttributePOA {
 
+    private final POA poa;
     private final AtfxCache atfxCache;
     private final long aid;
 
@@ -41,10 +43,12 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
     /**
      * Constructor.
      * 
+     * @param poa The POA.
      * @param atfxCache The atfx cache.
      * @param aid The application element id.
      */
-    public ApplicationAttributeImpl(AtfxCache atfxCache, long aid) {
+    public ApplicationAttributeImpl(POA poa, AtfxCache atfxCache, long aid) {
+        this.poa = poa;
         this.atfxCache = atfxCache;
         this.aid = aid;
         this.dataType = DataType.DT_UNKNOWN;
@@ -178,7 +182,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                                   "Changing the datatype of an attribute derived from a base attribute is not allowed");
         }
         // check for existing instance values
-        for (InstanceElement ie : this.atfxCache.getInstances(this.aid)) {
+        for (InstanceElement ie : this.atfxCache.getInstances(this.poa, this.aid)) {
             if (this.atfxCache.getInstanceValue(aid, ODSHelper.asJLong(ie.getId()), getName()) != null) {
                 throw new AoException(ErrorCode.AO_HAS_INSTANCES, SeverityFlag.ERROR, 0,
                                       "Changing the datatype for application attribute with existing instances is not allowed");

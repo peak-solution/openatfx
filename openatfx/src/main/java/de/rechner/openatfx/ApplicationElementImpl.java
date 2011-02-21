@@ -19,7 +19,6 @@ import org.asam.ods.BaseRelation;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
 import org.asam.ods.InstanceElement;
-import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.NameIterator;
@@ -163,7 +162,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         }
         // create application attribute
         try {
-            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.atfxCache, this.aid);
+            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.poa, this.atfxCache, this.aid);
             ApplicationAttribute aa = ApplicationAttributeHelper.narrow(poa.servant_to_reference(aaImpl));
             this.atfxCache.addApplicationAttribute(this.aid, aa);
             return aa;
@@ -393,22 +392,13 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#createInstance(java.lang.String)
      */
     public InstanceElement createInstance(String ieName) throws AoException {
-        try {
-            long iid = this.atfxCache.nextIid(this.aid);
-            InstanceElementImpl impl = new InstanceElementImpl(this.poa, this.atfxCache, this.aid, iid);
-            InstanceElement ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
-            String idValName = ie.getApplicationElement().getAttributeByBaseName("id").getName();
-            this.atfxCache.addInstance(this.aid, iid, ie);
-            this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
-            ie.setName(ieName);
-            return ie;
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        }
+        String idValName = this.atfxCache.getApplicationAttributeByBaName(this.aid, "id").getName();
+        long iid = this.atfxCache.nextIid(this.aid);
+        this.atfxCache.addInstance(this.aid, iid);
+        this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, iid);
+        ie.setName(ieName);
+        return ie;
     }
 
     /**
@@ -419,7 +409,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public NameIterator listInstances(String iePattern) throws AoException {
         try {
             List<String> list = new ArrayList<String>();
-            for (InstanceElement ie : this.atfxCache.getInstances(aid)) {
+            for (InstanceElement ie : this.atfxCache.getInstances(poa, aid)) {
                 String name = ie.getName();
                 if (PatternUtil.nameFilterMatch(name, iePattern)) {
                     list.add(name);
@@ -444,7 +434,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public InstanceElementIterator getInstances(String iePattern) throws AoException {
         try {
             List<InstanceElement> list = new ArrayList<InstanceElement>();
-            for (InstanceElement ie : this.atfxCache.getInstances(aid)) {
+            for (InstanceElement ie : this.atfxCache.getInstances(poa, aid)) {
                 String name = ie.getName();
                 if (PatternUtil.nameFilterMatch(name, iePattern)) {
                     list.add(ie);
@@ -468,7 +458,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#getInstanceById(org.asam.ods.T_LONGLONG)
      */
     public InstanceElement getInstanceById(T_LONGLONG ieId) throws AoException {
-        InstanceElement ie = this.atfxCache.getInstanceById(aid, ODSHelper.asJLong(ieId));
+        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, ODSHelper.asJLong(ieId));
         if (ie == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
@@ -483,7 +473,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElement getInstanceByName(String ieName) throws AoException {
         InstanceElement found = null;
-        for (InstanceElement ie : this.atfxCache.getInstances(this.aid)) {
+        for (InstanceElement ie : this.atfxCache.getInstances(this.poa, this.aid)) {
             if (ie.getName().equals(ieName)) {
                 // check if duplicate
                 if (found != null) {
@@ -516,12 +506,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public void removeInstance(T_LONGLONG ieId, boolean recursive) throws AoException {
         // check if instance exists
         long iid = ODSHelper.asJLong(ieId);
-        if (this.atfxCache.getInstanceById(aid, iid) == null) {
+        if (this.atfxCache.getInstanceById(this.poa, aid, iid) == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
         }
         // remove recursively
-        InstanceElement ie = this.atfxCache.getInstanceById(aid, iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, iid);
         if (recursive) {
             InstanceElementIterator iter = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
             for (int i = 0; i < iter.getCount(); i++) {

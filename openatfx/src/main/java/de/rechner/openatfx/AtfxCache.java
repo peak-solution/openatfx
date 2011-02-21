@@ -10,14 +10,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -28,6 +34,8 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
+
+    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
 
     /** application elements */
     private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ae>
@@ -421,12 +429,54 @@ class AtfxCache {
      * 
      * @param aid The application element id.
      * @param iid The instance id.
-     * @param ie The instance element.
      */
-    public void addInstance(long aid, long iid, InstanceElement ie) {
-        this.instanceElementMap.get(aid).put(iid, ie);
+    public void addInstance(long aid, long iid) {
+        this.instanceElementMap.get(aid).put(iid, null);
         this.instanceValueMap.get(aid).put(iid, new HashMap<String, TS_Value>());
         this.instanceRelMap.get(aid).put(iid, new HashMap<ApplicationRelation, Set<Long>>());
+    }
+
+    /**
+     * Returns an instance element by given instance id.
+     * 
+     * @param poa The POA for lazy creation of the CORBA object.
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @return The instance element, null if not found.
+     * @throws AoException Error lazy create CORBA instance element.
+     */
+    public InstanceElement getInstanceById(POA poa, long aid, long iid) throws AoException {
+        try {
+            InstanceElement ie = this.instanceElementMap.get(aid).get(iid);
+            if (ie == null && this.instanceExists(aid, iid)) {
+                // lazy create CORBA object
+                InstanceElementImpl impl = new InstanceElementImpl(poa, this, aid, iid);
+                ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
+                this.instanceElementMap.get(aid).put(iid, ie);
+            }
+            return ie;
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+    }
+
+    /**
+     * Returns all instance elements for an application element.
+     * 
+     * @param aid The application element id.
+     * @return Collection if instance elements.
+     * @throws AoException Error lazy create CORBA instance element.
+     */
+    public Collection<InstanceElement> getInstances(POA poa, long aid) throws AoException {
+        List<InstanceElement> list = new ArrayList<InstanceElement>();
+        for (long iid : this.instanceElementMap.get(aid).keySet()) {
+            list.add(getInstanceById(poa, aid, iid));
+        }
+        return this.instanceElementMap.get(aid).values();
     }
 
     /**
@@ -450,17 +500,6 @@ class AtfxCache {
     }
 
     /**
-     * Returns an instance element by given instance id.
-     * 
-     * @param aid The application element id.
-     * @param iid The instance id.
-     * @return The instance element, null if not found.
-     */
-    public InstanceElement getInstanceById(long aid, long iid) {
-        return this.instanceElementMap.get(aid).get(iid);
-    }
-
-    /**
      * Returns all instance ids for given application element id.
      * 
      * @param aid The application element id.
@@ -468,16 +507,6 @@ class AtfxCache {
      */
     public Set<Long> getInstanceIds(long aid) {
         return this.instanceElementMap.get(aid).keySet();
-    }
-
-    /**
-     * Returns all instance elements for an application element.
-     * 
-     * @param aid The application element id.
-     * @return Collection if instance elements.
-     */
-    public Collection<InstanceElement> getInstances(long aid) {
-        return this.instanceElementMap.get(aid).values();
     }
 
     /**
