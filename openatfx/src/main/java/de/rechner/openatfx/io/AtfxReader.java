@@ -696,6 +696,13 @@ public class AtfxReader {
         return retMap;
     }
 
+    /**
+     * Returns the application attribute object for given application element and attribute name.
+     * 
+     * @param aeName The application element name.
+     * @param name The application attribute name.
+     * @return The application attribute, null if no attribute found.
+     */
     private ApplicationAttribute getApplAttr(String aeName, String name) {
         Map<String, ApplicationAttribute> attrMap = this.applAttrs.get(aeName);
         if (attrMap != null) {
@@ -704,6 +711,13 @@ public class AtfxReader {
         return null;
     }
 
+    /**
+     * Returns the application relation object for given application element and relation name.
+     * 
+     * @param aeName The application element name.
+     * @param name The relation name.
+     * @return The application relation, null if not attribute found.
+     */
     private ApplicationRelation getApplRel(String aeName, String name) {
         Map<String, ApplicationRelation> relMap = this.applRels.get(aeName);
         if (relMap != null) {

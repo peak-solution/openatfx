@@ -422,7 +422,8 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#close()
      */
     public void close() throws AoException {
-        // this.poa.destroy(false, false);
+        this.poa.destroy(false, false);
+        LOG.info("Closed ATFX AoSession");
     }
 
     /**

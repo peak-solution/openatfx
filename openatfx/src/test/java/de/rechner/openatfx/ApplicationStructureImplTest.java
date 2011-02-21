@@ -18,6 +18,7 @@ import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.T_LONGLONG;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -389,10 +390,15 @@ public class ApplicationStructureImplTest {
     @Test
     public void testGetInstancesById() {
         try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidRef = as.getElementByName("audifahrzeug.audireifen").getId();
+            T_LONGLONG aidDim = as.getElementByName("dim").getId();
+            T_LONGLONG aidDts = as.getElementByName("dts").getId();
+
             ElemId[] ieIds = new ElemId[3];
-            ieIds[0] = new ElemId(ODSHelper.asODSLongLong(25), ODSHelper.asODSLongLong(14));
-            ieIds[1] = new ElemId(ODSHelper.asODSLongLong(6), ODSHelper.asODSLongLong(35));
-            ieIds[2] = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
+            ieIds[0] = new ElemId(aidRef, ODSHelper.asODSLongLong(14));
+            ieIds[1] = new ElemId(aidDim, ODSHelper.asODSLongLong(35));
+            ieIds[2] = new ElemId(aidDts, ODSHelper.asODSLongLong(32));
 
             InstanceElement[] ies = applicationStructure.getInstancesById(ieIds);
             assertEquals("test.2345", ies[0].getName());
