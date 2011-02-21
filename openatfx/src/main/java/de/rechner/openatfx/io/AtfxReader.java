@@ -118,8 +118,11 @@ public class AtfxReader {
                         + AtfxTagConstants.BASE_MODEL_VERSION + "'");
             }
 
-            // create AoSession object
+            // create AoSession object and write documentation to context
             AoSession aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, atfxFile, baseModelVersion);
+            for (String docKey : documentation.keySet()) {
+                aoSession.setContextString("documentation_" + docKey, documentation.get(docKey));
+            }
 
             // parse 'files'
             Map<String, String> files = new HashMap<String, String>();
@@ -480,7 +483,8 @@ public class AtfxReader {
 
         // add to global map
         this.applAttrs.get(applElem.getName()).put(aaNameStr, aa);
-        if (baseAttrStr.equals("value") && applElem.getBaseElement().getType().equals("AoLocalColumn")) {
+        if (this.applAttrLocalColumnValues == null && baseAttrStr.equals("values")
+                && applElem.getBaseElement().getType().equals("AoLocalColumn")) {
             this.applAttrLocalColumnValues = aa;
         }
     }
@@ -577,13 +581,13 @@ public class AtfxReader {
     private void parseInstanceElements(AoSession aoSession, XMLStreamReader reader, Map<String, String> componentMap)
             throws XMLStreamException, AoException {
         ApplicationStructure as = aoSession.getApplicationStructure();
-        Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<ApplicationRelation, T_LONGLONG[]>>();
+        Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
 
         // parse instances
         reader.next();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
             if (reader.isStartElement()) {
-                parseInstanceElement(as, reader, componentMap);
+                relMap.putAll(parseInstanceElement(as, reader, componentMap));
             }
             reader.next();
         }
@@ -591,9 +595,9 @@ public class AtfxReader {
         // create relations
         ApplElemAccess applElemAccess = aoSession.getApplElemAccess();
         for (ElemId elemId : relMap.keySet()) {
-            for (ApplicationRelation applRel : relMap.get(elemId).keySet()) {
-                T_LONGLONG[] relIids = relMap.get(elemId).get(applRel);
-                applElemAccess.setRelInst(elemId, applRel.getRelationName(), relIids, SetType.APPEND);
+            for (String relName : relMap.get(elemId).keySet()) {
+                T_LONGLONG[] relIids = relMap.get(elemId).get(relName);
+                applElemAccess.setRelInst(elemId, relName, relIids, SetType.APPEND);
             }
         }
     }
@@ -608,7 +612,7 @@ public class AtfxReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as,
+    private Map<ElemId, Map<String, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as,
             XMLStreamReader reader, Map<String, String> componentMap) throws XMLStreamException, AoException {
         // 'name'
         String aeName = reader.getLocalName();
@@ -617,11 +621,17 @@ public class AtfxReader {
         // read attributes
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
-        Map<ApplicationRelation, T_LONGLONG[]> instRelMap = new HashMap<ApplicationRelation, T_LONGLONG[]>();
+        Map<String, T_LONGLONG[]> instRelMap = new HashMap<String, T_LONGLONG[]>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(aeName))) {
+            reader.next();
+
+            // base attribute 'values' of 'LocalColumn'
+            if (reader.isStartElement() && isLocalColumnValue(aeName, reader.getLocalName())) {
+                // System.out.println("JAJA");
+            }
 
             // application attribute
-            if (reader.isStartElement() && (getApplAttr(aeName, reader.getLocalName()) != null)) {
+            else if (reader.isStartElement() && (getApplAttr(aeName, reader.getLocalName()) != null)) {
                 ApplicationAttribute aa = getApplAttr(aeName, reader.getLocalName());
                 AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
                 applAttrValue.unitId = ODSHelper.asODSLongLong(0);
@@ -642,13 +652,14 @@ public class AtfxReader {
                     String textContent = reader.getElementText();
                     if (textContent.length() > 0) {
                         T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);
-                        instRelMap.put(applRel, relInstIids);
+                        instRelMap.put(applRel.getRelationName(), relInstIids);
                     }
                 }
             }
 
             // instance attribute
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
+                instAttrValues = parseInstanceAttributes(reader);
             }
 
             // ACLA
@@ -658,12 +669,6 @@ public class AtfxReader {
             // ACLI
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLI))) {
             }
-
-            // values of 'LocalColumn'
-            else if (reader.isStartElement() && isLocalColumnValue(aeName, reader.getLocalName())) {
-            }
-
-            reader.next();
         }
 
         // create instance element
@@ -685,7 +690,7 @@ public class AtfxReader {
         // }
 
         // create relation map
-        Map<ElemId, Map<ApplicationRelation, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<ApplicationRelation, T_LONGLONG[]>>();
+        Map<ElemId, Map<String, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
         retMap.put(new ElemId(applElem.getId(), elemId.iid), instRelMap);
 
         return retMap;
@@ -715,111 +720,6 @@ public class AtfxReader {
             }
         }
         return false;
-    }
-
-    /**
-     * Read the instance attributes from the instance attributes XML element.
-     * 
-     * @param instElemsNode The instance attributes XML element.
-     * @return List of values.
-     */
-    private List<NameValueUnit> parseInstanceAttributes(Element instElemsNode) throws AoException {
-        List<NameValueUnit> instAttrs = new ArrayList<NameValueUnit>();
-
-        NodeList nodeList = instElemsNode.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() != Node.ELEMENT_NODE) {
-                continue;
-            }
-            String nodeName = node.getNodeName();
-            NameValueUnit nvu = new NameValueUnit();
-            nvu.unit = "";
-            nvu.valName = ((Element) node).getAttribute(AtfxTagConstants.INST_ATTR_NAME);
-            nvu.value = new TS_Value();
-            nvu.value.u = new TS_Union();
-
-            String textContent = node.getTextContent();
-            // DT_STRING
-            if (nodeName.equals(AtfxTagConstants.INST_ATTR_ASCIISTRING)) {
-                nvu.value.u.stringVal(textContent);
-                nvu.value.flag = (textContent == null || textContent.length() < 1) ? (short) 0 : (short) 15;
-            }
-            // DT_FLOAT
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_FLOAT32)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.floatVal(AtfxParseUtil.parseFloat(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.floatVal(0);
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_DOUBLE
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_FLOAT64)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.doubleVal(AtfxParseUtil.parseDouble(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.doubleVal(0);
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_BYTE
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_INT8)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.byteVal(AtfxParseUtil.parseByte(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.byteVal((byte) 0);
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_SHORT
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_INT16)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.shortVal(AtfxParseUtil.parseShort(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.shortVal((short) 0);
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_LONG
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_INT32)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.longVal(AtfxParseUtil.parseLong(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.longVal(0);
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_LONGLONG
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_INT64)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.longlongVal(AtfxParseUtil.parseLongLong(textContent));
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.longlongVal(ODSHelper.asODSLongLong(0));
-                    nvu.value.flag = (short) 0;
-                }
-            }
-            // DT_DATE
-            else if (nodeName.equals(AtfxTagConstants.INST_ATTR_TIME)) {
-                if (textContent.trim().length() > 0) {
-                    nvu.value.u.dateVal(textContent.trim());
-                    nvu.value.flag = (short) 15;
-                } else {
-                    nvu.value.u.dateVal("");
-                    nvu.value.flag = (short) 0;
-                }
-            }
-
-            instAttrs.add(nvu);
-        }
-
-        return instAttrs;
     }
 
     /**
@@ -920,6 +820,106 @@ public class AtfxReader {
         }
     }
 
+    /**
+     * Parse the instance attributes from the XML stream reader.
+     * 
+     * @param reader The XML stream reader.
+     * @return List of instance attributes.
+     * @throws XMLStreamException Error parsing XML.
+     * @throws AoException Error writing to application model.
+     */
+    private List<NameValueUnit> parseInstanceAttributes(XMLStreamReader reader) throws XMLStreamException, AoException {
+        List<NameValueUnit> instAttrs = new ArrayList<NameValueUnit>();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
+            reader.next();
+            if (reader.isStartElement()) {
+                NameValueUnit nvu = new NameValueUnit();
+                nvu.unit = "";
+                nvu.valName = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_NAME);
+                nvu.value = new TS_Value();
+                nvu.value.u = new TS_Union();
+                String textContent = reader.getElementText();
+                // DT_STRING
+                if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_ASCIISTRING)) {
+                    nvu.value.u.stringVal(textContent);
+                    nvu.value.flag = (textContent == null || textContent.length() < 1) ? (short) 0 : (short) 15;
+                }
+                // DT_FLOAT
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_FLOAT32)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.floatVal(AtfxParseUtil.parseFloat(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.floatVal(0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_DOUBLE
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_FLOAT64)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.doubleVal(AtfxParseUtil.parseDouble(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.doubleVal(0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_BYTE
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_INT8)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.byteVal(AtfxParseUtil.parseByte(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.byteVal((byte) 0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_SHORT
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_INT16)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.shortVal(AtfxParseUtil.parseShort(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.shortVal((short) 0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_LONG
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_INT32)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.longVal(AtfxParseUtil.parseLong(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.longVal(0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_LONGLONG
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_INT64)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.longlongVal(AtfxParseUtil.parseLongLong(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.longlongVal(ODSHelper.asODSLongLong(0));
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                // DT_DATE
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_TIME)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.dateVal(textContent.trim());
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.dateVal("");
+                        nvu.value.flag = (short) 0;
+                    }
+                }
+                instAttrs.add(nvu);
+            }
+        }
+        return instAttrs;
+    }
+
     private void parseComponent(InstanceElement localColumnIe, Element attrElem) throws AoException {
         NodeList nodeList = attrElem.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
@@ -953,11 +953,13 @@ public class AtfxReader {
      ***************************************************************************************/
 
     /**
-     * @param aa
-     * @param reader
-     * @return
-     * @throws XMLStreamException
-     * @throws AoException
+     * Parse the content of an application attribute.
+     * 
+     * @param aa The application attribute.
+     * @param reader The XML stream reader.
+     * @return The parsed value.
+     * @throws XMLStreamException Error reading XML.
+     * @throws AoException Error parsing value.
      */
     private TS_Value parseAttributeContent(ApplicationAttribute aa, XMLStreamReader reader) throws XMLStreamException,
             AoException {

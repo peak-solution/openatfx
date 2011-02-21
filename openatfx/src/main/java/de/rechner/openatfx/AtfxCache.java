@@ -619,13 +619,9 @@ class AtfxCache {
      * @throws AoException Error getting inverse relation.
      */
     public Set<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
-        Set<Long> relInstIds = new HashSet<Long>();
         Set<Long> set = this.instanceRelMap.get(aid).get(iid).get(applRel);
         if (set != null) {
-            for (Long otherIid : set) {
-                relInstIds.add(otherIid);
-            }
-            return relInstIds;
+            return set;
         }
         return Collections.emptySet();
     }

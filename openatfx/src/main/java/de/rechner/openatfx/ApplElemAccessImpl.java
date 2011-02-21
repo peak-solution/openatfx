@@ -211,7 +211,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         }
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
 
-        // alter relations (with check for existing instances)
+        // alter relations
         for (T_LONGLONG otherIidT : instIds) {
             long otherIid = ODSHelper.asJLong(otherIidT);
             if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {

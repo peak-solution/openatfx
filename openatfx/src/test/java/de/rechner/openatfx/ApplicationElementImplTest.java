@@ -254,7 +254,7 @@ public class ApplicationElementImplTest {
             assertEquals("tstser_iid", secRel.getRelationName());
             assertEquals("prj_iid", secRel.getInverseRelationName());
             assertEquals("children", secRel.getBaseRelation().getRelationName());
-            assertEquals("test", secRel.getBaseRelation().getInverseRelationName());
+            assertEquals("parent_test", secRel.getBaseRelation().getInverseRelationName());
             assertEquals(RelationType.FATHER_CHILD, secRel.getRelationType());
             assertEquals(0, secRel.getRelationRange().min);
             assertEquals(-1, secRel.getRelationRange().max);

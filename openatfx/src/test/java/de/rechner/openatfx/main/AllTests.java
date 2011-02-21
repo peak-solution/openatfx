@@ -5,6 +5,7 @@ import junit.framework.TestSuite;
 import de.rechner.openatfx.AoFactoryImplTest;
 import de.rechner.openatfx.AoServiceFactoryTest;
 import de.rechner.openatfx.AoSessionImplTest;
+import de.rechner.openatfx.ApplElemAccessImplTest;
 import de.rechner.openatfx.ApplicationAttributeImplTest;
 import de.rechner.openatfx.ApplicationElementImplTest;
 import de.rechner.openatfx.ApplicationStructureImplTest;
@@ -44,7 +45,7 @@ public class AllTests {
         suite.addTest(AoFactoryImplTest.suite());
         suite.addTest(AoServiceFactoryTest.suite());
         suite.addTest(AoSessionImplTest.suite());
-        // suite.addTest(ApplElemAccessImplTest.suite());
+        suite.addTest(ApplElemAccessImplTest.suite());
         suite.addTest(ApplicationAttributeImplTest.suite());
         suite.addTest(ApplicationElementImplTest.suite());
         suite.addTest(ApplicationStructureImplTest.suite());
