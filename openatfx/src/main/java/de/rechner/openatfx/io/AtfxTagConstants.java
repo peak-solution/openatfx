@@ -26,6 +26,8 @@ class AtfxTagConstants {
     public static final String COMPONENT_FILENAME = "filename";
     public static final String COMPONENT_DATATYPE = "datatype";
     public static final String COMPONENT_LENGTH = "length";
+
+    public static final String COMPONENT_DESCRIPTION = "description";
     public static final String COMPONENT_INIOFFSET = "inioffset";
     public static final String COMPONENT_BLOCKSIZE = "blocksize";
     public static final String COMPONENT_VALPERBLOCK = "valperblock";

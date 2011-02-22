@@ -43,9 +43,6 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.util.ODSHelper;
@@ -64,6 +61,7 @@ public class AtfxReader {
     private static AtfxReader instance;
 
     /** cached model information for faster parsing */
+    private final Map<String, String> files;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
     private final Map<String, Map<String, ApplicationRelation>> applRels;
     private ApplicationAttribute applAttrLocalColumnValues;
@@ -72,6 +70,7 @@ public class AtfxReader {
      * Non visible constructor.
      */
     private AtfxReader() {
+        this.files = new HashMap<String, String>();
         this.applAttrs = new HashMap<String, Map<String, ApplicationAttribute>>();
         this.applRels = new HashMap<String, Map<String, ApplicationRelation>>();
     }
@@ -125,7 +124,6 @@ public class AtfxReader {
             }
 
             // parse 'files'
-            Map<String, String> files = new HashMap<String, String>();
             if (reader.getLocalName().equals(AtfxTagConstants.FILES)) {
                 files.putAll(parseFiles(reader));
                 reader.nextTag();
@@ -139,7 +137,7 @@ public class AtfxReader {
 
             // parse 'instance_data'
             if (reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
-                parseInstanceElements(aoSession, reader, files);
+                parseInstanceElements(aoSession, reader);
                 reader.nextTag();
             }
 
@@ -574,12 +572,11 @@ public class AtfxReader {
      * 
      * @param aoSession The session.
      * @param reader The XML stream reader.
-     * @param componentMap The mapping between external file identifier and file name.
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private void parseInstanceElements(AoSession aoSession, XMLStreamReader reader, Map<String, String> componentMap)
-            throws XMLStreamException, AoException {
+    private void parseInstanceElements(AoSession aoSession, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         ApplicationStructure as = aoSession.getApplicationStructure();
         Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
 
@@ -587,7 +584,7 @@ public class AtfxReader {
         reader.next();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
             if (reader.isStartElement()) {
-                relMap.putAll(parseInstanceElement(as, reader, componentMap));
+                relMap.putAll(parseInstanceElement(as, reader));
             }
             reader.next();
         }
@@ -607,13 +604,12 @@ public class AtfxReader {
      * 
      * @param as The applications structure.
      * @param reader The XML stream reader.
-     * @param componentMap The mapping between external file identifier and file name.
      * @return
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Map<ElemId, Map<String, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as,
-            XMLStreamReader reader, Map<String, String> componentMap) throws XMLStreamException, AoException {
+    private Map<ElemId, Map<String, T_LONGLONG[]>> parseInstanceElement(ApplicationStructure as, XMLStreamReader reader)
+            throws XMLStreamException, AoException {
         // 'name'
         String aeName = reader.getLocalName();
         ApplicationElement applElem = as.getElementByName(aeName);
@@ -622,19 +618,20 @@ public class AtfxReader {
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
         Map<String, T_LONGLONG[]> instRelMap = new HashMap<String, T_LONGLONG[]>();
+        InstanceElement ieExternalComponent = null;
         while (!(reader.isEndElement() && reader.getLocalName().equals(aeName))) {
             reader.next();
 
             // base attribute 'values' of 'LocalColumn'
-            if (reader.isStartElement() && isLocalColumnValue(aeName, reader.getLocalName())) {
+            if (reader.isStartElement() && isLocalColumnValuesAttr(aeName, reader.getLocalName())) {
                 reader.nextTag();
                 // external component
                 if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-                    // System.out.println("COMPONENT");
+                    ieExternalComponent = parseLocalColumnComponent(as, reader);
                 }
                 // explicit values inline XML
                 else if (reader.isStartElement()) {
-                    TS_Value value = parseLocalColumnValues(this.applAttrLocalColumnValues, componentMap, reader);
+                    TS_Value value = parseLocalColumnValues(this.applAttrLocalColumnValues, reader);
                     AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
                     valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
                     valuesAttrValue.attr = new AIDName();
@@ -655,7 +652,6 @@ public class AtfxReader {
                 applAttrValue.attr.aaName = reader.getLocalName();
                 applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aa, reader));
                 applAttrValues.add(applAttrValue);
-                reader.next();
             }
 
             // application relation
@@ -671,13 +667,11 @@ public class AtfxReader {
                         instRelMap.put(applRel.getRelationName(), relInstIids);
                     }
                 }
-                reader.next();
             }
 
             // instance attribute
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
                 instAttrValues = parseInstanceAttributes(reader);
-                reader.next();
             }
 
             // ACLA
@@ -686,6 +680,11 @@ public class AtfxReader {
 
             // ACLI
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLI))) {
+            }
+
+            // unknown
+            else if (reader.isStartElement()) {
+                LOG.warn("Unsupported XML tag name: " + reader.getLocalName());
             }
         }
 
@@ -701,11 +700,27 @@ public class AtfxReader {
             }
         }
 
-        // parse measurement values
-        // if (valuesElement != null) {
-        // InstanceElement localColumnIe = applElem.getInstanceById(elemId.iid);
-        // parseMeasurementData(componentMap, localColumnIe, valuesElement);
-        // }
+        // add external component instance, and set sequence representation to external_component
+        if (ieExternalComponent != null) {
+            ApplicationElement aeLocalColumn = as.getElementById(elemId.aid);
+            ApplicationRelation rel = aeLocalColumn.getRelationsByBaseName("external_component")[0];
+            // create relation to external component
+            InstanceElement ieLocalColumn = as.getElementById(elemId.aid).getInstanceById(elemId.iid);
+            ieLocalColumn.createRelation(rel, ieExternalComponent);
+            // alter sequence representation
+            String attrSeqRep = aeLocalColumn.getAttributeByBaseName("sequence_representation").getName();
+            int seqRep = ODSHelper.getEnumVal(ieLocalColumn.getValue(attrSeqRep));
+            if (seqRep == 0) { // explicit
+                seqRep = 7; // external_component
+            } else if (seqRep == 4) { // raw_linear
+                seqRep = 8; // raw_linear_external
+            } else if (seqRep == 5) { // raw_polynomial
+                seqRep = 9; // raw_polynomial_external
+            } else if (seqRep == 10) { // raw_linear_calibrated
+                seqRep = 11; // raw_linear_calibrated_external
+            }
+            ieLocalColumn.setValue(ODSHelper.createEnumNVU(attrSeqRep, seqRep));
+        }
 
         // create relation map
         Map<ElemId, Map<String, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
@@ -744,7 +759,15 @@ public class AtfxReader {
         return null;
     }
 
-    private boolean isLocalColumnValue(String aeName, String name) throws AoException {
+    /**
+     * Returns whether given attribute name if the attribute 'values' of the local column instance.
+     * 
+     * @param aeName The application element name.
+     * @param name The instance name.
+     * @return True, if 'values' attribute.
+     * @throws AoException Error checking attribute.
+     */
+    private boolean isLocalColumnValuesAttr(String aeName, String name) throws AoException {
         if (this.applAttrLocalColumnValues != null) {
             if (this.applAttrLocalColumnValues.getName().equals(name)
                     && this.applAttrLocalColumnValues.getApplicationElement().getName().equals(aeName)) {
@@ -754,8 +777,134 @@ public class AtfxReader {
         return false;
     }
 
-    private TS_Value parseLocalColumnValues(ApplicationAttribute aa, Map<String, String> componentMap,
-            XMLStreamReader reader) throws XMLStreamException, AoException {
+    /**
+     * Parse the 'component' XML element and create an external component instance.
+     * 
+     * @param as The application structure.
+     * @param reader The XML stream reader.
+     * @return The created instance element of base type 'external_component'
+     * @throws XMLStreamException Error reading XML.
+     * @throws AoException Error creating instance element.
+     */
+    private InstanceElement parseLocalColumnComponent(ApplicationStructure as, XMLStreamReader reader)
+            throws XMLStreamException, AoException {
+        EnumerationDefinition typeSpectEnum = as.getEnumerationDefinition("typespec_enum");
+        String description = "";
+        String fileName = "";
+        int dataType = 0;
+        int length = 0;
+        long inioffset = 0;
+        int blockSize = 0;
+        int valPerBlock = 0;
+        int valOffsets = 0;
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+            // 'description'
+            if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_DESCRIPTION))) {
+                description = reader.getElementText();
+            }
+            // 'identifier'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
+                fileName = this.files.get(reader.getElementText());
+                if (fileName == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                          "External component file not found for identifiert '"
+                                                  + reader.getElementText() + "'");
+                }
+            }
+            // 'datatype'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_DATATYPE))) {
+                dataType = typeSpectEnum.getItem(reader.getElementText());
+            }
+            // 'length'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_LENGTH))) {
+                length = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'inioffset'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
+                inioffset = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'blocksize'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
+                blockSize = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'valperblock'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
+                valPerBlock = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'valoffsets'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALOFFSETS))) {
+                valOffsets = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            reader.next();
+        }
+
+        // create attribute values of external component
+        ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
+        if (aes.length != 1) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "None or multiple application elements of type 'AoExternalComponent' found");
+        }
+        ApplicationElement aeExtComp = aes[0];
+
+        // collect base attributes and map to application attributes
+        Map<String, String> baseAttrMap = new HashMap<String, String>();
+        for (ApplicationAttribute aa : aeExtComp.getAttributes("*")) {
+            BaseAttribute ba = aa.getBaseAttribute();
+            if (ba != null) {
+                baseAttrMap.put(ba.getName(), aa.getName());
+            }
+        }
+
+        // create external component instance
+        InstanceElement ieExtComp = aeExtComp.createInstance("ExtComp");
+        List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
+        // mandatory base attribute 'filename_url'
+        String attrname = baseAttrMap.get("filename_url");
+        attrsList.add(ODSHelper.createStringNVU(attrname, fileName));
+        // mandatory base attribute 'value_type'
+        attrname = baseAttrMap.get("value_type");
+        attrsList.add(ODSHelper.createEnumNVU(attrname, dataType));
+        // mandatory base attribute 'component_length'
+        attrname = baseAttrMap.get("component_length");
+        attrsList.add(ODSHelper.createLongNVU(attrname, length));
+        // mandatory base attribute 'start_offset'
+        attrname = baseAttrMap.get("start_offset");
+        attrsList.add(ODSHelper.createLongLongNVU(attrname, inioffset));
+        // mandatory base attribute 'block_size'
+        attrname = baseAttrMap.get("block_size");
+        attrsList.add(ODSHelper.createLongNVU(attrname, blockSize));
+        // mandatory base attribute 'valuesperblock'
+        attrname = baseAttrMap.get("valuesperblock");
+        attrsList.add(ODSHelper.createLongNVU(attrname, valPerBlock));
+        // mandatory base attribute 'value_offset'
+        attrname = baseAttrMap.get("value_offset");
+        attrsList.add(ODSHelper.createLongNVU(attrname, valOffsets));
+        // optional base attribute 'description'
+        attrname = baseAttrMap.get("description");
+        if (attrname != null && attrname.length() > 0) {
+            attrsList.add(ODSHelper.createStringNVU(attrname, description));
+        }
+        // optional base attribute 'ordinal_number'
+        attrname = baseAttrMap.get("ordinal_number");
+        if (attrname != null && attrname.length() > 0) {
+            attrsList.add(ODSHelper.createLongNVU(attrname, 1));
+        }
+        ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
+
+        return ieExtComp;
+    }
+
+    /**
+     * Parse the explicit inline XML mass data from the local column 'values' attribute.
+     * 
+     * @param aa The application attribute.
+     * @param reader The XML stream reader.
+     * @return The parsed value.
+     * @throws XMLStreamException Error reading XML.
+     * @throws AoException Error parsing values.
+     */
+    private TS_Value parseLocalColumnValues(ApplicationAttribute aa, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         String aaName = aa.getName();
         TS_Value value = new TS_Value();
         value.flag = (short) 15;
@@ -923,34 +1072,6 @@ public class AtfxReader {
             }
         }
         return instAttrs;
-    }
-
-    private void parseComponent(InstanceElement localColumnIe, Element attrElem) throws AoException {
-        NodeList nodeList = attrElem.getChildNodes();
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
-            if (node.getNodeType() != Node.ELEMENT_NODE) {
-                continue;
-            }
-            String nodeName = node.getNodeName();
-
-            // external component configuration
-            if (nodeName.equals(AtfxTagConstants.COMPONENT_IDENTIFIER)) {
-
-            } else if (nodeName.equals(AtfxTagConstants.COMPONENT_DATATYPE)) {
-
-            } else if (nodeName.equals(AtfxTagConstants.COMPONENT_LENGTH)) {
-
-            }
-        }
-
-        // insert external component
-        ApplicationStructure as = localColumnIe.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeLc = as.getElementsByBaseType("AoExternalComponent")[0];
-        ApplicationRelation relLc2ExtComp = localColumnIe.getApplicationElement()
-                                                         .getRelationsByBaseName("external_component")[0];
-        InstanceElement ieExtComp = aeLc.createInstance("ExtComp");
-        localColumnIe.createRelation(relLc2ExtComp, ieExtComp);
     }
 
     /***************************************************************************************

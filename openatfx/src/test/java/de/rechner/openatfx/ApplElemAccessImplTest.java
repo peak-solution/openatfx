@@ -9,32 +9,21 @@ import java.net.URL;
 import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AIDName;
-import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
-import org.asam.ods.AIDNameValueUnitId;
 import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplElemAccess;
-import org.asam.ods.ApplicationAttribute;
-import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ElemId;
-import org.asam.ods.ElemResultSet;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.JoinDef;
-import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SelItem;
-import org.asam.ods.SelOpcode;
-import org.asam.ods.SelOperator;
 import org.asam.ods.SelOrder;
-import org.asam.ods.SelValue;
-import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
-import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 import org.junit.AfterClass;
@@ -161,79 +150,7 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testGetInstances() {
-        try {
-            ApplicationStructure as = aoSession.getApplicationStructure();
-            // Create the query structure for the method getInstances
-            QueryStructure aoq;
-            // The application attribute.
-            // ApplicationAttribute aaObj;
-            // Result of the request
-            ElemResultSet elemRes[];
-            // Query on the application element AoTest
-            ApplicationElement ae[] = as.getElementsByBaseType("AoMeasurementQuantity");
-            if (ae.length > 0) {
-                ApplicationElement aeObj = ae[0];
-                aoq = new QueryStructure();
-                ApplicationAttribute aaObj = aeObj.getAttributeByBaseName("id");
-                aoq.anuSeq = new AIDNameUnitId[2];
-                aoq.anuSeq[0] = new AIDNameUnitId();
-                aoq.anuSeq[0].attr = new AIDName();
-                // set Id of element
-                aoq.anuSeq[0].attr.aid = aeObj.getId();
-                // Set Name of attribute
-                aoq.anuSeq[0].attr.aaName = aaObj.getName();
-                // Build the query, two select values.
-                aoq.condSeq = new SelValue[2];
-                // First select on the Id
-                aaObj = aeObj.getAttributeByBaseName("id");
-                aoq.condSeq[0] = new SelValue();
-                aoq.condSeq[0].attr = new AIDNameValueUnitId();
-                aoq.condSeq[0].attr.attr = new AIDName();
-                aoq.condSeq[0].attr.attr.aid = aeObj.getId();
-                aoq.condSeq[0].attr.attr.aaName = aaObj.getName();
-                aoq.condSeq[0].value = new TS_Value();
-                aoq.condSeq[0].value.u = new TS_Union();
-                T_LONGLONG iid = new T_LONGLONG();
-                iid.high = 0;
-                iid.low = 10;
-                aoq.condSeq[0].value.u.longlongVal(iid);
-                aoq.condSeq[0].oper = SelOpcode.LT;
-                // Second select on the Name
-                aaObj = aeObj.getAttributeByBaseName("name");
-                aoq.anuSeq[1] = new AIDNameUnitId();
-                aoq.anuSeq[1].attr = new AIDName();
-                // set Id of element
-                aoq.anuSeq[1].attr.aid = aeObj.getId();
-                // Set name of attribute
-                aoq.anuSeq[1].attr.aaName = aaObj.getName();
-                // Build the query.
-                aoq.condSeq[1] = new SelValue();
-                aoq.condSeq[1].attr = new AIDNameValueUnitId();
-                aoq.condSeq[1].attr.attr = new AIDName();
-                aoq.condSeq[1].attr.attr.aid = aeObj.getId();
-                aoq.condSeq[1].attr.attr.aaName = aaObj.getName();
-                aoq.condSeq[1].value = new TS_Value();
-                aoq.condSeq[1].value.u = new TS_Union();
-                aoq.condSeq[1].value.u.stringVal("ZYK*");
-                aoq.condSeq[1].oper = SelOpcode.EQ;
-                // Set the operator.
-                aoq.operSeq = new SelOperator[1];
-                aoq.operSeq[0] = SelOperator.OR;
-                // Set the reference selection
-                ae = as.getElementsByBaseType("AoSubTest");
-                ApplicationElement aeSubObj = null;
-                if (ae.length > 0) {
-                    aeSubObj = ae[0];
-                    aoq.relInst = new ElemId();
-                    aoq.relInst.aid = aeSubObj.getId();
-                    aoq.relInst.iid = new T_LONGLONG();
-                    aoq.relInst.iid.low = 1;
-                }
-                elemRes = applElemAccess.getInstances(aoq, 100);
-            }
-        } catch (AoException aoe) {
-            fail(aoe.reason);
-        }
+
     }
 
     @Test
