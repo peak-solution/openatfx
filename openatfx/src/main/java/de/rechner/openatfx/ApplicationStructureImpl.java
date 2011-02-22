@@ -613,7 +613,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         for (int i = 0; i < iter.getCount(); i++) {
             InstanceElement ie = iter.nextOne();
             if (ie.getName().equals(name)) {
-                if (version != null && !version.isEmpty()) {
+                if (version != null && version.length() > 0) {
                     String v = ODSHelper.getStringVal(ie.getValueByBaseName("version"));
                     if (v.equals(version)) {
                         found.add(ie);

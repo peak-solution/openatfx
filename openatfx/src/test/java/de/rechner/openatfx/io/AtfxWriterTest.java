@@ -41,7 +41,7 @@ public class AtfxWriterTest {
     public void testWriteXML() {
         try {
             aoSession.startTransaction();
-            aoSession.commitTransaction();
+//            aoSession.commitTransaction();
         } catch (AoException e) {
             fail(e.reason);
         }

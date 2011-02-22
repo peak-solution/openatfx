@@ -5,6 +5,8 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,6 +19,8 @@ import org.omg.CORBA.ORB;
  * @author Christian Rechner
  */
 public class AtfxReaderTest {
+
+    private static final Log LOG = LogFactory.getLog(AtfxReaderTest.class);
 
     private static ORB orb;
 
@@ -36,9 +40,12 @@ public class AtfxReaderTest {
 
             url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/mdm.xml");
             reader.createSessionForATFX(orb, new File(url.getFile()));
+
+            url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/header.xml");
+            reader.createSessionForATFX(orb, new File(url.getFile()));
         } catch (AoException e) {
+            LOG.error(e.reason, e);
             fail(e.reason);
         }
     }
-
 }

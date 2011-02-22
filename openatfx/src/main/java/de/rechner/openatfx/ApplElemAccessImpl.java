@@ -215,16 +215,18 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstances(org.asam.ods.QueryStructure, int)
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
-        long start = System.currentTimeMillis();
-
-        // retrieve start aid and build up query
-        long startAid = ODSHelper.asJLong(aoq.anuSeq[0].attr.aid);
-        QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache, startAid);
-        ElemResultSet[] resSet = queryBuilder.getElemResultSet(aoq.anuSeq);
-
-        long duration = System.currentTimeMillis() - start;
-        LOG.debug("Executed query in " + duration + "ms");
-        return resSet;
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        //
+        // long start = System.currentTimeMillis();
+        //
+        // // retrieve start aid and build up query
+        // long startAid = ODSHelper.asJLong(aoq.anuSeq[0].attr.aid);
+        // QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache, startAid);
+        // ElemResultSet[] resSet = queryBuilder.getElemResultSet(aoq.anuSeq);
+        //
+        // long duration = System.currentTimeMillis() - start;
+        // LOG.debug("Executed query in " + duration + "ms");
+        // return resSet;
     }
 
     /**
