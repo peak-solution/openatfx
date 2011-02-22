@@ -1258,7 +1258,7 @@ public class AtfxReader {
         else if (dataType == DataType.DS_DATE) {
             String[] seq = parseStringSeq(aa.getName(), reader);
             if (seq.length > 0) {
-                tsValue.u.dateSeq(parseStringSeq(aa.getName(), reader));
+                tsValue.u.dateSeq(seq);
                 tsValue.flag = 15;
             }
         }

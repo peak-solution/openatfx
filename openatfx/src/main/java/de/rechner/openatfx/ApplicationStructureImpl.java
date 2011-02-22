@@ -30,6 +30,7 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongAdapter;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
@@ -119,6 +120,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             int index = getMaxEnumDefIndex() + 1;
             EnumerationDefinitionImpl enumDefImpl = new EnumerationDefinitionImpl(_this(), index, enumName);
+            this.poa.activate_object(enumDefImpl);
             EnumerationDefinition enumDef = EnumerationDefinitionHelper.narrow(poa.servant_to_reference(enumDefImpl));
             this.enumerationDefinitions.add(enumDef);
             return enumDef;
@@ -126,6 +128,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -242,6 +247,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             long aid = this.atfxCache.nextAid();
             ApplicationElementImpl aeImpl = new ApplicationElementImpl(poa, this.atfxCache, _this(), baseElem, aid);
+            this.poa.activate_object(aeImpl);
             ApplicationElement ae = ApplicationElementHelper.narrow(poa.servant_to_reference(aeImpl));
             this.atfxCache.addApplicationElement(aid, baseElem.getType(), ae);
 
@@ -259,6 +265,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -451,6 +460,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
     public ApplicationRelation createRelation() throws AoException {
         try {
             ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.atfxCache);
+            this.poa.activate_object(arImpl);
             ApplicationRelation ar = ApplicationRelationHelper.narrow(poa.servant_to_reference(arImpl));
             this.atfxCache.addApplicationRelation(ar);
             return ar;
@@ -458,6 +468,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }

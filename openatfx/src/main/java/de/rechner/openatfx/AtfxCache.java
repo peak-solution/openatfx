@@ -22,6 +22,7 @@ import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
@@ -451,6 +452,7 @@ class AtfxCache {
             if (ie == null && this.instanceExists(aid, iid)) {
                 // lazy create CORBA object
                 InstanceElementImpl impl = new InstanceElementImpl(poa, this, aid, iid);
+                poa.activate_object(impl);
                 ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
                 this.instanceElementMap.get(aid).put(iid, ie);
             }
@@ -459,6 +461,9 @@ class AtfxCache {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }

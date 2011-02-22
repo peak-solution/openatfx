@@ -28,6 +28,7 @@ import org.omg.PortableServer.ThreadPolicyValue;
 import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
 import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
 import org.omg.PortableServer.POAPackage.InvalidPolicy;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
@@ -119,6 +120,7 @@ public class AoServiceFactory {
 
             // create AoSession object
             AoSessionImpl aoSessionImpl = new AoSessionImpl(sessionPOA, atfxFile, baseStructure);
+            sessionPOA.activate_object(aoSessionImpl);
             AoSession aoSession = AoSessionHelper.narrow(sessionPOA.servant_to_reference(aoSessionImpl));
 
             return aoSession;
@@ -126,6 +128,9 @@ public class AoServiceFactory {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -148,11 +153,12 @@ public class AoServiceFactory {
                                                  rootPOA.create_id_assignment_policy(IdAssignmentPolicyValue.SYSTEM_ID),
                                                  rootPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
                                                  rootPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
-                                                 rootPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.IMPLICIT_ACTIVATION),
+                                                 rootPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.NO_IMPLICIT_ACTIVATION),
                                                  rootPOA.create_servant_retention_policy(ServantRetentionPolicyValue.RETAIN),
                                                  rootPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_ACTIVE_OBJECT_MAP_ONLY),
                                                  rootPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });
             poa.the_POAManager().activate();
+            LOG.debug("Created session POA");
             return poa;
         } catch (InvalidName e) {
             LOG.error(e.getMessage(), e);

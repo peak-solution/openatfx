@@ -112,7 +112,7 @@ public class ApplElemAccessImplTest {
             T_LONGLONG aidMea = as.getElementByName("mea").getId();
 
             // prj->tstser
-            assertEquals(1,
+            assertEquals(2,
                          applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid").length);
             // tstser->mea
             assertEquals(1,

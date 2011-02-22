@@ -41,6 +41,7 @@ import org.asam.ods.NameValueIteratorHelper;
 import org.asam.ods.QueryEvaluator;
 import org.asam.ods.SeverityFlag;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
@@ -157,7 +158,8 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplicationStructure getApplicationStructure() throws AoException {
         try {
             if (this.applicationStructure == null) {
-                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(poa, this.atfxCache, _this());
+                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(this.poa, this.atfxCache, _this());
+                this.poa.activate_object(asImpl);
                 this.applicationStructure = ApplicationStructureHelper.narrow(this.poa.servant_to_reference(asImpl));
             }
             return this.applicationStructure;
@@ -165,6 +167,9 @@ class AoSessionImpl extends AoSessionPOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -178,7 +183,8 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplElemAccess getApplElemAccess() throws AoException {
         try {
             if (this.applElemAccess == null) {
-                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(poa, this.atfxCache);
+                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(this.poa, this.atfxCache);
+                this.poa.activate_object(aeaImpl);
                 this.applElemAccess = ApplElemAccessHelper.narrow(this.poa.servant_to_reference(aeaImpl));
             }
             return this.applElemAccess;
@@ -186,6 +192,9 @@ class AoSessionImpl extends AoSessionPOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -215,11 +224,15 @@ class AoSessionImpl extends AoSessionPOA {
                 }
             }
             NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.poa, list.toArray(new String[0]));
+            this.poa.activate_object(nIteratorImpl);
             return NameIteratorHelper.narrow(this.poa.servant_to_reference(nIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -239,11 +252,15 @@ class AoSessionImpl extends AoSessionPOA {
                 }
             }
             NameValueIteratorImpl nvIteratorImpl = new NameValueIteratorImpl(this.poa, list.toArray(new NameValue[0]));
+            this.poa.activate_object(nvIteratorImpl);
             return NameValueIteratorHelper.narrow(this.poa.servant_to_reference(nvIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -319,11 +336,15 @@ class AoSessionImpl extends AoSessionPOA {
     public Blob createBlob() throws AoException {
         try {
             BlobImpl blobImpl = new BlobImpl(this.poa);
+            this.poa.activate_object(blobImpl);
             return BlobHelper.narrow(this.poa.servant_to_reference(blobImpl));
         } catch (WrongPolicy e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
