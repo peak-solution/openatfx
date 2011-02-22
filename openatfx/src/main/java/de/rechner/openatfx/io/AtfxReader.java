@@ -40,6 +40,8 @@ import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
+import org.asam.ods.T_COMPLEX;
+import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
@@ -1095,58 +1097,96 @@ public class AtfxReader {
             AoException {
         DataType dataType = aa.getDataType();
         TS_Value tsValue = ODSHelper.createEmptyTS_Value(dataType);
-        tsValue.flag = 15;
-        tsValue.u = new TS_Union();
         // DT_BLOB
         if (dataType == DataType.DT_BLOB) {
             AoSession aoSession = aa.getApplicationElement().getApplicationStructure().getSession();
-            tsValue.u.blobVal(parseBlob(aoSession, aa.getName(), reader));
+            Blob blob = parseBlob(aoSession, aa.getName(), reader);
+            tsValue.u.blobVal(blob);
+            tsValue.flag = blob.getHeader().length() < 1 && blob.getLength() < 1 ? (short) 0 : 15;
         }
         // DT_BOOLEAN
         else if (dataType == DataType.DT_BOOLEAN) {
-            tsValue.u.booleanVal(AtfxParseUtil.parseBoolean(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.booleanVal(AtfxParseUtil.parseBoolean(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_BYTE
         else if (dataType == DataType.DT_BYTE) {
-            tsValue.u.byteVal(AtfxParseUtil.parseByte(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.byteVal(AtfxParseUtil.parseByte(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_BYTESTR
         else if (dataType == DataType.DT_BYTESTR) {
-            tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(txt));
+                tsValue.flag = tsValue.u.bytestrVal().length > 0 ? 15 : (short) 0;
+            }
         }
         // DT_COMPLEX
         else if (dataType == DataType.DT_COMPLEX) {
-            tsValue.u.complexVal(AtfxParseUtil.parseComplex(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.complexVal(AtfxParseUtil.parseComplex(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_DATE
         else if (dataType == DataType.DT_DATE) {
-            tsValue.u.dateVal(reader.getElementText());
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.dateVal(txt);
+                tsValue.flag = 15;
+            }
         }
         // DT_COMPLEX
         else if (dataType == DataType.DT_DCOMPLEX) {
-            tsValue.u.dcomplexVal(AtfxParseUtil.parseDComplex(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.dcomplexVal(AtfxParseUtil.parseDComplex(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_DOUBLE
         else if (dataType == DataType.DT_DOUBLE) {
-            tsValue.u.doubleVal(AtfxParseUtil.parseDouble(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.doubleVal(AtfxParseUtil.parseDouble(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_ENUM
         else if (dataType == DataType.DT_ENUM) {
-            EnumerationDefinition ed = aa.getEnumerationDefinition();
-            tsValue.u.enumVal(ed.getItem(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                EnumerationDefinition ed = aa.getEnumerationDefinition();
+                tsValue.u.enumVal(ed.getItem(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_EXTERNALREFERENCE
         else if (dataType == DataType.DT_EXTERNALREFERENCE) {
             T_ExternalReference[] extRefs = parseExtRefs(aa.getName(), reader);
             if (extRefs.length > 1) {
                 throw new AoException(ErrorCode.AO_INVALID_LENGTH, SeverityFlag.ERROR, 0,
-                                      "Multiple references for datatype DT_EXTERNALREFERENCE FOUND");
+                                      "Multiple references for datatype DT_EXTERNALREFERENCE found");
+            } else if (extRefs.length == 1) {
+                tsValue.u.extRefVal(extRefs[0]);
+                tsValue.flag = 15;
             }
-            tsValue.u.extRefVal(extRefs[0]);
         }
         // DT_FLOAT
         else if (dataType == DataType.DT_FLOAT) {
-            tsValue.u.floatVal(AtfxParseUtil.parseFloat(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.floatVal(AtfxParseUtil.parseFloat(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_ID
         else if (dataType == DataType.DT_ID) {
@@ -1155,27 +1195,51 @@ public class AtfxReader {
         }
         // DT_LONG
         else if (dataType == DataType.DT_LONG) {
-            tsValue.u.longVal(AtfxParseUtil.parseLong(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.longVal(AtfxParseUtil.parseLong(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_LONGLONG
         else if (dataType == DataType.DT_LONGLONG) {
-            tsValue.u.longlongVal(AtfxParseUtil.parseLongLong(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.longlongVal(AtfxParseUtil.parseLongLong(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_SHORT
         else if (dataType == DataType.DT_SHORT) {
-            tsValue.u.shortVal(AtfxParseUtil.parseShort(reader.getElementText()));
+            String txt = reader.getElementText().trim();
+            if (txt.length() > 0) {
+                tsValue.u.shortVal(AtfxParseUtil.parseShort(txt));
+                tsValue.flag = 15;
+            }
         }
         // DT_STRING
         else if (dataType == DataType.DT_STRING) {
-            tsValue.u.stringVal(reader.getElementText());
+            String txt = reader.getElementText();
+            if (txt.length() > 0) {
+                tsValue.u.stringVal(txt);
+                tsValue.flag = 15;
+            }
         }
         // DS_BOOLEAN
         else if (dataType == DataType.DS_BOOLEAN) {
-            tsValue.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(reader.getElementText()));
+            boolean[] seq = AtfxParseUtil.parseBooleanSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.booleanSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_BYTE
         else if (dataType == DataType.DS_BYTE) {
-            tsValue.u.byteSeq(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+            byte[] seq = AtfxParseUtil.parseByteSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.byteSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_BYTESTR
         else if (dataType == DataType.DS_BYTESTR) {
@@ -1184,37 +1248,64 @@ public class AtfxReader {
         }
         // DS_COMPLEX
         else if (dataType == DataType.DS_COMPLEX) {
-            tsValue.u.complexSeq(AtfxParseUtil.parseComplexSeq(reader.getElementText()));
+            T_COMPLEX[] seq = AtfxParseUtil.parseComplexSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.complexSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_DATE
         else if (dataType == DataType.DS_DATE) {
-            tsValue.u.dateSeq(parseStringSeq(aa.getName(), reader));
+            String[] seq = parseStringSeq(aa.getName(), reader);
+            if (seq.length > 0) {
+                tsValue.u.dateSeq(parseStringSeq(aa.getName(), reader));
+                tsValue.flag = 15;
+            }
         }
         // DS_DCOMPLEX
         else if (dataType == DataType.DS_DCOMPLEX) {
-            tsValue.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(reader.getElementText()));
+            T_DCOMPLEX[] seq = AtfxParseUtil.parseDComplexSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.dcomplexSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_DOUBLE
         else if (dataType == DataType.DS_DOUBLE) {
-            tsValue.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(reader.getElementText()));
+            double[] seq = AtfxParseUtil.parseDoubleSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.doubleSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_ENUM
         else if (dataType == DataType.DS_ENUM) {
-            String[] enumValues = parseStringSeq(aa.getName(), reader);
-            EnumerationDefinition ed = aa.getEnumerationDefinition();
-            int[] enumItems = new int[enumValues.length];
-            for (int i = 0; i < enumItems.length; i++) {
-                enumItems[i] = ed.getItem(enumValues[i]);
+            String[] seq = parseStringSeq(aa.getName(), reader);
+            if (seq.length > 0) {
+                EnumerationDefinition ed = aa.getEnumerationDefinition();
+                int[] enumItems = new int[seq.length];
+                for (int i = 0; i < enumItems.length; i++) {
+                    enumItems[i] = ed.getItem(seq[i]);
+                }
+                tsValue.u.enumSeq(enumItems);
+                tsValue.flag = 15;
             }
-            tsValue.u.enumSeq(enumItems);
         }
         // DS_EXTERNALREFERENCE
         else if (dataType == DataType.DS_EXTERNALREFERENCE) {
-            tsValue.u.extRefSeq(parseExtRefs(aa.getName(), reader));
+            T_ExternalReference[] seq = parseExtRefs(aa.getName(), reader);
+            if (seq.length > 0) {
+                tsValue.u.extRefSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_FLOAT
         else if (dataType == DataType.DS_FLOAT) {
-            tsValue.u.floatSeq(AtfxParseUtil.parseFloatSeq(reader.getElementText()));
+            float[] seq = AtfxParseUtil.parseFloatSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.floatSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_ID
         else if (dataType == DataType.DS_ID) {
@@ -1223,19 +1314,35 @@ public class AtfxReader {
         }
         // DS_LONG
         else if (dataType == DataType.DS_LONG) {
-            tsValue.u.longSeq(AtfxParseUtil.parseLongSeq(reader.getElementText()));
+            int[] seq = AtfxParseUtil.parseLongSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.longSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_LONGLONG
         else if (dataType == DataType.DS_LONGLONG) {
-            tsValue.u.longlongSeq(AtfxParseUtil.parseLongLongSeq(reader.getElementText()));
+            T_LONGLONG[] seq = AtfxParseUtil.parseLongLongSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.longlongSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_SHORT
         else if (dataType == DataType.DS_SHORT) {
-            tsValue.u.shortSeq(AtfxParseUtil.parseShortSeq(reader.getElementText()));
+            short[] seq = AtfxParseUtil.parseShortSeq(reader.getElementText());
+            if (seq.length > 0) {
+                tsValue.u.shortSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_STRING
         else if (dataType == DataType.DS_STRING) {
-            tsValue.u.stringSeq(parseStringSeq(aa.getName(), reader));
+            String[] seq = parseStringSeq(aa.getName(), reader);
+            if (seq.length > 0) {
+                tsValue.u.stringSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DT_UNKNOWN: only for the values of a LocalColumn
         else if (dataType == DataType.DT_UNKNOWN) {

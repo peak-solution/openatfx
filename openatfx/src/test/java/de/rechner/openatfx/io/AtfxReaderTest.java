@@ -38,15 +38,13 @@ public class AtfxReaderTest {
             AoSession aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
             aoSession.close();
 
-//            url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/mdm.xml");
-//            aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
-//            aoSession.close();
-
-            // url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/head_acoustics.xml");
-            // reader.createSessionForATFX(orb, new File(url.getFile()));
+            // url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/header.xml");
+            // aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
+            // aoSession.close();
         } catch (AoException e) {
             LOG.error(e.reason, e);
             fail(e.reason);
         }
     }
+
 }
