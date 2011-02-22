@@ -8,6 +8,7 @@ import java.net.URL;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
@@ -34,14 +35,14 @@ public class AtfxReaderTest {
         try {
             URL url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
             AtfxReader reader = AtfxReader.getInstance();
-            reader.createSessionForATFX(orb, new File(url.getFile()));
-            reader.createSessionForATFX(orb, new File(url.getFile()));
-            reader.createSessionForATFX(orb, new File(url.getFile()));
+            AoSession aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
+            aoSession.close();
 
-            url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/mdm.xml");
-            reader.createSessionForATFX(orb, new File(url.getFile()));
+//            url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/mdm.xml");
+//            aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
+//            aoSession.close();
 
-            // url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/header.xml");
+            // url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/head_acoustics.xml");
             // reader.createSessionForATFX(orb, new File(url.getFile()));
         } catch (AoException e) {
             LOG.error(e.reason, e);

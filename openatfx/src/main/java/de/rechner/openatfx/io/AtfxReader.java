@@ -61,6 +61,7 @@ public class AtfxReader {
     private static AtfxReader instance;
 
     /** cached model information for faster parsing */
+    private final Map<String, String> documentation;
     private final Map<String, String> files;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
     private final Map<String, Map<String, ApplicationRelation>> applRels;
@@ -70,6 +71,7 @@ public class AtfxReader {
      * Non visible constructor.
      */
     private AtfxReader() {
+        this.documentation = new HashMap<String, String>();
         this.files = new HashMap<String, String>();
         this.applAttrs = new HashMap<String, Map<String, ApplicationAttribute>>();
         this.applRels = new HashMap<String, Map<String, ApplicationRelation>>();
@@ -85,6 +87,8 @@ public class AtfxReader {
      */
     public synchronized AoSession createSessionForATFX(ORB orb, File atfxFile) throws AoException {
         long start = System.currentTimeMillis();
+        this.documentation.clear();
+        this.files.clear();
         this.applAttrs.clear();
         this.applRels.clear();
         this.applAttrLocalColumnValues = null;
@@ -96,49 +100,42 @@ public class AtfxReader {
             in = new BufferedInputStream(new FileInputStream(atfxFile));
             XMLStreamReader reader = inputFactory.createXMLStreamReader(in);
 
-            // parse start element 'atfx_file'
-            reader.nextTag();
-            reader.nextTag();
-
-            // parse 'documentation'
-            Map<String, String> documentation = new HashMap<String, String>();
-            if (reader.getLocalName().equals(AtfxTagConstants.DOCUMENTATION)) {
-                documentation.putAll(parseDocumentation(reader));
-                reader.nextTag();
-            }
-
-            // parse 'base_model_version'
             String baseModelVersion = "";
-            if (reader.getLocalName().equals(AtfxTagConstants.BASE_MODEL_VERSION)) {
-                baseModelVersion = reader.getElementText();
+            AoSession aoSession = null;
+            while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.ATFX_FILE))) {
+
+                // parse 'documentation'
+                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.DOCUMENTATION)) {
+                    documentation.putAll(parseDocumentation(reader));
+                }
+                // parse 'base_model_version'
+                else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BASE_MODEL_VERSION)) {
+                    baseModelVersion = reader.getElementText();
+                }
+                // parse 'files'
+                else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.FILES)) {
+                    files.putAll(parseFiles(reader));
+                }
+                // parse 'application_model'
+                else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL)) {
+                    parseApplicationModel(aoSession.getApplicationStructure(), reader);
+                }
+                // parse 'instance_data'
+                else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
+                    parseInstanceElements(aoSession, reader);
+                }
+
+                // create AoSession object and write documentation to context
+                if ((baseModelVersion.length() > 0) && (aoSession == null)) {
+                    aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, atfxFile, baseModelVersion);
+                }
+
                 reader.nextTag();
-            } else {
-                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Expected tag '"
-                        + AtfxTagConstants.BASE_MODEL_VERSION + "'");
             }
 
-            // create AoSession object and write documentation to context
-            AoSession aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, atfxFile, baseModelVersion);
+            // set context
             for (String docKey : documentation.keySet()) {
                 aoSession.setContextString("documentation_" + docKey, documentation.get(docKey));
-            }
-
-            // parse 'files'
-            if (reader.getLocalName().equals(AtfxTagConstants.FILES)) {
-                files.putAll(parseFiles(reader));
-                reader.nextTag();
-            }
-
-            // parse 'application_model'
-            if (reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL)) {
-                parseApplicationModel(aoSession.getApplicationStructure(), reader);
-                reader.nextTag();
-            }
-
-            // parse 'instance_data'
-            if (reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
-                parseInstanceElements(aoSession, reader);
-                reader.nextTag();
             }
 
             LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms: " + atfxFile.getAbsolutePath());
@@ -621,6 +618,13 @@ public class AtfxReader {
         InstanceElement ieExternalComponent = null;
         while (!(reader.isEndElement() && reader.getLocalName().equals(aeName))) {
             reader.next();
+
+            // if (reader.isStartElement()) {
+            // System.out.println("START: " + reader.getLocalName());
+            // }
+            // if (reader.isEndElement()) {
+            // System.out.println("END: " + reader.getLocalName());
+            // }
 
             // base attribute 'values' of 'LocalColumn'
             if (reader.isStartElement() && isLocalColumnValuesAttr(aeName, reader.getLocalName())) {
