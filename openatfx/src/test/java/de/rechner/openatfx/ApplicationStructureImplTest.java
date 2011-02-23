@@ -18,6 +18,7 @@ import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.RelationRange;
 import org.asam.ods.T_LONGLONG;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -323,7 +324,47 @@ public class ApplicationStructureImplTest {
      */
     @Test
     public void testCreateRelation() {
-        // fail("Not yet implemented");
+        try {
+            // info relation from "prj" to "dsk"
+            ApplicationElement elem1 = applicationStructure.getElementByName("prj");
+            ApplicationElement elem2 = applicationStructure.getElementByName("dsk");
+
+            // create relation
+            ApplicationRelation rel = applicationStructure.createRelation();
+            rel.setElem1(elem1);
+            rel.setElem2(elem2);
+            rel.setRelationName("test_rel");
+            rel.setInverseRelationName("test_inv_rel");
+            rel.setRelationRange(new RelationRange((short) 0, (short) -1));
+            rel.setInverseRelationRange(new RelationRange((short) 0, (short) 1));
+
+            // create inverse relation
+            ApplicationRelation invRel = applicationStructure.createRelation();
+            invRel.setElem1(elem2);
+            invRel.setElem2(elem1);
+            invRel.setRelationName("test_inv_rel");
+            invRel.setInverseRelationName("test_rel");
+            invRel.setRelationRange(new RelationRange((short) 0, (short) 1));
+            invRel.setInverseRelationRange(new RelationRange((short) 0, (short) -1));
+
+            // check relation
+            ApplicationRelation[] rels = applicationStructure.getRelations(elem1, elem2);
+            assertEquals(1, rels.length);
+            assertEquals("test_rel", rels[0].getRelationName());
+            assertEquals("test_inv_rel", rels[0].getInverseRelationName());
+
+            // check inverse relation
+            rels = applicationStructure.getRelations(elem2, elem1);
+            assertEquals(1, rels.length);
+            assertEquals("test_inv_rel", rels[0].getRelationName());
+            assertEquals("test_rel", rels[0].getInverseRelationName());
+
+            // cleanup
+            applicationStructure.removeRelation(rel);
+            applicationStructure.removeRelation(invRel);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     /**
