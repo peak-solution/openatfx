@@ -603,7 +603,8 @@ public class AtfxReader {
      * 
      * @param as The applications structure.
      * @param reader The XML stream reader.
-     * @return
+     * @return Map containing the information about the instance relations (the relation has to be set after all
+     *         instances have been created!).
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
@@ -618,15 +619,18 @@ public class AtfxReader {
         List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
         Map<String, T_LONGLONG[]> instRelMap = new HashMap<String, T_LONGLONG[]>();
         InstanceElement ieExternalComponent = null;
-        while (!(reader.isEndElement() && reader.getLocalName().equals(aeName))) {
-            reader.next();
 
-            // if (reader.isStartElement()) {
-            // System.out.println("START: " + reader.getLocalName());
-            // }
-            // if (reader.isEndElement()) {
-            // System.out.println("END: " + reader.getLocalName());
-            // }
+        String currentTagName = null;
+        while (!(reader.isEndElement() && reader.getLocalName().equals(aeName) && (currentTagName == null))) {
+
+            // need this 'trick' to indicate whether to parse an instance or application element to know when to end
+            if (reader.isEndElement() && currentTagName != null) {
+                currentTagName = null;
+            }
+            reader.next();
+            if (reader.isStartElement()) {
+                currentTagName = reader.getLocalName();
+            }
 
             // base attribute 'values' of 'LocalColumn'
             if (reader.isStartElement() && isLocalColumnValuesAttr(aeName, reader.getLocalName())) {
@@ -975,7 +979,7 @@ public class AtfxReader {
                 throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
                                       "Unsupported local column 'values' datatype: " + reader.getLocalName());
             }
-            reader.next();
+            reader.nextTag();
         }
         return value;
     }

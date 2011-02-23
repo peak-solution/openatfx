@@ -37,10 +37,6 @@ public class AtfxReaderTest {
             AtfxReader reader = AtfxReader.getInstance();
             AoSession aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
             aoSession.close();
-
-            // url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/header.xml");
-            // aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
-            // aoSession.close();
         } catch (AoException e) {
             LOG.error(e.reason, e);
             fail(e.reason);

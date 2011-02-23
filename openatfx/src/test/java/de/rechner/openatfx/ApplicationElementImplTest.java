@@ -420,10 +420,14 @@ public class ApplicationElementImplTest {
     public void testRemoveInstance() {
         try {
             assertEquals(3, applicationElement.getInstances("*").getCount());
+
             InstanceElement ie = applicationElement.createInstance("new_instance");
             assertEquals(4, applicationElement.getInstances("*").getCount());
-            applicationElement.removeInstance(ie.getId(), true);
+            assertEquals(ie.getName(), applicationElement.getInstanceByName("new_instance").getName());
+
+            applicationElement.removeInstance(ie.getId(), false);
             assertEquals(3, applicationElement.getInstances("*").getCount());
+            assertEquals(null, applicationElement.getInstanceByName("new_instance"));
         } catch (AoException e) {
             fail(e.reason);
         }
