@@ -509,9 +509,11 @@ public class InstanceElementImplTest {
     @Test
     public void testCreateRelation() {
         try {
-            ApplicationElement aeDts = aoSession.getApplicationStructure().getElementByName("dts");
-            ApplicationElement aeMeaQua = aoSession.getApplicationStructure().getElementByName("meq");
-            ApplicationElement aePas = aoSession.getApplicationStructure().getElementByName("pas");
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = as.getElementByName("dts");
+            ApplicationElement aeMeaQua = as.getElementByName("meq");
+            ApplicationElement aePas = as.getElementByName("pas");
+            ApplicationElement aeSM = as.getElementByName("sm");
             InstanceElement ieMeaQua = aeMeaQua.createInstance("NewMeaQua");
 
             // adding a child (1:n)
@@ -539,6 +541,22 @@ public class InstanceElementImplTest {
             InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
             ieDts.createRelation(arPas, iePas);
             assertEquals(2, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
+
+            // setting a self relation
+            InstanceElement ieSMy = aeSM.getInstanceById(ODSHelper.asODSLongLong(59));
+            InstanceElement ieSMx = aeSM.getInstanceById(ODSHelper.asODSLongLong(62));
+            assertEquals(7, aeSM.getAllRelations().length);
+
+            // re-set y->x
+            ApplicationRelation arSMx = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[0]; // x-axis-for-y-axis
+            assertEquals(1, ieSMy.getRelatedInstances(arSMx, "*").getCount());
+            ieSMy.createRelation(arSMx, ieSMx);
+            assertEquals(1, ieSMy.getRelatedInstances(arSMx, "*").getCount());
+            // re-set x->y
+            ApplicationRelation arSMy = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[2]; // y-axis-for-x-axis
+            assertEquals(1, ieSMx.getRelatedInstances(arSMy, "*").getCount());
+            ieSMx.createRelation(arSMy, ieSMy);
+            assertEquals(1, ieSMx.getRelatedInstances(arSMy, "*").getCount());
 
             // cleanup
             ieDts.removeRelation(arChild, ieMeaQua);
