@@ -814,11 +814,11 @@ public class AtfxReader {
             }
             // 'identifier'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
-                fileName = this.files.get(reader.getElementText());
+                String identifier = reader.getElementText();
+                fileName = this.files.get(identifier);
                 if (fileName == null) {
                     throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                          "External component file not found for identifiert '"
-                                                  + reader.getElementText() + "'");
+                                          "External component file not found for identifier '" + identifier + "'");
                 }
             }
             // 'datatype'
