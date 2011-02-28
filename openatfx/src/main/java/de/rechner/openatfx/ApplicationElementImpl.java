@@ -527,12 +527,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, iid);
         if (recursive) {
             InstanceElementIterator iter = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
-            for (int i = 0; i < iter.getCount(); i++) {
-                InstanceElement childIe = iter.nextOne();
-                ApplicationElement ae = childIe.getApplicationElement();
-                ae.removeInstance(childIe.getId(), true);
-            }
+            InstanceElement[] instances = iter.nextN(iter.getCount());
             iter.destroy();
+            for (int i = 0; i < instances.length; i++) {
+                ApplicationElement ae = instances[i].getApplicationElement();
+                ae.removeInstance(instances[i].getId(), true);
+            }
         }
         // remove instance
         this.atfxCache.removeInstance(this.aid, iid);

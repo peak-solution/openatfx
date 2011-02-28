@@ -494,7 +494,8 @@ class AtfxCache {
     public void removeInstance(long aid, long iid) throws AoException {
         // remove relations
         for (ApplicationRelation applRel : getApplicationRelations(aid)) {
-            for (long otherIid : getRelatedInstanceIds(aid, iid, applRel)) {
+            Set<Long> otherIidsSet = new HashSet<Long>(getRelatedInstanceIds(aid, iid, applRel));
+            for (long otherIid : otherIidsSet) {
                 removeInstanceRelation(aid, iid, applRel, otherIid);
             }
         }
