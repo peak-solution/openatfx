@@ -404,7 +404,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         List<InstanceElement> list = new ArrayList<InstanceElement>();
         for (long otherIid : this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel)) {
             InstanceElement ie = this.atfxCache.getInstanceById(this.poa, otherAid, otherIid);
-            if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
+            if (ie != null && PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
                 list.add(ie);
             }
         }
