@@ -62,6 +62,8 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private long iid;
 
+    private InstanceElementCopyHelper copyHelper;
+
     /**
      * Constructor.
      * 
@@ -75,6 +77,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         this.aid = aid;
         this.iid = iid;
         this.instanceAttributes = new LinkedHashMap<String, TS_Value>();
+        this.copyHelper = new InstanceElementCopyHelper(atfxCache);
     }
 
     /**
@@ -502,7 +505,8 @@ class InstanceElementImpl extends InstanceElementPOA {
                     + applRel.getRelationName() + "' is not defined at application element '"
                     + getApplicationElement().getName() + "'");
         }
-        // check if inverse relation belongs to other instance application element
+        // check if inverse relation belongs to other instance application
+        // element
         if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2().getId())) {
             throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
                     + applRel.getInverseRelationName() + "' is not defined at application element '"
@@ -533,7 +537,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // remove a certain relation
         else {
-            // check if inverse relation belongs to other instance application element
+            // check if inverse relation belongs to other instance application
+            // element
             if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2()
                                                                                                         .getId())) {
                 throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
@@ -629,6 +634,14 @@ class InstanceElementImpl extends InstanceElementPOA {
         // do nothing
     }
 
+    public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {
+        return copyHelper.shallowCopy(this._this(), newName, newVersion);
+    }
+
+    public InstanceElement deepCopy(String newName, String newVersion) throws AoException {
+        return copyHelper.deepCopy(this._this(), newName, newVersion);
+    }
+
     /**
      * {@inheritDoc}
      * 
@@ -659,25 +672,6 @@ class InstanceElementImpl extends InstanceElementPOA {
             ApplicationRelationInstanceElementSeq[] relatedInstances) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'createRelatedInstances' not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.InstanceElementOperations#shallowCopy(java.lang.String, java.lang.String)
-     */
-    public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'shallowCopy' not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.InstanceElementOperations#deepCopy(java.lang.String, java.lang.String)
-     */
-    public InstanceElement deepCopy(String newName, String newVersion) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Method 'deepCopy' not implemented");
     }
 
     /***********************************************************************************

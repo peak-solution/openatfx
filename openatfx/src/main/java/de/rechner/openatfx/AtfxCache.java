@@ -383,7 +383,7 @@ class AtfxCache {
         this.applicationRelationMap.get(aid).remove(applRel);
     }
 
-    public void addApplicationRelation(ApplicationRelation applRel) {
+    public void addApplicationRelation(ApplicationRelation applRel) throws AoException {
         this.applicationRelations.add(applRel);
     }
 

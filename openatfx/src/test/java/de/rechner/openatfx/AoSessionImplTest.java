@@ -276,7 +276,13 @@ public class AoSessionImplTest {
      * Test method for {@link de.rechner.openatfx.util.atfx.AoSessionImpl#commitTransaction()}.
      */
     @Test
-    public void testCommitTransaction() {}
+    public void testCommitTransaction() {
+//        try {
+//        	aoSession.commitTransaction();
+//        } catch (AoException e) {
+//        	fail(e.reason);
+//        }
+    }
 
     /**
      * Test method for {@link de.rechner.openatfx.util.atfx.AoSessionImpl#abortTransaction()}.

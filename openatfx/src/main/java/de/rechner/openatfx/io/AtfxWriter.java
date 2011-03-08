@@ -208,6 +208,9 @@ public class AtfxWriter {
 
         // application elements
         for (ApplElem applElem : av.applElems) {
+            if (applElem.aeName.equals("MeaResult")) {
+                System.out.println("writing: found the meaResult!");
+            }
             writeApplElem(streamWriter, applElem, applElemMap, applRelsMap, eas);
         }
 
