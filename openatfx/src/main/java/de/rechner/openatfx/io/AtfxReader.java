@@ -762,11 +762,6 @@ public class AtfxReader {
      * @return The application relation, null if not attribute found.
      */
     private ApplicationRelation getApplRel(String aeName, String name) {
-
-        if (aeName.equals("MeaResult")) {
-            System.out.println("CHECK: " + name);
-        }
-
         Map<String, ApplicationRelation> relMap = this.applRels.get(aeName);
         if (relMap != null) {
             return relMap.get(name);

@@ -606,6 +606,11 @@ class AtfxCache {
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
+        if (invRelsMap == null) {
+            invRelsMap = new HashMap<ApplicationRelation, Set<Long>>();
+            this.instanceRelMap.get(otherAid).put(otherIid, invRelsMap);
+        }
+
         Set<Long> invRelMap = invRelsMap.get(invApplRel);
         if (invRelMap == null) {
             invRelMap = new HashSet<Long>();
