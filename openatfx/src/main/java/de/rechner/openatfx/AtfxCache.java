@@ -348,9 +348,37 @@ class AtfxCache {
      * @param aid The application element id.
      * @return Collection of application relations.
      */
-    public Collection<ApplicationRelation> getApplicationRelations(long aid) {
-        return this.applicationRelationMap.get(aid);
+    public Collection<ApplicationRelation> getApplicationRelations(long aid) throws AoException {
+        // this.compareMapToList();
+
+        List<ApplicationRelation> result = this.applicationRelationMap.get(aid);
+        // if (result.size() < 1) {
+        // System.out.println("key not found: " + aid);
+        // }
+        return result;
     }
+
+    // boolean printed = false;
+    //
+    // private void compareMapToList() throws AoException {
+    // if (printed) {
+    // return;
+    // }
+    //
+    // for (ApplicationRelation ar : this.applicationRelations) {
+    // System.out.println("List," + ar.getRelationName() + ","
+    // + ar.getInverseRelationName());
+    // }
+    //
+    // for (long key : this.applicationRelationMap.keySet()) {
+    // for (ApplicationRelation ar : this.applicationRelationMap.get(key)) {
+    // System.out.println("Map," + ar.getRelationName() + ","
+    // + ar.getInverseRelationName() + "," + key);
+    // }
+    // }
+    // System.out.flush();
+    // printed = true;
+    // }
 
     /**
      * Returns an application relation by given relation name.

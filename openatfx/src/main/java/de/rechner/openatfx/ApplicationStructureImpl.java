@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -485,7 +486,26 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
     public ApplicationRelation[] getRelations(ApplicationElement applElem1, ApplicationElement applElem2)
             throws AoException {
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
-        for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(ODSHelper.asJLong(applElem1.getId()))) {
+        Collection<ApplicationRelation> result = this.atfxCache
+                                                               .getApplicationRelations(ODSHelper
+                                                                                                 .asJLong(applElem1
+                                                                                                                   .getId()));
+        for (ApplicationRelation rel : result) {
+            // System.out.println("------------------START-------------------");
+            // System.out.println("Element: " + applElem1.getName() + " with '"
+            // + result.size() + "' relations");
+            // System.out.println("relation: " + rel.getRelationName() + " < > "
+            // + rel.getInverseRelationName());
+            // System.out.println("comparing elem1: '" +
+            // rel.getElem1().getName()
+            // + "' to '" + applElem1.getName() + "'");
+            // System.out.println("comparing elem2: '" +
+            // rel.getElem2().getName()
+            // + "' to '" + applElem2.getName() + "'");
+            // System.out.println("------------------END-------------------");
+            // System.out.println();
+            // System.out.println();
+            // System.out.flush();
             if (rel.getElem1().getName().equals(applElem1.getName())
                     && rel.getElem2().getName().equals(applElem2.getName())) {
                 list.add(rel);
@@ -504,10 +524,11 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         ApplicationRelation relToRemove = null;
         ApplicationRelation invRelToRemove = null;
         for (ApplicationRelation rel : this.atfxCache.getApplicationRelations()) {
-            String relName = rel.getRelationName();
-            if (relName.equals(applRel.getRelationName())) {
+            if (ODSHelper.asJLong(applRel.getElem1().getId()) == ODSHelper.asJLong(rel.getElem1().getId())
+                    && applRel.getRelationName().equals(rel.getRelationName())) {
                 relToRemove = rel;
-            } else if (relName.equals(applRel.getInverseRelationName())) {
+            } else if (ODSHelper.asJLong(applRel.getElem2().getId()) == ODSHelper.asJLong(rel.getElem1().getId())
+                    && applRel.getInverseRelationName().equals(rel.getRelationName())) {
                 invRelToRemove = rel;
             }
         }
@@ -515,9 +536,13 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         // remove relation and inverse relation from cache
         if (relToRemove != null) {
             this.atfxCache.removeApplicationRelation(relToRemove);
+        } else {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Relation not found");
         }
         if (invRelToRemove != null) {
             this.atfxCache.removeApplicationRelation(invRelToRemove);
+        } else {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Inverse relation not found");
         }
         // deactivate CORBA object
         try {
@@ -654,7 +679,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      */
     public void createInstanceRelations(ApplicationRelation applRel, InstanceElement[] elemList1,
             InstanceElement[] elemList2) throws AoException {
-        // TODO Auto-generated method stub
+    // TODO Auto-generated method stub
 
     }
 

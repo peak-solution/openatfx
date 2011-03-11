@@ -540,8 +540,8 @@ public class AtfxReader {
 
         rel.setElem1(applElem);
         rel.setRelationName(relName);
-        rel.setInverseRelationName(inverseRelName);
         rel.setRelationRange(relRange);
+        rel.setInverseRelationName(inverseRelName);
         if (brName != null && brName.length() > 0) {
             BaseRelation baseRel = baseRelMap.get(brName);
             if (baseRel == null) {

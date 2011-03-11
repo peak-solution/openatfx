@@ -60,8 +60,11 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
     public void setBaseRelation(BaseRelation baseRel) throws AoException {
         // set default values for base relation
         if (baseRel != null) {
+            // only set the relation range if there is none set
+            if (this.relationRange == null) {
+                this.relationRange = baseRel.getRelationRange();
+            }
             this.relationType = baseRel.getRelationType();
-            this.relationRange = baseRel.getRelationRange();
         }
         this.baseRelation = baseRel;
     }
@@ -179,7 +182,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setInverseRelationRange(org.asam.ods.RelationRange)
      */
     public void setInverseRelationRange(RelationRange arRelationRange) throws AoException {
-        // this.inverseRelationRange = arRelationRange;
+    // this.inverseRelationRange = arRelationRange;
     }
 
     /**
@@ -193,7 +196,9 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
             return this.baseRelation.getRelationship();
         }
         // m:n
-        else if (getRelationRange().max == -1 && getInverseRelationRange().max == -1) {
+        else if (getRelationRange() == null) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "RelationRange was null");
+        } else if (getRelationRange().max == -1 && getInverseRelationRange().max == -1) {
             return Relationship.INFO_REL;
         }
         // 0:1 or 1:0

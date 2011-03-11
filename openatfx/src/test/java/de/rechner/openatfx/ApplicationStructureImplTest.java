@@ -52,7 +52,7 @@ public class ApplicationStructureImplTest {
     }
 
     /**
-     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getSession()}.
+     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getSession()} .
      */
     @Test
     public void testGetSession() {
@@ -64,7 +64,7 @@ public class ApplicationStructureImplTest {
     }
 
     /**
-     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listEnumerations()}.
+     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listEnumerations()} .
      */
     @Test
     public void testListEnumerations() {
@@ -77,7 +77,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getEnumerationDefinition(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getEnumerationDefinition(java.lang.String)} .
      */
     @Test
     public void testGetEnumerationDefinition() {
@@ -91,7 +91,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createEnumerationDefinition(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createEnumerationDefinition(java.lang.String)} .
      */
     @Test
     public void testCreateEnumerationDefinition() {
@@ -116,7 +116,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeEnumerationDefinition(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeEnumerationDefinition(java.lang.String)} .
      */
     @Test
     public void testRemoveEnumerationDefinition() {
@@ -143,7 +143,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createElement(org.asam.ods.BaseElement)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createElement(org.asam.ods.BaseElement)} .
      */
     @Test
     public void testCreateElement() {
@@ -162,7 +162,7 @@ public class ApplicationStructureImplTest {
     }
 
     /**
-     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listElements(java.lang.String)}.
+     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listElements(java.lang.String)} .
      */
     @Test
     public void testListElements() {
@@ -175,7 +175,7 @@ public class ApplicationStructureImplTest {
     }
 
     /**
-     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElements(java.lang.String)}.
+     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElements(java.lang.String)} .
      */
     @Test
     public void testGetElements() {
@@ -189,7 +189,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listElementsByBaseType(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listElementsByBaseType(java.lang.String)} .
      */
     @Test
     public void testListElementsByBaseType() {
@@ -204,7 +204,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElementsByBaseType(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElementsByBaseType(java.lang.String)} .
      */
     @Test
     public void testGetElementsByBaseType() {
@@ -219,7 +219,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listTopLevelElements(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#listTopLevelElements(java.lang.String)} .
      */
     @Test
     public void testListTopLevelElements() {
@@ -247,7 +247,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElementById(org.asam.ods.T_LONGLONG)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getElementById(org.asam.ods.T_LONGLONG)} .
      */
     @Test
     public void testGetElementById() {
@@ -283,7 +283,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeElement(org.asam.ods.ApplicationElement)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeElement(org.asam.ods.ApplicationElement)} .
      */
     @Test
     public void testRemoveElement() {
@@ -299,12 +299,15 @@ public class ApplicationStructureImplTest {
             rel.setElem2(elem2);
             rel.setRelationName("rel");
             rel.setInverseRelationName("inv_rel");
+            rel.setRelationRange(new RelationRange((short) 1, (short) 1));
+            rel.setInverseRelationRange(new RelationRange((short) -1, (short) 1));
             ApplicationRelation invRel = applicationStructure.createRelation();
             invRel.setElem1(elem2);
             invRel.setElem2(applElem);
             invRel.setRelationName("inv_rel");
             invRel.setInverseRelationName("rel");
-
+            invRel.setRelationRange(new RelationRange((short) -1, (short) 1));
+            invRel.setInverseRelationRange(new RelationRange((short) 1, (short) 1));
             assertEquals(34, applicationStructure.getElements("*").length);
             assertEquals(2, applicationStructure.getElementByName("newElement").getAttributes("*").length);
             assertEquals(1, applicationStructure.getElementByName("newElement").getAllRelations().length);
@@ -320,7 +323,7 @@ public class ApplicationStructureImplTest {
     }
 
     /**
-     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createRelation()}.
+     * Test method for {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#createRelation()} .
      */
     @Test
     public void testCreateRelation() {
@@ -361,7 +364,6 @@ public class ApplicationStructureImplTest {
 
             // cleanup
             applicationStructure.removeRelation(rel);
-            applicationStructure.removeRelation(invRel);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -386,7 +388,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeRelation(org.asam.ods.ApplicationRelation)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#removeRelation(org.asam.ods.ApplicationRelation)} .
      */
     @Test
     public void testRemoveRelation() {
@@ -401,12 +403,15 @@ public class ApplicationStructureImplTest {
             rel.setElem2(elem2);
             rel.setRelationName("rel");
             rel.setInverseRelationName("inv_rel");
+            rel.setRelationRange(new RelationRange((short) 1, (short) 1));
+            rel.setInverseRelationRange(new RelationRange((short) -1, (short) 1));
             ApplicationRelation invRel = applicationStructure.createRelation();
             invRel.setElem1(elem2);
             invRel.setElem2(elem1);
             invRel.setRelationName("inv_rel");
             invRel.setInverseRelationName("rel");
-
+            invRel.setRelationRange(new RelationRange((short) -1, (short) 1));
+            invRel.setInverseRelationRange(new RelationRange((short) 1, (short) 1));
             assertEquals(3, elem1.getAllRelations().length);
             assertEquals(3, elem2.getAllRelations().length);
             assertEquals(2, applicationStructure.getRelations(elem1, elem2).length);
@@ -426,7 +431,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getInstancesById(org.asam.ods.ElemId[])}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getInstancesById(org.asam.ods.ElemId[])} .
      */
     @Test
     public void testGetInstancesById() {
@@ -472,7 +477,7 @@ public class ApplicationStructureImplTest {
 
     /**
      * Test method for
-     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getInstanceByAsamPath(java.lang.String)}.
+     * {@link de.rechner.openatfx.util.atfx.ApplicationStructureImpl#getInstanceByAsamPath(java.lang.String)} .
      */
     @Test
     public void testGetInstanceByAsamPath() {
@@ -510,7 +515,7 @@ public class ApplicationStructureImplTest {
      */
     @Test
     public void testCreateInstanceRelations() {
-        // fail("Not yet implemented");
+    // fail("Not yet implemented");
     }
 
     /**
