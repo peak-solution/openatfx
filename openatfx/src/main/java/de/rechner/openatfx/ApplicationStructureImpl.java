@@ -605,8 +605,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             String ieVersion = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
 
             // skip environment instance
-            InstanceElement environmentInstance = atfxCache.getEnvironmentInstance();
-            if (environmentInstance != null && aeName.equals(environmentInstance.getApplicationElement().getName())) {
+            String environmentName = atfxCache.getEnvironmentApplicationElementName(poa);
+            if (environmentName != null && aeName.equals(environmentName)) {
                 continue;
             }
 

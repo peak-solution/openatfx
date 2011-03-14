@@ -605,7 +605,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         StringBuffer sb = new StringBuffer();
 
         // check if environment application element exists
-        InstanceElement envIe = this.atfxCache.getEnvironmentInstance();
+        InstanceElement envIe = this.atfxCache.getEnvironmentInstance(this.poa);
         if (envIe != null) {
             sb.append(buildAsamPathPart(envIe));
         }

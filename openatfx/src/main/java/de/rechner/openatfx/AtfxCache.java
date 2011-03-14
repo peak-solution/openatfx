@@ -561,16 +561,40 @@ class AtfxCache {
     /**
      * Returns the environment instance.
      * 
+     * @param poa any valid POA
      * @return The environment instance, null if not application element derived from 'AoEnviroment' exists or no
      *         instance available.
+     * @throws AoException if something went wrong
      */
-    public InstanceElement getEnvironmentInstance() {
+    public InstanceElement getEnvironmentInstance(POA poa) throws AoException {
         Set<Long> envAidSet = this.beToAidMap.get("aoenvironment");
         if (envAidSet != null && !envAidSet.isEmpty()) {
             long envAid = envAidSet.iterator().next();
-            Map<Long, InstanceElement> map = this.instanceElementMap.get(envAid);
-            if (map != null && !map.isEmpty()) {
-                return map.values().iterator().next();
+
+            // Map<Long, InstanceElement> map = this.getInstances(poa, envAid);
+            Collection<InstanceElement> ieList = this.getInstances(poa, envAid);
+
+            if (ieList.size() > 0) {
+                return ieList.iterator().next();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the name of the first found environment application element.
+     * 
+     * @param poa any valid POA
+     * @return the name of the first found environment AE or null, if none exist
+     * @throws AoException if something went wrong
+     */
+    public String getEnvironmentApplicationElementName(POA poa) throws AoException {
+        Set<Long> envAidSet = this.beToAidMap.get("aoenvironment");
+        if (envAidSet != null && !envAidSet.isEmpty()) {
+            long envAid = envAidSet.iterator().next();
+            ApplicationElement env = this.getApplicationElementById(envAid);
+            if (env != null) {
+                return env.getName();
             }
         }
         return null;
