@@ -174,6 +174,10 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValue(java.lang.String)
      */
     public NameValueUnit getValue(String aaName) throws AoException {
+        if (isExternalComponentValue(aaName)) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Reading of external components is not yet implemented");
+        }
         // check if instance attribute
         TS_Value value = this.instanceAttributes.get(aaName);
         // no instance attribute, check application attribute
@@ -189,6 +193,37 @@ class InstanceElementImpl extends InstanceElementPOA {
     }
 
     /**
+     * Checks if the value queried is not a external component value of a local column
+     * 
+     * @param aaName
+     * @throws AoException
+     */
+    private boolean isExternalComponentValue(String aaName) throws AoException {
+        if (this.getApplicationElement().getBaseElement().getType().equals("AoLocalColumn")) {
+            ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
+            if (aa != null) {
+                if (aa.getName().equals(aaName)) {
+                    NameValueUnit seqRep = this.getValueByBaseName("sequence_representation");
+                    int seqRepEnum = ODSHelper.getEnumVal(seqRep);
+                    // check if the sequence representation is 7(external_component), 8(raw_linear_external),
+                    // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
+                    if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * {@inheritDoc}
      * 
      * @see org.asam.ods.InstanceElementOperations#getValueSeq(java.lang.String[])
@@ -196,6 +231,10 @@ class InstanceElementImpl extends InstanceElementPOA {
     public NameValueUnit[] getValueSeq(String[] attrNames) throws AoException {
         List<NameValueUnit> list = new ArrayList<NameValueUnit>();
         for (String attrName : attrNames) {
+            if (this.isExternalComponentValue(attrName)) {
+                // do not throw an exception, just ignore
+                continue;
+            }
             list.add(getValue(attrName));
         }
         return list.toArray(new NameValueUnit[0]);
@@ -207,6 +246,10 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueByBaseName(java.lang.String)
      */
     public NameValueUnit getValueByBaseName(String baseAttrName) throws AoException {
+        if (this.isExternalComponentValue(baseAttrName)) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Reading of external components is not yet implemented");
+        }
         ApplicationAttribute aa = getApplicationElement().getAttributeByBaseName(baseAttrName);
         return getValue(aa.getName());
     }
@@ -448,7 +491,9 @@ class InstanceElementImpl extends InstanceElementPOA {
     public InstanceElementIterator getRelatedInstancesByRelationship(Relationship ieRelationship, String iePattern)
             throws AoException {
         try {
-            InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern).toArray(new InstanceElement[0]);
+            InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern)
+                                                                                                     .toArray(
+                                                                                                              new InstanceElement[0]);
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.poa, ieAr);
             this.poa.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.poa.servant_to_reference(ieIteratorImpl));
@@ -507,7 +552,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // check if inverse relation belongs to other instance application
         // element
-        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2().getId())) {
+        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper
+                                                                                    .asJLong(applRel.getElem2().getId())) {
             throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
                     + applRel.getInverseRelationName() + "' is not defined at application element '"
                     + instElem.getApplicationElement().getName() + "'");
@@ -580,7 +626,8 @@ class InstanceElementImpl extends InstanceElementPOA {
             partSb.append(buildAsamPathPart(currentIe));
 
             // navigate to father
-            InstanceElementIterator fatherIeIter = currentIe.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
+            InstanceElementIterator fatherIeIter = currentIe
+                                                            .getRelatedInstancesByRelationship(Relationship.FATHER, "*");
             currentIe = (fatherIeIter.getCount() > 0) ? fatherIeIter.nextOne() : null;
             fatherIeIter.destroy();
 
@@ -631,7 +678,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#destroy()
      */
     public void destroy() throws AoException {
-        // do nothing
+    // do nothing
     }
 
     public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {

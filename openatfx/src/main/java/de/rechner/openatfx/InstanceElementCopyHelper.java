@@ -58,10 +58,9 @@ class InstanceElementCopyHelper {
     }
 
     private void copyAttributeValues(InstanceElement ie, InstanceElement copy, String newVersion) throws AoException {
-        // get the attribute values
+        // get the attribute value names
         ApplicationAttribute[] allApplicationAttributes = ie.getApplicationElement().getAttributes("*");
-
-        // set the attribute values
+        List<String> allApplicationAttributeNames = new ArrayList<String>();
         for (ApplicationAttribute applicationAttribute : allApplicationAttributes) {
             // do not change id and name
             BaseAttribute ba = applicationAttribute.getBaseAttribute();
@@ -70,7 +69,13 @@ class InstanceElementCopyHelper {
                     continue;
                 }
             }
-            NameValueUnit oldNVU = ie.getValue(applicationAttribute.getName());
+            allApplicationAttributeNames.add(applicationAttribute.getName());
+        }
+
+        NameValueUnit[] valueSeq = ie.getValueSeq(allApplicationAttributeNames.toArray(new String[0]));
+
+        // set the attribute values
+        for (NameValueUnit oldNVU : valueSeq) {
             copy.setValue(ODSHelper.cloneNVU(oldNVU));
         }
 
