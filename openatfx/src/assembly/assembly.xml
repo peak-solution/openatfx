@@ -6,9 +6,20 @@
 	<formats>
 		<format>zip</format>
 	</formats>
+	<fileSets>
+		<fileSet>
+			<directory>src/doc</directory>
+			<outputDirectory>/doc</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>${project.basedir}/src</directory>
+			<outputDirectory>/src</outputDirectory>
+			<useDefaultExcludes>true</useDefaultExcludes>
+		</fileSet>
+	</fileSets>
 	<dependencySets>
 		<dependencySet>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory>/lib</outputDirectory>
 			<useProjectArtifact>true</useProjectArtifact>
 			<scope>runtime</scope>
 		</dependencySet>

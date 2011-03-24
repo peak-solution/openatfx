@@ -1,0 +1,28 @@
+openATFX
+========
+
+Description
+-----------
+Pure Java library to access ASAM ODS ATFX files (ASAM transport format) via OO-API.
+
+Java code example for opening a ASAM ODS session on an ATFX file:
+-----------------------------------------------------------------
+
+public static void main(String[] args) {
+    try {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        AoFactory aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+        AoSession aoSession = aoFactory.newSession("FILENAME=" + new File("C:/file.atfx"));
+    } catch (AoException e) {
+        System.err.println(e.reason);
+    }
+}
+
+Known bugs/missing features:
+----------------------------
+- The ATFX file is read completely into memory
+- One session per file
+- Not implemented:
+  * Security 
+  * Inheritance
+  
