@@ -1,0 +1,44 @@
+# Start MDM community Header ======================================= 
+# 
+# This software has been developed an published under the conditions 
+# of the MDM community software exchange. See terms of use in the 
+# attached file MDMCL14.pdf or on MDM community web site 
+# 
+# https://www.mdm-community.org/images/reg/mdmcl14.pdf 
+# 
+# Any further distribution or use has to be realized under these 
+# conditions. You are not allowed to change or modify this header. 
+# 
+# For further information see MDM community web site 
+# 
+# https://www.mdm-community.org 
+# 
+# Stop MDM community Header =======================================
+
+
+0. Contents
+	
+	These are the release notes of the MeDaMAk action request handler for DBC file upload package.
+	It can be used with a MDM framework version min. 4.3.0.
+	
+
+1. Changes
+
+	0.1.1
+		
+		- Fixed parsing of LocalColumn values of type A_TIMESTRING.
+
+	0.1.0
+		
+		- Initial release.
+
+2. Known Bugs
+
+	- None
+	
+
+3. Future changes
+
+	- None planned
+	
+	

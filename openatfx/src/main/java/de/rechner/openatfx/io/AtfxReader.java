@@ -968,7 +968,12 @@ public class AtfxReader {
             }
             // DT_DATE
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_TIMESTRING)) {
-                value.u.dateSeq(parseStringSeq(AtfxTagConstants.VALUES_ATTR_TIMESTRING, reader));
+                String input = reader.getElementText().trim();
+                String[] dateSeq = new String[0];
+                if (input.length() > 0) {
+                    dateSeq = input.split("\\s+");
+                }
+                value.u.dateSeq(dateSeq);
             }
             // DT_STRING
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_UTF8STRING)) {
