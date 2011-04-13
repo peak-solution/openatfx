@@ -24,6 +24,10 @@
 
 1. Changes
 
+	0.1.2
+		
+		- Fixed parsing application relations with a base relation without relation range information.
+
 	0.1.1
 		
 		- Fixed parsing of LocalColumn values of type A_TIMESTRING.

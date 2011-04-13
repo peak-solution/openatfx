@@ -534,13 +534,17 @@ public class AtfxReader {
 
         ApplicationStructure as = applElem.getApplicationStructure();
         ApplicationRelation rel = as.createRelation();
-        RelationRange relRange = new RelationRange();
-        relRange.min = ODSHelper.string2relRange(minStr);
-        relRange.max = ODSHelper.string2relRange(maxStr);
 
         rel.setElem1(applElem);
         rel.setRelationName(relName);
-        rel.setRelationRange(relRange);
+
+        if (minStr.length() > 0 && maxStr.length() > 0) {
+            RelationRange relRange = new RelationRange();
+            relRange.min = ODSHelper.string2relRange(minStr);
+            relRange.max = ODSHelper.string2relRange(maxStr);
+            rel.setRelationRange(relRange);
+        }
+
         rel.setInverseRelationName(inverseRelName);
         if (brName != null && brName.length() > 0) {
             BaseRelation baseRel = baseRelMap.get(brName);
