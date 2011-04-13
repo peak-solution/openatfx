@@ -39,7 +39,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-public class BaseStructureWriter {
+class BaseStructureWriter {
 
     private static final Log LOG = LogFactory.getLog(BaseStructureWriter.class);
 
