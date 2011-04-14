@@ -28,6 +28,7 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
 import org.asam.ods.BaseRelation;
+import org.asam.ods.BaseStructure;
 import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
@@ -66,7 +67,7 @@ public class AtfxReader {
     private final Map<String, String> documentation;
     private final Map<String, String> files;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
-    private final Map<String, Map<String, ApplicationRelation>> applRels;
+    private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
     private ApplicationAttribute applAttrLocalColumnValues;
 
     /**
@@ -255,9 +256,62 @@ public class AtfxReader {
             reader.next();
         }
 
+        // create missing inverse relations
+        createMissingInverseRelations(as, applRelElem2Map);
+
         // set the elem2 of all application relations (this has to be done after parsing all elements)
         for (ApplicationRelation rel : applRelElem2Map.keySet()) {
             rel.setElem2(as.getElementByName(applRelElem2Map.get(rel)));
+        }
+    }
+
+    /**
+     * Creates missing inverse relations.
+     * 
+     * @param as The application structure.
+     * @param applRelElem2Map Map containing the elem2 ae name for the relations.
+     * @throws AoException Error creating inverse relations.
+     */
+    private void createMissingInverseRelations(ApplicationStructure as, Map<ApplicationRelation, String> applRelElem2Map)
+            throws AoException {
+        for (String elem1Name : this.applRels.keySet()) {
+            for (String relName : this.applRels.get(elem1Name).keySet()) {
+                ApplicationRelation rel = this.applRels.get(elem1Name).get(relName);
+                String elem2Name = applRelElem2Map.get(rel);
+                String invRelName = rel.getInverseRelationName();
+
+                ApplicationRelation invRel = this.applRels.get(elem2Name).get(invRelName);
+                if (invRel == null) {
+                    LOG.warn("Inverse relation for aeName='" + elem1Name + "',relName='" + relName + "',invRelName='"
+                            + invRelName + "' not found!");
+
+                    // implicit create inverse relation
+                    invRel = as.createRelation();
+                    // empty inverse relation name
+                    if (invRelName == null || invRelName.length() < 1) {
+                        invRelName = elem1Name;
+                        rel.setInverseRelationName(invRelName);
+                    }
+                    invRel.setRelationName(invRelName);
+                    invRel.setInverseRelationName(relName);
+                    invRel.setElem1(as.getElementByName(elem2Name));
+                    invRel.setElem2(as.getElementByName(elem1Name));
+
+                    BaseRelation baseRel = rel.getBaseRelation();
+                    if (baseRel != null) {
+                        BaseStructure bs = as.getSession().getBaseStructure();
+                        BaseRelation invBaseRel = bs.getRelation(baseRel.getElem2(), baseRel.getElem1());
+                        invRel.setBaseRelation(invBaseRel);
+                    } else {
+                        // default relation range (unknown information)
+                        invRel.setRelationRange(new RelationRange((short) 0, (short) -1));
+                    }
+
+                    // put to maps
+                    applRelElem2Map.put(invRel, elem1Name);
+                    this.applRels.get(elem2Name).put(invRelName, invRel);
+                }
+            }
         }
     }
 
