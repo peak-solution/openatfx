@@ -49,7 +49,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
 
     private static final Log LOG = LogFactory.getLog(ApplicationStructureImpl.class);
 
-    private final POA poa;
+    private final POA modelPOA;
+    private final POA instancePOA;
     private final AoSession aoSession;
     private final AtfxCache atfxCache;
 
@@ -60,13 +61,16 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
     /**
      * Constructor.
      * 
-     * @param poa The POA.
+     * @param modelPOA The model POA.
+     * @param instancePOA The instance POA.
      * @param atfxCache The ATFX cache.
      * @param aoSession The AoSession.
      * @throws AoException Error creating application structure.
      */
-    public ApplicationStructureImpl(POA poa, AtfxCache atfxCache, AoSession aoSession) throws AoException {
-        this.poa = poa;
+    public ApplicationStructureImpl(POA modelPOA, POA instancePOA, AtfxCache atfxCache, AoSession aoSession)
+            throws AoException {
+        this.modelPOA = modelPOA;
+        this.instancePOA = instancePOA;
         this.atfxCache = atfxCache;
         this.aoSession = aoSession;
         this.enumerationDefinitions = new ArrayList<EnumerationDefinition>();
@@ -121,8 +125,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             int index = getMaxEnumDefIndex() + 1;
             EnumerationDefinitionImpl enumDefImpl = new EnumerationDefinitionImpl(_this(), index, enumName);
-            this.poa.activate_object(enumDefImpl);
-            EnumerationDefinition enumDef = EnumerationDefinitionHelper.narrow(poa.servant_to_reference(enumDefImpl));
+            this.modelPOA.activate_object(enumDefImpl);
+            EnumerationDefinition enumDef = EnumerationDefinitionHelper.narrow(modelPOA.servant_to_reference(enumDefImpl));
             this.enumerationDefinitions.add(enumDef);
             return enumDef;
         } catch (ServantNotActive e) {
@@ -247,9 +251,10 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         // create application element
         try {
             long aid = this.atfxCache.nextAid();
-            ApplicationElementImpl aeImpl = new ApplicationElementImpl(poa, this.atfxCache, _this(), baseElem, aid);
-            this.poa.activate_object(aeImpl);
-            ApplicationElement ae = ApplicationElementHelper.narrow(poa.servant_to_reference(aeImpl));
+            ApplicationElementImpl aeImpl = new ApplicationElementImpl(this.modelPOA, this.instancePOA, this.atfxCache,
+                                                                       _this(), baseElem, aid);
+            this.modelPOA.activate_object(aeImpl);
+            ApplicationElement ae = ApplicationElementHelper.narrow(modelPOA.servant_to_reference(aeImpl));
             this.atfxCache.addApplicationElement(aid, baseElem.getType(), ae);
 
             // mandatory base attributes are created automatically
@@ -435,8 +440,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         LOG.debug("Removed application element aid=" + aid);
         // deactivate CORBA object
         try {
-            byte[] id = poa.reference_to_id(applElem);
-            poa.deactivate_object(id);
+            byte[] id = modelPOA.reference_to_id(applElem);
+            modelPOA.deactivate_object(id);
         } catch (WrongAdapter e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -461,8 +466,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
     public ApplicationRelation createRelation() throws AoException {
         try {
             ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.atfxCache);
-            this.poa.activate_object(arImpl);
-            ApplicationRelation ar = ApplicationRelationHelper.narrow(poa.servant_to_reference(arImpl));
+            this.modelPOA.activate_object(arImpl);
+            ApplicationRelation ar = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arImpl));
             this.atfxCache.addApplicationRelation(ar);
             return ar;
         } catch (ServantNotActive e) {
@@ -486,10 +491,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
     public ApplicationRelation[] getRelations(ApplicationElement applElem1, ApplicationElement applElem2)
             throws AoException {
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
-        Collection<ApplicationRelation> result = this.atfxCache
-                                                               .getApplicationRelations(ODSHelper
-                                                                                                 .asJLong(applElem1
-                                                                                                                   .getId()));
+        Collection<ApplicationRelation> result = this.atfxCache.getApplicationRelations(ODSHelper.asJLong(applElem1.getId()));
         for (ApplicationRelation rel : result) {
             // System.out.println("------------------START-------------------");
             // System.out.println("Element: " + applElem1.getName() + " with '"
@@ -546,8 +548,8 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         }
         // deactivate CORBA object
         try {
-            byte[] id = poa.reference_to_id(applRel);
-            poa.deactivate_object(id);
+            byte[] id = modelPOA.reference_to_id(applRel);
+            modelPOA.deactivate_object(id);
         } catch (WrongAdapter e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -605,7 +607,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             String ieVersion = yAr.length == 2 ? PatternUtil.unEscapeNameForASAMPath(yAr[1]) : "";
 
             // skip environment instance
-            String environmentName = atfxCache.getEnvironmentApplicationElementName(poa);
+            String environmentName = atfxCache.getEnvironmentApplicationElementName(modelPOA);
             if (environmentName != null && aeName.equals(environmentName)) {
                 continue;
             }
@@ -679,7 +681,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      */
     public void createInstanceRelations(ApplicationRelation applRel, InstanceElement[] elemList1,
             InstanceElement[] elemList2) throws AoException {
-    // TODO Auto-generated method stub
+        // TODO Auto-generated method stub
 
     }
 

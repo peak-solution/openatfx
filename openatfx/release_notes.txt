@@ -24,6 +24,12 @@
 
 1. Changes
 
+	0.1.3
+	
+		- Fixed FindBugs warnings.
+		- Fixed writing of explicit local column values back to ATFX.
+		- Changed CORBA pattern of InstanceElement objects to FlighWeight using a ServantLocator.
+
 	0.1.2
 		
 		- Fixed parsing application relations with a base relation without relation range information.

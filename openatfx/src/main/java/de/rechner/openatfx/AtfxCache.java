@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
@@ -22,9 +20,6 @@ import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
-import org.omg.PortableServer.POAPackage.ServantNotActive;
-import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -35,8 +30,6 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
-
-    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
 
     /** application elements */
     private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ae>
@@ -52,14 +45,14 @@ class AtfxCache {
     private final List<ApplicationRelation> applicationRelations;
     private final Map<Long, List<ApplicationRelation>> applicationRelationMap; // <aid,<applRels>
 
-    /** instance elements */
-    private final Map<Long, Map<Long, InstanceElement>> instanceElementMap; // <aid,<iid,ie>>
-
-    /** instance values */
-    private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceValueMap; // <aid,<iid,<attrName,value>>>
-
     /** instance relations */
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
+
+    /** instance values */
+    private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
+
+    /** instance attribute values */
+    private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
 
     /** The counters for ids */
     private int nextAid;
@@ -76,9 +69,9 @@ class AtfxCache {
         this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();
         this.baNameToApplAttrMap = new HashMap<Long, Map<String, ApplicationAttribute>>();
         this.applicationRelations = new ArrayList<ApplicationRelation>();
-        this.instanceElementMap = new HashMap<Long, Map<Long, InstanceElement>>();
-        this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
+        this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
+        this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.nextAid = 1;
     }
 
@@ -98,7 +91,7 @@ class AtfxCache {
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        Set<Long> iids = this.instanceElementMap.get(aid).keySet();
+        Set<Long> iids = this.instanceValueMap.get(aid).keySet();
         if (iids.size() < 1) {
             return 1;
         }
@@ -124,10 +117,9 @@ class AtfxCache {
         this.baNameToApplAttrMap.put(aid, new HashMap<String, ApplicationAttribute>());
         this.applicationAttributeMap.put(aid, new LinkedHashMap<String, ApplicationAttribute>());
         this.applicationRelationMap.put(aid, new ArrayList<ApplicationRelation>());
-        this.instanceElementMap.put(aid, new HashMap<Long, InstanceElement>());
-        this.instanceValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
-        // this.nextIids.put(aid, (long) 0);
+        this.instanceValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
+        this.instanceAttrValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
         if (applElems == null) {
@@ -202,9 +194,9 @@ class AtfxCache {
         this.baNameToApplAttrMap.remove(aid);
         this.applicationAttributeMap.remove(aid);
         this.applicationRelationMap.remove(aid);
-        this.instanceElementMap.remove(aid);
-        this.instanceValueMap.remove(aid);
         this.instanceRelMap.remove(aid);
+        this.instanceValueMap.remove(aid);
+        this.instanceAttrValueMap.remove(aid);
     }
 
     /***********************************************************************************
@@ -349,36 +341,8 @@ class AtfxCache {
      * @return Collection of application relations.
      */
     public Collection<ApplicationRelation> getApplicationRelations(long aid) throws AoException {
-        // this.compareMapToList();
-
-        List<ApplicationRelation> result = this.applicationRelationMap.get(aid);
-        // if (result.size() < 1) {
-        // System.out.println("key not found: " + aid);
-        // }
-        return result;
+        return this.applicationRelationMap.get(aid);
     }
-
-    // boolean printed = false;
-    //
-    // private void compareMapToList() throws AoException {
-    // if (printed) {
-    // return;
-    // }
-    //
-    // for (ApplicationRelation ar : this.applicationRelations) {
-    // System.out.println("List," + ar.getRelationName() + ","
-    // + ar.getInverseRelationName());
-    // }
-    //
-    // for (long key : this.applicationRelationMap.keySet()) {
-    // for (ApplicationRelation ar : this.applicationRelationMap.get(key)) {
-    // System.out.println("Map," + ar.getRelationName() + ","
-    // + ar.getInverseRelationName() + "," + key);
-    // }
-    // }
-    // System.out.flush();
-    // printed = true;
-    // }
 
     /**
      * Returns an application relation by given relation name.
@@ -460,9 +424,9 @@ class AtfxCache {
      * @param iid The instance id.
      */
     public void addInstance(long aid, long iid) {
-        this.instanceElementMap.get(aid).put(iid, null);
-        this.instanceValueMap.get(aid).put(iid, new HashMap<String, TS_Value>());
         this.instanceRelMap.get(aid).put(iid, new HashMap<ApplicationRelation, Set<Long>>());
+        this.instanceValueMap.get(aid).put(iid, new HashMap<String, TS_Value>());
+        this.instanceAttrValueMap.get(aid).put(iid, new LinkedHashMap<String, TS_Value>());
     }
 
     /**
@@ -474,42 +438,35 @@ class AtfxCache {
      * @return The instance element, null if not found.
      * @throws AoException Error lazy create CORBA instance element.
      */
-    public InstanceElement getInstanceById(POA poa, long aid, long iid) throws AoException {
-        try {
-            InstanceElement ie = this.instanceElementMap.get(aid).get(iid);
-            if (ie == null && this.instanceExists(aid, iid)) {
-                // lazy create CORBA object
-                InstanceElementImpl impl = new InstanceElementImpl(poa, this, aid, iid);
-                poa.activate_object(impl);
-                ie = InstanceElementHelper.narrow(poa.servant_to_reference(impl));
-                this.instanceElementMap.get(aid).put(iid, ie);
-            }
-            return ie;
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantAlreadyActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+    public InstanceElement getInstanceById(POA modelPOA, POA instancePOA, long aid, long iid) throws AoException {
+        if (this.instanceExists(aid, iid)) {
+            StringBuffer sb = new StringBuffer();
+            sb.append(aid);
+            sb.append(":");
+            sb.append(iid);
+            byte[] oid = sb.toString().getBytes();
+
+            org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
+            return InstanceElementHelper.narrow(obj);
         }
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
+                + iid + "]");
     }
 
     /**
      * Returns all instance elements for an application element.
      * 
+     * @param instancePOA The instance POA.
      * @param aid The application element id.
      * @return Collection if instance elements.
      * @throws AoException Error lazy create CORBA instance element.
      */
-    public Collection<InstanceElement> getInstances(POA poa, long aid) throws AoException {
+    public Collection<InstanceElement> getInstances(POA modelPOA, POA instancePOA, long aid) throws AoException {
         List<InstanceElement> list = new ArrayList<InstanceElement>();
-        for (long iid : this.instanceElementMap.get(aid).keySet()) {
-            list.add(getInstanceById(poa, aid, iid));
+        for (long iid : this.instanceValueMap.get(aid).keySet()) {
+            list.add(getInstanceById(modelPOA, instancePOA, aid, iid));
         }
-        return this.instanceElementMap.get(aid).values();
+        return list;
     }
 
     /**
@@ -529,8 +486,7 @@ class AtfxCache {
         }
         // remove instance values
         this.instanceValueMap.get(aid).remove(iid);
-        // remove instance reference
-        this.instanceElementMap.get(aid).remove(iid);
+        this.instanceAttrValueMap.get(aid).remove(iid);
     }
 
     /**
@@ -540,7 +496,7 @@ class AtfxCache {
      * @return The instance ids.
      */
     public Set<Long> getInstanceIds(long aid) {
-        return this.instanceElementMap.get(aid).keySet();
+        return this.instanceValueMap.get(aid).keySet();
     }
 
     /**
@@ -551,11 +507,7 @@ class AtfxCache {
      * @return True, if instance exists, otherwise false.
      */
     public boolean instanceExists(long aid, long iid) {
-        Map<Long, InstanceElement> iMap = this.instanceElementMap.get(aid);
-        if (iMap != null) {
-            return iMap.containsKey(iid);
-        }
-        return false;
+        return this.instanceValueMap.get(aid).containsKey(iid);
     }
 
     /**
@@ -566,13 +518,13 @@ class AtfxCache {
      *         instance available.
      * @throws AoException if something went wrong
      */
-    public InstanceElement getEnvironmentInstance(POA poa) throws AoException {
+    public InstanceElement getEnvironmentInstance(POA modelPOA, POA instancePOA) throws AoException {
         Set<Long> envAidSet = this.beToAidMap.get("aoenvironment");
         if (envAidSet != null && !envAidSet.isEmpty()) {
             long envAid = envAidSet.iterator().next();
 
             // Map<Long, InstanceElement> map = this.getInstances(poa, envAid);
-            Collection<InstanceElement> ieList = this.getInstances(poa, envAid);
+            Collection<InstanceElement> ieList = this.getInstances(modelPOA, instancePOA, envAid);
 
             if (ieList.size() > 0) {
                 return ieList.iterator().next();
@@ -626,6 +578,49 @@ class AtfxCache {
      */
     public TS_Value getInstanceValue(long aid, long iid, String aaName) {
         return this.instanceValueMap.get(aid).get(iid).get(aaName);
+    }
+
+    /***********************************************************************************
+     * instance attribute values
+     ***********************************************************************************/
+
+    /**
+     * List all instance attribute names.
+     * 
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @return Collection of attribute names.
+     */
+    public Collection<String> listInstanceAttributes(long aid, long iid) {
+        return this.instanceAttrValueMap.get(aid).get(iid).keySet();
+    }
+
+    /**
+     * Sets an instance attribute value.
+     * 
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @param attrName The attribute name.
+     * @param value The instance value.
+     */
+    public void setInstanceAttributeValue(long aid, long iid, String attrName, TS_Value value) {
+        this.instanceAttrValueMap.get(aid).get(iid).put(attrName, value);
+    }
+
+    /**
+     * Returns the value of an instance attribute.
+     * 
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @param attrName The attribute name.
+     * @return The value, null if instance attribute does not exist.
+     */
+    public TS_Value getInstanceAttributeValue(long aid, long iid, String attrName) {
+        return instanceAttrValueMap.get(aid).get(iid).get(attrName);
+    }
+
+    public void removeInstanceAttribute(long aid, long iid, String attrName) {
+        this.instanceAttrValueMap.get(aid).get(iid).remove(attrName);
     }
 
     /***********************************************************************************

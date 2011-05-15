@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AoException;
@@ -39,7 +37,7 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 class ApplElemAccessImpl extends ApplElemAccessPOA {
 
-    private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
+    // private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
 
     private final AtfxCache atfxCache;
 
@@ -235,17 +233,18 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstancesExt(org.asam.ods.QueryStructureExt, int)
      */
     public ResultSetExt[] getInstancesExt(QueryStructureExt aoq, int how_many) throws AoException {
-        long start = System.currentTimeMillis();
-
-        // retrieve start aid and build up query
-        QueryBuilder queryBuilder = aoq.anuSeq.length < 1 ? new QueryBuilder(atfxCache)
-                : new QueryBuilder(this.atfxCache, ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
-        queryBuilder.addJoinDefs(aoq.joinSeq);
-        ResultSetExt[] resSet = queryBuilder.getResultSetExt(aoq.anuSeq);
-
-        long duration = System.currentTimeMillis() - start;
-        LOG.debug("Executed extendend query in " + duration + "ms");
-        return resSet;
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        // long start = System.currentTimeMillis();
+        //
+        // // retrieve start aid and build up query
+        // QueryBuilder queryBuilder = aoq.anuSeq.length < 1 ? new QueryBuilder(atfxCache)
+        // : new QueryBuilder(this.atfxCache, ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
+        // queryBuilder.addJoinDefs(aoq.joinSeq);
+        // ResultSetExt[] resSet = queryBuilder.getResultSetExt(aoq.anuSeq);
+        //
+        // long duration = System.currentTimeMillis() - start;
+        // LOG.debug("Executed extendend query in " + duration + "ms");
+        // return resSet;
     }
 
     /**

@@ -24,7 +24,6 @@ import org.asam.ods.JoinDef;
 import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
-import org.asam.ods.SelOpcode;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
@@ -35,7 +34,6 @@ import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.ODSHelper;
-import de.rechner.openatfx.util.PatternUtil;
 
 
 /**
@@ -571,64 +569,64 @@ class QueryBuilder {
         return sb.toString();
     }
 
-    private boolean filterMatch(TS_Value value, TS_Value filter, SelOpcode selOpCode) throws AoException {
-        if (value.u.discriminator() != filter.u.discriminator()) {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Invalid datatype!");
-        }
-        // EQ
-        if (selOpCode == SelOpcode.EQ) {
-            return filterMatchEQ(value, filter);
-        }
-        // unsupported SelOpcode
-        else {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "unsupproted SelOpcode: ");
-        }
-    }
+    // private boolean filterMatch(TS_Value value, TS_Value filter, SelOpcode selOpCode) throws AoException {
+    // if (value.u.discriminator() != filter.u.discriminator()) {
+    // throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Invalid datatype!");
+    // }
+    // // EQ
+    // if (selOpCode == SelOpcode.EQ) {
+    // return filterMatchEQ(value, filter);
+    // }
+    // // unsupported SelOpcode
+    // else {
+    // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "unsupproted SelOpcode: ");
+    // }
+    // }
 
-    private boolean filterMatchEQ(TS_Value value, TS_Value filter) throws AoException {
-        DataType dt = value.u.discriminator();
-        boolean ret = false;
-        // flags unequal
-        if (value.flag != filter.flag) {
-            ret = false;
-        }
-        // flags both null
-        else if (value.flag == 0 && filter.flag == 0) {
-            ret = true;
-        }
-        // DT_BOOLEAN
-        else if (dt == DataType.DT_BOOLEAN) {
-            ret = (value.u.booleanVal() == filter.u.booleanVal());
-        }
-        // DT_BYTE
-        else if (dt == DataType.DT_BYTE) {
-            ret = (value.u.byteVal() == filter.u.byteVal());
-        }
-        // DT_ENUM
-        else if (dt == DataType.DT_ENUM) {
-            ret = (value.u.enumVal() == filter.u.enumVal());
-        }
-        // DT_LONG
-        else if (dt == DataType.DT_LONG) {
-            ret = (value.u.longVal() == filter.u.longVal());
-        }
-        // DT_LONGLONG
-        else if (dt == DataType.DT_LONGLONG) {
-            ret = (ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(filter.u.longlongVal()));
-        }
-        // DT_SHORT
-        else if (dt == DataType.DT_SHORT) {
-            ret = (value.u.shortVal() == filter.u.shortVal());
-        }
-        // DT_STRING
-        else if (dt == DataType.DT_STRING) {
-            ret = PatternUtil.nameFilterMatch(value.u.stringVal(), filter.u.stringVal());
-        }
-        // unsupported datatype
-        else {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "unsupproted datatype: ");
-        }
-        return ret;
-    }
+    // private boolean filterMatchEQ(TS_Value value, TS_Value filter) throws AoException {
+    // DataType dt = value.u.discriminator();
+    // boolean ret = false;
+    // // flags unequal
+    // if (value.flag != filter.flag) {
+    // ret = false;
+    // }
+    // // flags both null
+    // else if (value.flag == 0 && filter.flag == 0) {
+    // ret = true;
+    // }
+    // // DT_BOOLEAN
+    // else if (dt == DataType.DT_BOOLEAN) {
+    // ret = (value.u.booleanVal() == filter.u.booleanVal());
+    // }
+    // // DT_BYTE
+    // else if (dt == DataType.DT_BYTE) {
+    // ret = (value.u.byteVal() == filter.u.byteVal());
+    // }
+    // // DT_ENUM
+    // else if (dt == DataType.DT_ENUM) {
+    // ret = (value.u.enumVal() == filter.u.enumVal());
+    // }
+    // // DT_LONG
+    // else if (dt == DataType.DT_LONG) {
+    // ret = (value.u.longVal() == filter.u.longVal());
+    // }
+    // // DT_LONGLONG
+    // else if (dt == DataType.DT_LONGLONG) {
+    // ret = (ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(filter.u.longlongVal()));
+    // }
+    // // DT_SHORT
+    // else if (dt == DataType.DT_SHORT) {
+    // ret = (value.u.shortVal() == filter.u.shortVal());
+    // }
+    // // DT_STRING
+    // else if (dt == DataType.DT_STRING) {
+    // ret = PatternUtil.nameFilterMatch(value.u.stringVal(), filter.u.stringVal());
+    // }
+    // // unsupported datatype
+    // else {
+    // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "unsupproted datatype: ");
+    // }
+    // return ret;
+    // }
 
 }

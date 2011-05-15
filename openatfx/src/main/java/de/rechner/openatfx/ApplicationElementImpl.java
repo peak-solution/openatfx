@@ -49,7 +49,8 @@ class ApplicationElementImpl extends ApplicationElementPOA {
 
     private static final Log LOG = LogFactory.getLog(ApplicationElementImpl.class);
 
-    private final POA poa;
+    private final POA modelPOA;
+    private final POA instancePOA;
     private final AtfxCache atfxCache;
     private final ApplicationStructure applicationStructure;
     private final BaseElement baseElement;
@@ -58,15 +59,17 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     /**
      * Constructor.
      * 
-     * @param poa The POA.
+     * @param modelPOA The model POA.
+     * @param instancePOA The instance POA.
      * @param atfxCache The ATFX cache.
      * @param applicationStructure The application structure.
      * @param baseElement The base element.
      * @param aid The application element id;
      */
-    public ApplicationElementImpl(POA poa, AtfxCache atfxCache, ApplicationStructure applicationStructure,
-            BaseElement baseElement, long aid) {
-        this.poa = poa;
+    public ApplicationElementImpl(POA modelPOA, POA instancePOA, AtfxCache atfxCache,
+            ApplicationStructure applicationStructure, BaseElement baseElement, long aid) {
+        this.modelPOA = modelPOA;
+        this.instancePOA = instancePOA;
         this.atfxCache = atfxCache;
         this.applicationStructure = applicationStructure;
         this.baseElement = baseElement;
@@ -163,9 +166,9 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         }
         // create application attribute
         try {
-            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.poa, this.atfxCache, this.aid);
-            this.poa.activate_object(aaImpl);
-            ApplicationAttribute aa = ApplicationAttributeHelper.narrow(poa.servant_to_reference(aaImpl));
+            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.atfxCache, this.aid);
+            this.modelPOA.activate_object(aaImpl);
+            ApplicationAttribute aa = ApplicationAttributeHelper.narrow(modelPOA.servant_to_reference(aaImpl));
             this.atfxCache.addApplicationAttribute(this.aid, aa);
             return aa;
         } catch (ServantNotActive e) {
@@ -268,8 +271,8 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         this.atfxCache.removeApplicationAttribute(this.aid, applAttr.getName());
         // deactivate CORBA object
         try {
-            byte[] id = poa.reference_to_id(applAttr);
-            poa.deactivate_object(id);
+            byte[] id = modelPOA.reference_to_id(applAttr);
+            modelPOA.deactivate_object(id);
         } catch (WrongAdapter e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -401,7 +404,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         long iid = this.atfxCache.nextIid(this.aid);
         this.atfxCache.addInstance(this.aid, iid);
         this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
-        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid);
         ie.setName(ieName);
         return ie;
     }
@@ -414,15 +417,15 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public NameIterator listInstances(String iePattern) throws AoException {
         try {
             List<String> list = new ArrayList<String>();
-            for (InstanceElement ie : this.atfxCache.getInstances(poa, aid)) {
+            for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
                 String name = ie.getName();
                 if (PatternUtil.nameFilterMatch(name, iePattern)) {
                     list.add(name);
                 }
             }
-            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.poa, list.toArray(new String[0]));
-            this.poa.activate_object(nIteratorImpl);
-            return NameIteratorHelper.narrow(this.poa.servant_to_reference(nIteratorImpl));
+            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.modelPOA, list.toArray(new String[0]));
+            this.modelPOA.activate_object(nIteratorImpl);
+            return NameIteratorHelper.narrow(this.modelPOA.servant_to_reference(nIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -443,16 +446,16 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public InstanceElementIterator getInstances(String iePattern) throws AoException {
         try {
             List<InstanceElement> list = new ArrayList<InstanceElement>();
-            for (InstanceElement ie : this.atfxCache.getInstances(poa, aid)) {
+            for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
                 String name = ie.getName();
                 if (PatternUtil.nameFilterMatch(name, iePattern)) {
                     list.add(ie);
                 }
             }
             InstanceElement[] ieAr = list.toArray(new InstanceElement[0]);
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.poa, ieAr);
-            this.poa.activate_object(ieIteratorImpl);
-            return InstanceElementIteratorHelper.narrow(this.poa.servant_to_reference(ieIteratorImpl));
+            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
+            this.modelPOA.activate_object(ieIteratorImpl);
+            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -471,7 +474,8 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#getInstanceById(org.asam.ods.T_LONGLONG)
      */
     public InstanceElement getInstanceById(T_LONGLONG ieId) throws AoException {
-        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, ODSHelper.asJLong(ieId));
+        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid,
+                                                            ODSHelper.asJLong(ieId));
         if (ie == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
@@ -486,7 +490,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElement getInstanceByName(String ieName) throws AoException {
         InstanceElement found = null;
-        for (InstanceElement ie : this.atfxCache.getInstances(this.poa, this.aid)) {
+        for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, this.aid)) {
             if (ie.getName().equals(ieName)) {
                 // check if duplicate
                 if (found != null) {
@@ -519,12 +523,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public void removeInstance(T_LONGLONG ieId, boolean recursive) throws AoException {
         // check if instance exists
         long iid = ODSHelper.asJLong(ieId);
-        if (this.atfxCache.getInstanceById(this.poa, aid, iid) == null) {
+        if (this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid) == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
         }
         // remove recursively
-        InstanceElement ie = this.atfxCache.getInstanceById(this.poa, aid, iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid);
         if (recursive) {
             InstanceElementIterator iter = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
             InstanceElement[] instances = iter.nextN(iter.getCount());
@@ -536,20 +540,6 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         }
         // remove instance
         this.atfxCache.removeInstance(this.aid, iid);
-        // deactivate CORBA object
-        try {
-            byte[] id = poa.reference_to_id(ie);
-            poa.deactivate_object(id);
-        } catch (WrongAdapter e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ObjectNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        }
         LOG.debug("Removed instance aid=" + aid + ",iid=" + iid);
     }
 

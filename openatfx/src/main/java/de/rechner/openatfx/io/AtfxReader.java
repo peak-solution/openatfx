@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -61,7 +62,7 @@ public class AtfxReader {
     private static final Log LOG = LogFactory.getLog(AtfxReader.class);
 
     /** The singleton instance */
-    private static AtfxReader instance;
+    private static volatile AtfxReader instance;
 
     /** cached model information for faster parsing */
     private final Map<String, String> documentation;
@@ -260,8 +261,8 @@ public class AtfxReader {
         createMissingInverseRelations(as, applRelElem2Map);
 
         // set the elem2 of all application relations (this has to be done after parsing all elements)
-        for (ApplicationRelation rel : applRelElem2Map.keySet()) {
-            rel.setElem2(as.getElementByName(applRelElem2Map.get(rel)));
+        for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
+            entry.getKey().setElem2(as.getElementByName(entry.getValue()));
         }
     }
 
@@ -648,9 +649,11 @@ public class AtfxReader {
 
         // create relations
         ApplElemAccess applElemAccess = aoSession.getApplElemAccess();
-        for (ElemId elemId : relMap.keySet()) {
-            for (String relName : relMap.get(elemId).keySet()) {
-                T_LONGLONG[] relIids = relMap.get(elemId).get(relName);
+        for (Entry<ElemId, Map<String, T_LONGLONG[]>> entry : relMap.entrySet()) {
+            ElemId elemId = entry.getKey();
+            for (Entry<String, T_LONGLONG[]> relInstEntry : entry.getValue().entrySet()) {
+                String relName = relInstEntry.getKey();
+                T_LONGLONG[] relIids = relInstEntry.getValue();
                 applElemAccess.setRelInst(elemId, relName, relIids, SetType.APPEND);
             }
         }

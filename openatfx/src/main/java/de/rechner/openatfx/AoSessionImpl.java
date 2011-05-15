@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,7 +41,18 @@ import org.asam.ods.NameValueIterator;
 import org.asam.ods.NameValueIteratorHelper;
 import org.asam.ods.QueryEvaluator;
 import org.asam.ods.SeverityFlag;
+import org.omg.CORBA.Policy;
+import org.omg.PortableServer.IdAssignmentPolicyValue;
+import org.omg.PortableServer.IdUniquenessPolicyValue;
+import org.omg.PortableServer.ImplicitActivationPolicyValue;
+import org.omg.PortableServer.LifespanPolicyValue;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.RequestProcessingPolicyValue;
+import org.omg.PortableServer.ServantRetentionPolicyValue;
+import org.omg.PortableServer.ThreadPolicyValue;
+import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
+import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
+import org.omg.PortableServer.POAPackage.InvalidPolicy;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
@@ -81,7 +93,7 @@ class AoSessionImpl extends AoSessionPOA {
         STATIC_CONTEXT.put("TYPE", ODSHelper.createStringNV("TYPE", "XATF-ASCII"));
     }
 
-    private final POA poa;
+    private final POA modelPOA;
     private final File atfxFile;
     private final BaseStructure baseStructure;
     private final Map<String, NameValue> context;
@@ -94,12 +106,12 @@ class AoSessionImpl extends AoSessionPOA {
     /**
      * Constructor.
      * 
-     * @param poa The POA.
+     * @param modelPOA The POA.
      * @param atfxFile The ATFX file.
      * @param baseStructure The base structure.
      */
-    public AoSessionImpl(POA poa, File atfxFile, BaseStructure baseStructure) {
-        this.poa = poa;
+    public AoSessionImpl(POA modelPOA, File atfxFile, BaseStructure baseStructure) {
+        this.modelPOA = modelPOA;
         this.atfxFile = atfxFile;
         this.baseStructure = baseStructure;
         this.context = new LinkedHashMap<String, NameValue>();
@@ -158,9 +170,11 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplicationStructure getApplicationStructure() throws AoException {
         try {
             if (this.applicationStructure == null) {
-                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(this.poa, this.atfxCache, _this());
-                this.poa.activate_object(asImpl);
-                this.applicationStructure = ApplicationStructureHelper.narrow(this.poa.servant_to_reference(asImpl));
+                POA instancePOA = createInstancePOA();
+                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(this.modelPOA, instancePOA,
+                                                                               this.atfxCache, _this());
+                this.modelPOA.activate_object(asImpl);
+                this.applicationStructure = ApplicationStructureHelper.narrow(this.modelPOA.servant_to_reference(asImpl));
             }
             return this.applicationStructure;
         } catch (WrongPolicy e) {
@@ -175,6 +189,39 @@ class AoSessionImpl extends AoSessionPOA {
         }
     }
 
+    private POA createInstancePOA() throws AoException {
+        try {
+            String poaName = "AoSession.InstancePOA." + UUID.randomUUID().toString();
+            POA poa = modelPOA.create_POA(poaName,
+                                          null,
+                                          new Policy[] {
+                                                  modelPOA.create_id_assignment_policy(IdAssignmentPolicyValue.USER_ID),
+                                                  modelPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
+                                                  modelPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
+                                                  modelPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.NO_IMPLICIT_ACTIVATION),
+                                                  modelPOA.create_servant_retention_policy(ServantRetentionPolicyValue.NON_RETAIN),
+                                                  modelPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_SERVANT_MANAGER),
+                                                  modelPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });
+            poa.set_servant_manager(new InstanceServantLocator(this.modelPOA, atfxCache));
+            poa.the_POAManager().activate();
+
+            LOG.debug("Created instance POA");
+            return poa;
+        } catch (AdapterAlreadyExists e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (InvalidPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (AdapterInactive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+    }
+
     /**
      * {@inheritDoc}
      * 
@@ -183,9 +230,9 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplElemAccess getApplElemAccess() throws AoException {
         try {
             if (this.applElemAccess == null) {
-                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(this.poa, this.atfxCache);
-                this.poa.activate_object(aeaImpl);
-                this.applElemAccess = ApplElemAccessHelper.narrow(this.poa.servant_to_reference(aeaImpl));
+                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(this.modelPOA, this.atfxCache);
+                this.modelPOA.activate_object(aeaImpl);
+                this.applElemAccess = ApplElemAccessHelper.narrow(this.modelPOA.servant_to_reference(aeaImpl));
             }
             return this.applElemAccess;
         } catch (WrongPolicy e) {
@@ -223,9 +270,9 @@ class AoSessionImpl extends AoSessionPOA {
                     list.add(str);
                 }
             }
-            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.poa, list.toArray(new String[0]));
-            this.poa.activate_object(nIteratorImpl);
-            return NameIteratorHelper.narrow(this.poa.servant_to_reference(nIteratorImpl));
+            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.modelPOA, list.toArray(new String[0]));
+            this.modelPOA.activate_object(nIteratorImpl);
+            return NameIteratorHelper.narrow(this.modelPOA.servant_to_reference(nIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -251,9 +298,10 @@ class AoSessionImpl extends AoSessionPOA {
                     list.add(ODSHelper.cloneNV(nv));
                 }
             }
-            NameValueIteratorImpl nvIteratorImpl = new NameValueIteratorImpl(this.poa, list.toArray(new NameValue[0]));
-            this.poa.activate_object(nvIteratorImpl);
-            return NameValueIteratorHelper.narrow(this.poa.servant_to_reference(nvIteratorImpl));
+            NameValueIteratorImpl nvIteratorImpl = new NameValueIteratorImpl(this.modelPOA,
+                                                                             list.toArray(new NameValue[0]));
+            this.modelPOA.activate_object(nvIteratorImpl);
+            return NameValueIteratorHelper.narrow(this.modelPOA.servant_to_reference(nvIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -335,9 +383,9 @@ class AoSessionImpl extends AoSessionPOA {
      */
     public Blob createBlob() throws AoException {
         try {
-            BlobImpl blobImpl = new BlobImpl(this.poa);
-            this.poa.activate_object(blobImpl);
-            return BlobHelper.narrow(this.poa.servant_to_reference(blobImpl));
+            BlobImpl blobImpl = new BlobImpl(this.modelPOA);
+            this.modelPOA.activate_object(blobImpl);
+            return BlobHelper.narrow(this.modelPOA.servant_to_reference(blobImpl));
         } catch (WrongPolicy e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -443,7 +491,7 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#close()
      */
     public void close() throws AoException {
-        this.poa.destroy(false, false);
+        this.modelPOA.destroy(false, false);
         LOG.info("Closed ATFX AoSession");
     }
 

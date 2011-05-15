@@ -3,10 +3,8 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,29 +53,26 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private static final Log LOG = LogFactory.getLog(InstanceElementImpl.class);
 
-    private final POA poa;
+    private final POA modelPOA;
+    private final POA instancePOA;
     private final AtfxCache atfxCache;
     private final long aid;
-    private final Map<String, TS_Value> instanceAttributes;
-
-    private long iid;
-
-    private InstanceElementCopyHelper copyHelper;
+    private final long iid;
 
     /**
      * Constructor.
      * 
-     * @param poa The POA.
+     * @param modelPOA The model POA.
+     * @param instancePOA The instance POA.
      * @param atfxCache The ATFX cache.
      * @param aid The application element id.
      */
-    public InstanceElementImpl(POA poa, AtfxCache atfxCache, long aid, long iid) {
-        this.poa = poa;
+    public InstanceElementImpl(POA modelPOA, POA instancePOA, AtfxCache atfxCache, long aid, long iid) {
+        this.modelPOA = modelPOA;
+        this.instancePOA = instancePOA;
         this.atfxCache = atfxCache;
         this.aid = aid;
         this.iid = iid;
-        this.instanceAttributes = new LinkedHashMap<String, TS_Value>();
-        this.copyHelper = new InstanceElementCopyHelper(atfxCache);
     }
 
     /**
@@ -163,7 +158,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // instance attributes
         if (aType != AttrType.APPLATTR_ONLY) {
-            list.addAll(this.instanceAttributes.keySet());
+            list.addAll(this.atfxCache.listInstanceAttributes(aid, iid));
         }
         return list.toArray(new String[0]);
     }
@@ -176,10 +171,10 @@ class InstanceElementImpl extends InstanceElementPOA {
     public NameValueUnit getValue(String aaName) throws AoException {
         if (isExternalComponentValue(aaName)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "Reading of external components is not yet implemented");
+                                  "Reading the 'values' of external components is not yet implemented");
         }
         // check if instance attribute
-        TS_Value value = this.instanceAttributes.get(aaName);
+        TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
         // no instance attribute, check application attribute
         if (value == null) {
             value = this.atfxCache.getInstanceValue(this.aid, this.iid, aaName);
@@ -193,13 +188,14 @@ class InstanceElementImpl extends InstanceElementPOA {
     }
 
     /**
-     * Checks if the value queried is not a external component value of a local column
+     * Checks whether the value queried is an external component value of a local column.
      * 
-     * @param aaName
-     * @throws AoException
+     * @param aaName The application attribute name.
+     * @throws AoException Error checking application attribute.
      */
     private boolean isExternalComponentValue(String aaName) throws AoException {
-        if (this.getApplicationElement().getBaseElement().getType().equals("AoLocalColumn")) {
+        String bType = this.getApplicationElement().getBaseElement().getType();
+        if (bType.equals("AoLocalColumn")) {
             ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
             if (aa != null) {
                 if (aa.getName().equals(aaName)) {
@@ -209,18 +205,11 @@ class InstanceElementImpl extends InstanceElementPOA {
                     // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
                     if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
                         return true;
-                    } else {
-                        return false;
                     }
-                } else {
-                    return false;
                 }
-            } else {
-                return false;
             }
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -271,8 +260,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public void setValue(NameValueUnit nvu) throws AoException {
         // check if instance attribute
-        if (this.instanceAttributes.containsKey(nvu.valName)) {
-            this.instanceAttributes.put(nvu.valName, nvu.value);
+        if (this.atfxCache.getInstanceAttributeValue(aid, iid, nvu.valName) != null) {
+            this.atfxCache.setInstanceAttributeValue(aid, iid, nvu.valName, nvu.value);
         }
         // application attribute
         else {
@@ -319,7 +308,7 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "An ApplicationAttribute with name '" + instAttr.valName + "' already exists");
         }
         // check for existing instance attribute
-        if (this.instanceAttributes.containsKey(instAttr.valName)) {
+        if (this.atfxCache.getInstanceValue(aid, iid, instAttr.valName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "An InstanceAttribute with name '" + instAttr.valName + "' already exists");
         }
@@ -331,7 +320,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
                                   "DataType is no allowed for InstanceAttributes: " + ODSHelper.dataType2String(dt));
         }
-        this.instanceAttributes.put(instAttr.valName, instAttr.value);
+        this.atfxCache.setInstanceAttributeValue(aid, iid, instAttr.valName, instAttr.value);
     }
 
     /**
@@ -340,11 +329,11 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#removeInstanceAttribute(java.lang.String)
      */
     public void removeInstanceAttribute(String attrName) throws AoException {
-        if (!this.instanceAttributes.containsKey(attrName)) {
+        if (this.atfxCache.getInstanceAttributeValue(aid, iid, attrName) == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceAttribute '" + attrName
                     + "' not found");
         }
-        this.instanceAttributes.remove(attrName);
+        this.atfxCache.removeInstanceAttribute(aid, iid, attrName);
     }
 
     /**
@@ -354,7 +343,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public void renameInstanceAttribute(String oldName, String newName) throws AoException {
         // check if attribute exists
-        if (!this.instanceAttributes.containsKey(oldName)) {
+        if (this.atfxCache.getInstanceAttributeValue(aid, iid, oldName) == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceAttribute '" + oldName
                     + "' not found");
         }
@@ -369,12 +358,14 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "An ApplicationAttribute with name '" + newName + "' already exists");
         }
         // check for existing instance attribute
-        if (this.instanceAttributes.containsKey(newName)) {
+        if (this.atfxCache.getInstanceAttributeValue(aid, iid, newName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "An InstanceAttribute with name '" + newName + "' already exists");
         }
         // rename
-        this.instanceAttributes.put(newName, this.instanceAttributes.get(oldName));
+        TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, oldName);
+        this.atfxCache.removeInstanceAttribute(aid, iid, oldName);
+        this.atfxCache.setInstanceAttributeValue(aid, iid, newName, value);
     }
 
     /***********************************************************************************
@@ -393,9 +384,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             for (InstanceElement ie : collectRelatedInstances(applRel, iePattern)) {
                 list.add(ie.getName());
             }
-            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.poa, list.toArray(new String[0]));
-            this.poa.activate_object(nIteratorImpl);
-            return NameIteratorHelper.narrow(this.poa.servant_to_reference(nIteratorImpl));
+            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.modelPOA, list.toArray(new String[0]));
+            this.modelPOA.activate_object(nIteratorImpl);
+            return NameIteratorHelper.narrow(this.modelPOA.servant_to_reference(nIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -418,9 +409,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             throws AoException {
         try {
             InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern).toArray(new InstanceElement[0]);
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.poa, ieAr);
-            this.poa.activate_object(ieIteratorImpl);
-            return InstanceElementIteratorHelper.narrow(this.poa.servant_to_reference(ieIteratorImpl));
+            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
+            this.modelPOA.activate_object(ieIteratorImpl);
+            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -446,7 +437,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
         List<InstanceElement> list = new ArrayList<InstanceElement>();
         for (long otherIid : this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel)) {
-            InstanceElement ie = this.atfxCache.getInstanceById(this.poa, otherAid, otherIid);
+            InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, otherAid, otherIid);
             if (ie != null && PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
                 list.add(ie);
             }
@@ -467,9 +458,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             for (InstanceElement ie : collectRelatedInstancesByRelationship(ieRelationship, iePattern)) {
                 list.add(ie.getName());
             }
-            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.poa, list.toArray(new String[0]));
-            this.poa.activate_object(nIteratorImpl);
-            return NameIteratorHelper.narrow(this.poa.servant_to_reference(nIteratorImpl));
+            NameIteratorImpl nIteratorImpl = new NameIteratorImpl(this.modelPOA, list.toArray(new String[0]));
+            this.modelPOA.activate_object(nIteratorImpl);
+            return NameIteratorHelper.narrow(this.modelPOA.servant_to_reference(nIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -491,12 +482,10 @@ class InstanceElementImpl extends InstanceElementPOA {
     public InstanceElementIterator getRelatedInstancesByRelationship(Relationship ieRelationship, String iePattern)
             throws AoException {
         try {
-            InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern)
-                                                                                                     .toArray(
-                                                                                                              new InstanceElement[0]);
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.poa, ieAr);
-            this.poa.activate_object(ieIteratorImpl);
-            return InstanceElementIteratorHelper.narrow(this.poa.servant_to_reference(ieIteratorImpl));
+            InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern).toArray(new InstanceElement[0]);
+            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
+            this.modelPOA.activate_object(ieIteratorImpl);
+            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
@@ -552,8 +541,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // check if inverse relation belongs to other instance application
         // element
-        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper
-                                                                                    .asJLong(applRel.getElem2().getId())) {
+        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2().getId())) {
             throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
                     + applRel.getInverseRelationName() + "' is not defined at application element '"
                     + instElem.getApplicationElement().getName() + "'");
@@ -605,7 +593,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         StringBuffer sb = new StringBuffer();
 
         // check if environment application element exists
-        InstanceElement envIe = this.atfxCache.getEnvironmentInstance(this.poa);
+        InstanceElement envIe = this.atfxCache.getEnvironmentInstance(this.modelPOA, this.instancePOA);
         if (envIe != null) {
             sb.append(buildAsamPathPart(envIe));
         }
@@ -626,8 +614,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             partSb.append(buildAsamPathPart(currentIe));
 
             // navigate to father
-            InstanceElementIterator fatherIeIter = currentIe
-                                                            .getRelatedInstancesByRelationship(Relationship.FATHER, "*");
+            InstanceElementIterator fatherIeIter = currentIe.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
             currentIe = (fatherIeIter.getCount() > 0) ? fatherIeIter.nextOne() : null;
             fatherIeIter.destroy();
 
@@ -678,14 +665,26 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#destroy()
      */
     public void destroy() throws AoException {
-    // do nothing
+        // do nothing
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.InstanceElementOperations#shallowCopy(java.lang.String, java.lang.String)
+     */
     public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {
+        InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
         return copyHelper.shallowCopy(this._this(), newName, newVersion);
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.InstanceElementOperations#deepCopy(java.lang.String, java.lang.String)
+     */
     public InstanceElement deepCopy(String newName, String newVersion) throws AoException {
+        InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
         return copyHelper.deepCopy(this._this(), newName, newVersion);
     }
 

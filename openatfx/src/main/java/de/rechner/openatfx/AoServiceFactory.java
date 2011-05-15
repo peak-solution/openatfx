@@ -115,13 +115,13 @@ public class AoServiceFactory {
             // read base structure
             BaseStructure baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
 
-            // create session POA
-            POA sessionPOA = createSessionPOA(orb);
+            // create POAs
+            POA modelPOA = createModelPOA(orb);
 
             // create AoSession object
-            AoSessionImpl aoSessionImpl = new AoSessionImpl(sessionPOA, atfxFile, baseStructure);
-            sessionPOA.activate_object(aoSessionImpl);
-            AoSession aoSession = AoSessionHelper.narrow(sessionPOA.servant_to_reference(aoSessionImpl));
+            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, atfxFile, baseStructure);
+            modelPOA.activate_object(aoSessionImpl);
+            AoSession aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
 
             return aoSession;
         } catch (ServantNotActive e) {
@@ -137,13 +137,13 @@ public class AoServiceFactory {
     }
 
     /**
-     * Creates a new POA for all elements for the session.
+     * Creates a new POA for all elements of the application structure for the session.
      * 
      * @param orb The ORB object.
      * @return The POA.
      * @throws AoException Error creating POA.
      */
-    private POA createSessionPOA(ORB orb) throws AoException {
+    private POA createModelPOA(ORB orb) throws AoException {
         try {
             String poaName = "AoSession.POA." + UUID.randomUUID().toString();
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));

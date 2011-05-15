@@ -64,6 +64,9 @@ public class AtfxWriter {
     /** The singleton instance */
     private static AtfxWriter instance;
 
+    /** cached model information for faster writing */
+    private ApplicationAttribute applAttrLocalColumnValues;
+
     /**
      * Non visible constructor.
      */
@@ -380,12 +383,17 @@ public class AtfxWriter {
     private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElemAccess aea, InstanceElement ie)
             throws XMLStreamException, AoException {
         ApplicationElement applElem = ie.getApplicationElement();
-        streamWriter.writeStartElement(applElem.getName());
+        String aeName = applElem.getName();
+        streamWriter.writeStartElement(aeName);
 
         // write application attribute data
         for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.APPLATTR_ONLY))) {
             if (nvu.value.flag == 15) {
-                writeApplAttrValue(streamWriter, applElem, nvu);
+                if (isLocalColumnValuesAttr(aeName, nvu.valName)) {
+                    System.out.println("WRITE LOCALCOLUMN VALUES");
+                } else {
+                    writeApplAttrValue(streamWriter, applElem, nvu);
+                }
             }
         }
 
@@ -669,6 +677,24 @@ public class AtfxWriter {
         }
 
         streamWriter.writeEndElement();
+    }
+
+    /**
+     * Returns whether given attribute name if the attribute 'values' of the local column instance.
+     * 
+     * @param aeName The application element name.
+     * @param name The instance name.
+     * @return True, if 'values' attribute.
+     * @throws AoException Error checking attribute.
+     */
+    private boolean isLocalColumnValuesAttr(String aeName, String name) throws AoException {
+        if (this.applAttrLocalColumnValues != null) {
+            if (this.applAttrLocalColumnValues.getName().equals(name)
+                    && this.applAttrLocalColumnValues.getApplicationElement().getName().equals(aeName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

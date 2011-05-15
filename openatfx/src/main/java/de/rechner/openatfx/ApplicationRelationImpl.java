@@ -2,7 +2,6 @@ package de.rechner.openatfx;
 
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationElement;
-import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationRelationPOA;
 import org.asam.ods.BaseRelation;
 import org.asam.ods.ErrorCode;
@@ -30,8 +29,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
     private String inverseRelationName;
     private RelationRange relationRange;
     private RelationType relationType;
-
-    private ApplicationRelation inverseRelation;
 
     /**
      * Constructor.
@@ -94,7 +91,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         }
 
         this.elem1 = applElem;
-        this.inverseRelation = null;
     }
 
     /**
@@ -113,7 +109,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public void setElem2(ApplicationElement applElem) throws AoException {
         this.elem2 = applElem;
-        this.inverseRelation = null;
     }
 
     /**
@@ -132,9 +127,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public void setRelationName(String arName) throws AoException {
         this.relationName = arName;
-        if (this.inverseRelation != null) {
-            this.inverseRelation.setInverseRelationName(arName);
-        }
     }
 
     /**
@@ -153,9 +145,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public void setInverseRelationName(String arInvName) throws AoException {
         this.inverseRelationName = arInvName;
-        if (this.inverseRelation != null) {
-            this.inverseRelation.setRelationName(arInvName);
-        }
     }
 
     /**

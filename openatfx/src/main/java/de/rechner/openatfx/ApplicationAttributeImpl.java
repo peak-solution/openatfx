@@ -10,10 +10,10 @@ import org.asam.ods.DataType;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
-import org.omg.PortableServer.POA;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -25,7 +25,6 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 class ApplicationAttributeImpl extends ApplicationAttributePOA {
 
-    private final POA poa;
     private final AtfxCache atfxCache;
     private final long aid;
 
@@ -43,12 +42,10 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
     /**
      * Constructor.
      * 
-     * @param poa The POA.
      * @param atfxCache The atfx cache.
      * @param aid The application element id.
      */
-    public ApplicationAttributeImpl(POA poa, AtfxCache atfxCache, long aid) {
-        this.poa = poa;
+    public ApplicationAttributeImpl(AtfxCache atfxCache, long aid) {
         this.atfxCache = atfxCache;
         this.aid = aid;
         this.dataType = DataType.DT_UNKNOWN;
@@ -182,12 +179,14 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                                   "Changing the datatype of an attribute derived from a base attribute is not allowed");
         }
         // check for existing instance values
-        for (InstanceElement ie : this.atfxCache.getInstances(this.poa, this.aid)) {
-            if (this.atfxCache.getInstanceValue(aid, ODSHelper.asJLong(ie.getId()), getName()) != null) {
+        InstanceElementIterator iter = getApplicationElement().getInstances("*");
+        for (InstanceElement ie : iter.nextN(iter.getCount())) {
+            if (ie.getValue(getName()).value.flag != 0) {
                 throw new AoException(ErrorCode.AO_HAS_INSTANCES, SeverityFlag.ERROR, 0,
                                       "Changing the datatype for application attribute with existing instances is not allowed");
             }
         }
+        iter.destroy();
         // change data type
         this.dataType = aaDataType;
         // set default length
