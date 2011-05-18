@@ -27,6 +27,8 @@ import de.rechner.openatfx.AoServiceFactory;
  */
 public class MemoryLeakTest {
 
+    private static final int NO_OF_TESTS = 0;
+
     private static AoFactory aoFactory;
 
     @BeforeClass
@@ -37,7 +39,7 @@ public class MemoryLeakTest {
 
     @Test
     public void testOneHundredThousandSessions() {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < NO_OF_TESTS; i++) {
             try {
                 URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
                 AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
@@ -56,4 +58,5 @@ public class MemoryLeakTest {
             }
         }
     }
+
 }
