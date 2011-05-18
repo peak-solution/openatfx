@@ -29,6 +29,7 @@
 		- Fixed FindBugs warnings.
 		- Changed CORBA pattern of InstanceElement objects to FlighWeight using a ServantLocator.
 		- Added memory leak detection test.
+		- Performed memory leak test with 100000 session.
 
 	0.1.2
 		

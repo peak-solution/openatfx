@@ -389,7 +389,7 @@ public class AtfxWriter {
         // write application attribute data
         for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.APPLATTR_ONLY))) {
             if (isLocalColumnValuesAttr(aeName, nvu.valName)) {
-                System.out.println("WRITE LOCALCOLUMN VALUES");
+
             } else if (nvu.value.flag == 15) {
                 writeApplAttrValue(streamWriter, applElem, nvu);
             }

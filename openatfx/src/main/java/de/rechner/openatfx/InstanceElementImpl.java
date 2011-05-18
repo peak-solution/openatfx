@@ -600,7 +600,7 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // collect a path parts recursively
         List<String> paths = new LinkedList<String>();
-        InstanceElement currentIe = _this();
+        InstanceElement currentIe = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
         while (currentIe != null) {
             StringBuffer partSb = new StringBuffer();
 

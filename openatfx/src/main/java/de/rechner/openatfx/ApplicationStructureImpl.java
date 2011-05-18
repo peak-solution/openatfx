@@ -493,21 +493,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
         Collection<ApplicationRelation> result = this.atfxCache.getApplicationRelations(ODSHelper.asJLong(applElem1.getId()));
         for (ApplicationRelation rel : result) {
-            // System.out.println("------------------START-------------------");
-            // System.out.println("Element: " + applElem1.getName() + " with '"
-            // + result.size() + "' relations");
-            // System.out.println("relation: " + rel.getRelationName() + " < > "
-            // + rel.getInverseRelationName());
-            // System.out.println("comparing elem1: '" +
-            // rel.getElem1().getName()
-            // + "' to '" + applElem1.getName() + "'");
-            // System.out.println("comparing elem2: '" +
-            // rel.getElem2().getName()
-            // + "' to '" + applElem2.getName() + "'");
-            // System.out.println("------------------END-------------------");
-            // System.out.println();
-            // System.out.println();
-            // System.out.flush();
             if (rel.getElem1().getName().equals(applElem1.getName())
                     && rel.getElem2().getName().equals(applElem2.getName())) {
                 list.add(rel);
