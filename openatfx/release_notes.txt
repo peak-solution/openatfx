@@ -27,8 +27,8 @@
 	0.1.3
 	
 		- Fixed FindBugs warnings.
-		- Fixed writing of explicit local column values back to ATFX.
 		- Changed CORBA pattern of InstanceElement objects to FlighWeight using a ServantLocator.
+		- Added memory leak detection test.
 
 	0.1.2
 		
@@ -46,7 +46,7 @@
 
 2. Known Bugs
 
-	- None
+	- Writing of explicit local column values back to ATFX does not work.
 	
 
 3. Future changes

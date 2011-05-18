@@ -3,12 +3,17 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIteratorPOA;
 import org.asam.ods.SeverityFlag;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ObjectNotActive;
+import org.omg.PortableServer.POAPackage.WrongAdapter;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 
 /**
@@ -18,7 +23,9 @@ import org.omg.PortableServer.POA;
  */
 class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
 
-    // private final POA poa;
+    private static final Log LOG = LogFactory.getLog(InstanceElementIteratorImpl.class);
+
+    private final POA poa;
     private final InstanceElement[] instanceElements;
     private int pointer;
 
@@ -29,7 +36,7 @@ class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
      * @param instanceElements The instance elements.
      */
     public InstanceElementIteratorImpl(POA poa, InstanceElement[] instanceElements) {
-        // this.poa = poa;
+        this.poa = poa;
         this.instanceElements = instanceElements;
         this.pointer = 0;
     }
@@ -89,19 +96,19 @@ class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
      * @see org.asam.ods.InstanceElementIteratorOperations#destroy()
      */
     public void destroy() throws AoException {
-        // try {
-        // byte[] id = poa.reference_to_id(_this_object());
-        // poa.deactivate_object(id);
-        // } catch (WrongAdapter e) {
-        // LOG.error(e.getMessage(), e);
-        // throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        // } catch (WrongPolicy e) {
-        // LOG.error(e.getMessage(), e);
-        // throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        // } catch (ObjectNotActive e) {
-        // LOG.error(e.getMessage(), e);
-        // throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        // }
+        try {
+            byte[] id = poa.reference_to_id(_this_object());
+            poa.deactivate_object(id);
+        } catch (WrongAdapter e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ObjectNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
 }
