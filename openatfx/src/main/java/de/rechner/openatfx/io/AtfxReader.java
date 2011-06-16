@@ -396,10 +396,10 @@ public class AtfxReader {
         Map<String, BaseAttribute> baseAttrMap = new HashMap<String, BaseAttribute>();
         Map<String, BaseRelation> baseRelMap = new HashMap<String, BaseRelation>();
         for (BaseAttribute baseAttr : applElem.getBaseElement().getAttributes("*")) {
-            baseAttrMap.put(baseAttr.getName(), baseAttr);
+            baseAttrMap.put(baseAttr.getName().toLowerCase(), baseAttr);
         }
         for (BaseRelation baseRel : applElem.getBaseElement().getAllRelations()) {
-            baseRelMap.put(baseRel.getRelationName(), baseRel);
+            baseRelMap.put(baseRel.getRelationName().toLowerCase(), baseRel);
         }
 
         // add to global map
@@ -602,7 +602,7 @@ public class AtfxReader {
 
         rel.setInverseRelationName(inverseRelName);
         if (brName != null && brName.length() > 0) {
-            BaseRelation baseRel = baseRelMap.get(brName);
+            BaseRelation baseRel = baseRelMap.get(brName.toLowerCase());
             if (baseRel == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "BaseRelation '" + brName
                         + "' not found'");

@@ -27,7 +27,7 @@ import de.rechner.openatfx.AoServiceFactory;
  */
 public class MemoryLeakTest {
 
-    private static final int NO_OF_TESTS = 100000;
+    private static final int NO_OF_TESTS = 0;
 
     private static AoFactory aoFactory;
 
@@ -76,7 +76,7 @@ public class MemoryLeakTest {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-            
+
         }
     }
 

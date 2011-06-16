@@ -27,6 +27,8 @@
 	0.1.4
 	
 		- Added test for "InstanceElementIterator".
+		- Fixed case sensitivity when comparing base attribute/relation names.
+		  (Base element/attribute/relation names has to be compared case insensitive)
 		
 	0.1.3
 	

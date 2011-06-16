@@ -11,7 +11,7 @@ import org.asam.ods.NameIteratorPOA;
 import org.asam.ods.SeverityFlag;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
-import org.omg.PortableServer.POAPackage.WrongAdapter;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 
@@ -96,15 +96,15 @@ class NameIteratorImpl extends NameIteratorPOA {
      */
     public void destroy() throws AoException {
         try {
-            byte[] id = poa.reference_to_id(_this_object());
+            byte[] id = poa.servant_to_id(this);
             poa.deactivate_object(id);
-        } catch (WrongAdapter e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ObjectNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
