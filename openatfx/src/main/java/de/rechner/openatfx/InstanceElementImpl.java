@@ -409,6 +409,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             throws AoException {
         try {
             InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern).toArray(new InstanceElement[0]);
+          
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
             this.modelPOA.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));

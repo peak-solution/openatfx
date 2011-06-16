@@ -145,7 +145,7 @@ public class AoServiceFactory {
      */
     private POA createModelPOA(ORB orb) throws AoException {
         try {
-            String poaName = "AoSession.POA." + UUID.randomUUID().toString();
+            String poaName = "AoSession.ModelPOA." + UUID.randomUUID().toString();
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             POA poa = rootPOA.create_POA(poaName,
                                          null,

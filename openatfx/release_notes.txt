@@ -24,6 +24,10 @@
 
 1. Changes
 
+	0.1.4
+	
+		- Added test for "InstanceElementIterator".
+		
 	0.1.3
 	
 		- Fixed FindBugs warnings.

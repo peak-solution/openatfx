@@ -27,7 +27,7 @@ import de.rechner.openatfx.AoServiceFactory;
  */
 public class MemoryLeakTest {
 
-    private static final int NO_OF_TESTS = 0;
+    private static final int NO_OF_TESTS = 100000;
 
     private static AoFactory aoFactory;
 
@@ -40,22 +40,43 @@ public class MemoryLeakTest {
     @Test
     public void testOneHundredThousandSessions() {
         for (int i = 0; i < NO_OF_TESTS; i++) {
-            try {
-                URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-                AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
-                for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
-                    InstanceElementIterator iter = ae.getInstances("*");
-                    for (InstanceElement ie : iter.nextN(iter.getCount())) {
-                        ie.getAsamPath();
-                        ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
-                    }
-                    iter.destroy();
-                }
+            AoSession[] sessions = new AoSession[5];
 
-                aoSession.close();
-            } catch (AoException e) {
-                fail(e.reason);
+            // open sessions
+            for (int x = 0; x < 5; x++) {
+                try {
+                    URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+                    sessions[x] = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+                    for (ApplicationElement ae : sessions[x].getApplicationStructure().getElements("*")) {
+                        InstanceElementIterator iter = ae.getInstances("*");
+                        for (InstanceElement ie : iter.nextN(iter.getCount())) {
+                            ie.getAsamPath();
+                            ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                        }
+                        iter.destroy();
+                    }
+                } catch (AoException e) {
+                    fail(e.reason);
+                }
             }
+
+            // close sessions
+            for (int x = 0; x < 5; x++) {
+                try {
+                    sessions[x].close();
+                } catch (AoException e) {
+                    fail(e.reason);
+                }
+            }
+
+            // wait
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            
         }
     }
 

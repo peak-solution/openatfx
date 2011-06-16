@@ -100,6 +100,7 @@ class AoSessionImpl extends AoSessionPOA {
     private final AtfxCache atfxCache;
 
     /** lazy loaded objects */
+    private POA instancePOA;
     private ApplicationStructure applicationStructure;
     private ApplElemAccess applElemAccess;
 
@@ -170,8 +171,7 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplicationStructure getApplicationStructure() throws AoException {
         try {
             if (this.applicationStructure == null) {
-                POA instancePOA = createInstancePOA();
-                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(this.modelPOA, instancePOA,
+                ApplicationStructureImpl asImpl = new ApplicationStructureImpl(this.modelPOA, getInstancePOA(),
                                                                                this.atfxCache, _this());
                 this.modelPOA.activate_object(asImpl);
                 this.applicationStructure = ApplicationStructureHelper.narrow(this.modelPOA.servant_to_reference(asImpl));
@@ -189,37 +189,39 @@ class AoSessionImpl extends AoSessionPOA {
         }
     }
 
-    private POA createInstancePOA() throws AoException {
-        try {
-            String poaName = "AoSession.InstancePOA." + UUID.randomUUID().toString();
-            POA poa = modelPOA.create_POA(poaName,
-                                          null,
-                                          new Policy[] {
-                                                  modelPOA.create_id_assignment_policy(IdAssignmentPolicyValue.USER_ID),
-                                                  modelPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
-                                                  modelPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
-                                                  modelPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.NO_IMPLICIT_ACTIVATION),
-                                                  modelPOA.create_servant_retention_policy(ServantRetentionPolicyValue.NON_RETAIN),
-                                                  modelPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_SERVANT_MANAGER),
-                                                  modelPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });
-            poa.set_servant_manager(new InstanceServantLocator(this.modelPOA, atfxCache));
-            poa.the_POAManager().activate();
+    private POA getInstancePOA() throws AoException {
+        if (this.instancePOA == null) {
+            try {
+                String poaName = "AoSession.InstancePOA." + UUID.randomUUID().toString();
+                this.instancePOA = this.modelPOA.create_POA(poaName,
+                                                            null,
+                                                            new Policy[] {
+                                                                    modelPOA.create_id_assignment_policy(IdAssignmentPolicyValue.USER_ID),
+                                                                    modelPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
+                                                                    modelPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
+                                                                    modelPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.NO_IMPLICIT_ACTIVATION),
+                                                                    modelPOA.create_servant_retention_policy(ServantRetentionPolicyValue.NON_RETAIN),
+                                                                    modelPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_SERVANT_MANAGER),
+                                                                    modelPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });
+                this.instancePOA.set_servant_manager(new InstanceServantLocator(this.modelPOA, atfxCache));
+                this.instancePOA.the_POAManager().activate();
 
-            LOG.debug("Created instance POA");
-            return poa;
-        } catch (AdapterAlreadyExists e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (InvalidPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (AdapterInactive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+                LOG.debug("Created instance POA");
+            } catch (AdapterAlreadyExists e) {
+                LOG.error(e.getMessage(), e);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+            } catch (InvalidPolicy e) {
+                LOG.error(e.getMessage(), e);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+            } catch (AdapterInactive e) {
+                LOG.error(e.getMessage(), e);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+            } catch (WrongPolicy e) {
+                LOG.error(e.getMessage(), e);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+            }
         }
+        return this.instancePOA;
     }
 
     /**
@@ -491,6 +493,9 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#close()
      */
     public void close() throws AoException {
+        if (this.instancePOA != null) {
+            this.instancePOA.destroy(false, true);
+        }
         this.modelPOA.destroy(false, false);
         LOG.info("Closed ATFX AoSession");
     }
