@@ -981,53 +981,53 @@ public class AtfxReader {
         value.flag = (short) 15;
         value.u = new TS_Union();
         while (!(reader.isEndElement() && reader.getLocalName().equals(aaName))) {
-            // DT_BLOB
+            // DS_BLOB
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BLOB)) {
                 AoSession aoSession = aa.getApplicationElement().getApplicationStructure().getSession();
                 value.u.blobVal(parseBlob(aoSession, AtfxTagConstants.VALUES_ATTR_BLOB, reader));
             }
-            // DT_BOOLEAN
+            // DS_BOOLEAN
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BOOLEAN)) {
                 value.u.booleanSeq(AtfxParseUtil.parseBooleanSeq(reader.getElementText()));
             }
-            // DT_COMPLEX
+            // DS_COMPLEX
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_COMPLEX32)) {
                 value.u.complexSeq(AtfxParseUtil.parseComplexSeq(reader.getElementText()));
             }
-            // DT_DCOMPLEX
+            // DS_DCOMPLEX
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_COMPLEX64)) {
                 value.u.dcomplexSeq(AtfxParseUtil.parseDComplexSeq(reader.getElementText()));
             }
-            // DT_EXTERNALREFERENCE
+            // DS_EXTERNALREFERENCE
             else if (reader.isStartElement()
                     && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE)) {
                 value.u.extRefSeq(parseExtRefs(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE, reader));
             }
-            // DT_BYTE
+            // DS_BYTE
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BYTEFIELD)) {
                 value.u.byteSeq(AtfxParseUtil.parseByteSeq(reader.getElementText()));
             }
-            // DT_SHORT
+            // DS_SHORT
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_INT16)) {
                 value.u.shortSeq(AtfxParseUtil.parseShortSeq(reader.getElementText()));
             }
-            // DT_LONG
+            // DS_LONG
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_INT32)) {
                 value.u.longSeq(AtfxParseUtil.parseLongSeq(reader.getElementText()));
             }
-            // DT_LONGLONG
+            // DS_LONGLONG
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_INT64)) {
                 value.u.longlongSeq(AtfxParseUtil.parseLongLongSeq(reader.getElementText()));
             }
-            // DT_FLOAT
+            // DS_FLOAT
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_FLOAT32)) {
                 value.u.floatSeq(AtfxParseUtil.parseFloatSeq(reader.getElementText()));
             }
-            // DT_DOUBLE
+            // DS_DOUBLE
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_FLOAT64)) {
                 value.u.doubleSeq(AtfxParseUtil.parseDoubleSeq(reader.getElementText()));
             }
-            // DT_DATE
+            // DS_DATE
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_TIMESTRING)) {
                 String input = reader.getElementText().trim();
                 String[] dateSeq = new String[0];
@@ -1036,7 +1036,7 @@ public class AtfxReader {
                 }
                 value.u.dateSeq(dateSeq);
             }
-            // DT_STRING
+            // DS_STRING
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_UTF8STRING)) {
                 value.u.stringSeq(parseStringSeq(AtfxTagConstants.VALUES_ATTR_UTF8STRING, reader));
             }

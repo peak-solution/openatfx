@@ -65,7 +65,8 @@ public class AtfxWriter {
     private static AtfxWriter instance;
 
     /** cached model information for faster writing */
-    private ApplicationAttribute applAttrLocalColumnValues;
+    private ApplElem applElemLocalColumn;
+    private ApplAttr applAttrLocalColumnValues;
 
     /**
      * Non visible constructor.
@@ -79,7 +80,9 @@ public class AtfxWriter {
      * @param aoSession The session.
      * @throws AoException Error writing XML file.
      */
-    public void writeXML(File xmlFile, AoSession aoSession) throws AoException {
+    public synchronized void writeXML(File xmlFile, AoSession aoSession) throws AoException {
+        this.applElemLocalColumn = null;
+        this.applAttrLocalColumnValues = null;
         long start = System.currentTimeMillis();
 
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
@@ -143,7 +146,7 @@ public class AtfxWriter {
         writeElement(streamWriter, AtfxTagConstants.EXPORTED_BY, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORTER, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORT_DATETIME, ODSHelper.getCurrentODSDate());
-        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "1.0.0");
+        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.1.4");
         streamWriter.writeEndElement();
     }
 
@@ -257,6 +260,11 @@ public class AtfxWriter {
         // application attributes
         for (ApplAttr applAttr : applElem.attributes) {
             writeApplAttr(streamWriter, aid, applAttr, eas);
+            // set global attributes
+            if (applElem.beName.equalsIgnoreCase("AoLocalColumn") && applAttr.baName.equalsIgnoreCase("values")) {
+                this.applElemLocalColumn = applElem;
+                this.applAttrLocalColumnValues = applAttr;
+            }
         }
 
         // applicaton relations
@@ -305,7 +313,7 @@ public class AtfxWriter {
             writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_OBLIGATORY, String.valueOf(applAttr.isObligatory));
         }
         // unique
-        if (!applAttr.baName.equals("id") && applAttr.isUnique) {
+        if (!applAttr.baName.equalsIgnoreCase("id") && applAttr.isUnique) {
             writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_UNIQUE, String.valueOf(applAttr.isUnique));
         }
         // length
@@ -313,6 +321,11 @@ public class AtfxWriter {
                 || applAttr.dType == DataType.DT_EXTERNALREFERENCE || applAttr.dType == DataType.DS_EXTERNALREFERENCE
                 || applAttr.dType == DataType.DT_DATE || applAttr.dType == DataType.DS_DATE) {
             writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_LENGTH, String.valueOf(applAttr.length));
+        }
+        // unit
+        long unitId = ODSHelper.asJLong(applAttr.unitId);
+        if (unitId != 0) {
+            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_UNIT, String.valueOf(unitId));
         }
         streamWriter.writeEndElement();
     }
@@ -389,7 +402,7 @@ public class AtfxWriter {
         // write application attribute data
         for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.APPLATTR_ONLY))) {
             if (isLocalColumnValuesAttr(aeName, nvu.valName)) {
-
+                writeLocalColumnValues(streamWriter, nvu);
             } else if (nvu.value.flag == 15) {
                 writeApplAttrValue(streamWriter, applElem, nvu);
             }
@@ -678,6 +691,103 @@ public class AtfxWriter {
     }
 
     /**
+     * Writes LocalColumn values to the XML stream.
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param nvu The values.
+     * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading instance data.
+     */
+    private void writeLocalColumnValues(XMLStreamWriter streamWriter, NameValueUnit nvu) throws XMLStreamException,
+            AoException {
+        streamWriter.writeStartElement(nvu.valName);
+
+        
+        TS_Union u = nvu.value.u;
+        DataType dataType = u.discriminator();
+        
+        // DS_BOOLEAN
+        if (dataType == DataType.DS_BOOLEAN) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_BOOLEAN);
+            streamWriter.writeCharacters(AtfxExportUtil.createBooleanSeqString(u.booleanSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_COMPLEX
+        else if (dataType == DataType.DS_COMPLEX) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_COMPLEX32);
+            streamWriter.writeCharacters(AtfxExportUtil.createComplexSeqString(u.complexSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_DCOMPLEX
+        else if (dataType == DataType.DS_DCOMPLEX) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_COMPLEX64);
+            streamWriter.writeCharacters(AtfxExportUtil.createDComplexSeqString(u.dcomplexSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dataType == DataType.DS_EXTERNALREFERENCE) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE);
+            writeExtRefs(streamWriter, u.extRefSeq());
+            streamWriter.writeEndElement();
+        }
+        // DS_BYTE
+        else if (dataType == DataType.DS_BYTE) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_BYTEFIELD);
+            streamWriter.writeCharacters(AtfxExportUtil.createByteSeqString(u.byteSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_SHORT
+        else if (dataType == DataType.DS_SHORT) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_INT16);
+            streamWriter.writeCharacters(AtfxExportUtil.createShortSeqString(u.shortSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_LONG
+        else if (dataType == DataType.DS_LONG) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_INT32);
+            streamWriter.writeCharacters(AtfxExportUtil.createLongSeqString(u.longSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_LONGLONG
+        else if (dataType == DataType.DS_LONGLONG) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_INT64);
+            streamWriter.writeCharacters(AtfxExportUtil.createLongLongSeqString(u.longlongSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_FLOAT
+        else if (dataType == DataType.DS_FLOAT) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_FLOAT32);
+            streamWriter.writeCharacters(AtfxExportUtil.createFloatSeqString(u.floatSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_DOUBLE
+        else if (dataType == DataType.DS_DOUBLE) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_FLOAT64);
+            streamWriter.writeCharacters(AtfxExportUtil.createDoubleSeqString(u.doubleSeq()));
+            streamWriter.writeEndElement();
+        }
+        // DS_DATE
+        else if (dataType == DataType.DS_DATE) {
+            // TODO!!!
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_TIMESTRING);
+            streamWriter.writeEndElement();
+        }
+        // DS_STRING
+        else if (dataType == DataType.DS_STRING) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_UTF8STRING);
+            writeStringSeq(streamWriter, u.stringSeq());
+            streamWriter.writeEndElement();
+        }
+        // not supported
+        else {
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                  "Unsupported local column 'values' datatype: " + dataType);
+        }
+
+        streamWriter.writeEndElement();
+    }
+
+    /**
      * Returns whether given attribute name if the attribute 'values' of the local column instance.
      * 
      * @param aeName The application element name.
@@ -686,9 +796,9 @@ public class AtfxWriter {
      * @throws AoException Error checking attribute.
      */
     private boolean isLocalColumnValuesAttr(String aeName, String name) throws AoException {
-        if (this.applAttrLocalColumnValues != null) {
-            if (this.applAttrLocalColumnValues.getName().equals(name)
-                    && this.applAttrLocalColumnValues.getApplicationElement().getName().equals(aeName)) {
+        if (this.applAttrLocalColumnValues != null && this.applElemLocalColumn != null) {
+            if (this.applAttrLocalColumnValues.aaName.equalsIgnoreCase(name)
+                    && this.applElemLocalColumn.aeName.equalsIgnoreCase(aeName)) {
                 return true;
             }
         }
