@@ -270,4 +270,21 @@ abstract class AtfxExportUtil {
         return sb.toString();
     }
 
+    /**
+     * Returns the ATFX string representation of a date sequence.
+     * 
+     * @param dAr The sequence of ODS date values.
+     * @return The string.
+     */
+    public static String createDateSeqString(String[] dAr) {
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < dAr.length; i++) {
+            sb.append(dAr[i]);
+            if (i < dAr.length - 1) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
+    }
+
 }

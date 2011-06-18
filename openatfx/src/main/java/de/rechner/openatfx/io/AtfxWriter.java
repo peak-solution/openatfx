@@ -702,10 +702,9 @@ public class AtfxWriter {
             AoException {
         streamWriter.writeStartElement(nvu.valName);
 
-        
         TS_Union u = nvu.value.u;
         DataType dataType = u.discriminator();
-        
+
         // DS_BOOLEAN
         if (dataType == DataType.DS_BOOLEAN) {
             streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_BOOLEAN);
@@ -768,8 +767,8 @@ public class AtfxWriter {
         }
         // DS_DATE
         else if (dataType == DataType.DS_DATE) {
-            // TODO!!!
             streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_TIMESTRING);
+            streamWriter.writeCharacters(AtfxExportUtil.createDateSeqString(u.dateSeq()));
             streamWriter.writeEndElement();
         }
         // DS_STRING

@@ -117,4 +117,9 @@ public class AtfxExportUtilTest {
                              new T_DCOMPLEX(3.4, 4.5) }));
     }
 
+    @Test
+    public void testCreateDateSeqString() {
+        assertEquals("20100101 20110101", AtfxExportUtil.createDateSeqString(new String[] { "20100101", "20110101" }));
+    }
+
 }

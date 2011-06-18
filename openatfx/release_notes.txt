@@ -54,11 +54,11 @@
 
 2. Known Bugs
 
-	- Writing of explicit local column values back to ATFX does not work.
-	
+	- None
 
 3. Future changes
 
-	- None planned
+	- Reading mass data from external files.
+	- Writing mass data to external files.
 	
 	
