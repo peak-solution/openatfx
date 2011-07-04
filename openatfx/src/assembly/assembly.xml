@@ -15,6 +15,7 @@
 			<outputDirectory>/</outputDirectory>
 			<includes>
 				<include>release_notes.txt</include>
+				<include>pom.xml</include>
 			</includes>
 		</fileSet>
 		<fileSet>

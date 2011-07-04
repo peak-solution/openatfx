@@ -18,14 +18,15 @@
 
 0. Contents
 	
-	These are the release notes of the MeDaMAk action request handler for DBC file upload package.
-	It can be used with a MDM framework version min. 4.3.0.
+	These are the release notes of the openATFX library.
 	
 
 1. Changes
 
 	0.1.4
 	
+		- Ident XML output if context parameter "INDENT_XML=YES".
+		- Omit writing of "<instance_data>" section if not instances available.
 		- Added test for "InstanceElementIterator".
 		- Fixed case sensitivity when comparing base attribute/relation names.
 		  (Base element/attribute/relation names has to be compared case insensitive)
@@ -60,5 +61,3 @@
 
 	- Reading mass data from external files.
 	- Writing mass data to external files.
-	
-	

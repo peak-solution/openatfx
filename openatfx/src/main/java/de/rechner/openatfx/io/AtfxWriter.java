@@ -42,6 +42,8 @@ import org.asam.ods.EnumerationStructure;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.NameValue;
+import org.asam.ods.NameValueIterator;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
@@ -62,7 +64,7 @@ public class AtfxWriter {
     private static final Log LOG = LogFactory.getLog(AtfxWriter.class);
 
     /** The singleton instance */
-    private static AtfxWriter instance;
+    private static volatile AtfxWriter instance;
 
     /** cached model information for faster writing */
     private ApplElem applElemLocalColumn;
@@ -91,8 +93,11 @@ public class AtfxWriter {
         try {
             fos = new BufferedOutputStream(new FileOutputStream(xmlFile));
             streamWriter = factory.createXMLStreamWriter(fos, "UTF-8");
-            streamWriter.writeStartDocument("UTF-8", "1.0");
+            if (shouldIndentXML(aoSession)) {
+                streamWriter = new IndentingXMLStreamWriter(streamWriter);
+            }
 
+            streamWriter.writeStartDocument("UTF-8", "1.0");
             streamWriter.writeStartElement(AtfxTagConstants.ATFX_FILE);
             streamWriter.writeAttribute("version", "atfx_file: V1.2.0");
             streamWriter.writeAttribute("xmlns", "http://www.asam.net/ODS/5.2.0/Schema");
@@ -105,7 +110,9 @@ public class AtfxWriter {
             // application model
             writeApplicationModel(streamWriter, aoSession);
             // instance data
-            writeInstanceData(streamWriter, aoSession);
+            if (instancesExists(aoSession)) {
+                writeInstanceData(streamWriter, aoSession);
+            }
 
             streamWriter.writeEndElement();
             streamWriter.writeEndDocument();
@@ -133,6 +140,44 @@ public class AtfxWriter {
         }
 
         LOG.info("Wrote XML in " + (System.currentTimeMillis() - start) + "ms to '" + xmlFile.getAbsolutePath() + "'");
+    }
+
+    /**
+     * Returns whether to indent the aoSession depending on the value of the context parameter 'INDENT_XML'.
+     * 
+     * @param aoSession The session.
+     * @return Whether to indent the XML.
+     * @throws AoException Error querying context parameters.
+     */
+    private boolean shouldIndentXML(AoSession aoSession) throws AoException {
+        NameValueIterator ni = aoSession.getContext("INDENT_XML");
+        boolean indent = false;
+        for (NameValue nv : ni.nextN(ni.getCount())) {
+            if (nv.value.u.stringVal().equalsIgnoreCase("TRUE")) {
+                indent = true;
+            }
+        }
+        ni.destroy();
+        return indent;
+    }
+
+    /**
+     * Returns whether a single instance exists in given session.
+     * 
+     * @param aoSession The session.
+     * @return True if a single instance exists.
+     * @throws AoException Error querying instances.
+     */
+    private boolean instancesExists(AoSession aoSession) throws AoException {
+        for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
+            InstanceElementIterator iter = ae.getInstances("*");
+            if (iter.getCount() > 0) {
+                iter.destroy();
+                return true;
+            }
+            iter.destroy();
+        }
+        return false;
     }
 
     /**

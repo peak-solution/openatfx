@@ -18,6 +18,11 @@ public static void main(String[] args) {
     }
 }
 
+Implementation specific ASAM ODS context parameter
+-------------------------------------------------- 
+
+INDENT_XML: Whether to ident the XML on output. Possible values are "TRUE" or "FALSE", default is true.
+
 Known bugs/missing features:
 ----------------------------
 - The ATFX file is read completely into memory
