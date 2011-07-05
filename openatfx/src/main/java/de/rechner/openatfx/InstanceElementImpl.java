@@ -409,7 +409,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             throws AoException {
         try {
             InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern).toArray(new InstanceElement[0]);
-          
+
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
             this.modelPOA.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
@@ -676,7 +676,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {
         InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
-        return copyHelper.shallowCopy(this._this(), newName, newVersion);
+        InstanceElement ieToCopy = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
+        return copyHelper.shallowCopy(ieToCopy, newName, newVersion);
     }
 
     /**
@@ -686,7 +687,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElement deepCopy(String newName, String newVersion) throws AoException {
         InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
-        return copyHelper.deepCopy(this._this(), newName, newVersion);
+        InstanceElement ieToCopy = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
+        return copyHelper.deepCopy(ieToCopy, newName, newVersion);
     }
 
     /**

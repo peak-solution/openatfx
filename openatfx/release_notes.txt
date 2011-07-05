@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.1.5
+	
+		- Fixed session close problem with JacORB.
+
 	0.1.4
 	
 		- Ident XML output if context parameter "INDENT_XML=YES".

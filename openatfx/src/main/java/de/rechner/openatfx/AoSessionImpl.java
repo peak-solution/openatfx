@@ -495,7 +495,7 @@ class AoSessionImpl extends AoSessionPOA {
      */
     public void close() throws AoException {
         if (this.instancePOA != null) {
-            this.instancePOA.destroy(false, true);
+            this.instancePOA.destroy(false, false);
         }
         this.modelPOA.destroy(false, false);
         LOG.info("Closed ATFX AoSession");
