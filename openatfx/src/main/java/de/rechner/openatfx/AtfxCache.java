@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
@@ -118,8 +119,8 @@ class AtfxCache {
         this.applicationAttributeMap.put(aid, new LinkedHashMap<String, ApplicationAttribute>());
         this.applicationRelationMap.put(aid, new ArrayList<ApplicationRelation>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
-        this.instanceValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
-        this.instanceAttrValueMap.put(aid, new HashMap<Long, Map<String, TS_Value>>());
+        this.instanceValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
+        this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
         if (applElems == null) {

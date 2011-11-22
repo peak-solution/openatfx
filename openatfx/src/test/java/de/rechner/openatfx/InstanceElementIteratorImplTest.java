@@ -63,10 +63,10 @@ public class InstanceElementIteratorImplTest {
     public void testNextOne() {
         try {
             InstanceElement ie = this.instanceElementIterator.nextOne();
-            assertEquals("Setting Travel.NF.Gas Pedal", ie.getName());
+            assertEquals("LS.Right Side", ie.getName());
 
             ie = this.instanceElementIterator.nextOne();
-            assertEquals("Driving Speed.NF.Distance/Speed", ie.getName());
+            assertEquals("Time", ie.getName());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -77,7 +77,7 @@ public class InstanceElementIteratorImplTest {
         try {
             InstanceElement[] ies = this.instanceElementIterator.nextN(3);
             assertEquals(3, ies.length);
-            assertEquals("Setting Travel.NF.Gas Pedal", ies[0].getName());
+            assertEquals("LS.Right Side", ies[0].getName());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -87,12 +87,12 @@ public class InstanceElementIteratorImplTest {
     public void testReset() {
         try {
             InstanceElement ie = this.instanceElementIterator.nextOne();
-            assertEquals("Setting Travel.NF.Gas Pedal", ie.getName());
+            assertEquals("LS.Right Side", ie.getName());
 
             this.instanceElementIterator.reset();
 
             ie = this.instanceElementIterator.nextOne();
-            assertEquals("Setting Travel.NF.Gas Pedal", ie.getName());
+            assertEquals("LS.Right Side", ie.getName());
         } catch (AoException e) {
             fail(e.reason);
         }

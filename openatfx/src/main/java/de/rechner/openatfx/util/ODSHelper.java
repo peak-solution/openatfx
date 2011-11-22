@@ -2548,6 +2548,10 @@ public abstract class ODSHelper {
         } else if (str.equals("Many")) {
             return (short) -1;
         }
+        // workaround for wrong DIAdem ATFX files
+        else if (str.equals("100")) {
+            return (short) 1;
+        }
         throw new IllegalArgumentException("Unknown relation range: " + str);
     }
 

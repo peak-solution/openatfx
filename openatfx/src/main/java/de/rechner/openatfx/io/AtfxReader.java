@@ -257,6 +257,14 @@ public class AtfxReader {
             reader.next();
         }
 
+        ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
+        if (aes.length < 1) {
+            applRelElem2Map.putAll(implicitCreateAoExternalComponent(as));
+        } else if (aes.length > 1) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Multiple application elements of type 'AoExternalComponent' found");
+        }
+
         // create missing inverse relations
         createMissingInverseRelations(as, applRelElem2Map);
 
@@ -264,6 +272,50 @@ public class AtfxReader {
         for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
             entry.getKey().setElem2(as.getElementByName(entry.getValue()));
         }
+    }
+
+    /**
+     * Creates implicitly an application element of type "AoExternalComponent" including all relations.
+     * 
+     * @param as The application structure.
+     * @return The map containing the application relation as key, the elem2 name as value.
+     * @throws AoException Error creating application element.
+     */
+    private Map<ApplicationRelation, String> implicitCreateAoExternalComponent(ApplicationStructure as)
+            throws AoException {
+        LOG.warn("No application element of type 'AoExternalComponent' found, creating dummy");
+        Map<ApplicationRelation, String> applRel2Elem2Map = new HashMap<ApplicationRelation, String>();
+
+        // create application element
+        BaseStructure bs = as.getSession().getBaseStructure();
+        BaseElement beExtComp = bs.getElementByType("AoExternalComponent");
+        ApplicationElement aeExtComp = as.createElement(beExtComp);
+        aeExtComp.setName("ec");
+
+        // create relation to LocalColumn
+        ApplicationElement[] aeLCs = as.getElementsByBaseType("AoLocalColumn");
+        if (aeLCs.length != 1) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "None or multiple application elements of type 'AoLocalColumn' found");
+        }
+        ApplicationElement aeLC = aeLCs[0];
+        ApplicationRelation rel = as.createRelation();
+        rel.setElem1(aeLC);
+        rel.setElem2(aeExtComp);
+        rel.setBaseRelation(bs.getRelation(aeLC.getBaseElement(), beExtComp));
+        rel.setRelationName("rel_lc");
+        rel.setInverseRelationName("rel_ec");
+        applRel2Elem2Map.put(rel, aeExtComp.getName());
+
+        ApplicationRelation invRel = as.createRelation();
+        invRel.setElem1(aeExtComp);
+        invRel.setElem2(aeLC);
+        invRel.setBaseRelation(bs.getRelation(beExtComp, aeLC.getBaseElement()));
+        invRel.setRelationName("rel_ec");
+        invRel.setInverseRelationName("rel_lc");
+        applRel2Elem2Map.put(invRel, aeLC.getName());
+
+        return applRel2Elem2Map;
     }
 
     /**
@@ -911,11 +963,12 @@ public class AtfxReader {
 
         // create attribute values of external component
         ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
+        ApplicationElement aeExtComp = null;
         if (aes.length != 1) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "None or multiple application elements of type 'AoExternalComponent' found");
         }
-        ApplicationElement aeExtComp = aes[0];
+        aeExtComp = aes[0];
 
         // collect base attributes and map to application attributes
         Map<String, String> baseAttrMap = new HashMap<String, String>();

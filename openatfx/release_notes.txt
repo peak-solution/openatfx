@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.1.6
+	
+		- Added workaround to read DIAdem ATFX files having the wrong relation range (100).
+		- Added implicit creation of the application element 'AoExternalComponent', if missing.
+
 	0.1.5
 	
 		- Fixed session close problem with JacORB.

@@ -277,11 +277,11 @@ public class AoSessionImplTest {
      */
     @Test
     public void testCommitTransaction() {
-//        try {
-//        	aoSession.commitTransaction();
-//        } catch (AoException e) {
-//        	fail(e.reason);
-//        }
+        // try {
+        // aoSession.commitTransaction();
+        // } catch (AoException e) {
+        // fail(e.reason);
+        // }
     }
 
     /**
