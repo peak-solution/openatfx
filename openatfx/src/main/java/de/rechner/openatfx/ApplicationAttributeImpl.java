@@ -1,5 +1,10 @@
 package de.rechner.openatfx;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
@@ -24,6 +29,55 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class ApplicationAttributeImpl extends ApplicationAttributePOA {
+
+    /**
+     * this map contains the names of all base attributes that are defined as 'non optional' in the ods specification
+     * and their respective base element names. this workaround is necessary, because while the ods spec has two
+     * distinct flags 'optional' and 'mandatory' for each attribute, the ods interface does not. thus this
+     * implementation returns 'true' for isObligatory() whenever one of the attribute names below is encountered.
+     * additionally, it does not permit the obligatory flag to be set to 'false' for those attributes.
+     */
+    private static final Map<String, List<String>> obligatoryAttributes;
+
+    static {
+        obligatoryAttributes = new HashMap<String, List<String>>();
+        obligatoryAttributes.put("id", null); // all application elements
+        obligatoryAttributes.put("name", null); // all application elements
+        obligatoryAttributes.put("external_references", Arrays.asList(new String[] { "AoEnvironment", "AoNameMap",
+                "AoAttributeMap", "AoQuantity", "AoUnit", "AoPhysicalDimension", "AoQuantityGroup", "AoUnitGroup",
+                "AoMeasurement", "AoMeasurementQuantity", "AoSubmatrix", "AoLocalColumn", "AoExternalComponent",
+                "AoTest", "AoSubTest", "AoUnitUnderTest", "AoUnitUnderTestPart", "AoTestSequence",
+                "AoTestSequencePart", "AoTestEquipment", "AoTestEquipmentPart", "AoTestDevice", "AoUser",
+                "AoUserGroup", "AoAny", "AoLog", "AoParameter", "AoParameterSet" }));
+        obligatoryAttributes.put("meaning_of_aliases", Arrays.asList(new String[] { "AoEnvironment" }));
+        obligatoryAttributes.put("entity_name", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
+        obligatoryAttributes.put("alias_names", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
+        obligatoryAttributes.put("default_dimension", Arrays.asList(new String[] { "AoQuantity" }));
+        obligatoryAttributes.put("factor", Arrays.asList(new String[] { "AoUnit" }));
+        obligatoryAttributes.put("offset", Arrays.asList(new String[] { "AoUnit" }));
+        obligatoryAttributes.put("length_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("mass_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("time_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("current_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("temperature_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("molar_amount_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("luminous_intensity_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
+        obligatoryAttributes.put("datatype", Arrays.asList(new String[] { "AoMeasurementQuantity" }));
+        obligatoryAttributes.put("dimension", Arrays.asList(new String[] { "AoMeasurementQuantity" }));
+        obligatoryAttributes.put("number_of_rows", Arrays.asList(new String[] { "AoSubmatrix" }));
+        obligatoryAttributes.put("flags", Arrays.asList(new String[] { "AoLocalColumn" }));
+        obligatoryAttributes.put("independent", Arrays.asList(new String[] { "AoLocalColumn" }));
+        obligatoryAttributes.put("sequence_representation", Arrays.asList(new String[] { "AoLocalColumn" }));
+        obligatoryAttributes.put("generation_parameters", Arrays.asList(new String[] { "AoLocalColumn" }));
+        obligatoryAttributes.put("component_length", Arrays.asList(new String[] { "AoExternalComponent" }));
+        obligatoryAttributes.put("filename_url", Arrays.asList(new String[] { "AoExternalComponent" }));
+        obligatoryAttributes.put("value_type", Arrays.asList(new String[] { "AoExternalComponent" }));
+        obligatoryAttributes.put("password", Arrays.asList(new String[] { "AoUser" }));
+        obligatoryAttributes.put("superuser_flag", Arrays.asList(new String[] { "AoUserGroup" }));
+        obligatoryAttributes.put("date", Arrays.asList(new String[] { "AoLog" }));
+        obligatoryAttributes.put("parameter_datatype", Arrays.asList(new String[] { "AoParameter" }));
+        obligatoryAttributes.put("pvalue", Arrays.asList(new String[] { "AoParameter" }));
+    }
 
     private final AtfxCache atfxCache;
     private final long aid;
@@ -242,6 +296,20 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#isObligatory()
      */
     public boolean isObligatory() throws AoException {
+        // if the base attribute is obligatory, always return true
+        if (this.baseAttribute != null) {
+            String baseAttributeName = this.baseAttribute.getName();
+            String baseElementName = this.baseAttribute.getBaseElement().getType();
+            if (obligatoryAttributes.containsKey(baseAttributeName)) {
+                if (obligatoryAttributes.get(baseAttributeName) == null) {
+                    // attribute is obligatory in every application element
+                    return true;
+                } else if (obligatoryAttributes.get(baseAttributeName).contains(baseElementName)) {
+                    // attribute is obligatory in the application element this attribute belongs to
+                    return true;
+                }
+            }
+        }
         return this.obligatory;
     }
 
@@ -254,10 +322,25 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         if (this.obligatory == aaIsObligatory) {
             return;
         }
+
         // obligatory flag of obligatory base attribute is not reducable
-        if (this.baseAttribute != null && this.baseAttribute.isObligatory() && !aaIsObligatory) {
+        boolean mustBeObligatory = false;
+        if (this.baseAttribute != null) {
+            String baseAttributeName = this.baseAttribute.getName();
+            String baseElementName = this.baseAttribute.getBaseElement().getType();
+            if (obligatoryAttributes.containsKey(baseAttributeName)) {
+                if (obligatoryAttributes.get(baseAttributeName) == null) {
+                    // attribute is obligatory in every application element
+                    mustBeObligatory = true;
+                } else if (obligatoryAttributes.get(baseAttributeName).contains(baseElementName)) {
+                    // attribute is obligatory in the application element this attribute belongs to
+                    mustBeObligatory = true;
+                }
+            }
+        }
+        if (mustBeObligatory && !aaIsObligatory) {
             throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
-                                  "Unable to set obligatory flag for application attribute derived from a base attribute");
+                                  "Unable to set obligatory flag to 'false' for application attribute derived from an obligatory base attribute.");
         }
         this.obligatory = aaIsObligatory;
     }
@@ -330,7 +413,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#withUnit(boolean)
      */
     public void withUnit(boolean withUnit) throws AoException {
-        // nothing to do
+    // nothing to do
     }
 
     /**

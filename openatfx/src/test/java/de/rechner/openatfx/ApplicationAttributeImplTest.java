@@ -33,6 +33,7 @@ public class ApplicationAttributeImplTest {
     private static AoSession aoSession;
     private static ApplicationAttribute aaId;
     private static ApplicationAttribute aaDB;
+    private static ApplicationAttribute aaMT;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -43,6 +44,7 @@ public class ApplicationAttributeImplTest {
         ApplicationElement applicationElement = applicationStructure.getElementByName("unt");
         aaId = applicationElement.getAttributeByBaseName("id");
         aaDB = applicationElement.getAttributeByName("dB");
+        aaMT = applicationElement.getAttributeByName("mt");
     }
 
     @AfterClass
@@ -201,6 +203,8 @@ public class ApplicationAttributeImplTest {
         try {
             assertEquals(true, aaId.isObligatory());
             assertEquals(false, aaDB.isObligatory());
+            assertEquals(true, aoSession.getApplicationStructure().getElementByName("measurement_location")
+                                        .getAttributeByName("location_shape_id").isObligatory());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -211,6 +215,9 @@ public class ApplicationAttributeImplTest {
         try {
             aaId.setIsObligatory(false);
             fail("AoException expected");
+            aaDB.setIsObligatory(false);
+            assertEquals(false, aaDB.isObligatory());
+            assertEquals(true, aaMT.isObligatory());
         } catch (AoException e) {
         }
     }
@@ -265,7 +272,7 @@ public class ApplicationAttributeImplTest {
 
     @Test
     public void testWithUnit() {
-        // nothing to do
+    // nothing to do
     }
 
     @Test

@@ -2668,4 +2668,272 @@ public abstract class ODSHelper {
         return (byte) ((Character.digit(s.charAt(0), 16) << 4) + Character.digit(s.charAt(1), 16));
     }
 
+    /**
+     * Converts an array of TS_Value to a single TS_ValueSeq. All elements in the array must not be null and have the
+     * same DataType.
+     * 
+     * @param tsValues the array of TS_Value
+     * @return the created TS_ValueSeq
+     * @throws AoException if one or more of the array elements are null or one or more of the elements have a different
+     *             DataType than the rest.
+     */
+    public static TS_ValueSeq tsValue2ts_valueSeq(TS_Value[] tsValues) throws AoException {
+        DataType dt = null;
+
+        for (int row = 0; row < tsValues.length; row++) {
+            if (tsValues[row] == null) {
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Null reference found on index '" + row + "'");
+            } else {
+                if (dt == null) {
+                    dt = tsValues[row].u.discriminator();
+                } else {
+                    if (!dt.equals(tsValues[row].u.discriminator())) {
+                        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                              "Found more than one DataType for result column '" + tsValues[row] + "'");
+                    }
+                }
+            }
+        }
+
+        TS_UnionSeq seq = new TS_UnionSeq();
+
+        if (dt == DataType.DS_BOOLEAN) {
+            boolean[][] val = new boolean[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.booleanSeq();
+            }
+            seq.booleanSeq(val);
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            byte[][] val = new byte[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.byteSeq();
+            }
+            seq.byteSeq(val);
+        }
+        // DS_BYTESTR
+        else if (dt == DataType.DS_BYTESTR) {
+            byte[][][] val = new byte[tsValues.length][][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.bytestrSeq();
+            }
+            seq.bytestrSeq(val);
+        }
+        // DS_COMPLEX
+        else if (dt == DataType.DS_COMPLEX) {
+            T_COMPLEX[][] val = new T_COMPLEX[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.complexSeq();
+            }
+            seq.complexSeq(val);
+        }
+        // DS_DATE
+        else if (dt == DataType.DS_DATE) {
+            String[][] val = new String[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.dateSeq();
+            }
+            seq.dateSeq(val);
+        }
+        // DS_DCOMPLEX
+        else if (dt == DataType.DS_DCOMPLEX) {
+            T_DCOMPLEX[][] val = new T_DCOMPLEX[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.dcomplexSeq();
+            }
+            seq.dcomplexSeq(val);
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            double[][] val = new double[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.doubleSeq();
+            }
+            seq.doubleSeq(val);
+        }
+        // DS_ENUM
+        else if (dt == DataType.DS_ENUM) {
+            int[][] val = new int[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.enumSeq();
+            }
+            seq.enumSeq(val);
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dt == DataType.DS_EXTERNALREFERENCE) {
+            T_ExternalReference[][] val = new T_ExternalReference[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.extRefSeq();
+            }
+            seq.extRefSeq(val);
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            float[][] val = new float[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.floatSeq();
+            }
+            seq.floatSeq(val);
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            int[][] val = new int[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.longSeq();
+            }
+            seq.longSeq(val);
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            T_LONGLONG[][] val = new T_LONGLONG[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.longlongSeq();
+            }
+            seq.longlongSeq(val);
+        }
+        // DS_SHORT
+        else if (dt == DataType.DS_SHORT) {
+            short[][] val = new short[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.shortSeq();
+            }
+            seq.shortSeq(val);
+        }
+        // DS_STRING
+        else if (dt == DataType.DS_STRING) {
+            String[][] val = new String[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.stringSeq();
+            }
+            seq.stringSeq(val);
+        }
+        // DT_BOOLEAN
+        else if (dt == DataType.DT_BOOLEAN) {
+            boolean[] val = new boolean[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.booleanVal();
+            }
+            seq.booleanVal(val);
+        }
+        // DT_BYTE
+        else if (dt == DataType.DT_BYTE) {
+            byte[] val = new byte[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.byteVal();
+            }
+            seq.byteVal(val);
+        }
+        // DT_BYTESTR
+        else if (dt == DataType.DT_BYTESTR) {
+            byte[][] val = new byte[tsValues.length][];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.bytestrVal();
+            }
+            seq.bytestrVal(val);
+        }
+        // DT_COMPLEX
+        else if (dt == DataType.DT_COMPLEX) {
+            T_COMPLEX[] val = new T_COMPLEX[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.complexVal();
+            }
+            seq.complexVal(val);
+        }
+        // DT_DATE
+        else if (dt == DataType.DT_DATE) {
+            String[] val = new String[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.dateVal();
+            }
+            seq.dateVal(val);
+        }
+        // DT_DCOMPLEX
+        else if (dt == DataType.DT_DCOMPLEX) {
+            T_DCOMPLEX[] val = new T_DCOMPLEX[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.dcomplexVal();
+            }
+            seq.dcomplexVal(val);
+        }
+        // DT_DOUBLE
+        else if (dt == DataType.DT_DOUBLE) {
+            double[] val = new double[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.doubleVal();
+            }
+            seq.doubleVal(val);
+        }
+        // DT_ENUM
+        else if (dt == DataType.DT_ENUM) {
+            int[] val = new int[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.enumVal();
+            }
+            seq.enumVal(val);
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dt == DataType.DT_EXTERNALREFERENCE) {
+            T_ExternalReference[] val = new T_ExternalReference[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.extRefVal();
+            }
+            seq.extRefVal(val);
+        }
+        // DT_FLOAT
+        else if (dt == DataType.DT_FLOAT) {
+            float[] val = new float[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.floatVal();
+            }
+            seq.floatVal(val);
+        }
+        // DT_LONG
+        else if (dt == DataType.DT_LONG) {
+            int[] val = new int[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.longVal();
+            }
+            seq.longVal(val);
+        }
+        // DT_LONGLONG
+        else if (dt == DataType.DT_LONGLONG) {
+            T_LONGLONG[] val = new T_LONGLONG[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.longlongVal();
+            }
+            seq.longlongVal(val);
+        }
+        // DT_SHORT
+        else if (dt == DataType.DT_SHORT) {
+            short[] val = new short[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.shortVal();
+            }
+            seq.shortVal(val);
+        }
+        // DT_STRING
+        else if (dt == DataType.DT_STRING) {
+            String[] val = new String[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.stringVal();
+            }
+            seq.stringVal(val);
+        }
+        // Cannot process given DataType
+        else {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported DataType '" + dt
+                    + "'");
+        }
+
+        short[] flags = new short[ODSHelper.tsUnionSeqLength(seq)];
+        for (int i = 0; i < flags.length; i++) {
+            flags[i] = tsValues[i].flag;
+        }
+
+        TS_ValueSeq result = new TS_ValueSeq(seq, flags);
+        return result;
+    }
+
 }

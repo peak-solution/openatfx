@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.1.7
+	
+		- Added limited query implementation.
+		- Application attributes will now always be considered obligatory, if base attribute is defined as non-optional in the ODS 5.2 specification.
+
 	0.1.6
 	
 		- Added workaround to read DIAdem ATFX files having the wrong relation range (100).

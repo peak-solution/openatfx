@@ -9,13 +9,24 @@ import java.net.URL;
 import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AIDName;
+import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
+import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplElemAccess;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.JoinDef;
+import org.asam.ods.QueryStructureExt;
+import org.asam.ods.ResultSetExt;
+import org.asam.ods.SelAIDNameUnitId;
+import org.asam.ods.SelItem;
+import org.asam.ods.SelOpcode;
+import org.asam.ods.SelOrder;
+import org.asam.ods.SelValueExt;
 import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
@@ -120,10 +131,11 @@ public class ApplElemAccessImplTest {
             assertEquals(0,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dsk_iid").length);
             // mea->audifahrzeug_iid
-            assertEquals(1,
-                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifahrzeug_iid").length);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "audifahrzeug_iid").length);
             // mea->audifm_iid
-            assertEquals(1,
+            assertEquals(
+                         1,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifm_iid").length);
 
         } catch (AoException e) {
@@ -133,78 +145,108 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testSetRelInst() {
-        // try {
-        // applElemAccess.getRelInst(null, null);
-        // fail("AoException expected");
-        // } catch (AoException e) {
-        // assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
-        // }
+    // try {
+    // applElemAccess.getRelInst(null, null);
+    // fail("AoException expected");
+    // } catch (AoException e) {
+    // assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+    // }
     }
 
     @Test
     public void testGetInstances() {
-
+        try {
+            applElemAccess.getInstances(null, 0);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test
     public void testGetInstancesExt() {
-        // try {
-        // ApplicationStructure as = aoSession.getApplicationStructure();
-        // T_LONGLONG aidMeq = as.getElementByName("meq").getId();
-        // T_LONGLONG aidDts = as.getElementByName("dts").getId();
-        // T_LONGLONG aidUnt = as.getElementByName("unt").getId();
-        // T_LONGLONG aidDevice = as.getElementByName("device").getId();
-        //
-        // // 1: empty query
-        // QueryStructureExt qse = new QueryStructureExt();
-        // qse.anuSeq = new SelAIDNameUnitId[0];
-        // qse.joinSeq = new JoinDef[0];
-        // qse.condSeq = new SelItem[0];
-        // qse.groupBy = new AIDName[0];
-        // qse.orderBy = new SelOrder[0];
-        // ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
-        // assertEquals(0, resSetExt[0].firstElems.length);
-        //
-        // // 2. only 'SELECT' with same application element
-        // qse.anuSeq = new SelAIDNameUnitId[2];
-        // qse.anuSeq[0] = new SelAIDNameUnitId();
-        // qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
-        // qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
-        // qse.anuSeq[0].aggregate = AggrFunc.NONE;
-        // qse.anuSeq[1] = new SelAIDNameUnitId();
-        // qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
-        // qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
-        // qse.anuSeq[1].aggregate = AggrFunc.NONE;
-        // resSetExt = applElemAccess.getInstancesExt(qse, 0);
-        // assertEquals(1, resSetExt[0].firstElems.length); // no of aes
-        // assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
-        // assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
-        // assertEquals(14, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
-        // assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
-        //
-        // // 3. add a join to parent and to children with default join
-        // // qse.joinSeq = new JoinDef[3];
-        // // qse.joinSeq[0] = new JoinDef();
-        // // qse.joinSeq[0].fromAID = aidDts; // dts
-        // // qse.joinSeq[0].toAID = aidMeq; // meq
-        // // qse.joinSeq[0].refName = "dts_iid";
-        // // qse.joinSeq[0].joiningType = JoinType.JTDEFAULT;
-        // // qse.joinSeq[1] = new JoinDef();
-        // // qse.joinSeq[1].fromAID = aidMeq; // meq
-        // // qse.joinSeq[1].toAID = aidUnt; // unt
-        // // qse.joinSeq[1].refName = "unt_iid";
-        // // qse.joinSeq[1].joiningType = JoinType.JTDEFAULT;
-        // // qse.joinSeq[2] = new JoinDef();
-        // // qse.joinSeq[2].fromAID = aidMeq; // meq
-        // // qse.joinSeq[2].toAID = aidDevice; // device
-        // // qse.joinSeq[2].refName = "device_iid";
-        // // qse.joinSeq[2].joiningType = JoinType.JTDEFAULT;
-        // // resSetExt = applElemAccess.getInstancesExt(qse, 0);
-        // // assertEquals(1, resSetExt[0].firstElems.length); // no of aes
-        //
-        // } catch (AoException e) {
-        // fail(e.reason);
-        // }
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+            // T_LONGLONG aidDts = as.getElementByName("dts").getId();
+            // T_LONGLONG aidUnt = as.getElementByName("unt").getId();
+            // T_LONGLONG aidDevice = as.getElementByName("device").getId();
+
+            // 1: empty query
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[0];
+            qse.joinSeq = new JoinDef[0];
+            qse.condSeq = new SelItem[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(0, resSetExt[0].firstElems.length);
+
+            // 2. only 'SELECT' with same application element
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(14, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+
+            // 3. put in a condition
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aidMeq, "iname"), new T_LONGLONG());
+            selValue.oper = SelOpcode.CI_LIKE;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_STRING, "LS.*");
+            qse.condSeq[0].value(selValue);
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(4, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            // the value of the aodt attribute
+            assertEquals(DataType.DT_FLOAT.value(), resSetExt[0].firstElems[0].values[1].value.u.enumVal()[0]);
+
+            // 3. add a join to parent and to children with default join
+            // qse.joinSeq = new JoinDef[3];
+            // qse.joinSeq[0] = new JoinDef();
+            // qse.joinSeq[0].fromAID = aidDts; // dts
+            // qse.joinSeq[0].toAID = aidMeq; // meq
+            // qse.joinSeq[0].refName = "dts_iid";
+            // qse.joinSeq[0].joiningType = JoinType.JTDEFAULT;
+            // qse.joinSeq[1] = new JoinDef();
+            // qse.joinSeq[1].fromAID = aidMeq; // meq
+            // qse.joinSeq[1].toAID = aidUnt; // unt
+            // qse.joinSeq[1].refName = "unt_iid";
+            // qse.joinSeq[1].joiningType = JoinType.JTDEFAULT;
+            // qse.joinSeq[2] = new JoinDef();
+            // qse.joinSeq[2].fromAID = aidMeq; // meq
+            // qse.joinSeq[2].toAID = aidDevice; // device
+            // qse.joinSeq[2].refName = "device_iid";
+            // qse.joinSeq[2].joiningType = JoinType.JTDEFAULT;
+            // resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            // assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     @Test

@@ -20,6 +20,7 @@ import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
+import org.asam.ods.TS_ValueSeq;
 import org.omg.PortableServer.POA;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -618,6 +619,28 @@ class AtfxCache {
      */
     public TS_Value getInstanceAttributeValue(long aid, long iid, String attrName) {
         return instanceAttrValueMap.get(aid).get(iid).get(attrName);
+    }
+
+    /**
+     * Returns all values of an instance attribute of a given list of instances.
+     * 
+     * @param aid the application element id
+     * @param iids the array of instance ids
+     * @param attrName the attribute name
+     * @return TS_ValueSeq containing all values, or null, if one or more of the instances do not possess the instance
+     *         attribute.
+     * @throws AoException if the conversion from tsValue array to tsValueSeq fails
+     */
+    public TS_ValueSeq listInstanceValues(long aid, long[] iids, String attrName) throws AoException {
+        TS_Value[] tsValues = new TS_Value[iids.length];
+        for (int index = 0; index < iids.length; index++) {
+            TS_Value value = getInstanceValue(aid, iids[index], attrName);
+            if (value == null) {
+                return null;
+            }
+            tsValues[index] = value;
+        }
+        return ODSHelper.tsValue2ts_valueSeq(tsValues);
     }
 
     public void removeInstanceAttribute(long aid, long iid, String attrName) {
