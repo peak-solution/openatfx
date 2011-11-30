@@ -55,7 +55,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<String> list = new ArrayList<String>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
+            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCI(type, bePattern)) {
                 list.add(type);
             }
         }
@@ -71,7 +71,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<BaseElement> list = new ArrayList<BaseElement>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
+            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCI(type, bePattern)) {
                 list.add(baseElement);
             }
         }
@@ -87,7 +87,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<String> list = new ArrayList<String>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
+            if (PatternUtil.nameFilterMatchCI(type, bePattern)) {
                 list.add(type);
             }
         }
@@ -103,7 +103,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<BaseElement> list = new ArrayList<BaseElement>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
+            if (PatternUtil.nameFilterMatchCI(type, bePattern)) {
                 list.add(baseElement);
             }
         }

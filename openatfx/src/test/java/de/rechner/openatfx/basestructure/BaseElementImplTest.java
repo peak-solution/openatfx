@@ -63,6 +63,8 @@ public class BaseElementImplTest {
             assertEquals(10, baseElement.listAttributes("*").length);
             assertEquals(2, baseElement.listAttributes("v*").length);
             assertEquals(2, baseElement.listAttributes("V*").length);
+            assertEquals(1, baseElement.listAttributes("NaM?").length);
+            assertEquals(0, baseElement.listAttributes("NaasdM?").length);
         } catch (AoException e) {
             fail(e.reason);
         }

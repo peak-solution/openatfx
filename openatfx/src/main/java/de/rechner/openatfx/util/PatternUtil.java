@@ -2,7 +2,6 @@ package de.rechner.openatfx.util;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
@@ -53,26 +52,6 @@ public abstract class PatternUtil {
 
         String regex = wildcardToRegex(pattern);
         return Pattern.matches(regex, value);
-    }
-
-    /**
-     * Checks if given value string matches the given pattern.<br>
-     * The pattern may contain '*' and '?'.<br>
-     * The lookup will be performed case insensitive.
-     * 
-     * @param value the value
-     * @param pattern the pattern to match
-     * @return true if matches, otherwise false
-     */
-    public static boolean nameFilterMatchCaseInsensitive(String value, String pattern) {
-        if (pattern.equals("*")) {
-            return true;
-        }
-
-        String regex = wildcardToRegex(pattern);
-        Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-        Matcher matcher = p.matcher(value);
-        return matcher.matches();
     }
 
     /**
