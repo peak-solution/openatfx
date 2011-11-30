@@ -23,10 +23,11 @@
 
 1. Changes
 
-	0.1.7
+	0.1.7 (Florian Steinberger, Christian Rechner)
 	
 		- Added limited query implementation.
 		- Application attributes will now always be considered obligatory, if base attribute is defined as non-optional in the ODS 5.2 specification.
+		- Fixed case insensitive lookup of base elements.
 
 	0.1.6
 	

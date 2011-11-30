@@ -55,7 +55,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<String> list = new ArrayList<String>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatch(type, bePattern)) {
+            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
                 list.add(type);
             }
         }
@@ -71,7 +71,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<BaseElement> list = new ArrayList<BaseElement>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatch(type, bePattern)) {
+            if (baseElement.isTopLevel() && PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
                 list.add(baseElement);
             }
         }
@@ -87,7 +87,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<String> list = new ArrayList<String>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (PatternUtil.nameFilterMatch(type, bePattern)) {
+            if (PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
                 list.add(type);
             }
         }
@@ -103,7 +103,7 @@ class BaseStructureImpl extends BaseStructurePOA {
         List<BaseElement> list = new ArrayList<BaseElement>();
         for (BaseElement baseElement : this.baseElements) {
             String type = baseElement.getType();
-            if (PatternUtil.nameFilterMatch(type, bePattern)) {
+            if (PatternUtil.nameFilterMatchCaseInsensitive(type, bePattern)) {
                 list.add(baseElement);
             }
         }
@@ -117,7 +117,7 @@ class BaseStructureImpl extends BaseStructurePOA {
      */
     public BaseElement getElementByType(String beType) throws AoException {
         for (BaseElement baseElement : this.baseElements) {
-            if (baseElement.getType().equals(beType)) {
+            if (baseElement.getType().equalsIgnoreCase(beType)) {
                 return baseElement;
             }
         }

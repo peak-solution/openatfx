@@ -48,6 +48,7 @@ public class BaseStructureImplTest {
         try {
             assertEquals(16, baseStructure.listTopLevelElements("*").length);
             assertEquals(3, baseStructure.listTopLevelElements("AoUnit*").length);
+            assertEquals(3, baseStructure.listTopLevelElements("AOuNIT*").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -60,8 +61,10 @@ public class BaseStructureImplTest {
     @Test
     public void testGetTopLevelElements() {
         try {
+            assertEquals(0, baseStructure.getTopLevelElements("unknown").length);
             assertEquals(16, baseStructure.getTopLevelElements("*").length);
             assertEquals(3, baseStructure.getTopLevelElements("AoUnit*").length);
+            assertEquals(2, baseStructure.getTopLevelElements("*tES?").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -75,6 +78,9 @@ public class BaseStructureImplTest {
         try {
             assertEquals(28, baseStructure.listElements("*").length);
             assertEquals(4, baseStructure.listElements("AoUnit*").length);
+            // test case insensitivity of base element lookup
+            assertEquals(1, baseStructure.listElements("aoquantityg*").length);
+            assertEquals(9, baseStructure.listElements("*TEST*").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -88,6 +94,7 @@ public class BaseStructureImplTest {
         try {
             assertEquals(28, baseStructure.getElements("*").length);
             assertEquals(4, baseStructure.getElements("AoUnit*").length);
+            assertEquals(2, baseStructure.getElements("a?param*").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -102,6 +109,10 @@ public class BaseStructureImplTest {
             assertEquals("AoMeasurement", baseStructure.getElementByType("AoMeasurement").getType());
             assertEquals(false, baseStructure.getElementByType("AoMeasurement").isTopLevel());
             assertEquals(true, baseStructure.getElementByType("AoTest").isTopLevel());
+            // test case insensitivity of base element lookup methods
+            assertEquals("AoUnit", baseStructure.getElementByType("AOUNIT").getType());
+            assertEquals("AoQuantity", baseStructure.getElementByType("aoquantity").getType());
+            assertEquals("AoParameter", baseStructure.getElementByType("AoparAMetER").getType());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -115,8 +126,8 @@ public class BaseStructureImplTest {
     @Test
     public void testGetRelation() {
         try {
-            BaseElement be1 = baseStructure.getElementByType("AoMeasurement");
-            BaseElement be2 = baseStructure.getElementByType("AoMeasurementQuantity");
+            BaseElement be1 = baseStructure.getElementByType("aoMeasurement");
+            BaseElement be2 = baseStructure.getElementByType("AOMeasurementQUANTITY");
             assertEquals("measurement_quantities", baseStructure.getRelation(be1, be2).getRelationName());
         } catch (AoException e) {
             fail(e.reason);
