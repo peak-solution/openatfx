@@ -199,8 +199,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @throws AoException Error checking application attribute.
      */
     private boolean isExternalComponentValue(String aaName) throws AoException {
-        String bType = this.getApplicationElement().getBaseElement().getType();
-        if (bType.equals("AoLocalColumn")) {
+        Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(aid)) {
             ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
             if (aa != null) {
                 if (aa.getName().equals(aaName)) {
@@ -223,15 +223,11 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueSeq(java.lang.String[])
      */
     public NameValueUnit[] getValueSeq(String[] attrNames) throws AoException {
-        List<NameValueUnit> list = new ArrayList<NameValueUnit>();
-        for (String attrName : attrNames) {
-            if (this.isExternalComponentValue(attrName)) {
-                // do not throw an exception, just ignore
-                continue;
-            }
-            list.add(getValue(attrName));
+        NameValueUnit[] values = new NameValueUnit[attrNames.length];
+        for (int i = 0; i < attrNames.length; i++) {
+            values[i] = getValue(attrNames[i]);
         }
-        return list.toArray(new NameValueUnit[0]);
+        return values;
     }
 
     /**
@@ -240,10 +236,6 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueByBaseName(java.lang.String)
      */
     public NameValueUnit getValueByBaseName(String baseAttrName) throws AoException {
-        if (this.isExternalComponentValue(baseAttrName)) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "Reading of external components is not yet implemented");
-        }
         ApplicationAttribute aa = getApplicationElement().getAttributeByBaseName(baseAttrName);
         return getValue(aa.getName());
     }

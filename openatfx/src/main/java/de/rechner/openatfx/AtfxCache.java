@@ -208,6 +208,16 @@ class AtfxCache {
         this.instanceElementCache.remove(aid);
     }
 
+    /**
+     * Return the application element ids for given base element type.
+     * 
+     * @param baseType The base type (must be written in lowercase!)
+     * @return Set of application element ids, may be null.
+     */
+    public Set<Long> getAidsByBaseType(String baseType) {
+        return this.beToAidMap.get(baseType);
+    }
+
     /***********************************************************************************
      * application attributes
      ***********************************************************************************/
