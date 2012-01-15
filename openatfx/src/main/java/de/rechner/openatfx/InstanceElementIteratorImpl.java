@@ -1,6 +1,6 @@
 package de.rechner.openatfx;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -56,7 +56,7 @@ class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
      * @see org.asam.ods.InstanceElementIteratorOperations#nextN(int)
      */
     public InstanceElement[] nextN(int how_many) throws AoException {
-        List<InstanceElement> list = new ArrayList<InstanceElement>();
+        List<InstanceElement> list = new LinkedList<InstanceElement>();
         for (int i = pointer; i < how_many; i++) {
             if (i >= this.instanceElements.length) {
                 break;

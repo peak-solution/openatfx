@@ -158,7 +158,11 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // instance attributes
         if (aType != AttrType.APPLATTR_ONLY) {
-            list.addAll(this.atfxCache.listInstanceAttributes(aid, iid));
+            for (String iaName : this.atfxCache.listInstanceAttributes(aid, iid)) {
+                if (PatternUtil.nameFilterMatch(iaName, iaPattern)) {
+                    list.add(iaName);
+                }
+            }
         }
         return list.toArray(new String[0]);
     }

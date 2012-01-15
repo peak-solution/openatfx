@@ -26,6 +26,7 @@
 	0.1.8 (Christian Rechner)
 	
 		- Performance tuning in method "getInstances" for pattern "*".
+		- Bugfix: Pattern of method "listAttributes" has not been taken into account for instance attributes.
 
 	0.1.7 (Florian Steinberger, Christian Rechner)
 	

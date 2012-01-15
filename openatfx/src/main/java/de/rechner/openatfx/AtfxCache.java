@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -464,7 +465,7 @@ class AtfxCache {
      * @throws AoException Error lazy create CORBA instance element.
      */
     public Collection<InstanceElement> getInstances(POA modelPOA, POA instancePOA, long aid) throws AoException {
-        List<InstanceElement> list = new ArrayList<InstanceElement>();
+        List<InstanceElement> list = new LinkedList<InstanceElement>();
         for (long iid : this.instanceValueMap.get(aid).keySet()) {
             list.add(getInstanceById(modelPOA, instancePOA, aid, iid));
         }

@@ -130,9 +130,12 @@ public class InstanceElementImplTest {
 
             // test listing of instance attributes
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
+
             assertEquals(7, ieDts.listAttributes("*", AttrType.ALL).length);
             assertEquals(6, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
             assertEquals(1, ieDts.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+            assertEquals(1, ieDts.listAttributes("instattr*", AttrType.INSTATTR_ONLY).length);
+            assertEquals(0, ieDts.listAttributes("xxx", AttrType.INSTATTR_ONLY).length);
             ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
