@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -440,13 +441,24 @@ class InstanceElementImpl extends InstanceElementPOA {
     private Collection<InstanceElement> collectRelatedInstances(ApplicationRelation applRel, String iePattern)
             throws AoException {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
-        List<InstanceElement> list = new ArrayList<InstanceElement>();
-        for (long otherIid : this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel)) {
-            InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, otherAid, otherIid);
-            if (ie != null && PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
-                list.add(ie);
+        Set<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
+
+        List<InstanceElement> list;
+        if (iePattern.equals("*")) {
+            list = new ArrayList<InstanceElement>(otherIids.size());
+            for (long otherIid : otherIids) {
+                list.add(this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid));
+            }
+        } else {
+            list = new ArrayList<InstanceElement>();
+            for (long otherIid : otherIids) {
+                InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid);
+                if (ie != null && PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
+                    list.add(ie);
+                }
             }
         }
+
         return list;
     }
 
@@ -605,7 +617,7 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // collect a path parts recursively
         List<String> paths = new LinkedList<String>();
-        InstanceElement currentIe = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
+        InstanceElement currentIe = this.atfxCache.getInstanceById(instancePOA, aid, iid);
         while (currentIe != null) {
             StringBuffer partSb = new StringBuffer();
 
@@ -680,7 +692,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElement shallowCopy(String newName, String newVersion) throws AoException {
         InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
-        InstanceElement ieToCopy = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
+        InstanceElement ieToCopy = this.atfxCache.getInstanceById(instancePOA, aid, iid);
         return copyHelper.shallowCopy(ieToCopy, newName, newVersion);
     }
 
@@ -691,7 +703,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElement deepCopy(String newName, String newVersion) throws AoException {
         InstanceElementCopyHelper copyHelper = new InstanceElementCopyHelper(atfxCache);
-        InstanceElement ieToCopy = this.atfxCache.getInstanceById(modelPOA, instancePOA, aid, iid);
+        InstanceElement ieToCopy = this.atfxCache.getInstanceById(instancePOA, aid, iid);
         return copyHelper.deepCopy(ieToCopy, newName, newVersion);
     }
 

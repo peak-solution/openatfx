@@ -405,7 +405,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         long iid = this.atfxCache.nextIid(this.aid);
         this.atfxCache.addInstance(this.aid, iid);
         this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
-        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
         ie.setName(ieName);
         return ie;
     }
@@ -481,8 +481,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#getInstanceById(org.asam.ods.T_LONGLONG)
      */
     public InstanceElement getInstanceById(T_LONGLONG ieId) throws AoException {
-        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid,
-                                                            ODSHelper.asJLong(ieId));
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, ODSHelper.asJLong(ieId));
         if (ie == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
@@ -530,12 +529,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public void removeInstance(T_LONGLONG ieId, boolean recursive) throws AoException {
         // check if instance exists
         long iid = ODSHelper.asJLong(ieId);
-        if (this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid) == null) {
+        if (this.atfxCache.getInstanceById(this.instancePOA, aid, iid) == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
                     + ODSHelper.asJLong(ieId) + " not found");
         }
         // remove recursively
-        InstanceElement ie = this.atfxCache.getInstanceById(this.modelPOA, this.instancePOA, aid, iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
         if (recursive) {
             InstanceElementIterator iter = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
             InstanceElement[] instances = iter.nextN(iter.getCount());

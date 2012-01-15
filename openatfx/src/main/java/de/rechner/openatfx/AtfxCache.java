@@ -441,7 +441,7 @@ class AtfxCache {
      * @return The instance element, null if not found.
      * @throws AoException Error lazy create CORBA instance element.
      */
-    public InstanceElement getInstanceById(POA modelPOA, POA instancePOA, long aid, long iid) throws AoException {
+    public InstanceElement getInstanceById(POA instancePOA, long aid, long iid) throws AoException {
         if (this.instanceExists(aid, iid)) {
             StringBuffer sb = new StringBuffer();
             sb.append(aid);
@@ -467,7 +467,7 @@ class AtfxCache {
     public Collection<InstanceElement> getInstances(POA modelPOA, POA instancePOA, long aid) throws AoException {
         List<InstanceElement> list = new LinkedList<InstanceElement>();
         for (long iid : this.instanceValueMap.get(aid).keySet()) {
-            list.add(getInstanceById(modelPOA, instancePOA, aid, iid));
+            list.add(getInstanceById(instancePOA, aid, iid));
         }
         return list;
     }

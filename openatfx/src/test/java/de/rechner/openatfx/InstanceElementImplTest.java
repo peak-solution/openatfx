@@ -446,7 +446,7 @@ public class InstanceElementImplTest {
             ApplicationElement aeDts = as.getElementByName("dts");
             ApplicationElement aePas = as.getElementByName("pas");
             ApplicationRelation applRel = as.getRelations(aeDts, aePas)[0];
-            assertEquals(1, ieDts.getRelatedInstances(applRel, "*").getCount());
+            assertEquals(1, ieDts.getRelatedInstances(applRel, "bas*").getCount());
             // pas->dts
             InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
             applRel = as.getRelations(aePas, aeDts)[0];
