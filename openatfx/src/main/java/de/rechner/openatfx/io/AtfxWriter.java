@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,12 +64,13 @@ public class AtfxWriter {
 
     private static final Log LOG = LogFactory.getLog(AtfxWriter.class);
 
-    /** The singleton instance */
+    /** singleton instance */
     private static volatile AtfxWriter instance;
 
-    /** cached model information for faster writing */
-    private ApplElem applElemLocalColumn;
-    private ApplAttr applAttrLocalColumnValues;
+    /** model information for writing local column values */
+    private Long aidLocalColumn;
+    private String aaNameLocalColumnValues;
+    private String aaNameLocalColumnSequenceRepresentation;
 
     /**
      * Non visible constructor.
@@ -83,8 +85,9 @@ public class AtfxWriter {
      * @throws AoException Error writing XML file.
      */
     public synchronized void writeXML(File xmlFile, AoSession aoSession) throws AoException {
-        this.applElemLocalColumn = null;
-        this.applAttrLocalColumnValues = null;
+        this.aidLocalColumn = null;
+        this.aaNameLocalColumnValues = null;
+        this.aaNameLocalColumnSequenceRepresentation = null;
         long start = System.currentTimeMillis();
 
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
@@ -306,9 +309,13 @@ public class AtfxWriter {
         for (ApplAttr applAttr : applElem.attributes) {
             writeApplAttr(streamWriter, aid, applAttr, eas);
             // set global attributes
-            if (applElem.beName.equalsIgnoreCase("AoLocalColumn") && applAttr.baName.equalsIgnoreCase("values")) {
-                this.applElemLocalColumn = applElem;
-                this.applAttrLocalColumnValues = applAttr;
+            if (applElem.beName.equalsIgnoreCase("AoLocalColumn")) {
+                this.aidLocalColumn = ODSHelper.asJLong(applElem.aid);
+                if (applAttr.baName.equalsIgnoreCase("values")) {
+                    this.aaNameLocalColumnValues = applAttr.aaName;
+                } else if (applAttr.baName.equalsIgnoreCase("sequence_representation")) {
+                    this.aaNameLocalColumnSequenceRepresentation = applAttr.aaName;
+                }
             }
         }
 
@@ -441,16 +448,30 @@ public class AtfxWriter {
     private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElemAccess aea, InstanceElement ie)
             throws XMLStreamException, AoException {
         ApplicationElement applElem = ie.getApplicationElement();
-        String aeName = applElem.getName();
-        streamWriter.writeStartElement(aeName);
+        long aid = ODSHelper.asJLong(applElem.getId());
+        streamWriter.writeStartElement(applElem.getName());
 
         // write application attribute data
-        for (NameValueUnit nvu : ie.getValueSeq(ie.listAttributes("*", AttrType.APPLATTR_ONLY))) {
-            if (isLocalColumnValuesAttr(aeName, nvu.valName)) {
-                writeLocalColumnValues(streamWriter, nvu);
-            } else if (nvu.value.flag == 15) {
-                writeApplAttrValue(streamWriter, applElem, nvu);
+        String[] attrNames = ie.listAttributes("*", AttrType.APPLATTR_ONLY);
+        List<String> attrNameList = new ArrayList<String>(Arrays.asList(attrNames));
+
+        // special handling: LocalColumn 'values'; do not write external component values
+        if ((this.aidLocalColumn != null) && (this.aidLocalColumn == aid) && (this.aaNameLocalColumnValues != null)
+                && (this.aaNameLocalColumnSequenceRepresentation != null)) {
+            // remove values from attribute list
+            attrNameList.remove(this.aaNameLocalColumnValues);
+            // query sequence representation
+            int seqRepEnum = ODSHelper.getEnumVal(ie.getValueByBaseName("sequence_representation"));
+            // check if the sequence representation is 7(external_component), 8(raw_linear_external),
+            // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
+            if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+            } else {
+                writeLocalColumnValues(streamWriter, ie.getValue(this.aaNameLocalColumnValues));
             }
+        }
+
+        for (NameValueUnit nvu : ie.getValueSeq(attrNameList.toArray(new String[0]))) {
+            writeApplAttrValue(streamWriter, applElem, nvu);
         }
 
         // write instance attribute data
@@ -831,23 +852,23 @@ public class AtfxWriter {
         streamWriter.writeEndElement();
     }
 
-    /**
-     * Returns whether given attribute name if the attribute 'values' of the local column instance.
-     * 
-     * @param aeName The application element name.
-     * @param name The instance name.
-     * @return True, if 'values' attribute.
-     * @throws AoException Error checking attribute.
-     */
-    private boolean isLocalColumnValuesAttr(String aeName, String name) throws AoException {
-        if (this.applAttrLocalColumnValues != null && this.applElemLocalColumn != null) {
-            if (this.applAttrLocalColumnValues.aaName.equalsIgnoreCase(name)
-                    && this.applElemLocalColumn.aeName.equalsIgnoreCase(aeName)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // /**
+    // * Returns whether given attribute name if the attribute 'values' of the local column instance.
+    // *
+    // * @param aeName The application element name.
+    // * @param aaName The application attribute name.
+    // * @return True, if 'values' attribute.
+    // * @throws AoException Error checking attribute.
+    // */
+    // private boolean isLocalColumnValuesAttr(String aeName, String aaName) throws AoException {
+    // if (this.aeNameLocalColumn != null && this.aaNameLocalColumnValues != null) {
+    // if (this.aeNameLocalColumn.equalsIgnoreCase(aeName)
+    // && this.aaNameLocalColumnValues.equalsIgnoreCase(aaName)) {
+    // return true;
+    // }
+    // }
+    // return false;
+    // }
 
     /**
      * Writes the Blob value to the XML stream.

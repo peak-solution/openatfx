@@ -243,7 +243,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         if (baName == null || baName.length() < 1) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "baName must not be empty");
         }
-        // lookup
+        // get application attribute
         ApplicationAttribute aa = this.atfxCache.getApplicationAttributeByBaName(aid, baName);
         if (aa == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
@@ -401,7 +401,11 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#createInstance(java.lang.String)
      */
     public InstanceElement createInstance(String ieName) throws AoException {
-        String idValName = this.atfxCache.getApplicationAttributeByBaName(this.aid, "id").getName();
+        String idValName = this.atfxCache.getAaNameByBaName(this.aid, "id");
+        if (idValName == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Not application attribute of base attribute 'id' found for aid=" + aid);
+        }
         long iid = this.atfxCache.nextIid(this.aid);
         this.atfxCache.addInstance(this.aid, iid);
         this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
@@ -418,7 +422,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
     public NameIterator listInstances(String iePattern) throws AoException {
         try {
             List<String> list = new ArrayList<String>();
-            for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
+            for (InstanceElement ie : this.atfxCache.getInstances(this.instancePOA, aid)) {
                 String name = ie.getName();
                 if (PatternUtil.nameFilterMatch(name, iePattern)) {
                     list.add(name);
@@ -446,20 +450,20 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElementIterator getInstances(String iePattern) throws AoException {
         try {
-            Collection<InstanceElement> ies = null;
+            InstanceElement[] ieAr = null;
             // check filter 'all' for performance tuning
             if (iePattern.equals("*")) {
-                ies = this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid);
+                ieAr = this.atfxCache.getInstances(this.instancePOA, aid);
             } else {
-                ies = new ArrayList<InstanceElement>();
-                for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
+                Collection<InstanceElement> list = new ArrayList<InstanceElement>();
+                for (InstanceElement ie : this.atfxCache.getInstances(this.instancePOA, aid)) {
                     if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
-                        ies.add(ie);
+                        list.add(ie);
                     }
                 }
+                ieAr = list.toArray(new InstanceElement[0]);
             }
 
-            InstanceElement[] ieAr = ies.toArray(new InstanceElement[0]);
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
             this.modelPOA.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
@@ -496,7 +500,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElement getInstanceByName(String ieName) throws AoException {
         InstanceElement found = null;
-        for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, this.aid)) {
+        for (InstanceElement ie : this.atfxCache.getInstances(this.instancePOA, this.aid)) {
             if (ie.getName().equals(ieName)) {
                 // check if duplicate
                 if (found != null) {

@@ -6,9 +6,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -35,14 +35,14 @@ import de.rechner.openatfx.util.ODSHelper;
 class AtfxCache {
 
     /** application elements */
-    private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ae>
+    private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ApplicationElement>
     private final Map<String, Set<Long>> beToAidMap; // <beName, aid>
     private final Map<Long, String> aidToAeNameMap;
     private final Map<Long, ApplicationElement> aidToAeMap;
 
     /** application attributes */
-    private final Map<Long, Map<String, ApplicationAttribute>> applicationAttributeMap; // <aid,<aaName,aaName>>
-    private final Map<Long, Map<String, ApplicationAttribute>> baNameToApplAttrMap; // <aid,<baName,aaName>>
+    private final Map<Long, Map<String, ApplicationAttribute>> applicationAttributeMap; // <aid,<aaName,ApplicationAttribute>>
+    private final Map<Long, Map<String, String>> baNameToAaNameMap; // <aid,<baName,aaName>>
 
     /** application relations */
     private final List<ApplicationRelation> applicationRelations;
@@ -73,7 +73,7 @@ class AtfxCache {
         this.aidToAeNameMap = new HashMap<Long, String>();
         this.applicationAttributeMap = new HashMap<Long, Map<String, ApplicationAttribute>>();
         this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();
-        this.baNameToApplAttrMap = new HashMap<Long, Map<String, ApplicationAttribute>>();
+        this.baNameToAaNameMap = new HashMap<Long, Map<String, String>>();
         this.applicationRelations = new ArrayList<ApplicationRelation>();
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
@@ -121,7 +121,7 @@ class AtfxCache {
         this.aidToAeMap.put(aid, ae);
         this.aidToAeNameMap.put(aid, "");
         this.nameToAeMap.put("", ae);
-        this.baNameToApplAttrMap.put(aid, new HashMap<String, ApplicationAttribute>());
+        this.baNameToAaNameMap.put(aid, new HashMap<String, String>());
         this.applicationAttributeMap.put(aid, new LinkedHashMap<String, ApplicationAttribute>());
         this.applicationRelationMap.put(aid, new ArrayList<ApplicationRelation>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
@@ -199,7 +199,7 @@ class AtfxCache {
         this.nameToAeMap.remove(aidToAeNameMap.get(aid));
         this.aidToAeNameMap.remove(aid);
         this.aidToAeMap.remove(aid);
-        this.baNameToApplAttrMap.remove(aid);
+        this.baNameToAaNameMap.remove(aid);
         this.applicationAttributeMap.remove(aid);
         this.applicationRelationMap.remove(aid);
         this.instanceRelMap.remove(aid);
@@ -293,12 +293,13 @@ class AtfxCache {
     public void removeApplicationAttribute(long aid, String aaName) throws AoException {
         // remove from base attribute map
         String baName = null;
-        for (ApplicationAttribute aa : this.baNameToApplAttrMap.get(aid).values()) {
-            if (aa.getName().equals(aaName)) {
-                baName = aa.getBaseAttribute().getName();
+        for (Entry<String, String> entry : this.baNameToAaNameMap.get(aid).entrySet()) {
+            if (entry.getValue().equals(aaName)) {
+                baName = entry.getKey();
+                break;
             }
         }
-        this.baNameToApplAttrMap.get(aid).remove(baName);
+        this.baNameToAaNameMap.get(aid).remove(baName);
 
         // remove from application attribute map
         this.applicationAttributeMap.get(aid).remove(aaName);
@@ -319,12 +320,25 @@ class AtfxCache {
      * @param baName The base attribute name, null for no base attribute
      * @param aaName The application attribute name.
      */
-    public void setAaNameForBaName(long aid, String baName, ApplicationAttribute aa) {
+    public void setAaNameForBaName(long aid, String baName, String aaName) {
         if (baName == null || baName.length() < 1) {
-            this.baNameToApplAttrMap.get(aid).remove(baName);
+            this.baNameToAaNameMap.get(aid).remove(baName);
         } else {
-            this.baNameToApplAttrMap.get(aid).put(baName, aa);
+            this.baNameToAaNameMap.get(aid).put(baName, aaName);
         }
+    }
+
+    /**
+     * Returns the application attribute name for given base attribute name.
+     * <p>
+     * The lookup will be performed case insensitive!
+     * 
+     * @param aid The application element id.
+     * @param baName The base attribute name.
+     * @return The application attribute name, null if not found.
+     */
+    public String getAaNameByBaName(long aid, String baName) {
+        return this.baNameToAaNameMap.get(aid).get(baName.toLowerCase());
     }
 
     /**
@@ -337,7 +351,8 @@ class AtfxCache {
      * @return The application attribute, null if not found.
      */
     public ApplicationAttribute getApplicationAttributeByBaName(long aid, String baName) {
-        return this.baNameToApplAttrMap.get(aid).get(baName.toLowerCase());
+        String aaName = getAaNameByBaName(aid, baName);
+        return this.applicationAttributeMap.get(aid).get(aaName);
     }
 
     /***********************************************************************************
@@ -485,12 +500,15 @@ class AtfxCache {
      * @return Collection if instance elements.
      * @throws AoException Error lazy create CORBA instance element.
      */
-    public Collection<InstanceElement> getInstances(POA modelPOA, POA instancePOA, long aid) throws AoException {
-        List<InstanceElement> list = new LinkedList<InstanceElement>();
-        for (long iid : this.instanceValueMap.get(aid).keySet()) {
-            list.add(getInstanceById(instancePOA, aid, iid));
+    public InstanceElement[] getInstances(POA instancePOA, long aid) throws AoException {
+        Set<Long> iids = this.instanceValueMap.get(aid).keySet();
+        InstanceElement[] ies = new InstanceElement[iids.size()];
+        int i = 0;
+        for (long iid : iids) {
+            ies[i] = getInstanceById(instancePOA, aid, iid);
+            i++;
         }
-        return list;
+        return ies;
     }
 
     /**
@@ -547,12 +565,9 @@ class AtfxCache {
         Set<Long> envAidSet = this.beToAidMap.get("aoenvironment");
         if (envAidSet != null && !envAidSet.isEmpty()) {
             long envAid = envAidSet.iterator().next();
-
-            // Map<Long, InstanceElement> map = this.getInstances(poa, envAid);
-            Collection<InstanceElement> ieList = this.getInstances(modelPOA, instancePOA, envAid);
-
-            if (ieList.size() > 0) {
-                return ieList.iterator().next();
+            InstanceElement[] ieAr = this.getInstances(instancePOA, envAid);
+            if (ieAr.length > 0) {
+                return ieAr[0];
             }
         }
         return null;

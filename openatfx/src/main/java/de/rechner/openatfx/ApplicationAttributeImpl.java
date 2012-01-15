@@ -43,12 +43,15 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes = new HashMap<String, List<String>>();
         obligatoryAttributes.put("id", null); // all application elements
         obligatoryAttributes.put("name", null); // all application elements
-        obligatoryAttributes.put("external_references", Arrays.asList(new String[] { "AoEnvironment", "AoNameMap",
-                "AoAttributeMap", "AoQuantity", "AoUnit", "AoPhysicalDimension", "AoQuantityGroup", "AoUnitGroup",
-                "AoMeasurement", "AoMeasurementQuantity", "AoSubmatrix", "AoLocalColumn", "AoExternalComponent",
-                "AoTest", "AoSubTest", "AoUnitUnderTest", "AoUnitUnderTestPart", "AoTestSequence",
-                "AoTestSequencePart", "AoTestEquipment", "AoTestEquipmentPart", "AoTestDevice", "AoUser",
-                "AoUserGroup", "AoAny", "AoLog", "AoParameter", "AoParameterSet" }));
+        obligatoryAttributes.put("external_references",
+                                 Arrays.asList(new String[] { "AoEnvironment", "AoNameMap", "AoAttributeMap",
+                                         "AoQuantity", "AoUnit", "AoPhysicalDimension", "AoQuantityGroup",
+                                         "AoUnitGroup", "AoMeasurement", "AoMeasurementQuantity", "AoSubmatrix",
+                                         "AoLocalColumn", "AoExternalComponent", "AoTest", "AoSubTest",
+                                         "AoUnitUnderTest", "AoUnitUnderTestPart", "AoTestSequence",
+                                         "AoTestSequencePart", "AoTestEquipment", "AoTestEquipmentPart",
+                                         "AoTestDevice", "AoUser", "AoUserGroup", "AoAny", "AoLog", "AoParameter",
+                                         "AoParameterSet" }));
         obligatoryAttributes.put("meaning_of_aliases", Arrays.asList(new String[] { "AoEnvironment" }));
         obligatoryAttributes.put("entity_name", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
         obligatoryAttributes.put("alias_names", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
@@ -198,7 +201,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             }
 
             this.baseAttribute = baseAttr;
-            this.atfxCache.setAaNameForBaName(aid, baseAttr.getName(), _this());
+            this.atfxCache.setAaNameForBaName(aid, baseAttr.getName(), getName());
         } else {
             this.baseAttribute = null;
             // TODO: update cache
@@ -413,7 +416,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#withUnit(boolean)
      */
     public void withUnit(boolean withUnit) throws AoException {
-    // nothing to do
+        // nothing to do
     }
 
     /**

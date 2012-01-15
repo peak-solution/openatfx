@@ -84,7 +84,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         Map<Long, List<AIDNameValueSeqUnitId>> aeGroupColumns = new HashMap<Long, List<AIDNameValueSeqUnitId>>();
         for (AIDNameValueSeqUnitId column : val) {
             long aid = ODSHelper.asJLong(column.attr.aid);
-            String idAttrName = this.atfxCache.getApplicationAttributeByBaName(aid, "id").getName();
+            String idAttrName = this.atfxCache.getAaNameByBaName(aid, "id");
+            if (idAttrName == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "Not application attribute of base attribute 'id' found for aid=" + aid);
+            }
             // add to ae group
             List<AIDNameValueSeqUnitId> list = aeGroupColumns.get(aid);
             if (list == null) {

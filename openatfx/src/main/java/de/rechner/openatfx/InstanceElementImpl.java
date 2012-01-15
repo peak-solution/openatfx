@@ -236,8 +236,14 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueByBaseName(java.lang.String)
      */
     public NameValueUnit getValueByBaseName(String baseAttrName) throws AoException {
-        ApplicationAttribute aa = getApplicationElement().getAttributeByBaseName(baseAttrName);
-        return getValue(aa.getName());
+        String aaName = this.atfxCache.getAaNameByBaName(this.aid, baseAttrName);
+        if (aaName == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "No ApplicationAttribute of BaseAttribute '" + baseAttrName
+                                          + "' found for ApplicationElement '" + getApplicationElement().getName()
+                                          + "'");
+        }
+        return getValue(aaName);
     }
 
     /**
