@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.1.8 (Christian Rechner)
+	
+		- Performance tuning in method "getInstances" for pattern "*".
+
 	0.1.7 (Florian Steinberger, Christian Rechner)
 	
 		- Added limited query implementation.

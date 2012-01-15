@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -445,14 +446,20 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      */
     public InstanceElementIterator getInstances(String iePattern) throws AoException {
         try {
-            List<InstanceElement> list = new ArrayList<InstanceElement>();
-            for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
-                String name = ie.getName();
-                if (PatternUtil.nameFilterMatch(name, iePattern)) {
-                    list.add(ie);
+            Collection<InstanceElement> ies = null;
+            // check filter 'all' for performance tuning
+            if (iePattern.equals("*")) {
+                ies = this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid);
+            } else {
+                ies = new ArrayList<InstanceElement>();
+                for (InstanceElement ie : this.atfxCache.getInstances(this.modelPOA, this.instancePOA, aid)) {
+                    if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
+                        ies.add(ie);
+                    }
                 }
             }
-            InstanceElement[] ieAr = list.toArray(new InstanceElement[0]);
+
+            InstanceElement[] ieAr = ies.toArray(new InstanceElement[0]);
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
             this.modelPOA.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
