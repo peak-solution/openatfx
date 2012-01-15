@@ -57,6 +57,9 @@ class AtfxCache {
     /** instance attribute values */
     private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
 
+    /** instance element CORBA object references */
+    private final Map<Long, Map<Long, InstanceElement>> instanceElementCache; // <aid,<iid,<InstanceElement>>>
+
     /** The counters for ids */
     private int nextAid;
 
@@ -75,6 +78,7 @@ class AtfxCache {
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
+        this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
         this.nextAid = 1;
     }
 
@@ -123,6 +127,7 @@ class AtfxCache {
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
         this.instanceValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
         this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
+        this.instanceElementCache.put(aid, new TreeMap<Long, InstanceElement>());
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
         if (applElems == null) {
@@ -200,6 +205,7 @@ class AtfxCache {
         this.instanceRelMap.remove(aid);
         this.instanceValueMap.remove(aid);
         this.instanceAttrValueMap.remove(aid);
+        this.instanceElementCache.remove(aid);
     }
 
     /***********************************************************************************
@@ -443,14 +449,19 @@ class AtfxCache {
      */
     public InstanceElement getInstanceById(POA instancePOA, long aid, long iid) throws AoException {
         if (this.instanceExists(aid, iid)) {
-            StringBuffer sb = new StringBuffer();
-            sb.append(aid);
-            sb.append(":");
-            sb.append(iid);
-            byte[] oid = sb.toString().getBytes();
+            InstanceElement ie = this.instanceElementCache.get(aid).get(iid);
+            if (ie == null) {
+                StringBuffer sb = new StringBuffer();
+                sb.append(aid);
+                sb.append(":");
+                sb.append(iid);
+                byte[] oid = sb.toString().getBytes();
 
-            org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
-            return InstanceElementHelper.narrow(obj);
+                org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
+                ie = InstanceElementHelper.narrow(obj);
+                this.instanceElementCache.get(aid).put(iid, ie);
+            }
+            return ie;
         }
         throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
                 + iid + "]");
@@ -490,6 +501,7 @@ class AtfxCache {
         // remove instance values
         this.instanceValueMap.get(aid).remove(iid);
         this.instanceAttrValueMap.get(aid).remove(iid);
+        this.instanceElementCache.get(aid).remove(iid);
     }
 
     /**

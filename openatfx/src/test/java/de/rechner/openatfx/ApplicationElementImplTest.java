@@ -372,6 +372,11 @@ public class ApplicationElementImplTest {
     @Test
     public void testGetInstances() {
         try {
+            for (int i=0;i<10000;i++) {
+                applicationElement.getInstances("*");
+            }
+            
+            
             assertEquals(3, applicationElement.getInstances("*").getCount());
             assertEquals(1, applicationElement.getInstances("Slow*").getCount());
         } catch (AoException e) {

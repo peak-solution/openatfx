@@ -444,12 +444,15 @@ class InstanceElementImpl extends InstanceElementPOA {
         Set<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
 
         List<InstanceElement> list;
+        // pattern 'all'
         if (iePattern.equals("*")) {
             list = new ArrayList<InstanceElement>(otherIids.size());
             for (long otherIid : otherIids) {
                 list.add(this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid));
             }
-        } else {
+        }
+        // filter by pattern
+        else {
             list = new ArrayList<InstanceElement>();
             for (long otherIid : otherIids) {
                 InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid);
