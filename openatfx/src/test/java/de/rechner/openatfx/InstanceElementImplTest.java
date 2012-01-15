@@ -433,6 +433,7 @@ public class InstanceElementImplTest {
             rel = ieDts.getApplicationElement().getRelationsByBaseName("submatrices")[0];
             assertEquals(1, ieDts.listRelatedInstances(rel, "*").getCount());
         } catch (AoException e) {
+            e.printStackTrace();
             fail(e.reason);
         }
     }

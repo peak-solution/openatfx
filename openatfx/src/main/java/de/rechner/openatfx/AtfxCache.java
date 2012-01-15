@@ -412,6 +412,12 @@ class AtfxCache {
 
     public void addApplicationRelation(ApplicationRelation applRel) throws AoException {
         this.applicationRelations.add(applRel);
+        // prepare application relation maps for all aids
+        for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
+            for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
+                iMap.put(applRel, new TreeSet<Long>());
+            }
+        }
     }
 
     public void removeApplicationRelation(ApplicationRelation applRel) {
@@ -421,9 +427,12 @@ class AtfxCache {
                 relList.remove(applRel);
             }
         }
-
-        // TODO: remove from instance relation cache
-
+        // remove application relation maps for all aids
+        for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
+            for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
+                iMap.remove(applRel);
+            }
+        }
     }
 
     /**
@@ -458,8 +467,12 @@ class AtfxCache {
      * @param aid The application element id.
      * @param iid The instance id.
      */
-    public void addInstance(long aid, long iid) {
+    public void addInstance(long aid, long iid) throws AoException {
         this.instanceRelMap.get(aid).put(iid, new HashMap<ApplicationRelation, Set<Long>>());
+        for (ApplicationRelation rel : this.getApplicationRelations(aid)) {
+            this.instanceRelMap.get(aid).get(iid).put(rel, new TreeSet<Long>());
+        }
+
         this.instanceValueMap.get(aid).put(iid, new HashMap<String, TS_Value>());
         this.instanceAttrValueMap.get(aid).put(iid, new LinkedHashMap<String, TS_Value>());
     }
@@ -478,13 +491,6 @@ class AtfxCache {
             InstanceElement ie = this.instanceElementCache.get(aid).get(iid);
             if (ie == null) {
                 byte[] oid = toByta(new long[] { aid, iid });
-
-                // StringBuffer sb = new StringBuffer();
-                // sb.append(aid);
-                // sb.append(":");
-                // sb.append(iid);
-                // byte[] oid = sb.toString().getBytes();
-
                 org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
                 ie = InstanceElementHelper.narrow(obj);
                 this.instanceElementCache.get(aid).put(iid, ie);
@@ -739,35 +745,26 @@ class AtfxCache {
      */
     public void createInstanceRelations(long aid, long iid, ApplicationRelation applRel, Collection<Long> otherIids)
             throws AoException {
-        // add relation
-        Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
-        Set<Long> relMap = relsMap.get(applRel);
-        if (relMap == null) {
-            relMap = new TreeSet<Long>();
-            relsMap.put(applRel, relMap);
-        } else if (applRel.getRelationRange().max != -1) {
-            relMap.clear();
+        if (otherIids.isEmpty()) {
+            return;
         }
-        relMap.addAll(otherIids);
+
+        // add relation, if none multiple cardinality, overwrite
+        Set<Long> relInstIds = this.instanceRelMap.get(aid).get(iid).get(applRel);
+        if (applRel.getRelationRange().max != -1) {
+            relInstIds.clear();
+        }
+        relInstIds.addAll(otherIids);
 
         // add inverse relation
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         for (Long otherIid : otherIids) {
-            Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
-            if (invRelsMap == null) {
-                invRelsMap = new HashMap<ApplicationRelation, Set<Long>>();
-                this.instanceRelMap.get(otherAid).put(otherIid, invRelsMap);
+            Set<Long> invRelInstIds = this.instanceRelMap.get(otherAid).get(otherIid).get(invApplRel);
+            if (invApplRel.getRelationRange().max != -1) {
+                invRelInstIds.clear();
             }
-
-            Set<Long> invRelMap = invRelsMap.get(invApplRel);
-            if (invRelMap == null) {
-                invRelMap = new HashSet<Long>();
-                invRelsMap.put(invApplRel, invRelMap);
-            } else if (invApplRel.getRelationRange().max != -1) {
-                invRelMap.clear();
-            }
-            invRelMap.add(iid);
+            invRelInstIds.add(iid);
         }
     }
 
@@ -782,6 +779,10 @@ class AtfxCache {
      */
     public void removeInstanceRelations(long aid, long iid, ApplicationRelation applRel, Collection<Long> otherIids)
             throws AoException {
+        if (otherIids.isEmpty()) {
+            return;
+        }
+
         // add relation
         Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
         Set<Long> relMap = relsMap.get(applRel);
@@ -811,11 +812,7 @@ class AtfxCache {
      * @throws AoException Error getting inverse relation.
      */
     public Set<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
-        Set<Long> set = this.instanceRelMap.get(aid).get(iid).get(applRel);
-        if (set != null) {
-            return set;
-        }
-        return Collections.emptySet();
+        return this.instanceRelMap.get(aid).get(iid).get(applRel);
     }
 
 }
