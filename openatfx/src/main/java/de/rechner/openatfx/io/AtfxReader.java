@@ -6,11 +6,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -69,7 +71,10 @@ public class AtfxReader {
     private final Map<String, String> files;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
     private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
-    private ApplicationAttribute applAttrLocalColumnValues;
+
+    /** information where the mass data is stored in the model */
+    private String lcAeName;
+    private String lcValuesAaName;
 
     /**
      * Non visible constructor.
@@ -95,14 +100,16 @@ public class AtfxReader {
         this.files.clear();
         this.applAttrs.clear();
         this.applRels.clear();
-        this.applAttrLocalColumnValues = null;
+        this.lcAeName = null;
+        this.lcValuesAaName = null;
 
         InputStream in = null;
         try {
             // open XML file
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
             in = new BufferedInputStream(new FileInputStream(atfxFile));
-            XMLStreamReader reader = inputFactory.createXMLStreamReader(in);
+            XMLStreamReader rawReader = inputFactory.createXMLStreamReader(in);
+            XMLStreamReader reader = inputFactory.createFilteredReader(rawReader, new StartEndElementFilter());
 
             String baseModelVersion = "";
             AoSession aoSession = null;
@@ -587,9 +594,10 @@ public class AtfxReader {
 
         // add to global map
         this.applAttrs.get(applElem.getName()).put(aaNameStr, aa);
-        if (this.applAttrLocalColumnValues == null && baseAttrStr.equals("values")
+        if ((this.lcAeName == null) && (this.lcValuesAaName == null) && baseAttrStr.equals("values")
                 && applElem.getBaseElement().getType().equals("AoLocalColumn")) {
-            this.applAttrLocalColumnValues = aa;
+            this.lcAeName = applElem.getName();
+            this.lcValuesAaName = aaNameStr;
         }
     }
 
@@ -726,6 +734,7 @@ public class AtfxReader {
         // 'name'
         String aeName = reader.getLocalName();
         ApplicationElement applElem = as.getElementByName(aeName);
+        T_LONGLONG aid = applElem.getId();
 
         // read attributes
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
@@ -746,7 +755,7 @@ public class AtfxReader {
             }
 
             // base attribute 'values' of 'LocalColumn'
-            if (reader.isStartElement() && isLocalColumnValuesAttr(aeName, reader.getLocalName())) {
+            if (reader.isStartElement() && isLocalColumnValuesAttr(aeName, currentTagName)) {
                 reader.nextTag();
                 // external component
                 if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
@@ -754,33 +763,33 @@ public class AtfxReader {
                 }
                 // explicit values inline XML
                 else if (reader.isStartElement()) {
-                    TS_Value value = parseLocalColumnValues(this.applAttrLocalColumnValues, reader);
+                    TS_Value value = parseLocalColumnValues(reader);
                     AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
                     valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
                     valuesAttrValue.attr = new AIDName();
-                    valuesAttrValue.attr.aid = applElem.getId();
-                    valuesAttrValue.attr.aaName = this.applAttrLocalColumnValues.getName();
+                    valuesAttrValue.attr.aid = aid;
+                    valuesAttrValue.attr.aaName = this.lcValuesAaName;
                     valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
                     applAttrValues.add(valuesAttrValue);
                 }
             }
 
-            // application attribute
-            else if (reader.isStartElement() && (getApplAttr(aeName, reader.getLocalName()) != null)) {
-                ApplicationAttribute aa = getApplAttr(aeName, reader.getLocalName());
+            // application attribute value
+            else if (reader.isStartElement() && (getApplAttr(aeName, currentTagName) != null)) {
+                ApplicationAttribute aa = getApplAttr(aeName, currentTagName);
                 AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
                 applAttrValue.unitId = ODSHelper.asODSLongLong(0);
                 applAttrValue.attr = new AIDName();
-                applAttrValue.attr.aid = applElem.getId();
-                applAttrValue.attr.aaName = reader.getLocalName();
+                applAttrValue.attr.aid = aid;
+                applAttrValue.attr.aaName = currentTagName;
                 applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aa, reader));
                 applAttrValues.add(applAttrValue);
             }
 
             // application relation
-            else if (reader.isStartElement() && (getApplRel(aeName, reader.getLocalName()) != null)) {
+            else if (reader.isStartElement() && (getApplRel(aeName, currentTagName) != null)) {
                 // only read the non inverse relations for performance reasons!
-                ApplicationRelation applRel = getApplRel(aeName, reader.getLocalName());
+                ApplicationRelation applRel = getApplRel(aeName, currentTagName);
                 short relMax = applRel.getRelationRange().max;
                 short invMax = applRel.getInverseRelationRange().max;
                 if ((invMax == -1) || (relMax == 1 && invMax == 1)) {
@@ -812,6 +821,9 @@ public class AtfxReader {
         }
 
         // create instance element
+        if (applAttrValues.isEmpty()) { // no values
+            return Collections.emptyMap();
+        }
         ApplElemAccess aea = as.getSession().getApplElemAccess();
         ElemId elemId = aea.insertInstances(applAttrValues.toArray(new AIDNameValueSeqUnitId[0]))[0];
 
@@ -847,7 +859,7 @@ public class AtfxReader {
 
         // create relation map
         Map<ElemId, Map<String, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
-        retMap.put(new ElemId(applElem.getId(), elemId.iid), instRelMap);
+        retMap.put(new ElemId(aid, elemId.iid), instRelMap);
 
         return retMap;
     }
@@ -886,16 +898,14 @@ public class AtfxReader {
      * Returns whether given attribute name if the attribute 'values' of the local column instance.
      * 
      * @param aeName The application element name.
-     * @param name The instance name.
+     * @param aaName The application attribute name.
      * @return True, if 'values' attribute.
      * @throws AoException Error checking attribute.
      */
-    private boolean isLocalColumnValuesAttr(String aeName, String name) throws AoException {
-        if (this.applAttrLocalColumnValues != null) {
-            if (this.applAttrLocalColumnValues.getName().equals(name)
-                    && this.applAttrLocalColumnValues.getApplicationElement().getName().equals(aeName)) {
-                return true;
-            }
+    private boolean isLocalColumnValuesAttr(String aeName, String aaName) throws AoException {
+        if (this.lcAeName != null && this.lcValuesAaName != null && this.lcAeName.equals(aeName)
+                && this.lcValuesAaName.equals(aaName)) {
+            return true;
         }
         return false;
     }
@@ -1027,17 +1037,15 @@ public class AtfxReader {
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error parsing values.
      */
-    private TS_Value parseLocalColumnValues(ApplicationAttribute aa, XMLStreamReader reader) throws XMLStreamException,
-            AoException {
-        String aaName = aa.getName();
+    private TS_Value parseLocalColumnValues(XMLStreamReader reader) throws XMLStreamException, AoException {
         TS_Value value = new TS_Value();
         value.flag = (short) 15;
         value.u = new TS_Union();
-        while (!(reader.isEndElement() && reader.getLocalName().equals(aaName))) {
+        while (!(reader.isEndElement() && reader.getLocalName().equals(this.lcValuesAaName))) {
             // DS_BLOB
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BLOB)) {
-                AoSession aoSession = aa.getApplicationElement().getApplicationStructure().getSession();
-                value.u.blobVal(parseBlob(aoSession, AtfxTagConstants.VALUES_ATTR_BLOB, reader));
+                // AoSession aoSession = aa.getApplicationElement().getApplicationStructure().getSession();
+                // value.u.blobVal(parseBlob(aoSession, AtfxTagConstants.VALUES_ATTR_BLOB, reader));
             }
             // DS_BOOLEAN
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BOOLEAN)) {
@@ -1582,6 +1590,20 @@ public class AtfxReader {
             instance = new AtfxReader();
         }
         return instance;
+    }
+
+    /**
+     * Custom Stax filter for only collect start and end elements.
+     */
+    private static class StartEndElementFilter implements StreamFilter {
+
+        public boolean accept(XMLStreamReader myReader) {
+            if (myReader.isStartElement() || myReader.isEndElement()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
 }

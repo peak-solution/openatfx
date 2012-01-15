@@ -27,6 +27,7 @@
 	
 		- Performance tuning in method "getInstances" for pattern "*".
 		- Performance tuning in methods "getValue" and "getValueByBaseName".
+		- Several minor performance tunings.
 		- Bugfix: Pattern of method "listAttributes" has not been taken into account for instance attributes.
 
 	0.1.7 (Florian Steinberger, Christian Rechner)

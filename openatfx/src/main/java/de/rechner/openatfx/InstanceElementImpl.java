@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -411,8 +412,7 @@ class InstanceElementImpl extends InstanceElementPOA {
     public InstanceElementIterator getRelatedInstances(ApplicationRelation applRel, String iePattern)
             throws AoException {
         try {
-            InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern).toArray(new InstanceElement[0]);
-
+            InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern);
             InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
             this.modelPOA.activate_object(ieIteratorImpl);
             return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
@@ -433,34 +433,34 @@ class InstanceElementImpl extends InstanceElementPOA {
      * 
      * @param applRel The application relation.
      * @param iePattern The name pattern.
-     * @return Collection of instance elements.
+     * @return Array of instance elements.
      * @throws AoException Error fetching related instances.
      */
-    private Collection<InstanceElement> collectRelatedInstances(ApplicationRelation applRel, String iePattern)
-            throws AoException {
+    private InstanceElement[] collectRelatedInstances(ApplicationRelation applRel, String iePattern) throws AoException {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
         Set<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
 
-        List<InstanceElement> list;
         // pattern 'all'
         if (iePattern.equals("*")) {
-            list = new ArrayList<InstanceElement>(otherIids.size());
+            InstanceElement[] ies = new InstanceElement[otherIids.size()];
+            int i = 0;
             for (long otherIid : otherIids) {
-                list.add(this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid));
+                ies[i] = this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid);
+                i++;
             }
+            return ies;
         }
         // filter by pattern
         else {
-            list = new ArrayList<InstanceElement>();
+            List<InstanceElement> list = new ArrayList<InstanceElement>();
             for (long otherIid : otherIids) {
                 InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, otherAid, otherIid);
                 if (ie != null && PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
                     list.add(ie);
                 }
             }
+            return list.toArray(new InstanceElement[0]);
         }
-
-        return list;
     }
 
     /**
@@ -539,7 +539,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         // collect related instances
         List<InstanceElement> ieList = new ArrayList<InstanceElement>();
         for (ApplicationRelation applRel : relList) {
-            ieList.addAll(collectRelatedInstances(applRel, iePattern));
+            ieList.addAll(Arrays.asList(collectRelatedInstances(applRel, iePattern)));
         }
         return ieList;
     }

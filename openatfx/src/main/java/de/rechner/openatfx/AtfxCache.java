@@ -476,11 +476,13 @@ class AtfxCache {
         if (this.instanceExists(aid, iid)) {
             InstanceElement ie = this.instanceElementCache.get(aid).get(iid);
             if (ie == null) {
-                StringBuffer sb = new StringBuffer();
-                sb.append(aid);
-                sb.append(":");
-                sb.append(iid);
-                byte[] oid = sb.toString().getBytes();
+                byte[] oid = toByta(new long[] { aid, iid });
+
+                // StringBuffer sb = new StringBuffer();
+                // sb.append(aid);
+                // sb.append(":");
+                // sb.append(iid);
+                // byte[] oid = sb.toString().getBytes();
 
                 org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
                 ie = InstanceElementHelper.narrow(obj);
@@ -490,6 +492,44 @@ class AtfxCache {
         }
         throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
                 + iid + "]");
+    }
+
+    public static byte[] toByta(long[] data) {
+        if (data == null) {
+            return null;
+        }
+        byte[] byts = new byte[data.length * 8];
+        for (int i = 0; i < data.length; i++) {
+            System.arraycopy(toByta(data[i]), 0, byts, i * 8, 8);
+        }
+        return byts;
+    }
+
+    private static byte[] toByta(long data) {
+        return new byte[] { (byte) ((data >> 56) & 0xff), (byte) ((data >> 48) & 0xff), (byte) ((data >> 40) & 0xff),
+                (byte) ((data >> 32) & 0xff), (byte) ((data >> 24) & 0xff), (byte) ((data >> 16) & 0xff),
+                (byte) ((data >> 8) & 0xff), (byte) ((data >> 0) & 0xff), };
+    }
+
+    private static long toLong(byte[] data) {
+        if (data == null || data.length != 8) {
+            return 0x0;
+        }
+        return (long) ((long) (0xff & data[0]) << 56 | (long) (0xff & data[1]) << 48 | (long) (0xff & data[2]) << 40
+                | (long) (0xff & data[3]) << 32 | (long) (0xff & data[4]) << 24 | (long) (0xff & data[5]) << 16
+                | (long) (0xff & data[6]) << 8 | (long) (0xff & data[7]) << 0);
+    }
+
+    public static long[] toLongA(byte[] data) {
+        if (data == null || data.length % 8 != 0) {
+            return null;
+        }
+        long[] lngs = new long[data.length / 8];
+        for (int i = 0; i < lngs.length; i++) {
+            lngs[i] = toLong(new byte[] { data[(i * 8)], data[(i * 8) + 1], data[(i * 8) + 2], data[(i * 8) + 3],
+                    data[(i * 8) + 4], data[(i * 8) + 5], data[(i * 8) + 6], data[(i * 8) + 7], });
+        }
+        return lngs;
     }
 
     /**

@@ -40,13 +40,9 @@ class InstanceServantLocator extends LocalObject implements ServantLocator {
      *      java.lang.String, org.omg.PortableServer.ServantLocatorPackage.CookieHolder)
      */
     public Servant preinvoke(byte[] oid, POA adapter, String operation, CookieHolder the_cookie) throws ForwardRequest {
-        String oidStr = new String(oid);
-
-        // parse aid and iid from object id
-        String[] splitted = oidStr.split(":");
-        long aid = Long.valueOf(splitted[0]);
-        long iid = Long.valueOf(splitted[1]);
-
+        long[] ls = AtfxCache.toLongA(oid);
+        long aid = ls[0];
+        long iid = ls[1];
         return new InstanceElementImpl(modelPOA, adapter, atfxCache, aid, iid);
     }
 
