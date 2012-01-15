@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
@@ -561,10 +562,8 @@ class AtfxCache {
     public void removeInstance(long aid, long iid) throws AoException {
         // remove relations
         for (ApplicationRelation applRel : getApplicationRelations(aid)) {
-            Set<Long> otherIidsSet = new HashSet<Long>(getRelatedInstanceIds(aid, iid, applRel));
-            for (long otherIid : otherIidsSet) {
-                removeInstanceRelation(aid, iid, applRel, otherIid);
-            }
+            Set<Long> otherIidsSet = getRelatedInstanceIds(aid, iid, applRel);
+            removeInstanceRelations(aid, iid, applRel, otherIidsSet);
         }
         // remove instance values
         this.instanceValueMap.get(aid).remove(iid);
@@ -730,44 +729,46 @@ class AtfxCache {
      ***********************************************************************************/
 
     /**
-     * Creates an instance relation.
+     * Creates instance relation.
      * 
      * @param aid The source application element id.
      * @param iid The source instance id.
      * @param applRel The application relation.
-     * @param otherIid The target instance element id.
+     * @param otherIids The target instance element ids.
      * @throws AoException Error creating instance relation.
      */
-    public void createInstanceRelation(long aid, long iid, ApplicationRelation applRel, long otherIid)
+    public void createInstanceRelations(long aid, long iid, ApplicationRelation applRel, Collection<Long> otherIids)
             throws AoException {
         // add relation
         Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
         Set<Long> relMap = relsMap.get(applRel);
         if (relMap == null) {
-            relMap = new HashSet<Long>();
+            relMap = new TreeSet<Long>();
             relsMap.put(applRel, relMap);
         } else if (applRel.getRelationRange().max != -1) {
             relMap.clear();
         }
-        relMap.add(otherIid);
+        relMap.addAll(otherIids);
 
         // add inverse relation
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
-        Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
-        if (invRelsMap == null) {
-            invRelsMap = new HashMap<ApplicationRelation, Set<Long>>();
-            this.instanceRelMap.get(otherAid).put(otherIid, invRelsMap);
-        }
+        for (Long otherIid : otherIids) {
+            Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
+            if (invRelsMap == null) {
+                invRelsMap = new HashMap<ApplicationRelation, Set<Long>>();
+                this.instanceRelMap.get(otherAid).put(otherIid, invRelsMap);
+            }
 
-        Set<Long> invRelMap = invRelsMap.get(invApplRel);
-        if (invRelMap == null) {
-            invRelMap = new HashSet<Long>();
-            invRelsMap.put(invApplRel, invRelMap);
-        } else if (invApplRel.getRelationRange().max != -1) {
-            invRelMap.clear();
+            Set<Long> invRelMap = invRelsMap.get(invApplRel);
+            if (invRelMap == null) {
+                invRelMap = new HashSet<Long>();
+                invRelsMap.put(invApplRel, invRelMap);
+            } else if (invApplRel.getRelationRange().max != -1) {
+                invRelMap.clear();
+            }
+            invRelMap.add(iid);
         }
-        invRelMap.add(iid);
     }
 
     /**
@@ -779,22 +780,24 @@ class AtfxCache {
      * @param otherIid The target instance element id.
      * @throws AoException Error removing instance relation.
      */
-    public void removeInstanceRelation(long aid, long iid, ApplicationRelation applRel, long otherIid)
+    public void removeInstanceRelations(long aid, long iid, ApplicationRelation applRel, Collection<Long> otherIids)
             throws AoException {
         // add relation
         Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
         Set<Long> relMap = relsMap.get(applRel);
         if (relMap != null) {
-            relMap.remove(otherIid);
+            relMap.removeAll(otherIids);
         }
 
         // remove inverse relation
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
-        Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
-        Set<Long> invRelMap = invRelsMap.get(invApplRel);
-        if (invRelMap != null) {
-            invRelMap.remove(iid);
+        for (Long otherIid : otherIids) {
+            Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
+            Set<Long> invRelMap = invRelsMap.get(invApplRel);
+            if (invRelMap != null) {
+                invRelMap.remove(iid);
+            }
         }
     }
 

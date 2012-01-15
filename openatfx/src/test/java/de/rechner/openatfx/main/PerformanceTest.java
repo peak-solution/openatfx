@@ -65,7 +65,7 @@ public class PerformanceTest {
     @Test
     public void readAllValuesTree() {
         try {
-            for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
+            for (ApplicationElement ae : aoSession.getApplicationStructure().getTopLevelElements("*")) {
                 InstanceElementIterator iter = ae.getInstances("*");
                 for (InstanceElement ie : iter.nextN(iter.getCount())) {
                     readInstanceWithChildren(ie);
@@ -81,7 +81,6 @@ public class PerformanceTest {
         valNames.addAll(Arrays.asList(ie.listAttributes("*", AttrType.ALL)));
         valNames.remove("values");
         ie.getValueSeq(valNames.toArray(new String[0]));
-
         InstanceElementIterator iter = ie.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
         for (InstanceElement ieChild : iter.nextN(iter.getCount())) {
             readInstanceWithChildren(ieChild);

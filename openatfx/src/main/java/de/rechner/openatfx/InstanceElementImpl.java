@@ -565,7 +565,9 @@ class InstanceElementImpl extends InstanceElementPOA {
                     + instElem.getApplicationElement().getName() + "'");
         }
         // create relation
-        this.atfxCache.createInstanceRelation(this.aid, this.iid, applRel, ODSHelper.asJLong(instElem.getId()));
+        List<Long> otherIids = new ArrayList<Long>();
+        otherIids.add(ODSHelper.asJLong(instElem.getId()));
+        this.atfxCache.createInstanceRelations(this.aid, this.iid, applRel, otherIids);
     }
 
     /**
@@ -583,9 +585,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         // remove all other relation
         if (instElem == null) {
-            for (Long otherIid : this.atfxCache.getRelatedInstanceIds(aid, iid, applRel)) {
-                this.atfxCache.removeInstanceRelation(aid, iid, applRel, otherIid);
-            }
+            Collection<Long> otherIids = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
+            this.atfxCache.removeInstanceRelations(aid, iid, applRel, otherIids);
         }
         // remove a certain relation
         else {
@@ -597,8 +598,9 @@ class InstanceElementImpl extends InstanceElementPOA {
                         + applRel.getInverseRelationName() + "' is not defined at application element '"
                         + instElem.getApplicationElement().getName() + "'");
             }
-            long otherIid = ODSHelper.asJLong(instElem.getId());
-            this.atfxCache.removeInstanceRelation(aid, iid, applRel, otherIid);
+            List<Long> l = new ArrayList<Long>();
+            l.add(ODSHelper.asJLong(instElem.getId()));
+            this.atfxCache.removeInstanceRelations(aid, iid, applRel, l);
         }
     }
 

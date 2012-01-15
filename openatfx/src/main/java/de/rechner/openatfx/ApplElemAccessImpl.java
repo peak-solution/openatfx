@@ -206,17 +206,21 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
                     + aid + ",relName=" + relName);
         }
-        long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
 
         // alter relations
+        List<Long> otherIidsToSet = new ArrayList<Long>();
+        List<Long> otherIidsToRemove = new ArrayList<Long>();
         for (T_LONGLONG otherIidT : instIds) {
             long otherIid = ODSHelper.asJLong(otherIidT);
             if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {
-                this.atfxCache.createInstanceRelation(aid, iid, applRel, otherIid);
+                otherIidsToSet.add(otherIid);
             } else if (type == SetType.REMOVE) {
-                this.atfxCache.removeInstanceRelation(otherAid, iid, applRel, otherIid);
+                otherIidsToSet.add(otherIid);
             }
         }
+
+        this.atfxCache.createInstanceRelations(aid, iid, applRel, otherIidsToSet);
+        this.atfxCache.removeInstanceRelations(aid, iid, applRel, otherIidsToRemove);
     }
 
     /***********************************************************************************
