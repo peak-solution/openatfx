@@ -7,8 +7,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.JUnit4TestAdapter;
 
@@ -20,11 +18,9 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.AttrType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
-import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.Relationship;
-import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_ExternalReference;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -479,88 +475,6 @@ public class InstanceElementImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-    }
-
-    private static final String BE_MEASUREMENT = "AoMeasurement";
-    private static final String BE_SUBMATRIX = "AoSubMatrix";
-    private static final String BE_LOCALCOLUMN = "AoLocalColumn";
-    private static final String BA_NUMBER_OF_ROWS = "number_of_rows";
-    private static final String BR_SUBMATRICES = "submatrices";
-    private static final String BR_LOCAL_COLUMNS = "local_columns";
-
-    @Test
-    public void testTest() {
-        try {
-            ApplicationStructure as = aoSession.getApplicationStructure();
-            ApplicationElement ae = as.getElementByName("dts");
-            InstanceElementIterator iter = ae.getInstances("*");
-            for (InstanceElement ieMea : iter.nextN(iter.getCount())) {
-                mergeSubMatrices(as, ieMea);
-            }
-        } catch (AoException aoe) {
-            fail(aoe.reason);
-        }
-    }
-
-    private static ApplicationElement getAeByType(ApplicationStructure as, String bType) throws AoException {
-        ApplicationElement[] aes = as.getElementsByBaseType(bType);
-        if (aes.length != 1) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "None or multiple application elements of type '" + bType + "' found");
-        }
-        return aes[0];
-    }
-
-    private static ApplicationRelation getApplRelByBaseName(ApplicationStructure as, ApplicationElement elem1,
-            ApplicationElement elem2, String bRelName) throws AoException {
-        for (ApplicationRelation rel : as.getRelations(elem1, elem2)) {
-            if (rel.getBaseRelation().getRelationName().equals(bRelName)) {
-                return rel;
-            }
-        }
-        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "No application relation found between '"
-                + elem1.getName() + "' and '" + elem2.getName() + "' with base name '" + bRelName + "'");
-    }
-
-    private static void mergeSubMatrices(ApplicationStructure as, InstanceElement ieMea) throws AoException {
-        ApplicationElement aeMeasurement = getAeByType(as, BE_MEASUREMENT);
-        ApplicationElement aeSubMatrix = getAeByType(as, BE_SUBMATRIX);
-        ApplicationElement aeLocalColumn = getAeByType(as, BE_LOCALCOLUMN);
-        ApplicationRelation relMeaSubMatrix = getApplRelByBaseName(as, aeMeasurement, aeSubMatrix, BR_SUBMATRICES);
-        ApplicationRelation rel = getApplRelByBaseName(as, aeSubMatrix, aeLocalColumn, BR_LOCAL_COLUMNS);
-
-        // iterate over all instances of 'AoSubmatrix'
-        Map<Integer, InstanceElement> subMatrixMap = new HashMap<Integer, InstanceElement>(); // key=noOfRows
-        InstanceElementIterator iterSM = ieMea.getRelatedInstances(relMeaSubMatrix, "*");
-        for (InstanceElement ieSubmatrix : iterSM.nextN(iterSM.getCount())) {
-            for (int i = 0; i < 10000; i++) {
-                ieSubmatrix.getValueByBaseName(BA_NUMBER_OF_ROWS);
-            }
-            int noOfRows = ieSubmatrix.getValueByBaseName(BA_NUMBER_OF_ROWS).value.u.longVal();
-
-            // find or create SubMatrix
-            InstanceElement newIeSubMatrix = subMatrixMap.get(noOfRows);
-            if (newIeSubMatrix == null) {
-                ieSubmatrix.setName("SubMatrix#" + (subMatrixMap.size() + 1));
-                subMatrixMap.put(noOfRows, ieSubmatrix);
-                ieSubmatrix.destroy();
-                continue;
-            }
-            // change relation
-            else {
-                InstanceElementIterator iterLC = ieSubmatrix.getRelatedInstances(rel, "*");
-                for (InstanceElement ieLC : iterLC.nextN(iterLC.getCount())) {
-                    ieSubmatrix.removeRelation(rel, ieLC);
-                    newIeSubMatrix.createRelation(rel, ieLC);
-                }
-                iterLC.destroy();
-
-                // delete submatrix
-                aeSubMatrix.removeInstance(ieSubmatrix.getId(), true);
-            }
-
-        }
-        iterSM.destroy();
     }
 
     private ApplicationRelation getApplicationRelationByName(ApplicationRelation[] applRels, String relName)
