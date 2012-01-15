@@ -69,7 +69,7 @@ class AtfxCache {
     public AtfxCache() {
         this.nameToAeMap = new HashMap<String, ApplicationElement>();
         this.beToAidMap = new HashMap<String, Set<Long>>();
-        this.aidToAeMap = new HashMap<Long, ApplicationElement>();
+        this.aidToAeMap = new TreeMap<Long, ApplicationElement>();
         this.aidToAeNameMap = new HashMap<Long, String>();
         this.applicationAttributeMap = new HashMap<Long, Map<String, ApplicationAttribute>>();
         this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();

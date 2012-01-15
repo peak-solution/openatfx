@@ -515,7 +515,7 @@ public class ApplicationStructureImplTest {
      */
     @Test
     public void testCreateInstanceRelations() {
-    // fail("Not yet implemented");
+        // fail("Not yet implemented");
     }
 
     /**
