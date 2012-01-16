@@ -568,12 +568,12 @@ class AtfxCache {
     public void removeInstance(long aid, long iid) throws AoException {
         // remove relations
         for (ApplicationRelation applRel : getApplicationRelations(aid)) {
-            Set<Long> otherIidsSet = getRelatedInstanceIds(aid, iid, applRel);
-            removeInstanceRelations(aid, iid, applRel, otherIidsSet);
+            removeInstanceRelations(aid, iid, applRel, getRelatedInstanceIds(aid, iid, applRel));
         }
         // remove instance values
         this.instanceValueMap.get(aid).remove(iid);
         this.instanceAttrValueMap.get(aid).remove(iid);
+        this.instanceRelMap.get(aid).remove(iid);
         this.instanceElementCache.get(aid).remove(iid);
     }
 
@@ -783,22 +783,14 @@ class AtfxCache {
             return;
         }
 
-        // add relation
-        Map<ApplicationRelation, Set<Long>> relsMap = this.instanceRelMap.get(aid).get(iid);
-        Set<Long> relMap = relsMap.get(applRel);
-        if (relMap != null) {
-            relMap.removeAll(otherIids);
-        }
+        // remove relations
+        this.instanceRelMap.get(aid).get(iid).get(applRel).removeAll(otherIids);
 
-        // remove inverse relation
+        // remove inverse relations
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         for (Long otherIid : otherIids) {
-            Map<ApplicationRelation, Set<Long>> invRelsMap = this.instanceRelMap.get(otherAid).get(otherIid);
-            Set<Long> invRelMap = invRelsMap.get(invApplRel);
-            if (invRelMap != null) {
-                invRelMap.remove(iid);
-            }
+            this.instanceRelMap.get(otherAid).get(otherIid).get(invApplRel).remove(iid);
         }
     }
 
@@ -811,8 +803,8 @@ class AtfxCache {
      * @return Set of instance ids.
      * @throws AoException Error getting inverse relation.
      */
-    public Set<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
-        return this.instanceRelMap.get(aid).get(iid).get(applRel);
+    public Collection<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
+        return new ArrayList<Long>(this.instanceRelMap.get(aid).get(iid).get(applRel));
     }
 
 }

@@ -288,7 +288,6 @@ public abstract class DIAdemHelper {
             DIAdemHelper.mergeSubMatrices(aoSession);
             aoSession.commitTransaction();
         } catch (AoException aoe) {
-            aoe.printStackTrace();
             System.err.println(aoe.reason);
         }
     }

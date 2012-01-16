@@ -550,7 +550,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         }
         // remove instance
         this.atfxCache.removeInstance(this.aid, iid);
-        LOG.debug("Removed instance aid=" + aid + ",iid=" + iid);
+        LOG.debug("Removed instance aid=" + this.aid + ",iid=" + iid);
     }
 
     /***************************************************************************************

@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -249,7 +250,7 @@ class QueryBuilder {
         // relation column
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, colName);
         if (applRel != null) {
-            Set<Long> relsIids = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
+            Collection<Long> relsIids = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
             if (relsIids.size() < 1) {
                 return ODSHelper.createEmptyTS_Value(DataType.DT_LONGLONG);
             }

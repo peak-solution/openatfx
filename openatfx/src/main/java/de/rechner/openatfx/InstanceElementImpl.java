@@ -438,7 +438,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     private InstanceElement[] collectRelatedInstances(ApplicationRelation applRel, String iePattern) throws AoException {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
-        Set<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
+        Collection<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
 
         // pattern 'all'
         if (iePattern.equals("*")) {
@@ -578,7 +578,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public void removeRelation(ApplicationRelation applRel, InstanceElement instElem) throws AoException {
         // check if relation belongs to instance application element
-        if (aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
+        if (this.aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
             throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
                     + applRel.getRelationName() + "' is not defined at application element '"
                     + getApplicationElement().getName() + "'");
@@ -600,7 +600,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             }
             List<Long> l = new ArrayList<Long>();
             l.add(ODSHelper.asJLong(instElem.getId()));
-            this.atfxCache.removeInstanceRelations(aid, iid, applRel, l);
+            this.atfxCache.removeInstanceRelations(this.aid, this.iid, applRel, l);
         }
     }
 

@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +176,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                     + aid + ",relName=" + relName);
         }
         // return related instance ids
-        Set<Long> relInstIidSet = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
+        Collection<Long> relInstIidSet = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
         T_LONGLONG[] relInstIids = new T_LONGLONG[relInstIidSet.size()];
         int idx = 0;
         for (Long relInstIid : relInstIidSet) {
@@ -208,8 +209,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         }
 
         // alter relations
-        List<Long> otherIidsToSet = new ArrayList<Long>();
-        List<Long> otherIidsToRemove = new ArrayList<Long>();
+        Collection<Long> otherIidsToSet = new ArrayList<Long>();
+        Collection<Long> otherIidsToRemove = new ArrayList<Long>();
         for (T_LONGLONG otherIidT : instIds) {
             long otherIid = ODSHelper.asJLong(otherIidT);
             if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {
