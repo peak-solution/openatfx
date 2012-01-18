@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.1.9 (Christian Rechner)
+	
+		- Further performance tunings.
+
 	0.1.8 (Christian Rechner)
 	
 		- Performance tuning in method "getInstances" for pattern "*".
