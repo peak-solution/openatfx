@@ -15,6 +15,7 @@ import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.BaseAttribute;
+import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.RelationType;

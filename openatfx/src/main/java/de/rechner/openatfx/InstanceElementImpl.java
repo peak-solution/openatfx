@@ -179,18 +179,109 @@ class InstanceElementImpl extends InstanceElementPOA {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "Reading the 'values' of external components is not yet implemented");
         }
+
         // check if instance attribute
         TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
+
         // no instance attribute, check application attribute
         if (value == null) {
             value = this.atfxCache.getInstanceValue(this.aid, this.iid, aaName);
+
+            // value not found, return empty
             if (value == null) {
-                ApplicationAttribute aa = getApplicationElement().getAttributeByName(aaName);
-                value = ODSHelper.createEmptyTS_Value(aa.getDataType());
+                ApplicationAttribute aa = this.atfxCache.getApplicationAttributeByName(this.aid, aaName);
+                if (aa == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '"
+                            + aaName + "' not found");
+                }
+                DataType dt = aa.getDataType();
+                // special case: attribute "values" of "AoLocalColumn" is not set!
+                if (dt == DataType.DT_UNKNOWN && isLocalColumnValuesAttribute(aaName)) {
+                    dt = getDataTypeForLocalColumnValues();
+                }
+                value = ODSHelper.createEmptyTS_Value(dt);
                 this.atfxCache.setInstanceValue(aid, iid, aaName, value);
             }
+
         }
+
         return new NameValueUnit(aaName, value, "");
+    }
+
+    /**
+     * In case this InstanceElement is from the ApplicationElement derived from "AoLocalColumn", the datatype of the
+     * related "AoMeasurementQuantity" instance is returned.
+     * 
+     * @throws AoException
+     */
+    private DataType getDataTypeForLocalColumnValues() throws AoException {
+        ApplicationRelation[] rels = getApplicationElement().getRelationsByBaseName("measurement_quantity");
+        if (rels.length > 0) {
+            ApplicationRelation rel = rels[0];
+
+            Collection<Long> meaQuaIids = this.atfxCache.getRelatedInstanceIds(aid, iid, rels[0]);
+            if (!meaQuaIids.isEmpty()) {
+                long meaQuaAid = ODSHelper.asJLong(rel.getElem2().getId());
+                long meaQuaIid = meaQuaIids.iterator().next();
+                String aaNameDt = this.atfxCache.getAaNameByBaName(meaQuaAid, "datatype");
+                if (aaNameDt != null) {
+                    TS_Value dtValue = this.atfxCache.getInstanceValue(meaQuaAid, meaQuaIid, aaNameDt);
+                    if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
+                        int val = dtValue.u.enumVal();
+                        if (val == 1) { // DT_STRING
+                            return DataType.DS_STRING;
+                        } else if (val == 2) { // DT_SHORT
+                            return DataType.DS_SHORT;
+                        } else if (val == 3) { // DT_FLOAT
+                            return DataType.DS_FLOAT;
+                        } else if (val == 4) { // DT_BOOLEAN
+                            return DataType.DS_BOOLEAN;
+                        } else if (val == 5) { // DT_BYTE
+                            return DataType.DS_BYTE;
+                        } else if (val == 6) { // DT_LONG
+                            return DataType.DS_LONG;
+                        } else if (val == 7) { // DT_DOUBLE
+                            return DataType.DS_DOUBLE;
+                        } else if (val == 8) { // DT_LONGLONG
+                            return DataType.DS_LONGLONG;
+                        } else if (val == 10) { // DT_DATE
+                            return DataType.DS_DATE;
+                        } else if (val == 11) { // DT_BYTESTR
+                            return DataType.DS_BYTESTR;
+                        } else if (val == 14) { // DT_COMPLEX
+                            return DataType.DS_COMPLEX;
+                        } else if (val == 15) { // DT_DCOMPLEX
+                            return DataType.DS_DCOMPLEX;
+                        } else if (val == 28) { // DT_EXTERNALREFERENCE
+                            return DataType.DS_EXTERNALREFERENCE;
+                        } else if (val == 30) { // DT_ENUM
+                            return DataType.DS_ENUM;
+                        }
+                    }
+                }
+            }
+        }
+        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                              "Implementation problem at method 'getDataTypeForLocalColumnValues()' for instance '"
+                                      + getAsamPath() + "'");
+    }
+
+    /**
+     * Checks whether given attribute name is from base attribute 'values' of an this instance is from base element
+     * 'AoLocalColumn'.
+     * 
+     * @param aaName The application attribute name.
+     * @return True, if attribute is 'values.
+     */
+    private boolean isLocalColumnValuesAttribute(String aaName) {
+        Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(aid)) {
+            ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
+            if (aa != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

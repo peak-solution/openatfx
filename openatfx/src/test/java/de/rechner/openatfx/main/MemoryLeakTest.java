@@ -4,6 +4,9 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
@@ -38,6 +41,24 @@ public class MemoryLeakTest {
     }
 
     @Test
+    public void testFatSessions() {
+        File file = new File("D:/PUBLIC/tmp/20120105_IBN/au9147_rse_is4_inbetriebnahmetest_201112_e10.erg.atfx");
+        try {
+            AoSession s = aoFactory.newSession("FILENAME=" + file.getAbsolutePath());
+            ApplicationElement ae = s.getApplicationStructure().getElementsByBaseType("AoLocalColumn")[0];
+            InstanceElementIterator iter = ae.getInstances("*");
+            for (InstanceElement ie : iter.nextN(iter.getCount())) {
+
+            }
+
+            s.close();
+        } catch (AoException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testOneHundredThousandSessions() {
         for (int i = 0; i < NO_OF_TESTS; i++) {
             AoSession[] sessions = new AoSession[5];
@@ -50,8 +71,11 @@ public class MemoryLeakTest {
                     for (ApplicationElement ae : sessions[x].getApplicationStructure().getElements("*")) {
                         InstanceElementIterator iter = ae.getInstances("*");
                         for (InstanceElement ie : iter.nextN(iter.getCount())) {
+                            List<String> valNames = new ArrayList<String>();
+                            valNames.addAll(Arrays.asList(ie.listAttributes("*", AttrType.ALL)));
+                            valNames.remove("values");
+                            ie.getValueSeq(valNames.toArray(new String[0]));
                             ie.getAsamPath();
-                            ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
                         }
                         iter.destroy();
                     }
