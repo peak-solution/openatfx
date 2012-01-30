@@ -293,10 +293,20 @@ public abstract class ODSHelper {
         return createNV(valName, union);
     }
 
-    public static NameValueUnit createDoubleNVU(String valName, double value) {
-        TS_Union union = new TS_Union();
-        union.doubleVal(value);
-        return createNVU(valName, union);
+    public static NameValueUnit createDoubleNVU(String valName, Double value) {
+        NameValueUnit nvu = new NameValueUnit();
+        nvu.valName = valName;
+        nvu.value = new TS_Value();
+        nvu.unit = "";
+        nvu.value.u = new TS_Union();
+        if (value == null) {
+            nvu.value.flag = 0;
+            nvu.value.u.doubleVal(0);
+        } else {
+            nvu.value.flag = 15;
+            nvu.value.u.doubleVal(value);
+        }
+        return nvu;
     }
 
     public static NameValue createComplexNV(String valName, T_COMPLEX value) {

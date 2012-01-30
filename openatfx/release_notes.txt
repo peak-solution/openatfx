@@ -26,6 +26,8 @@
 	0.2.0 (Christian Rechner)
 	
 		- Enabled handling of LocalColumns having no values set.
+		- Suppress writing of NULL attribute values
+		- Added DIAdem DAT to ATFX converter.
 
 	0.1.9 (Christian Rechner)
 	

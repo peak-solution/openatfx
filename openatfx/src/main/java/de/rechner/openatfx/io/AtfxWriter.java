@@ -470,8 +470,11 @@ public class AtfxWriter {
             }
         }
 
+        // write attributes if not null
         for (NameValueUnit nvu : ie.getValueSeq(attrNameList.toArray(new String[0]))) {
-            writeApplAttrValue(streamWriter, applElem, nvu);
+            if (nvu.value.flag == 15) {
+                writeApplAttrValue(streamWriter, applElem, nvu);
+            }
         }
 
         // write instance attribute data
