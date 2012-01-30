@@ -8,6 +8,11 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
+/**
+ * Holds the content of an DIAdem DAT header file.
+ * 
+ * @author Christian Rechner
+ */
 class DatHeader {
 
     // global header keys
@@ -17,6 +22,7 @@ class DatHeader {
     public static final int KEY_PERSON = 103;
     public static final int KEY_DATE = 104;
     public static final int KEY_TIME = 105;
+    public static final int KEY_BYTE_ORDER = 112;
 
     // channel header keys
     public static final int KEY_COMMENT = 201;
@@ -28,6 +34,7 @@ class DatHeader {
     public static final int KEY_NO_OF_VALUES = 220;
     public static final int KEY_FILE_OFFSET = 221;
     public static final int KEY_CHANNEL_OFFSET = 222;
+    public static final int KEY_OFFSET = 240;
 
     private final File sourceFile;
     private final Map<Integer, String> globalHeaderEntries; // <header key,value>

@@ -39,7 +39,7 @@ final class DatHeaderReader {
      * Private constructor.
      */
     private DatHeaderReader() {
-        this.linePattern = Pattern.compile("(\\d*),(.*)");
+        this.linePattern = Pattern.compile("^\\s*(\\d*),(.*)$");
     }
 
     /**
@@ -57,7 +57,7 @@ final class DatHeaderReader {
         Scanner scanner = new Scanner(file, ENCODING);
         try {
             while (scanner.hasNextLine()) {
-                String line = scanner.nextLine().trim();
+                String line = scanner.nextLine();
 
                 // is global header?
                 if (line.equals(BEGINGLOBALHEADER)) {
@@ -90,11 +90,12 @@ final class DatHeaderReader {
     private void readGlobalHeader(Scanner scanner, DatHeader datHeader) throws IOException {
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
+
             // end reached
             if (line.equals(ENDGLOBALHEADER)) {
                 return;
             }
-            // read pair of name and value
+            // read pair of comment name and value (first comment and other way round supported!)
             Entry<Integer, String> entry = parseLineEntry(line).entrySet().iterator().next();
             if (entry.getKey().equals(KEY_COMMENT_VALUE)) {
                 line = scanner.nextLine();
@@ -102,7 +103,18 @@ final class DatHeaderReader {
                 if (!nameEntry.getKey().equals(KEY_COMMENT_NAME)) {
                     throw new IOException("Invalid comment (name missing): " + line);
                 }
-                datHeader.addGlobalHeaderComment(nameEntry.getValue(), entry.getValue());
+                if (nameEntry.getValue().length() > 0) {
+                    datHeader.addGlobalHeaderComment(nameEntry.getValue(), entry.getValue());
+                }
+            } else if (entry.getKey().equals(KEY_COMMENT_NAME)) {
+                line = scanner.nextLine();
+                Entry<Integer, String> valueEntry = parseLineEntry(line).entrySet().iterator().next();
+                if (!valueEntry.getKey().equals(KEY_COMMENT_VALUE)) {
+                    throw new IOException("Invalid comment (value missing): " + line);
+                }
+                if (valueEntry.getValue().length() > 0) {
+                    datHeader.addGlobalHeaderComment(entry.getValue(), valueEntry.getValue());
+                }
             }
             // common header entry
             else {

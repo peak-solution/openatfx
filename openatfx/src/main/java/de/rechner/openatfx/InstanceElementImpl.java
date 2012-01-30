@@ -395,7 +395,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         // check for empty name
         if (instAttr.valName == null || instAttr.valName.length() < 1) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
-                                  "Empty instance attribute is name not allowed");
+                                  "Empty instance attribute name is not allowed");
         }
         // check for existing application attribute
         if (this.atfxCache.getApplicationAttributeByName(this.aid, instAttr.valName) != null) {

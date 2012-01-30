@@ -41,24 +41,6 @@ public class MemoryLeakTest {
     }
 
     @Test
-    public void testFatSessions() {
-        File file = new File("D:/PUBLIC/tmp/20120105_IBN/au9147_rse_is4_inbetriebnahmetest_201112_e10.erg.atfx");
-        try {
-            AoSession s = aoFactory.newSession("FILENAME=" + file.getAbsolutePath());
-            ApplicationElement ae = s.getApplicationStructure().getElementsByBaseType("AoLocalColumn")[0];
-            InstanceElementIterator iter = ae.getInstances("*");
-            for (InstanceElement ie : iter.nextN(iter.getCount())) {
-
-            }
-
-            s.close();
-        } catch (AoException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-    @Test
     public void testOneHundredThousandSessions() {
         for (int i = 0; i < NO_OF_TESTS; i++) {
             AoSession[] sessions = new AoSession[5];

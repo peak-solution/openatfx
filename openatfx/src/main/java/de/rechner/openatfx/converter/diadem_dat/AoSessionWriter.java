@@ -6,8 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -46,7 +46,7 @@ class AoSessionWriter {
     static {
         MEQ_DATATYPE_MAP.put("REAL32", 3); // DT_FLOAT
         MEQ_DATATYPE_MAP.put("REAL48", null); // not yet supported
-        MEQ_DATATYPE_MAP.put("REAL64", null); // not yet supported
+        MEQ_DATATYPE_MAP.put("REAL64", 7); // DT_DOUBLE
         MEQ_DATATYPE_MAP.put("MSREAL32", null); // not yet supported
         MEQ_DATATYPE_MAP.put("INT16", null); // not yet supported
         MEQ_DATATYPE_MAP.put("INT32", 6); // DT_LONG
@@ -262,12 +262,12 @@ class AoSessionWriter {
             ieSm.createRelation(relSmLc, ieLc);
 
             // write AoExternalComponent
-            writeEc(ieMeq, ieLc, datHeader);
+            writeEc(ieMea, ieMeq, ieLc, datHeader);
         }
     }
 
-    private void writeEc(InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader) throws AoException,
-            ConvertException {
+    private void writeEc(InstanceElement ieMea, InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader)
+            throws AoException, ConvertException {
         ApplicationStructure as = ieLc.getApplicationElement().getApplicationStructure();
         ApplicationElement aeLc = as.getElementByName("lc");
         ApplicationElement aeEc = as.getElementByName("ec");
@@ -279,7 +279,6 @@ class AoSessionWriter {
         ieLc.createRelation(relLcEc, ieEc);
 
         try {
-
             // open source channel
             String sourceFilename = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILENAME);
             File sourceDir = datHeader.getSourceFile().getParentFile();
@@ -288,77 +287,51 @@ class AoSessionWriter {
             if (sourceMbb == null) {
                 FileChannel sourceChannel = new FileInputStream(sourceFile).getChannel();
                 sourceMbb = sourceChannel.map(MapMode.READ_ONLY, 0, sourceFile.length());
+                // set byte order
+                ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+                String byteOrderStr = datHeader.getGlobalHeaderEntry(DatHeader.KEY_BYTE_ORDER);
+                if (byteOrderStr != null && byteOrderStr.equals("Low -> High")) {
+                    byteOrder = ByteOrder.BIG_ENDIAN;
+                }
+                sourceMbb.order(byteOrder);
                 this.sourceFileChannels.put(sourceFile, sourceMbb);
             }
 
             // open target channel
             File targetDir = this.atfxFile.getParentFile();
-            File targetFile = new File(targetDir, "binary" + this.sourceFileChannels.size() + ".bin");
+            File targetFile = new File(targetDir, "binary" + ODSHelper.asJLong(ieMea.getId()) + ".bin");
             FileChannel targetChannel = this.targetFileChannels.get(targetFile);
             if (targetChannel == null) {
                 targetChannel = new FileOutputStream(targetFile).getChannel();
                 this.targetFileChannels.put(targetFile, targetChannel);
-                System.out.println(targetFile);
             }
 
             // read header data
             String dt = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
-            String method = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_METHOD);
-            int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES)
-                                                    .trim());
-            int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET)
-                                                      .trim());
-            int channelOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName,
-                                                                                DatHeader.KEY_CHANNEL_OFFSET).trim());
-            if (method == null || !method.equals("BLOCK")) {
-                throw new ConvertException("Store method not yet supported: " + method);
-            }
-            ieEc.setValue(ODSHelper.createLongNVU("length", noOfRows));
-
-            ieEc.setValue(ODSHelper.createLongLongNVU("start_offset", targetChannel.position()));
-            ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
-            ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
 
             // DT_FLOAT
             if (dt.equals("REAL32")) {
-                FloatBuffer sourceFb = sourceMbb.asFloatBuffer();
-                ByteBuffer targetBb = ByteBuffer.allocate(noOfRows * 8);
-                float[] data = new float[noOfRows];
-                for (int i = 0; i < noOfRows; i++) {
-                    int idx = (channelOffset * i) + fileOffset - 1;
-                    data[i] = sourceFb.get(idx);
-                    targetBb.putFloat(data[i]);
-                }
-                targetChannel.write(targetBb);
-
-                ieEc.setValue(ODSHelper.createEnumNVU("type", 5));
-                ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
-                ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
-
-                ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
+                writeEcREAL32(ieMeq, ieEc, datHeader, channelName, sourceMbb);
             }
             // DT_LONG
             else if (dt.equals("INT32")) {
-                ByteBuffer targetBuffer = ByteBuffer.allocate(noOfRows * 8);
-                IntBuffer ib = sourceMbb.asIntBuffer();
-                for (int i = 0; i < noOfRows; i++) {
-                    int idx = (channelOffset * i) + fileOffset - 1;
-                    targetBuffer.putInt(ib.get(idx));
-                }
-                targetChannel.write(targetBuffer);
-
-                ieEc.setValue(ODSHelper.createEnumNVU("type", 3));
-                ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
-                ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
-
-                int[] data = new int[noOfRows];
-                ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
-                ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
+                // ByteBuffer targetBuffer = ByteBuffer.allocate(noOfRows * 8);
+                // IntBuffer ib = sourceMbb.asIntBuffer();
+                // for (int i = 0; i < noOfRows; i++) {
+                // int idx = (channelOffset * i) + fileOffset - 1;
+                // targetBuffer.putInt(ib.get(idx));
+                // }
+                // targetChannel.write(targetBuffer);
+                //
+                // ieEc.setValue(ODSHelper.createEnumNVU("type", 3));
+                // ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
+                // ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
+                //
+                // int[] data = new int[noOfRows];
+                // ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
+                // ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
+                // ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
+                // ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
             }
 
         } catch (FileNotFoundException e) {
@@ -368,6 +341,56 @@ class AoSessionWriter {
             LOG.error(e.getMessage(), e);
             throw new ConvertException(e.getMessage(), e);
         }
+    }
+
+    private void writeEcREAL32(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
+            MappedByteBuffer sourceMbb) throws AoException, ConvertException {
+        // read meta info from DAT header
+        int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
+        int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET).trim());
+        String method = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_METHOD);
+
+        FloatBuffer sourceFb = sourceMbb.asFloatBuffer();
+        ByteBuffer targetBb = ByteBuffer.allocate(noOfRows * 8);
+        float[] data = new float[noOfRows];
+
+        // store method BLOCK
+        if (method.equals("BLOCK")) {
+            String chOffsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_OFFSET);
+            int chOffset = Integer.valueOf(chOffsetStr.trim());
+            for (int i = 0; i < noOfRows; i++) {
+                int idx = (chOffset * i) + fileOffset - 1;
+                data[i] = sourceFb.get(idx);
+                targetBb.putFloat(data[i]);
+            }
+        }
+        // store method CHANNEL
+        else if (method.equals("CHANNEL")) {
+            for (int i = 0; i < noOfRows; i++) {
+                int idx = fileOffset + i - 1;
+                data[i] = sourceFb.get(idx);
+                targetBb.putFloat(data[i]);
+            }
+        } else {
+            throw new ConvertException("Store method not yet supported: " + method);
+        }
+
+        // targetChannel.write(targetBb);
+
+        // set external component values
+        ieEc.setValue(ODSHelper.createLongNVU("length", noOfRows));
+        // ieEc.setValue(ODSHelper.createLongLongNVU("start_offset", targetChannel.position()));
+        ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
+        ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
+        ieEc.setValue(ODSHelper.createEnumNVU("type", 5));
+        ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
+        // ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
+
+        // calculate min/max/avg/dev and update measurement quantity instance
+        ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
     }
 
     /****************************************************************************************************
