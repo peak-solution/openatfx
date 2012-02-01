@@ -238,7 +238,7 @@
         <obligatory>true</obligatory>
       </application_attribute>
       <application_attribute>
-        <name>generation_parameters</name>
+        <name>gen_params</name>
         <base_attribute>generation_parameters</base_attribute>
       </application_attribute>
       <application_attribute>

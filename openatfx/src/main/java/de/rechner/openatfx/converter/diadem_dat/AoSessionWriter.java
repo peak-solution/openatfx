@@ -59,13 +59,6 @@ class AoSessionWriter {
         MEQ_DATATYPE_MAP.put("ASCII", null); // not yet supported
     }
 
-    // mapping between the DAT channel type and the ASAM ODS sequence representation enum value
-    private static final Map<String, Integer> LC_SEQ_REP_MAP = new HashMap<String, Integer>();
-    static {
-        LC_SEQ_REP_MAP.put("EXPLICIT", 7); // external_component
-        LC_SEQ_REP_MAP.put("IMPLICIT", null);
-    }
-
     private final Map<File, MappedByteBuffer> sourceFileChannels;
     private final Map<File, FileChannel> targetFileChannels;
     private File atfxFile;
@@ -193,7 +186,7 @@ class AoSessionWriter {
     }
 
     /**
-     * Write the instance of 'AoMeasurementQuantity'
+     * Write the instances of 'AoMeasurementQuantity'.
      * 
      * @param ieMea The 'AoMeasurement' instance.
      * @param smMap The SubMatrix map.
@@ -205,66 +198,124 @@ class AoSessionWriter {
             throws AoException, ConvertException {
         ApplicationStructure as = ieMea.getApplicationElement().getApplicationStructure();
         ApplicationElement aeMea = as.getElementByName("mea");
-        ApplicationElement aeSm = as.getElementByName("sm");
         ApplicationElement aeMeq = as.getElementByName("meq");
         ApplicationElement aeUnt = as.getElementByName("unt");
-        ApplicationElement aeLc = as.getElementByName("lc");
         ApplicationRelation relMeaMeq = as.getRelations(aeMea, aeMeq)[0];
         ApplicationRelation relMeqUnt = as.getRelations(aeMeq, aeUnt)[0];
-        ApplicationRelation relMeqLc = as.getRelations(aeMeq, aeLc)[0];
-        ApplicationRelation relSmLc = as.getRelations(aeSm, aeLc)[0];
 
         for (String channelName : datHeader.listChannelNames()) {
 
-            // AoMeasurementQuantity
-
             InstanceElement ieMeq = aeMeq.createInstance(channelName);
             ieMea.createRelation(relMeaMeq, ieMeq);
+
             // description
             String description = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_COMMENT);
-            ieMea.setValue(ODSHelper.createStringNVU("description", description));
+            ieMeq.setValue(ODSHelper.createStringNVU("description", description));
+
             // unit
             String unit = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_UNIT);
             if (unit != null && unit.length() > 0) {
                 InstanceElement ieUnt = aeUnt.getInstanceByName(unit);
                 if (ieUnt == null) {
                     ieUnt = aeUnt.createInstance(unit);
+                    ieUnt.setValue(ODSHelper.createDoubleNVU("factor", 1d));
+                    ieUnt.setValue(ODSHelper.createDoubleNVU("offset", 0d));
                 }
                 ieMeq.createRelation(relMeqUnt, ieUnt);
             }
-            // datatype
+
+            // datatype: only for explicit channels
+            String type = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_TYPE);
+            if (type == null || type.length() < 1) {
+                throw new ConvertException("Channel type not found for: " + channelName);
+            }
             String dt = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
-            Integer dtEnum = MEQ_DATATYPE_MAP.get(dt);
-            if (dtEnum == null) {
-                throw new ConvertException("Unsupported DAT datatype: " + dt);
+            if (type.equals("IMPLICIT")) {
+                ieMeq.setValue(ODSHelper.createEnumNVU("datatype", 7));
+            } else if (type.equals("EXPLICIT")) {
+                Integer dtEnum = MEQ_DATATYPE_MAP.get(dt);
+                if (dtEnum == null) {
+                    throw new ConvertException("Unsupported DAT datatype: " + dt);
+                }
+                ieMeq.setValue(ODSHelper.createEnumNVU("datatype", dtEnum));
+            } else {
+                throw new ConvertException("Unknown type: " + channelName);
             }
-            ieMeq.setValue(ODSHelper.createEnumNVU("datatype", dtEnum));
 
-            // AoLocalColumn
-
-            InstanceElement ieLc = aeLc.createInstance(channelName);
-            ieMeq.createRelation(relMeqLc, ieLc);
-            // global_flag
-            ieLc.setValue(ODSHelper.createShortNVU("global", (short) 15));
-            // independent flag
-            ieLc.setValue(ODSHelper.createShortNVU("idp", (short) 0));
-            // sequence_representation
-            String seqRepStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_TYPE);
-            Integer seqRepEnum = LC_SEQ_REP_MAP.get(seqRepStr);
-            if (seqRepEnum == null) {
-                throw new ConvertException("Unsupported DAT sequence representation: " + dt);
-            }
-            ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", seqRepEnum));
-
-            // relation to SubMatrix
-            String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
-            Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
-            InstanceElement ieSm = smMap.get(noOfRows);
-            ieSm.createRelation(relSmLc, ieLc);
-
-            // write AoExternalComponent
-            writeEc(ieMea, ieMeq, ieLc, datHeader);
+            // 'AoLocalColumn'
+            writeLc(ieMea, ieMeq, smMap, datHeader);
         }
+    }
+
+    /**
+     * Writes the instance of type 'AoLocalColumn' to the session.
+     * 
+     * @param ieMea
+     * @param ieMeq
+     * @param smMap
+     * @param datHeader
+     * @throws AoException
+     * @throws ConvertException
+     */
+    private void writeLc(InstanceElement ieMea, InstanceElement ieMeq, Map<Integer, InstanceElement> smMap,
+            DatHeader datHeader) throws AoException, ConvertException {
+        ApplicationStructure as = ieMeq.getApplicationElement().getApplicationStructure();
+        ApplicationElement aeMeq = as.getElementByName("meq");
+        ApplicationElement aeLc = as.getElementByName("lc");
+        ApplicationElement aeSm = as.getElementByName("sm");
+        ApplicationRelation relMeqLc = as.getRelations(aeMeq, aeLc)[0];
+        ApplicationRelation relSmLc = as.getRelations(aeSm, aeLc)[0];
+        String channelName = ieMeq.getName();
+
+        InstanceElement ieLc = aeLc.createInstance(channelName);
+        ieMeq.createRelation(relMeqLc, ieLc);
+
+        // relation to SubMatrix
+        String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
+        Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
+        InstanceElement ieSm = smMap.get(noOfRows);
+        ieSm.createRelation(relSmLc, ieLc);
+
+        // global_flag
+        ieLc.setValue(ODSHelper.createShortNVU("global", (short) 15));
+
+        // independent flag
+        ieLc.setValue(ODSHelper.createShortNVU("idp", (short) 0));
+
+        // sequence_representation and factor / offset
+        String seqRepStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_TYPE);
+        String offsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_OFFSET);
+        String factorStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FACTOR);
+        if (seqRepStr == null || seqRepStr.length() < 1) {
+            throw new ConvertException("Channel type not found for: " + channelName);
+        }
+        // implicit linear
+        else if (seqRepStr.equals("IMPLICIT")) {
+            if (offsetStr == null || offsetStr.length() < 1) {
+                throw new ConvertException("Implict channels need an offset: " + channelName);
+            }
+            double offset = Double.valueOf(offsetStr);
+            double factor = Double.valueOf(factorStr);
+            ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", new double[] { offset, factor }));
+            ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", 2));
+            ieMeq.setValue(ODSHelper.createDoubleNVU("min", offset));
+            ieMeq.setValue(ODSHelper.createDoubleNVU("max", (offset + (factor * noOfRows))));
+            return;
+        }
+        // raw_linear_external / external component
+        else if (offsetStr != null && offsetStr.length() > 0 && factorStr != null && factorStr.length() > 0) {
+            double offset = Double.valueOf(offsetStr);
+            double factor = Double.valueOf(factorStr);
+            ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", new double[] { offset, factor }));
+            ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", 8));
+        }
+        // external_component
+        else {
+            ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", 7));
+        }
+
+        // write AoExternalComponent
+        writeEc(ieMea, ieMeq, ieLc, datHeader);
     }
 
     private void writeEc(InstanceElement ieMea, InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader)

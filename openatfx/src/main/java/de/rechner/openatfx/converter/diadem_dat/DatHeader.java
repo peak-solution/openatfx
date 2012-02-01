@@ -35,6 +35,7 @@ class DatHeader {
     public static final int KEY_FILE_OFFSET = 221;
     public static final int KEY_CHANNEL_OFFSET = 222;
     public static final int KEY_OFFSET = 240;
+    public static final int KEY_FACTOR = 241;
 
     private final File sourceFile;
     private final Map<Integer, String> globalHeaderEntries; // <header key,value>
