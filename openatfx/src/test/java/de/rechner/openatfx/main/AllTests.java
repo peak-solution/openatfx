@@ -8,6 +8,7 @@ import de.rechner.openatfx.AoSessionImplTest;
 import de.rechner.openatfx.ApplElemAccessImplTest;
 import de.rechner.openatfx.ApplicationAttributeImplTest;
 import de.rechner.openatfx.ApplicationElementImplTest;
+import de.rechner.openatfx.ApplicationRelationImplTest;
 import de.rechner.openatfx.ApplicationStructureImplTest;
 import de.rechner.openatfx.BlobImplTest;
 import de.rechner.openatfx.EnumerationDefinitionImplTest;
@@ -48,6 +49,7 @@ public class AllTests {
         suite.addTest(AoSessionImplTest.suite());
         suite.addTest(ApplElemAccessImplTest.suite());
         suite.addTest(ApplicationAttributeImplTest.suite());
+        suite.addTest(ApplicationRelationImplTest.suite());
         suite.addTest(ApplicationElementImplTest.suite());
         suite.addTest(ApplicationStructureImplTest.suite());
         suite.addTest(BlobImplTest.suite());
