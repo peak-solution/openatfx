@@ -15,6 +15,7 @@ import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplElemAccess;
+import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
@@ -100,10 +101,16 @@ public class ApplElemAccessImplTest {
     @Test
     public void testDeleteInstances() {
         try {
-            applElemAccess.deleteInstances(null, null);
-            fail("AoException expected");
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeUnt = as.getElementByName("unt");
+
+            T_LONGLONG aidUnt = aeUnt.getId();
+            T_LONGLONG[] iids = new T_LONGLONG[] { ODSHelper.asODSLongLong(36), ODSHelper.asODSLongLong(42) };
+            applElemAccess.deleteInstances(aidUnt, iids);
+
+            assertEquals(5, aeUnt.listInstances("*").getCount());
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            fail(e.reason);
         }
     }
 
@@ -131,11 +138,10 @@ public class ApplElemAccessImplTest {
             assertEquals(0,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dsk_iid").length);
             // mea->audifahrzeug_iid
-            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
-                                                      "audifahrzeug_iid").length);
+            assertEquals(1,
+                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifahrzeug_iid").length);
             // mea->audifm_iid
-            assertEquals(
-                         1,
+            assertEquals(1,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifm_iid").length);
 
         } catch (AoException e) {
@@ -145,12 +151,12 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testSetRelInst() {
-    // try {
-    // applElemAccess.getRelInst(null, null);
-    // fail("AoException expected");
-    // } catch (AoException e) {
-    // assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
-    // }
+        // try {
+        // applElemAccess.getRelInst(null, null);
+        // fail("AoException expected");
+        // } catch (AoException e) {
+        // assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        // }
     }
 
     @Test

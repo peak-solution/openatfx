@@ -148,8 +148,21 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#deleteInstances(org.asam.ods.T_LONGLONG, org.asam.ods.T_LONGLONG[])
      */
     public void deleteInstances(T_LONGLONG aid, T_LONGLONG[] instIds) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'deleteInstances' not implemented");
+        // check if Application Element exists
+        long jAid = ODSHelper.asJLong(aid);
+        if (this.atfxCache.getApplicationElementById(jAid) == null) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "ApplicationElement with id="
+                    + jAid + " not found");
+        }
+        // delete each instance
+        for (T_LONGLONG instId : instIds) {
+            long jIid = ODSHelper.asJLong(instId);
+            if (!this.atfxCache.instanceExists(jAid, jIid)) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "InstanceElement not found ElemId aid=" + jAid + ",iid=" + jIid);
+            }
+            this.atfxCache.removeInstance(jAid, ODSHelper.asJLong(instId));
+        }
     }
 
     /***********************************************************************************
