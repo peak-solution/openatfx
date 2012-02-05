@@ -184,18 +184,26 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         if (this.baseRelation != null) {
             return this.baseRelation.getRelationship();
         }
-        // m:n
-        else if (getRelationRange() == null) {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "RelationRange was null");
-        } else if (getRelationRange().max == -1 && getInverseRelationRange().max == -1) {
+
+        RelationRange relRange = getRelationRange();
+        RelationRange invRelRange = getInverseRelationRange();
+
+        // m:n or 1:1
+        if (relRange.max == invRelRange.max) {
             return Relationship.INFO_REL;
         }
-        // 0:1 or 1:0
-        else if (getRelationRange().min == 1 || getRelationRange().min == 0) {
-            return Relationship.INFO_FROM;
-        } else {
+        // 0:n or 1:n
+        else if (relRange.max == 1 && invRelRange.max == -1) {
             return Relationship.INFO_TO;
         }
+        // m:0 or m:1
+        else if (relRange.max == -1 && invRelRange.max == 1) {
+            return Relationship.INFO_FROM;
+        }
+
+        throw new AoException(ErrorCode.AO_INVALID_RELATION_RANGE, SeverityFlag.ERROR, 0,
+                              "Unable to obtain the relationship by relationrange " + relRange.min + ":"
+                                      + relationRange.max + "=>" + invRelRange.min + ":" + invRelRange.max);
     }
 
     /**

@@ -317,8 +317,8 @@ public class ApplicationElementImplTest {
             assertEquals(1, applicationElement.listRelatedElementsByRelationship(Relationship.FATHER).length);
             assertEquals(2, applicationElement.listRelatedElementsByRelationship(Relationship.CHILD).length);
             assertEquals(1, applicationElement.listRelatedElementsByRelationship(Relationship.INFO_REL).length);
-            assertEquals(1, applicationElement.listRelatedElementsByRelationship(Relationship.INFO_FROM).length);
-            assertEquals(2, applicationElement.listRelatedElementsByRelationship(Relationship.INFO_TO).length);
+            assertEquals(0, applicationElement.listRelatedElementsByRelationship(Relationship.INFO_FROM).length);
+            assertEquals(3, applicationElement.listRelatedElementsByRelationship(Relationship.INFO_TO).length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -331,8 +331,8 @@ public class ApplicationElementImplTest {
             assertEquals(1, applicationElement.getRelatedElementsByRelationship(Relationship.FATHER).length);
             assertEquals(2, applicationElement.getRelatedElementsByRelationship(Relationship.CHILD).length);
             assertEquals(1, applicationElement.getRelatedElementsByRelationship(Relationship.INFO_REL).length);
-            assertEquals(1, applicationElement.getRelatedElementsByRelationship(Relationship.INFO_FROM).length);
-            assertEquals(2, applicationElement.getRelatedElementsByRelationship(Relationship.INFO_TO).length);
+            assertEquals(0, applicationElement.getRelatedElementsByRelationship(Relationship.INFO_FROM).length);
+            assertEquals(3, applicationElement.getRelatedElementsByRelationship(Relationship.INFO_TO).length);
         } catch (AoException e) {
             fail(e.reason);
         }
