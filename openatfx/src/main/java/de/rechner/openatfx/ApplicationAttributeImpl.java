@@ -38,24 +38,13 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * additionally, it does not permit the obligatory flag to be set to 'false' for those attributes.
      */
     private static final Map<String, List<String>> obligatoryAttributes;
-
     static {
         obligatoryAttributes = new HashMap<String, List<String>>();
         obligatoryAttributes.put("id", null); // all application elements
         obligatoryAttributes.put("name", null); // all application elements
-        obligatoryAttributes.put("external_references",
-                                 Arrays.asList(new String[] { "AoEnvironment", "AoNameMap", "AoAttributeMap",
-                                         "AoQuantity", "AoUnit", "AoPhysicalDimension", "AoQuantityGroup",
-                                         "AoUnitGroup", "AoMeasurement", "AoMeasurementQuantity", "AoSubmatrix",
-                                         "AoLocalColumn", "AoExternalComponent", "AoTest", "AoSubTest",
-                                         "AoUnitUnderTest", "AoUnitUnderTestPart", "AoTestSequence",
-                                         "AoTestSequencePart", "AoTestEquipment", "AoTestEquipmentPart",
-                                         "AoTestDevice", "AoUser", "AoUserGroup", "AoAny", "AoLog", "AoParameter",
-                                         "AoParameterSet" }));
         obligatoryAttributes.put("meaning_of_aliases", Arrays.asList(new String[] { "AoEnvironment" }));
         obligatoryAttributes.put("entity_name", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
         obligatoryAttributes.put("alias_names", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
-        obligatoryAttributes.put("default_dimension", Arrays.asList(new String[] { "AoQuantity" }));
         obligatoryAttributes.put("factor", Arrays.asList(new String[] { "AoUnit" }));
         obligatoryAttributes.put("offset", Arrays.asList(new String[] { "AoUnit" }));
         obligatoryAttributes.put("length_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
@@ -66,9 +55,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes.put("molar_amount_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
         obligatoryAttributes.put("luminous_intensity_exp", Arrays.asList(new String[] { "AoPhysicalDimension" }));
         obligatoryAttributes.put("datatype", Arrays.asList(new String[] { "AoMeasurementQuantity" }));
-        obligatoryAttributes.put("dimension", Arrays.asList(new String[] { "AoMeasurementQuantity" }));
         obligatoryAttributes.put("number_of_rows", Arrays.asList(new String[] { "AoSubmatrix" }));
-        obligatoryAttributes.put("flags", Arrays.asList(new String[] { "AoLocalColumn" }));
         obligatoryAttributes.put("independent", Arrays.asList(new String[] { "AoLocalColumn" }));
         obligatoryAttributes.put("sequence_representation", Arrays.asList(new String[] { "AoLocalColumn" }));
         obligatoryAttributes.put("generation_parameters", Arrays.asList(new String[] { "AoLocalColumn" }));
@@ -302,8 +289,8 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         // if the base attribute is obligatory, always return true
         if (this.baseAttribute != null) {
             String baseAttributeName = this.baseAttribute.getName();
-            String baseElementName = this.baseAttribute.getBaseElement().getType();
             if (obligatoryAttributes.containsKey(baseAttributeName)) {
+                String baseElementName = this.baseAttribute.getBaseElement().getType();
                 if (obligatoryAttributes.get(baseAttributeName) == null) {
                     // attribute is obligatory in every application element
                     return true;

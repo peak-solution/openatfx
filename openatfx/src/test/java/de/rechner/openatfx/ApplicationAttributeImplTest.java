@@ -203,8 +203,15 @@ public class ApplicationAttributeImplTest {
         try {
             assertEquals(true, aaId.isObligatory());
             assertEquals(false, aaDB.isObligatory());
-            assertEquals(true, aoSession.getApplicationStructure().getElementByName("measurement_location")
-                                        .getAttributeByName("location_shape_id").isObligatory());
+
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            assertEquals(true, as.getElementByName("measurement_location").getAttributeByName("location_shape_id")
+                                 .isObligatory());
+
+            // implicit by base attribute
+            assertEquals(true, as.getElementByName("tstser").getAttributeByName("mime_type").isObligatory());
+            // explicit with having base attribute
+            assertEquals(true, as.getElementByName("unt").getAttributeByBaseName("offset").isObligatory());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -272,7 +279,7 @@ public class ApplicationAttributeImplTest {
 
     @Test
     public void testWithUnit() {
-    // nothing to do
+        // nothing to do
     }
 
     @Test

@@ -568,6 +568,9 @@ public class AtfxReader {
         else {
             DataType datatype = ODSHelper.string2dataType(dataTypeStr);
             aa.setDataType(datatype);
+        }
+        // obligatory
+        if (obligatoryStr != null && obligatoryStr.length() > 0) {
             aa.setIsObligatory(Boolean.valueOf(obligatoryStr));
         }
         // length
