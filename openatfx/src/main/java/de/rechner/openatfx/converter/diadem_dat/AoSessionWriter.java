@@ -282,30 +282,37 @@ class AoSessionWriter {
         // independent flag
         ieLc.setValue(ODSHelper.createShortNVU("idp", (short) 0));
 
+        // factor and offset
+        double offset = 0d;
+        double factor = 1d;
+        String offsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_OFFSET);
+        if (offsetStr != null && offsetStr.length() > 0) {
+            offset = Double.valueOf(offsetStr);
+        }
+        String factorStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FACTOR);
+        if (factorStr != null && factorStr.length() > 0) {
+            factor = Double.valueOf(factorStr);
+        }
+
         // sequence_representation and factor / offset
         String seqRepStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_TYPE);
-        String offsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_OFFSET);
-        String factorStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FACTOR);
         if (seqRepStr == null || seqRepStr.length() < 1) {
             throw new ConvertException("Channel type not found for: " + channelName);
         }
         // implicit linear
         else if (seqRepStr.equals("IMPLICIT")) {
-            if (offsetStr == null || offsetStr.length() < 1) {
-                throw new ConvertException("Implict channels need an offset: " + channelName);
-            }
-            double offset = Double.valueOf(offsetStr);
-            double factor = Double.valueOf(factorStr);
             ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", new double[] { offset, factor }));
             ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", 2));
-            ieMeq.setValue(ODSHelper.createDoubleNVU("min", offset));
-            ieMeq.setValue(ODSHelper.createDoubleNVU("max", (offset + (factor * noOfRows))));
+            double min = offset;
+            double max = offset + (factor * noOfRows);
+            double avg = (min + max) / 2;
+            ieMeq.setValue(ODSHelper.createDoubleNVU("min", min));
+            ieMeq.setValue(ODSHelper.createDoubleNVU("max", max));
+            ieMeq.setValue(ODSHelper.createDoubleNVU("avg", avg));
             return;
         }
         // raw_linear_external / external component
-        else if (offsetStr != null && offsetStr.length() > 0 && factorStr != null && factorStr.length() > 0) {
-            double offset = Double.valueOf(offsetStr);
-            double factor = Double.valueOf(factorStr);
+        else if (offset != 0d || factor != 1d) {
             ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", new double[] { offset, factor }));
             ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", 8));
         }
@@ -315,16 +322,15 @@ class AoSessionWriter {
         }
 
         // write AoExternalComponent
-        writeEc(ieMea, ieMeq, ieLc, datHeader);
+        writeEc(ieMea, ieMeq, ieLc, datHeader, channelName, offset, factor);
     }
 
-    private void writeEc(InstanceElement ieMea, InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader)
-            throws AoException, ConvertException {
+    private void writeEc(InstanceElement ieMea, InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader,
+            String channelName, double offset, double factor) throws AoException, ConvertException {
         ApplicationStructure as = ieLc.getApplicationElement().getApplicationStructure();
         ApplicationElement aeLc = as.getElementByName("lc");
         ApplicationElement aeEc = as.getElementByName("ec");
         ApplicationRelation relLcEc = as.getRelations(aeLc, aeEc)[0];
-        String channelName = ieLc.getName();
 
         // create AoExternalComponenent instance
         InstanceElement ieEc = aeEc.createInstance("ec");
@@ -363,7 +369,7 @@ class AoSessionWriter {
 
             // DT_FLOAT
             if (dt.equals("REAL32")) {
-                writeEcREAL32(ieMeq, ieEc, datHeader, channelName, sourceMbb, targetFile, targetChannel);
+                writeEcREAL32(ieMeq, ieEc, datHeader, channelName, offset, factor, sourceMbb, targetFile, targetChannel);
             }
             // DT_DOUBLE
             if (dt.equals("REAL64")) {
@@ -384,8 +390,8 @@ class AoSessionWriter {
     }
 
     private void writeEcREAL32(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
-            MappedByteBuffer sourceMbb, File targetFile, FileChannel targetChannel) throws AoException,
-            ConvertException, IOException {
+            double offset, double factor, MappedByteBuffer sourceMbb, File targetFile, FileChannel targetChannel)
+            throws AoException, ConvertException, IOException {
         // read meta info from DAT header
         int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
         int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET).trim());
@@ -432,10 +438,10 @@ class AoSessionWriter {
         ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
 
         // calculate min/max/avg/dev and update measurement quantity instance
-        ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("min", (calcMin(data) * factor) + offset));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("max", (calcMax(data) * factor) + offset));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", (calcAvg(data) * factor) + offset));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", (calcStdDev(data) * factor) + offset));
     }
 
     private void writeEcREAL64(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
