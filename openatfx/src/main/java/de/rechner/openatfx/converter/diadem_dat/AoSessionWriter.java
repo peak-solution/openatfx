@@ -473,12 +473,12 @@ class AoSessionWriter {
 
         // set external component values
         ieEc.setValue(ODSHelper.createLongNVU("length", noOfRows));
-        ieEc.setValue(ODSHelper.createLongLongNVU("start_offset", targetStartOffset));
+        ieEc.setValue(ODSHelper.createLongLongNVU("sofs", targetStartOffset));
         ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
         ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
         ieEc.setValue(ODSHelper.createEnumNVU("type", EC_TYPE_MAP.get(datDataType)));
         ieEc.setValue(ODSHelper.createLongNVU("blocksize", blockSize));
-        ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
+        ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getName()));
 
         // calculate min/max/avg/dev and update measurement quantity instance
         ieMeq.setValue(ODSHelper.createDoubleNVU("min", (calcMin(data) * factor) + offset));

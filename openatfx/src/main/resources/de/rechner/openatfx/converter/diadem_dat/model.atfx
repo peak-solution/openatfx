@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <atfx_file version="atfx_file: V1.1.0" xmlns="http://www.asam.net/ODS/5.1/Schema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <base_model_version>asam29</base_model_version>
+  <base_model_version>asam30</base_model_version>
   <application_model>
     <application_element>
       <name>env</name>
@@ -288,7 +288,7 @@
 		<base_attribute>value_type</base_attribute>
 	  </application_attribute>
 	  <application_attribute>
-	    <name>start_offset</name>
+	    <name>sofs</name>
 		<base_attribute>start_offset</base_attribute>
   	  </application_attribute>
 	  <application_attribute>
@@ -427,7 +427,7 @@
     <env>
       <iid>1</iid>
       <iname>Environment</iname>
-      <BaseModelVersion>asam29</BaseModelVersion>
+      <BaseModelVersion>asam30</BaseModelVersion>
       <tsts>1</tsts>
     </env>
   </instance_data>

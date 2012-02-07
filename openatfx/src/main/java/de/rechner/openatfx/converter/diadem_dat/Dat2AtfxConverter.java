@@ -25,6 +25,8 @@ public class Dat2AtfxConverter implements IConverter {
     private static final String ATFX_TEMPLATE_FILE = "model.atfx";
 
     public void convert(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException {
+        long start = System.currentTimeMillis();
+
         // configure ORB
         ORB orb = ORB.init(new String[0], System.getProperties());
 
@@ -42,6 +44,9 @@ public class Dat2AtfxConverter implements IConverter {
             }
 
             aoSession.commitTransaction();
+
+            LOG.info("Performed conversion from DIAdem DAT files to ATFX in " + (System.currentTimeMillis() - start)
+                    + "ms");
         } catch (AoException e) {
             LOG.error(e.reason, e);
             try {

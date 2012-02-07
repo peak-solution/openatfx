@@ -12,12 +12,12 @@ import java.util.Properties;
 public interface IConverter {
 
     /**
-     * Converts
+     * Converts given source files to ASAM ODS ATFX. All measurement data will be merged into one ATFX file.
      * 
-     * @param sourceFiles
-     * @param atfxFile
-     * @param props
-     * @throws ConvertException
+     * @param sourceFiles List of source files.
+     * @param atfxFile The target ATFX file.
+     * @param props Convert properties.
+     * @throws ConvertException Error performing conversion.
      */
     public void convert(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException;
 

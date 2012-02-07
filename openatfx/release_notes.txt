@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.2.1 (Christian Rechner)
+	
+		- Completed implementation of the DIAdem DAT to ATFX converter.
+
 	0.2.0 (Christian Rechner)
 	
 		- Enabled handling of LocalColumns having no values set.
