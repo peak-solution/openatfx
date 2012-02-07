@@ -142,7 +142,7 @@
         <inverse_name>meq</inverse_name>
       </relation_attribute>
       <application_attribute>
-        <name>datatype</name>
+        <name>dt</name>
         <base_attribute>datatype</base_attribute>
         <obligatory>true</obligatory>
       </application_attribute>
@@ -159,7 +159,7 @@
         <base_attribute>average</base_attribute>
       </application_attribute>
       <application_attribute>
-        <name>stddev</name>
+        <name>dev</name>
         <base_attribute>standard_deviation</base_attribute>
       </application_attribute>
       <relation_attribute>

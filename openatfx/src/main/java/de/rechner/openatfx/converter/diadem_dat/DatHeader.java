@@ -31,11 +31,11 @@ class DatHeader {
     public static final int KEY_FILENAME = 211;
     public static final int KEY_METHOD = 213;
     public static final int KEY_DATATYPE = 214;
-    public static final int KEY_NO_OF_VALUES = 220;
-    public static final int KEY_FILE_OFFSET = 221;
-    public static final int KEY_CHANNEL_OFFSET = 222;
-    public static final int KEY_OFFSET = 240;
-    public static final int KEY_FACTOR = 241;
+    public static final int KEY_NO_OF_VALUES = 220; // No. of values in the channel
+    public static final int KEY_FILE_OFFSET = 221; // Pointer to the 1st value in the channel 1 2
+    public static final int KEY_CHANNEL_OFFSET = 222; // Offset for binary block files with header 2 2
+    public static final int KEY_OFFSET = 240; // Starting value / Offset
+    public static final int KEY_FACTOR = 241; // Step width / Factor
 
     private final File sourceFile;
     private final Map<Integer, String> globalHeaderEntries; // <header key,value>

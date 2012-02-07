@@ -7,8 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -25,6 +23,7 @@ import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.DataType;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.T_LONGLONG;
 
@@ -45,18 +44,35 @@ class AoSessionWriter {
     // mapping between the DAT data type and the ASAM ODS data type enum value
     private static final Map<String, Integer> MEQ_DATATYPE_MAP = new HashMap<String, Integer>();
     static {
+        MEQ_DATATYPE_MAP.put("INT16", 2); // DT_SHORT
         MEQ_DATATYPE_MAP.put("REAL32", 3); // DT_FLOAT
         MEQ_DATATYPE_MAP.put("REAL48", null); // not yet supported
+        MEQ_DATATYPE_MAP.put("INT32", 6); // DT_LONG
         MEQ_DATATYPE_MAP.put("REAL64", 7); // DT_DOUBLE
         MEQ_DATATYPE_MAP.put("MSREAL32", null); // not yet supported
-        MEQ_DATATYPE_MAP.put("INT16", null); // not yet supported
-        MEQ_DATATYPE_MAP.put("INT32", 6); // DT_LONG
         MEQ_DATATYPE_MAP.put("WORD8", null); // not yet supported
         MEQ_DATATYPE_MAP.put("WORD16", null); // not yet supported
         MEQ_DATATYPE_MAP.put("WORD32", null); // not yet supported
         MEQ_DATATYPE_MAP.put("TWOC12", null); // not yet supported
         MEQ_DATATYPE_MAP.put("TWOC16", null); // not yet supported
         MEQ_DATATYPE_MAP.put("ASCII", null); // not yet supported
+    }
+
+    // mapping between the DAT data type and the ASAM ODS typespec_enum value
+    private static final Map<String, Integer> EC_TYPE_MAP = new HashMap<String, Integer>();
+    static {
+        EC_TYPE_MAP.put("INT16", 2); // dt_short
+        EC_TYPE_MAP.put("INT32", 3); // dt_long
+        EC_TYPE_MAP.put("REAL32", 5); // ieeefloat4
+        EC_TYPE_MAP.put("REAL64", 6); // ieeefloat8
+        EC_TYPE_MAP.put("REAL48", null); // not yet supported
+        EC_TYPE_MAP.put("MSREAL32", null); // not yet supported
+        EC_TYPE_MAP.put("WORD8", null); // not yet supported
+        EC_TYPE_MAP.put("WORD16", null); // not yet supported
+        EC_TYPE_MAP.put("WORD32", null); // not yet supported
+        EC_TYPE_MAP.put("TWOC12", null); // not yet supported
+        EC_TYPE_MAP.put("TWOC16", null); // not yet supported
+        EC_TYPE_MAP.put("ASCII", null); // not yet supported
     }
 
     private final Map<File, MappedByteBuffer> sourceFileChannels;
@@ -203,6 +219,7 @@ class AoSessionWriter {
         ApplicationRelation relMeaMeq = as.getRelations(aeMea, aeMeq)[0];
         ApplicationRelation relMeqUnt = as.getRelations(aeMeq, aeUnt)[0];
 
+        // iterate over channels
         for (String channelName : datHeader.listChannelNames()) {
 
             InstanceElement ieMeq = aeMeq.createInstance(channelName);
@@ -231,13 +248,13 @@ class AoSessionWriter {
             }
             String dt = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
             if (type.equals("IMPLICIT")) {
-                ieMeq.setValue(ODSHelper.createEnumNVU("datatype", 7));
+                ieMeq.setValue(ODSHelper.createEnumNVU("dt", 7)); // always DT_DOUBLE
             } else if (type.equals("EXPLICIT")) {
                 Integer dtEnum = MEQ_DATATYPE_MAP.get(dt);
                 if (dtEnum == null) {
                     throw new ConvertException("Unsupported DAT datatype: " + dt);
                 }
-                ieMeq.setValue(ODSHelper.createEnumNVU("datatype", dtEnum));
+                ieMeq.setValue(ODSHelper.createEnumNVU("dt", dtEnum));
             } else {
                 throw new ConvertException("Unknown type: " + channelName);
             }
@@ -367,17 +384,25 @@ class AoSessionWriter {
             // read header data
             String dt = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
 
-            // DT_FLOAT
-            if (dt.equals("REAL32")) {
-                writeEcREAL32(ieMeq, ieEc, datHeader, channelName, offset, factor, sourceMbb, targetFile, targetChannel);
-            }
-            // DT_DOUBLE
-            if (dt.equals("REAL64")) {
-                writeEcREAL64(ieMeq, ieEc, datHeader, channelName, sourceMbb, targetFile, targetChannel);
+            // DT_SHORT
+            if (dt.equals("INT16")) {
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_SHORT, 2, sourceMbb,
+                              targetFile, targetChannel);
             }
             // DT_LONG
             else if (dt.equals("INT32")) {
-
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_LONG, 4, sourceMbb,
+                              targetFile, targetChannel);
+            }
+            // DT_FLOAT
+            else if (dt.equals("REAL32")) {
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_FLOAT, 4, sourceMbb,
+                              targetFile, targetChannel);
+            }
+            // DT_DOUBLE
+            if (dt.equals("REAL64")) {
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_DOUBLE, 8, sourceMbb,
+                              targetFile, targetChannel);
             }
 
         } catch (FileNotFoundException e) {
@@ -389,43 +414,61 @@ class AoSessionWriter {
         }
     }
 
-    private void writeEcREAL32(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
-            double offset, double factor, MappedByteBuffer sourceMbb, File targetFile, FileChannel targetChannel)
-            throws AoException, ConvertException, IOException {
+    private void writeEcValues(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
+            double offset, double factor, DataType dt, int blockSize, MappedByteBuffer sourceMbb, File targetFile,
+            FileChannel targetChannel) throws AoException, ConvertException, IOException {
         // read meta info from DAT header
         int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
         int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET).trim());
-        String method = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_METHOD);
+        String datDataType = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
+
+        // prepare target data structures
         long targetStartOffset = targetChannel.position();
-
-        // FloatBuffer sourceFb = sourceMbb.asFloatBuffer();
-        ByteBuffer targetBb = ByteBuffer.allocate(noOfRows * 4);
+        ByteBuffer targetBb = ByteBuffer.allocate(noOfRows * blockSize);
         targetBb.order(ByteOrder.LITTLE_ENDIAN);
-        FloatBuffer targetFb = targetBb.asFloatBuffer();
+        Number[] data = new Number[noOfRows];
 
-        float[] data = new float[noOfRows];
+        // obtain store method
+        int methodNo = 0; // 0=BLOCK, 1=CHANNEL
+        int chOffset = 0; // only for block
+        String method = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_METHOD);
 
-        // store method BLOCK
         if (method.equals("BLOCK")) {
+            methodNo = 0;
             String chOffsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_OFFSET);
-            int chOffset = Integer.valueOf(chOffsetStr.trim());
-            for (int i = 0; i < noOfRows; i++) {
-                int idx = (chOffset * i) + fileOffset - 1;
-                data[i] = sourceMbb.getFloat(idx);
-                targetFb.put(data[i]);
-            }
-        }
-        // store method CHANNEL
-        else if (method.equals("CHANNEL")) {
-            for (int i = 0; i < noOfRows; i++) {
-                int idx = fileOffset + i - 1;
-                data[i] = sourceMbb.getFloat(idx * 4);
-                targetFb.put(data[i]);
-            }
-        } else {
-            throw new ConvertException("Store method not yet supported: " + method);
+            chOffset = Integer.valueOf(chOffsetStr.trim());
+        } else if (method.equals("CHANNEL")) {
+            methodNo = 1;
         }
 
+        // iterate over file data
+        for (int i = 0; i < noOfRows; i++) {
+
+            // calc file idx
+            int idx = 0;
+            if (methodNo == 0) {
+                idx = (fileOffset + (chOffset * i) - 1) * blockSize;
+            } else {
+                idx = (fileOffset + i - 1) * blockSize;
+            }
+
+            // read data from file and store to buffer
+            if (dt == DataType.DT_SHORT) {
+                data[i] = sourceMbb.getShort(idx);
+                targetBb.putShort(i * blockSize, data[i].shortValue());
+            } else if (dt == DataType.DT_LONG) {
+                data[i] = sourceMbb.getInt(idx);
+                targetBb.putInt(i * blockSize, data[i].intValue());
+            } else if (dt == DataType.DT_FLOAT) {
+                data[i] = sourceMbb.getFloat(idx);
+                targetBb.putFloat(i * blockSize, data[i].intValue());
+            } else if (dt == DataType.DT_DOUBLE) {
+                data[i] = sourceMbb.getDouble(idx);
+                targetBb.putDouble(i * blockSize, data[i].intValue());
+            }
+        }
+
+        // write buffer to file
         targetChannel.write(targetBb);
 
         // set external component values
@@ -433,76 +476,22 @@ class AoSessionWriter {
         ieEc.setValue(ODSHelper.createLongLongNVU("start_offset", targetStartOffset));
         ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
         ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
-        ieEc.setValue(ODSHelper.createEnumNVU("type", 5));
-        ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
+        ieEc.setValue(ODSHelper.createEnumNVU("type", EC_TYPE_MAP.get(datDataType)));
+        ieEc.setValue(ODSHelper.createLongNVU("blocksize", blockSize));
         ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
 
         // calculate min/max/avg/dev and update measurement quantity instance
         ieMeq.setValue(ODSHelper.createDoubleNVU("min", (calcMin(data) * factor) + offset));
         ieMeq.setValue(ODSHelper.createDoubleNVU("max", (calcMax(data) * factor) + offset));
         ieMeq.setValue(ODSHelper.createDoubleNVU("avg", (calcAvg(data) * factor) + offset));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", (calcStdDev(data) * factor) + offset));
-    }
-
-    private void writeEcREAL64(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
-            MappedByteBuffer sourceMbb, File targetFile, FileChannel targetChannel) throws AoException,
-            ConvertException, IOException {
-        // read meta info from DAT header
-        int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
-        int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET).trim());
-        String method = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_METHOD);
-        long targetStartOffset = targetChannel.position();
-
-        // FloatBuffer sourceFb = sourceMbb.asFloatBuffer();
-        ByteBuffer targetBb = ByteBuffer.allocate(noOfRows * 8);
-        targetBb.order(ByteOrder.LITTLE_ENDIAN);
-        DoubleBuffer targetFb = targetBb.asDoubleBuffer();
-        double[] data = new double[noOfRows];
-
-        // store method BLOCK
-        if (method.equals("BLOCK")) {
-            String chOffsetStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_OFFSET);
-            int chOffset = Integer.valueOf(chOffsetStr.trim());
-            for (int i = 0; i < noOfRows; i++) {
-                int idx = (chOffset * i) + fileOffset - 1;
-                data[i] = sourceMbb.getDouble(idx);
-                targetFb.put(data[i]);
-            }
-        }
-        // store method CHANNEL
-        else if (method.equals("CHANNEL")) {
-            for (int i = 0; i < noOfRows; i++) {
-                int idx = fileOffset + i - 1;
-                data[i] = sourceMbb.getDouble(idx * 8);
-                targetFb.put(data[i]);
-            }
-        } else {
-            throw new ConvertException("Store method not yet supported: " + method);
-        }
-
-        targetChannel.write(targetBb);
-
-        // set external component values
-        ieEc.setValue(ODSHelper.createLongNVU("length", noOfRows));
-        ieEc.setValue(ODSHelper.createLongLongNVU("start_offset", targetStartOffset));
-        ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
-        ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
-        ieEc.setValue(ODSHelper.createEnumNVU("type", 6));
-        ieEc.setValue(ODSHelper.createLongNVU("blocksize", 4));
-        ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
-
-        // calculate min/max/avg/dev and update measurement quantity instance
-        ieMeq.setValue(ODSHelper.createDoubleNVU("min", calcMin(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("max", calcMax(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", calcAvg(data)));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("stddev", calcStdDev(data)));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("dev", (calcStdDev(data) * factor) + offset));
     }
 
     /****************************************************************************************************
      * utility methods
      ****************************************************************************************************/
 
-    private String asODSdate(String dateStr, String timeStr) {
+    private static String asODSdate(String dateStr, String timeStr) {
         if (dateStr == null || dateStr.length() < 1 || timeStr == null || timeStr.length() < 1) {
             return "";
         }
@@ -517,12 +506,12 @@ class AoSessionWriter {
         return "";
     }
 
-    private static Double calcMin(float[] numbers) {
+    private static Double calcMin(Number[] numbers) {
         if (numbers.length > 0) {
-            double minValue = numbers[0];
+            double minValue = numbers[0].doubleValue();
             for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] < minValue) {
-                    minValue = numbers[i];
+                if (numbers[i].doubleValue() < minValue) {
+                    minValue = numbers[i].doubleValue();
                 }
             }
             return minValue;
@@ -530,38 +519,12 @@ class AoSessionWriter {
         return null;
     }
 
-    private static Double calcMin(double[] numbers) {
+    private static Double calcMax(Number[] numbers) {
         if (numbers.length > 0) {
-            double minValue = numbers[0];
+            double maxValue = numbers[0].doubleValue();
             for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] < minValue) {
-                    minValue = numbers[i];
-                }
-            }
-            return minValue;
-        }
-        return null;
-    }
-
-    private static Double calcMin(int[] numbers) {
-        if (numbers.length > 0) {
-            double minValue = numbers[0];
-            for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] < minValue) {
-                    minValue = numbers[i];
-                }
-            }
-            return minValue;
-        }
-        return null;
-    }
-
-    private static Double calcMax(float[] numbers) {
-        if (numbers.length > 0) {
-            double maxValue = numbers[0];
-            for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] > maxValue) {
-                    maxValue = numbers[i];
+                if (numbers[i].doubleValue() > maxValue) {
+                    maxValue = numbers[i].doubleValue();
                 }
             }
             return maxValue;
@@ -569,114 +532,35 @@ class AoSessionWriter {
         return null;
     }
 
-    private static Double calcMax(double[] numbers) {
+    private static Double calcAvg(Number[] numbers) {
         if (numbers.length > 0) {
-            double maxValue = numbers[0];
-            for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] > maxValue) {
-                    maxValue = numbers[i];
-                }
+            double sum = 0;
+            for (int i = 0; i < numbers.length; i++) {
+                sum += numbers[i].doubleValue();
             }
-            return maxValue;
+            return sum / numbers.length;
         }
         return null;
     }
 
-    private static Double calcMax(int[] numbers) {
-        if (numbers.length > 0) {
-            double maxValue = numbers[0];
-            for (int i = 1; i < numbers.length; i++) {
-                if (numbers[i] > maxValue) {
-                    maxValue = numbers[i];
-                }
+    private static Double calcStdDev(Number[] numbers) {
+        if (numbers.length > 1) {
+            double mean = 0;
+            final int n = numbers.length;
+            for (int i = 0; i < n; i++) {
+                mean += numbers[i].doubleValue();
             }
-            return maxValue;
+            mean /= n;
+            // calculate the sum of squares
+            double sum = 0;
+            for (int i = 0; i < n; i++) {
+                final double v = numbers[i].doubleValue() - mean;
+                sum += v * v;
+            }
+            // Change to ( n - 1 ) to n if you have complete data instead of a sample.
+            return Math.sqrt(sum / (n - 1));
         }
         return null;
-    }
-
-    public static double calcAvg(float[] p) {
-        double sum = 0;
-        for (int i = 0; i < p.length; i++) {
-            sum += p[i];
-        }
-        return sum / p.length;
-    }
-
-    public static double calcAvg(double[] p) {
-        double sum = 0;
-        for (int i = 0; i < p.length; i++) {
-            sum += p[i];
-        }
-        return sum / p.length;
-    }
-
-    public static double calcAvg(int[] p) {
-        double sum = 0;
-        for (int i = 0; i < p.length; i++) {
-            sum += p[i];
-        }
-        return sum / p.length;
-    }
-
-    private static double calcStdDev(float[] data) {
-        double mean = 0;
-        final int n = data.length;
-        if (n < 2) {
-            return Double.NaN;
-        }
-        for (int i = 0; i < n; i++) {
-            mean += data[i];
-        }
-        mean /= n;
-        // calculate the sum of squares
-        double sum = 0;
-        for (int i = 0; i < n; i++) {
-            final double v = data[i] - mean;
-            sum += v * v;
-        }
-        // Change to ( n - 1 ) to n if you have complete data instead of a sample.
-        return Math.sqrt(sum / (n - 1));
-    }
-
-    private static double calcStdDev(double[] data) {
-        double mean = 0;
-        final int n = data.length;
-        if (n < 2) {
-            return Double.NaN;
-        }
-        for (int i = 0; i < n; i++) {
-            mean += data[i];
-        }
-        mean /= n;
-        // calculate the sum of squares
-        double sum = 0;
-        for (int i = 0; i < n; i++) {
-            final double v = data[i] - mean;
-            sum += v * v;
-        }
-        // Change to ( n - 1 ) to n if you have complete data instead of a sample.
-        return Math.sqrt(sum / (n - 1));
-    }
-
-    private static double calcStdDev(int[] data) {
-        double mean = 0;
-        final int n = data.length;
-        if (n < 2) {
-            return Double.NaN;
-        }
-        for (int i = 0; i < n; i++) {
-            mean += data[i];
-        }
-        mean /= n;
-        // calculate the sum of squares
-        double sum = 0;
-        for (int i = 0; i < n; i++) {
-            final double v = data[i] - mean;
-            sum += v * v;
-        }
-        // Change to ( n - 1 ) to n if you have complete data instead of a sample.
-        return Math.sqrt(sum / (n - 1));
     }
 
 }
