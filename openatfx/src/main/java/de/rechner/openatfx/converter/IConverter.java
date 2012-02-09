@@ -16,9 +16,19 @@ public interface IConverter {
      * 
      * @param sourceFiles List of source files.
      * @param atfxFile The target ATFX file.
-     * @param props Convert properties.
+     * @param props Converter properties.
      * @throws ConvertException Error performing conversion.
      */
-    public void convert(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException;
+    public void convertFiles(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException;
+
+    /**
+     * Converts all files having the ending '*.dat' in given directory the given ATFX file.
+     * 
+     * @param directory The directory to search for ATFX files.
+     * @param atfxFile The ATFX file.
+     * @param props Converter properties.
+     * @throws ConvertException Error performing conversion.
+     */
+    public void convertDirectory(File directory, File atfxFile, Properties props) throws ConvertException;
 
 }

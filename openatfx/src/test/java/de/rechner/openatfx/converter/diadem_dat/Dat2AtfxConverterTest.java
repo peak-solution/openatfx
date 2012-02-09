@@ -7,7 +7,6 @@ import java.net.URL;
 import java.util.Properties;
 
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import de.rechner.openatfx.converter.ConvertException;
 import de.rechner.openatfx.converter.ConverterFactory;
@@ -28,13 +27,27 @@ public class Dat2AtfxConverterTest {
         dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
-    @Test
-    public void testConvert() {
+    // @Test
+    public void testConvertDirectory() {
+        URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat");
+        File sourceDir = new File(url.getFile());
+        File targetFile = new File("D:/PUBLIC/transfer.atfx");
+        Properties props = new Properties();
+        props.put("attachmentFilenamePattern", "*.erg");
+        try {
+            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
+        } catch (ConvertException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    // @Test
+    public void testConvertFiles() {
         URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
         File sourceFile = new File(url.getFile());
         File targetFile = new File("D:/PUBLIC/transfer.atfx");
         try {
-            dat2AtfxConverter.convert(new File[] { sourceFile }, targetFile, new Properties());
+            dat2AtfxConverter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
         } catch (ConvertException e) {
             fail(e.getMessage());
         }
