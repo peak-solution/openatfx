@@ -19,13 +19,11 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
-import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.InstanceElement;
-import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.converter.ConvertException;
 import de.rechner.openatfx.util.ODSHelper;
@@ -87,26 +85,23 @@ class AoSessionWriter {
         this.targetFileChannels = new HashMap<File, FileChannel>();
     }
 
-    public synchronized void writeDataToSession(AoSession aoSession, File atfxFile, DatHeader datHeader)
+    public synchronized void writeDataToAoTest(InstanceElement iePrj, File atfxFile, DatHeader datHeader)
             throws ConvertException, IOException {
         this.atfxFile = atfxFile;
         this.sourceFileChannels.clear();
         this.targetFileChannels.clear();
 
         try {
-            ApplicationStructure as = aoSession.getApplicationStructure();
-            ApplicationElement aeEnv = as.getElementByName("env");
+            ApplicationStructure as = iePrj.getApplicationElement().getApplicationStructure();
+            ApplicationElement aePrj = as.getElementByName("prj");
             ApplicationElement aeTst = as.getElementByName("tst");
-            ApplicationRelation relEnvTsts = as.getRelations(aeEnv, aeTst)[0];
+            ApplicationRelation relPrjTsts = as.getRelations(aePrj, aeTst)[0];
 
-            // get "AoEnvironment" instance
-            InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
-
-            // create "AoTest" instance
+            // create "AoSubTest" instance
             String fileName = datHeader.getSourceFile().getName();
             fileName = fileName.substring(0, fileName.lastIndexOf('.'));
             InstanceElement ieTst = aeTst.createInstance(fileName);
-            ieEnv.createRelation(relEnvTsts, ieTst);
+            iePrj.createRelation(relPrjTsts, ieTst);
 
             // write "AoMeasurement" instances
             writeMea(ieTst, datHeader);

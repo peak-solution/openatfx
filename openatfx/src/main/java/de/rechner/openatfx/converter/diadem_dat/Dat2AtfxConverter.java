@@ -12,6 +12,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationRelation;
+import org.asam.ods.ApplicationStructure;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
@@ -38,9 +43,19 @@ public class Dat2AtfxConverter implements IConverter {
         try {
             aoSession.startTransaction();
 
+            // create instance of 'AoTest'
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeEnv = as.getElementByName("env");
+            ApplicationElement aePrj = as.getElementByName("prj");
+            ApplicationRelation relEnvPrj = as.getRelations(aeEnv, aePrj)[0];
+            InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
+            InstanceElement iePrj = aePrj.createInstance("prj");
+            ieEnv.createRelation(relEnvPrj, iePrj);
+
+            // create an 'AoSubTest' instance for each DAT file
             for (File datFile : sourceFiles) {
                 DatHeader datHeader = datHeaderReader.readFile(datFile);
-                writer.writeDataToSession(aoSession, atfxFile, datHeader);
+                writer.writeDataToAoTest(iePrj, atfxFile, datHeader);
             }
 
             aoSession.commitTransaction();

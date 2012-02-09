@@ -41,12 +41,12 @@ public class ApplicationRelationImplTest {
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
 
         ApplicationStructure as = aoSession.getApplicationStructure();
-        ApplicationElement aeDsk = as.getElementByName("dsk");
+        ApplicationElement aeGeo = as.getElementByName("geometry");
         ApplicationElement aeMea = as.getElementByName("mea");
         ApplicationElement aeDts = as.getElementByName("dts");
         ApplicationElement aePas = as.getElementByName("pas");
         baseRel = as.getRelations(aeMea, aeDts)[0];
-        infoRel = as.getRelations(aeDsk, aeMea)[0];
+        infoRel = as.getRelations(aeGeo, aeDts)[0];
         m2nRel = as.getRelations(aeDts, aePas)[0];
     }
 
@@ -70,7 +70,7 @@ public class ApplicationRelationImplTest {
     public void testGetElem1() {
         try {
             assertEquals("mea", baseRel.getElem1().getName());
-            assertEquals("dsk", infoRel.getElem1().getName());
+            assertEquals("geometry", infoRel.getElem1().getName());
             assertEquals("dts", m2nRel.getElem1().getName());
         } catch (AoException e) {
             fail(e.reason);
@@ -81,7 +81,7 @@ public class ApplicationRelationImplTest {
     public void testGetElem2() {
         try {
             assertEquals("dts", baseRel.getElem2().getName());
-            assertEquals("mea", infoRel.getElem2().getName());
+            assertEquals("dts", infoRel.getElem2().getName());
             assertEquals("pas", m2nRel.getElem2().getName());
         } catch (AoException e) {
             fail(e.reason);
@@ -92,7 +92,7 @@ public class ApplicationRelationImplTest {
     public void testGetRelationName() {
         try {
             assertEquals("dts_iid", baseRel.getRelationName());
-            assertEquals("mea_iid", infoRel.getRelationName());
+            assertEquals("measurements_on_geometry", infoRel.getRelationName());
             assertEquals("pas_iid", m2nRel.getRelationName());
         } catch (AoException e) {
             fail(e.reason);
@@ -103,7 +103,7 @@ public class ApplicationRelationImplTest {
     public void testGetInverseRelationName() {
         try {
             assertEquals("mea_iid", baseRel.getInverseRelationName());
-            assertEquals("dsk_iid", infoRel.getInverseRelationName());
+            assertEquals("geometry", infoRel.getInverseRelationName());
             assertEquals("dts_iid", m2nRel.getInverseRelationName());
         } catch (AoException e) {
             fail(e.reason);

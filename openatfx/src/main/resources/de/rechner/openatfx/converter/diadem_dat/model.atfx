@@ -20,14 +20,14 @@
         <base_attribute>base_model_version</base_attribute>
       </application_attribute>
       <relation_attribute>
-        <name>tsts</name>
-        <ref_to>tst</ref_to>
+        <name>prjs</name>
+        <ref_to>prj</ref_to>
         <base_relation>tests</base_relation>
         <inverse_name>env</inverse_name>
       </relation_attribute>
     </application_element>
     <application_element>
-      <name>tst</name>
+      <name>prj</name>
       <basetype>AoTest</basetype>
       <application_attribute>
         <name>iid</name>
@@ -40,16 +40,42 @@
         <obligatory>true</obligatory>
       </application_attribute>
       <relation_attribute>
+        <name>env</name>
+        <ref_to>env</ref_to>
+        <base_relation>environment</base_relation>
+        <inverse_name>prjs</inverse_name>
+      </relation_attribute>
+      <relation_attribute>
+        <name>tsts</name>
+        <ref_to>tst</ref_to>
+        <base_relation>children</base_relation>
+        <inverse_name>prj</inverse_name>
+      </relation_attribute>
+    </application_element>
+    <application_element>
+      <name>tst</name>
+      <basetype>AoSubTest</basetype>
+      <application_attribute>
+        <name>iid</name>
+        <base_attribute>id</base_attribute>
+        <obligatory>true</obligatory>
+      </application_attribute>
+      <application_attribute>
+        <name>iname</name>
+        <base_attribute>name</base_attribute>
+        <obligatory>true</obligatory>
+      </application_attribute>
+      <relation_attribute>
+        <name>prj</name>
+        <ref_to>prj</ref_to>
+        <base_relation>parent_test</base_relation>
+        <inverse_name>tsts</inverse_name>
+      </relation_attribute>
+      <relation_attribute>
         <name>meas</name>
         <ref_to>mea</ref_to>
         <base_relation>children</base_relation>
         <inverse_name>tst</inverse_name>
-      </relation_attribute>
-      <relation_attribute>
-        <name>env</name>
-        <ref_to>env</ref_to>
-        <base_relation>environment</base_relation>
-        <inverse_name>tsts</inverse_name>
       </relation_attribute>
     </application_element>
     <application_element>
@@ -428,7 +454,7 @@
       <iid>1</iid>
       <iname>Environment</iname>
       <BaseModelVersion>asam30</BaseModelVersion>
-      <tsts>1</tsts>
+      <prjs>1</prjs>
     </env>
   </instance_data>
 
