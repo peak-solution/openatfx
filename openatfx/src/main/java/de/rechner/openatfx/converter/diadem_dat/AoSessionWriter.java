@@ -1,10 +1,10 @@
 package de.rechner.openatfx.converter.diadem_dat;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
@@ -73,7 +73,6 @@ class AoSessionWriter {
         EC_TYPE_MAP.put("ASCII", null); // not yet supported
     }
 
-    private final Map<File, MappedByteBuffer> sourceFileChannels;
     private final Map<File, FileChannel> targetFileChannels;
     private File atfxFile;
 
@@ -81,14 +80,12 @@ class AoSessionWriter {
      * Constructor.
      */
     public AoSessionWriter() {
-        this.sourceFileChannels = new HashMap<File, MappedByteBuffer>();
         this.targetFileChannels = new HashMap<File, FileChannel>();
     }
 
     public synchronized void writeDataToAoTest(InstanceElement iePrj, File atfxFile, DatHeader datHeader)
             throws ConvertException, IOException {
         this.atfxFile = atfxFile;
-        this.sourceFileChannels.clear();
         this.targetFileChannels.clear();
 
         try {
@@ -112,6 +109,7 @@ class AoSessionWriter {
             // close buffers
             for (FileChannel targetChannel : this.targetFileChannels.values()) {
                 targetChannel.close();
+                targetChannel = null;
             }
         }
     }
@@ -348,24 +346,25 @@ class AoSessionWriter {
         InstanceElement ieEc = aeEc.createInstance("ec");
         ieLc.createRelation(relLcEc, ieEc);
 
+        RandomAccessFile raf = null;
+        FileChannel sourceChannel = null;
+        MappedByteBuffer sourceMbb = null;
         try {
             // open source channel
             String sourceFilename = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILENAME);
             File sourceDir = datHeader.getSourceFile().getParentFile();
             File sourceFile = new File(sourceDir, sourceFilename);
-            MappedByteBuffer sourceMbb = this.sourceFileChannels.get(sourceFile);
-            if (sourceMbb == null) {
-                FileChannel sourceChannel = new FileInputStream(sourceFile).getChannel();
-                sourceMbb = sourceChannel.map(MapMode.READ_ONLY, 0, sourceFile.length());
-                // set byte order
-                ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-                String byteOrderStr = datHeader.getGlobalHeaderEntry(DatHeader.KEY_BYTE_ORDER);
-                if (byteOrderStr != null && byteOrderStr.equals("Low -> High")) {
-                    byteOrder = ByteOrder.BIG_ENDIAN;
-                }
-                sourceMbb.order(byteOrder);
-                this.sourceFileChannels.put(sourceFile, sourceMbb);
+            raf = new RandomAccessFile(sourceFile, "r");
+            sourceChannel = raf.getChannel();
+            sourceMbb = sourceChannel.map(MapMode.READ_ONLY, 0, sourceFile.length());
+
+            // set byte order
+            ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+            String byteOrderStr = datHeader.getGlobalHeaderEntry(DatHeader.KEY_BYTE_ORDER);
+            if (byteOrderStr != null && byteOrderStr.equals("Low -> High")) {
+                byteOrder = ByteOrder.BIG_ENDIAN;
             }
+            sourceMbb.order(byteOrder);
 
             // open target channel
             File targetDir = this.atfxFile.getParentFile();
@@ -406,11 +405,22 @@ class AoSessionWriter {
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new ConvertException(e.getMessage(), e);
+        } finally {
+            try {
+                unmap(sourceChannel, sourceMbb);
+                sourceChannel.close();
+                sourceChannel = null;
+                sourceMbb = null;
+                raf.close();
+                raf = null;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
         }
     }
 
     private void writeEcValues(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
-            double offset, double factor, DataType dt, int blockSize, MappedByteBuffer sourceMbb, File targetFile,
+            double offset, double factor, DataType dt, int blockSize, ByteBuffer sourceMbb, File targetFile,
             FileChannel targetChannel) throws AoException, ConvertException, IOException {
         // read meta info from DAT header
         int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
@@ -556,6 +566,14 @@ class AoSessionWriter {
             return Math.sqrt(sum / (n - 1));
         }
         return null;
+    }
+
+    private static void unmap(FileChannel fc, MappedByteBuffer bb) throws Exception {
+        Class<?> fcClass = fc.getClass();
+        java.lang.reflect.Method unmapMethod = fcClass.getDeclaredMethod("unmap",
+                                                                         new Class[] { java.nio.MappedByteBuffer.class });
+        unmapMethod.setAccessible(true);
+        unmapMethod.invoke(null, new Object[] { bb });
     }
 
 }
