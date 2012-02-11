@@ -17,7 +17,6 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationRelationInstanceElementSeq;
 import org.asam.ods.AttrType;
-import org.asam.ods.BaseAttribute;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
@@ -35,6 +34,7 @@ import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.SubMatrix;
+import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
@@ -139,8 +139,20 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#setName(java.lang.String)
      */
     public void setName(String iaName) throws AoException {
-        String attrName = this.atfxCache.getApplicationAttributeByBaName(this.aid, "name").getName();
-        setValue(ODSHelper.createStringNVU(attrName, iaName));
+        Integer attrNo = this.atfxCache.getAttrNoByBaName(this.aid, "name");
+        if (attrNo == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Not application attribute of base attribute 'name' found for aid=" + aid);
+        }
+
+        // create value
+        TS_Value value = new TS_Value();
+        value.flag = 15;
+        value.u = new TS_Union();
+        value.u.stringVal(iaName);
+
+        // set value
+        this.atfxCache.setInstanceValue(this.aid, this.iid, attrNo, value);
     }
 
     /**
@@ -185,11 +197,16 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // no instance attribute, check application attribute
         if (value == null) {
-            value = this.atfxCache.getInstanceValue(this.aid, this.iid, aaName);
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
+            if (attrNo == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
+                        + "' not found");
+            }
+            value = this.atfxCache.getInstanceValue(this.aid, this.iid, attrNo);
 
             // value not found, return empty
             if (value == null) {
-                ApplicationAttribute aa = this.atfxCache.getApplicationAttributeByName(this.aid, aaName);
+                ApplicationAttribute aa = this.atfxCache.getApplicationAttribute(aid, attrNo);
                 if (aa == null) {
                     throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '"
                             + aaName + "' not found");
@@ -200,7 +217,7 @@ class InstanceElementImpl extends InstanceElementPOA {
                     dt = getDataTypeForLocalColumnValues();
                 }
                 value = ODSHelper.createEmptyTS_Value(dt);
-                this.atfxCache.setInstanceValue(aid, iid, aaName, value);
+                this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
             }
 
         }
@@ -223,9 +240,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             if (!meaQuaIids.isEmpty()) {
                 long meaQuaAid = ODSHelper.asJLong(rel.getElem2().getId());
                 long meaQuaIid = meaQuaIids.iterator().next();
-                String aaNameDt = this.atfxCache.getAaNameByBaName(meaQuaAid, "datatype");
-                if (aaNameDt != null) {
-                    TS_Value dtValue = this.atfxCache.getInstanceValue(meaQuaAid, meaQuaIid, aaNameDt);
+                Integer attrNoDt = this.atfxCache.getAttrNoByBaName(meaQuaAid, "datatype");
+                if (attrNoDt != null) {
+                    TS_Value dtValue = this.atfxCache.getInstanceValue(meaQuaAid, meaQuaIid, attrNoDt);
                     if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
                         int val = dtValue.u.enumVal();
                         if (val == 1) { // DT_STRING
@@ -267,7 +284,7 @@ class InstanceElementImpl extends InstanceElementPOA {
     }
 
     /**
-     * Checks whether given attribute name is from base attribute 'values' of an this instance is from base element
+     * Checks whether given attribute name is from base attribute 'values' of and this instance is from base element
      * 'AoLocalColumn'.
      * 
      * @param aaName The application attribute name.
@@ -276,10 +293,9 @@ class InstanceElementImpl extends InstanceElementPOA {
     private boolean isLocalColumnValuesAttribute(String aaName) {
         Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
         if (localColumnAids != null && localColumnAids.contains(aid)) {
-            ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
-            if (aa != null) {
-                return true;
-            }
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
+            Integer valuesAttrNo = this.atfxCache.getAttrNoByBaName(aid, "values");
+            return (attrNo != null) && (valuesAttrNo != null) && (attrNo.equals(valuesAttrNo));
         }
         return false;
     }
@@ -292,19 +308,21 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     private boolean isExternalComponentValue(String aaName) throws AoException {
         Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
-        if (localColumnAids != null && localColumnAids.contains(aid)) {
-            ApplicationAttribute aa = atfxCache.getApplicationAttributeByBaName(aid, "values");
-            if (aa != null) {
-                if (aa.getName().equals(aaName)) {
-                    NameValueUnit seqRep = this.getValueByBaseName("sequence_representation");
-                    int seqRepEnum = ODSHelper.getEnumVal(seqRep);
-                    // check if the sequence representation is 7(external_component), 8(raw_linear_external),
-                    // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
-                    if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                        return true;
-                    }
+        if (localColumnAids != null && localColumnAids.contains(this.aid)) {
+
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
+            Integer valuesAttrNo = this.atfxCache.getAttrNoByBaName(aid, "values");
+
+            if (attrNo != null && valuesAttrNo != null && attrNo.equals(valuesAttrNo)) {
+                NameValueUnit seqRep = this.getValueByBaseName("sequence_representation");
+                int seqRepEnum = ODSHelper.getEnumVal(seqRep);
+                // check if the sequence representation is 7(external_component), 8(raw_linear_external),
+                // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
+                if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+                    return true;
                 }
             }
+
         }
         return false;
     }
@@ -328,13 +346,15 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueByBaseName(java.lang.String)
      */
     public NameValueUnit getValueByBaseName(String baseAttrName) throws AoException {
-        String aaName = this.atfxCache.getAaNameByBaName(this.aid, baseAttrName);
-        if (aaName == null) {
+        Integer attrNo = this.atfxCache.getAttrNoByBaName(this.aid, baseAttrName);
+        if (attrNo == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                   "No ApplicationAttribute of BaseAttribute '" + baseAttrName
                                           + "' found for ApplicationElement '" + getApplicationElement().getName()
                                           + "'");
         }
+
+        String aaName = this.atfxCache.getApplicationAttribute(aid, attrNo).getName();
         return getValue(aaName);
     }
 
@@ -358,16 +378,22 @@ class InstanceElementImpl extends InstanceElementPOA {
         if (this.atfxCache.getInstanceAttributeValue(aid, iid, nvu.valName) != null) {
             this.atfxCache.setInstanceAttributeValue(aid, iid, nvu.valName, nvu.value);
         }
+
         // application attribute
         else {
-            ApplicationAttribute applAttr = getApplicationElement().getAttributeByName(nvu.valName);
+            Integer attrNo = this.atfxCache.getAttrNoByName(this.aid, nvu.valName);
+            if (attrNo == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '"
+                        + nvu.valName + "' not found");
+            }
+
             // check if id has been updated
-            BaseAttribute baseAttr = applAttr.getBaseAttribute();
-            if (baseAttr != null && baseAttr.getName().equals("id")) {
+            Integer baseAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
+            if (baseAttrNo != null && baseAttrNo.equals(attrNo)) {
                 throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
                                       "Updating the id of an instance element is not allowed!");
             }
-            this.atfxCache.setInstanceValue(aid, this.iid, nvu.valName, nvu.value);
+            this.atfxCache.setInstanceValue(aid, this.iid, attrNo, nvu.value);
         }
     }
 
@@ -398,12 +424,12 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "Empty instance attribute name is not allowed");
         }
         // check for existing application attribute
-        if (this.atfxCache.getApplicationAttributeByName(this.aid, instAttr.valName) != null) {
+        if (this.atfxCache.getAttrNoByName(this.aid, instAttr.valName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "An ApplicationAttribute with name '" + instAttr.valName + "' already exists");
         }
         // check for existing instance attribute
-        if (this.atfxCache.getInstanceValue(aid, iid, instAttr.valName) != null) {
+        if (this.atfxCache.getInstanceAttributeValue(aid, iid, instAttr.valName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "An InstanceAttribute with name '" + instAttr.valName + "' already exists");
         }
@@ -448,7 +474,7 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "Empty instance attribute is name not allowed");
         }
         // check for existing application attribute
-        if (this.atfxCache.getApplicationAttributeByName(this.aid, newName) != null) {
+        if (this.atfxCache.getAttrNoByName(this.aid, newName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "An ApplicationAttribute with name '" + newName + "' already exists");
         }
@@ -760,7 +786,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         // instance name (mandatory)
         sb.append(PatternUtil.escapeNameForASAMPath(ie.getName()));
         // version (optional)
-        if (this.atfxCache.getApplicationAttributeByBaName(ODSHelper.asJLong(ae.getId()), "version") != null) {
+        if (this.atfxCache.getAttrNoByBaName(ODSHelper.asJLong(ae.getId()), "version") != null) {
             NameValueUnit versionValue = ie.getValueByBaseName("version");
             if (versionValue.value.flag == 15 && versionValue.value.u.stringVal().length() > 0) {
                 sb.append(";");

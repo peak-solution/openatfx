@@ -701,7 +701,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
 
             // check mandatory base attributes
             for (BaseAttribute ba : ae.getBaseElement().getAttributes("*")) {
-                if (ba.isObligatory() && (this.atfxCache.getApplicationAttributeByBaName(aid, ba.getName()) == null)) {
+                if (ba.isObligatory() && (this.atfxCache.getAttrNoByBaName(aid, ba.getName()) == null)) {
                     throw new AoException(ErrorCode.AO_MISSING_ATTRIBUTE, SeverityFlag.ERROR, 0,
                                           "Application element is missing mandatory base attribute. aid=" + aid
                                                   + ",baseAttr=" + ba.getName());

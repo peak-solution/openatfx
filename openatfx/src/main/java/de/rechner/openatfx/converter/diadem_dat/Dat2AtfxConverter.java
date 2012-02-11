@@ -92,6 +92,7 @@ public class Dat2AtfxConverter implements IConverter {
         AoSessionWriter writer = new AoSessionWriter();
         try {
             aoSession.startTransaction();
+            aoSession.setContextString("INDENT_XML", "FALSE");
 
             // create instance of 'AoTest'
             ApplicationStructure as = aoSession.getApplicationStructure();

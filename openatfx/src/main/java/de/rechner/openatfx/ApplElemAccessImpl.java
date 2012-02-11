@@ -50,8 +50,6 @@ import de.rechner.openatfx.util.PatternUtil;
  */
 class ApplElemAccessImpl extends ApplElemAccessPOA {
 
-    // private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
-
     private final AtfxCache atfxCache;
 
     /**
@@ -85,8 +83,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         Map<Long, List<AIDNameValueSeqUnitId>> aeGroupColumns = new HashMap<Long, List<AIDNameValueSeqUnitId>>();
         for (AIDNameValueSeqUnitId column : val) {
             long aid = ODSHelper.asJLong(column.attr.aid);
-            String idAttrName = this.atfxCache.getAaNameByBaName(aid, "id");
-            if (idAttrName == null) {
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, column.attr.aaName);
+            Integer idAttrNo = this.atfxCache.getAttrNoByBaName(aid, "id");
+            if (idAttrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                       "Not application attribute of base attribute 'id' found for aid=" + aid);
             }
@@ -98,7 +97,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             }
             list.add(column);
             // check for id column
-            if (column.attr.aaName.equals(idAttrName)) {
+            if (attrNo.equals(idAttrNo)) {
                 idColumns.put(aid, column);
             }
         }
@@ -106,11 +105,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // create instances per application element
         List<ElemId> elemIdList = new ArrayList<ElemId>();
         for (long aid : aeGroupColumns.keySet()) {
+            AIDNameValueSeqUnitId idCol = idColumns.get(aid);
             // iterate over rows
             for (int row = 0; row < numberOfRows; row++) {
                 // fetch or create id
                 long iid = 0;
-                AIDNameValueSeqUnitId idCol = idColumns.get(aid);
                 if (idCol != null) {
                     iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
                 } else {
@@ -121,7 +120,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 // put values
                 for (AIDNameValueSeqUnitId avsui : aeGroupColumns.get(aid)) {
                     TS_Value value = ODSHelper.tsValueSeq2tsValue(avsui.values, row);
-                    this.atfxCache.setInstanceValue(aid, iid, avsui.attr.aaName, value);
+                    Integer attrNo = this.atfxCache.getAttrNoByName(aid, avsui.attr.aaName);
+                    this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
                 }
                 // TODO: create relations
 
@@ -248,17 +248,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-        //
-        // long start = System.currentTimeMillis();
-        //
-        // // retrieve start aid and build up query
-        // long startAid = ODSHelper.asJLong(aoq.anuSeq[0].attr.aid);
-        // QueryBuilder queryBuilder = new QueryBuilder(this.atfxCache, startAid);
-        // ElemResultSet[] resSet = queryBuilder.getElemResultSet(aoq.anuSeq);
-        //
-        // long duration = System.currentTimeMillis() - start;
-        // LOG.debug("Executed query in " + duration + "ms");
-        // return resSet;
     }
 
     /**
@@ -400,7 +389,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 resultList.add(iid);
             } else {
                 String conditionString = condition.value.u.stringVal();
-                TS_Value instanceAttributeValue = atfxCache.getInstanceValue(aid, iid, condition.attr.attr.aaName);
+                Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value instanceAttributeValue = atfxCache.getInstanceValue(aid, iid, attrNo);
                 if (instanceAttributeValue != null && instanceAttributeValue.u != null
                         && instanceAttributeValue.u.stringVal() != null) {
                     String instanceAttributeStringValue = instanceAttributeValue.u.stringVal();
@@ -420,7 +410,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         for (SelAIDNameUnitId selectedAttribute : aoq.anuSeq) {
             NameValueSeqUnitId nvsui = new NameValueSeqUnitId();
             nvsui.valName = selectedAttribute.attr.aaName;
-            nvsui.value = atfxCache.listInstanceValues(aid, iids, selectedAttribute.attr.aaName);
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, nvsui.valName);
+            nvsui.value = atfxCache.listInstanceValues(aid, iids, attrNo);
             nvsui.unitId = selectedAttribute.unitId;
             resultValues.add(nvsui);
         }
@@ -430,13 +421,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         ResultSetExt res = new ResultSetExt();
         res.firstElems = new ElemResultSetExt[] { elem };
         return new ResultSetExt[] { res };
-
-        // // retrieve start aid and build up query
-        // QueryBuilder queryBuilder = aoq.anuSeq.length < 1 ? new QueryBuilder(atfxCache)
-        // : new QueryBuilder(this.atfxCache, ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
-        // queryBuilder.addJoinDefs(aoq.joinSeq);
-        // ResultSetExt[] resSet = queryBuilder.getResultSetExt(aoq.anuSeq);
-        // return resSet;
     }
 
     /**

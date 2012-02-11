@@ -29,6 +29,8 @@ import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
@@ -160,17 +162,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#createAttribute()
      */
     public ApplicationAttribute createAttribute() throws AoException {
-        // check if attribute already exists
-        if (this.atfxCache.getApplicationAttributeByName(aid, "") != null) {
-            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "Creating a new application attribute with already having other attributes with empty name is not allowed!");
-        }
-        // create application attribute
         try {
-            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.atfxCache, this.aid);
+            int attrNo = this.atfxCache.nextAttrNo(this.aid);
+            ApplicationAttributeImpl aaImpl = new ApplicationAttributeImpl(this.atfxCache, this.aid, attrNo);
             this.modelPOA.activate_object(aaImpl);
             ApplicationAttribute aa = ApplicationAttributeHelper.narrow(modelPOA.servant_to_reference(aaImpl));
-            this.atfxCache.addApplicationAttribute(this.aid, aa);
+            this.atfxCache.addApplicationAttribute(this.aid, attrNo, aa);
             return aa;
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
@@ -225,12 +222,12 @@ class ApplicationElementImpl extends ApplicationElementPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "aaName must not be empty");
         }
         // lookup
-        ApplicationAttribute aa = this.atfxCache.getApplicationAttributeByName(aid, aaName);
-        if (aa == null) {
+        Integer attrNo = this.atfxCache.getAttrNoByName(this.aid, aaName);
+        if (attrNo == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
                     + "' not found");
         }
-        return aa;
+        return this.atfxCache.getApplicationAttribute(this.aid, attrNo);
     }
 
     /**
@@ -244,13 +241,13 @@ class ApplicationElementImpl extends ApplicationElementPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "baName must not be empty");
         }
         // get application attribute
-        ApplicationAttribute aa = this.atfxCache.getApplicationAttributeByBaName(aid, baName);
-        if (aa == null) {
+        Integer attrNo = this.atfxCache.getAttrNoByBaName(this.aid, baName);
+        if (attrNo == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                   "ApplicationAttribute by base attribute name '" + baName
                                           + "' not found for ApplicationElement '" + getName() + "'");
         }
-        return aa;
+        return this.atfxCache.getApplicationAttribute(aid, attrNo);
     }
 
     /**
@@ -379,11 +376,6 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         for (ApplicationRelation applRel : this.atfxCache.getApplicationRelations(this.aid)) {
             if (aeRelationship == Relationship.ALL_REL) {
                 list.add(applRel.getElem2());
-                // } else if (aeRelationship == Relationship.INFO_REL) {
-                // if (applRel.getRelationship() == Relationship.INFO_FROM
-                // || applRel.getRelationship() == Relationship.INFO_TO) {
-                // list.add(applRel.getElem2());
-                // }
             } else if (applRel.getRelationship() == aeRelationship) {
                 list.add(applRel.getElem2());
             }
@@ -401,14 +393,22 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#createInstance(java.lang.String)
      */
     public InstanceElement createInstance(String ieName) throws AoException {
-        String idValName = this.atfxCache.getAaNameByBaName(this.aid, "id");
-        if (idValName == null) {
+        Integer idAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
+        if (idAttrNo == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                   "Not application attribute of base attribute 'id' found for aid=" + aid);
         }
         long iid = this.atfxCache.nextIid(this.aid);
         this.atfxCache.addInstance(this.aid, iid);
-        this.atfxCache.setInstanceValue(this.aid, iid, idValName, ODSHelper.createLongLongNV(idValName, iid).value);
+
+        // set id value
+        TS_Value value = new TS_Value();
+        value.flag = 15;
+        value.u = new TS_Union();
+        value.u.longlongVal(ODSHelper.asODSLongLong(iid));
+        this.atfxCache.setInstanceValue(this.aid, iid, idAttrNo, value);
+
+        // set instance name and return reference
         InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
         ie.setName(ieName);
         return ie;

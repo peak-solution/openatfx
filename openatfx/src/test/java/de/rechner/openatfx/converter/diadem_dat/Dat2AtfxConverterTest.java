@@ -28,7 +28,7 @@ public class Dat2AtfxConverterTest {
         dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
-    @Test
+    // @Test
     public void testConvertFiles() {
         URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
         File sourceFile = new File(url.getFile());
@@ -54,7 +54,7 @@ public class Dat2AtfxConverterTest {
         }
     }
 
-    // @Test
+    @Test
     public void testConvertBulk() {
         File sourceDir = new File("D:/PUBLIC/TestData/dat/hvb/Batterie1");
         File targetFile = new File("D:/PUBLIC/transfer.atfx");

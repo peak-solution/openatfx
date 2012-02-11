@@ -184,8 +184,7 @@ class InstanceElementCopyHelper {
 
     public boolean hasVersionAttribute(InstanceElement ie) throws AoException {
         long aid = ODSHelper.asJLong(ie.getApplicationElement().getId());
-        boolean isVersionable = atfxCache.getApplicationAttributeByBaName(aid, "version") != null;
-        return isVersionable;
+        return atfxCache.getAttrNoByBaName(aid, "version") != null;
     }
 
     public InstanceElement shallowCopy(InstanceElement ie, String newName, String newVersion) throws AoException {

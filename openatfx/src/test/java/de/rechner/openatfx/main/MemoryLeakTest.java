@@ -41,6 +41,27 @@ public class MemoryLeakTest {
     }
 
     @Test
+    public void testMemoryConsumption() throws Exception {
+        File file = new File("D:/PUBLIC/transfer.atfx");
+
+        System.out.println("Used: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024)
+                + " kB");
+        AoSession aoSession = aoFactory.newSession("FILENAME=" + file.getAbsolutePath());
+
+        System.out.println("Used: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024)
+                + " kB");
+
+        aoSession.close();
+
+        System.gc();
+
+        Thread.sleep(500);
+
+        System.out.println("Used: " + ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024)
+                + " kB");
+    }
+
+    // @Test
     public void testOneHundredThousandSessions() {
         for (int i = 0; i < NO_OF_TESTS; i++) {
             AoSession[] sessions = new AoSession[5];
@@ -49,7 +70,6 @@ public class MemoryLeakTest {
             for (int x = 0; x < 1; x++) {
                 try {
                     URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-                    // File file = new File(url.getFile());
                     File file = new File("D:/PUBLIC/tmp/Batterie1/transfer.atfx");
 
                     sessions[x] = aoFactory.newSession("FILENAME=" + file.getAbsolutePath());
@@ -79,10 +99,10 @@ public class MemoryLeakTest {
             }
 
             // wait
-//            try {
-//                Thread.sleep(2000);
-//            } catch (InterruptedException e) {
-//            }
+            // try {
+            // Thread.sleep(2000);
+            // } catch (InterruptedException e) {
+            // }
         }
     }
 

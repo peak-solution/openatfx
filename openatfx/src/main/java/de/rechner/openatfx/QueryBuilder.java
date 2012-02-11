@@ -237,12 +237,13 @@ class QueryBuilder {
         long iid = this.rows.get(rowNo).get(aid);
 
         // application attribute column
-        ApplicationAttribute applAttr = this.atfxCache.getApplicationAttributeByName(aid, colName);
-        if (applAttr != null) {
-            TS_Value value = this.atfxCache.getInstanceValue(aid, iid, colName);
+        Integer attrNo = this.atfxCache.getAttrNoByName(aid, colName);
+        if (attrNo != null) {
+            TS_Value value = this.atfxCache.getInstanceValue(aid, iid, attrNo);
             if (value == null) {
-                value = ODSHelper.createEmptyTS_Value(applAttr.getDataType());
-                this.atfxCache.setInstanceValue(aid, iid, colName, value);
+                DataType dt = this.atfxCache.getApplicationAttribute(aid, attrNo).getDataType();
+                value = ODSHelper.createEmptyTS_Value(dt);
+                this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
             }
             return value;
         }
@@ -271,7 +272,8 @@ class QueryBuilder {
     private TS_ValueSeq getTsValueSeq(long aid, String colName) throws AoException {
         // determine datatype
         DataType dt = DataType.DT_LONGLONG;
-        ApplicationAttribute applAttr = this.atfxCache.getApplicationAttributeByName(aid, colName);
+        Integer attrNo = this.atfxCache.getAttrNoByName(aid, colName);
+        ApplicationAttribute applAttr = this.atfxCache.getApplicationAttribute(aid, attrNo);
         if (applAttr != null) {
             dt = applAttr.getDataType();
         }

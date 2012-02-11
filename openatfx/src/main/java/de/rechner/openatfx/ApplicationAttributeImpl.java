@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
-import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationAttributePOA;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.BaseAttribute;
@@ -15,7 +14,6 @@ import org.asam.ods.DataType;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
-import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
@@ -71,6 +69,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
 
     private final AtfxCache atfxCache;
     private final long aid;
+    private final int attrNo;
 
     private String aaName;
     private BaseAttribute baseAttribute;
@@ -89,11 +88,13 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @param atfxCache The atfx cache.
      * @param aid The application element id.
      */
-    public ApplicationAttributeImpl(AtfxCache atfxCache, long aid) {
+    public ApplicationAttributeImpl(AtfxCache atfxCache, long aid, int attrNo) {
         this.atfxCache = atfxCache;
         this.aid = aid;
-        this.dataType = DataType.DT_UNKNOWN;
+        this.attrNo = attrNo;
+
         this.aaName = "";
+        this.dataType = DataType.DT_UNKNOWN;
         this.length = 1;
         this.obligatory = false;
         this.unique = false;
@@ -138,12 +139,12 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             return;
         }
         // check for existing application attribute name
-        if (this.atfxCache.getApplicationAttributeByName(aid, aaName) != null) {
+        if (this.atfxCache.getAttrNoByName(aid, aaName) != null) {
             throw new AoException(ErrorCode.AO_DUPLICATE_NAME, SeverityFlag.ERROR, 0,
                                   "ApplicationAttribute with name '" + aaName + "' already exists");
         }
         // rename
-        this.atfxCache.renameApplicationAttribute(aid, this.aaName, aaName);
+        this.atfxCache.renameApplicationAttribute(this.aid, this.attrNo, this.aaName, aaName);
         this.aaName = aaName;
     }
 
@@ -169,12 +170,10 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             }
 
             // check if already an application attribute exists with same base attribute
-            for (ApplicationAttribute existingAa : getApplicationElement().getAttributes("*")) {
-                if (existingAa != null && !existingAa.getName().equals(this.aaName)
-                        && existingAa.getName().toLowerCase().equals(baseAttr.getName().toLowerCase())) {
-                    throw new AoException(ErrorCode.AO_DUPLICATE_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
-                                          "Duplicate base attribute '" + existingAa.getName() + "'");
-                }
+            Integer existingAttrNo = this.atfxCache.getAttrNoByBaName(aid, baseAttr.getName());
+            if (existingAttrNo != null && !existingAttrNo.equals(this.attrNo)) {
+                throw new AoException(ErrorCode.AO_DUPLICATE_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
+                                      "Duplicate base attribute '" + baseAttr.getName() + "'");
             }
 
             // set new datatype
@@ -188,11 +187,10 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             }
 
             this.baseAttribute = baseAttr;
-            this.atfxCache.setAaNameForBaName(aid, baseAttr.getName(), getName());
+            this.atfxCache.setBaNameForAttrNo(aid, attrNo, baseAttr.getName());
         } else {
             this.baseAttribute = null;
-            // TODO: update cache
-            // this.atfxCache.setAaNameForBaName(aid, aaName, null);
+            this.atfxCache.setBaNameForAttrNo(aid, attrNo, null);
         }
     }
 
@@ -212,25 +210,25 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      */
     public void setDataType(DataType aaDataType) throws AoException {
         if (aaDataType == null) {
-            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "aaDataType must not be null");
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "Parameter 'aaDataType' must not be null");
         }
+
+        // check if datatype has to be changed
         if (this.dataType == aaDataType) {
             return;
         }
+
         // check if base attribute is set
         if (getBaseAttribute() != null) {
             throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
                                   "Changing the datatype of an attribute derived from a base attribute is not allowed");
         }
-        // check for existing instance values
-        InstanceElementIterator iter = getApplicationElement().getInstances("*");
-        for (InstanceElement ie : iter.nextN(iter.getCount())) {
-            if (ie.getValue(getName()).value.flag != 0) {
-                throw new AoException(ErrorCode.AO_HAS_INSTANCES, SeverityFlag.ERROR, 0,
-                                      "Changing the datatype for application attribute with existing instances is not allowed");
-            }
+
+        // clear for existing instance values
+        for (long iid : this.atfxCache.getInstanceIds(this.aid)) {
+            this.atfxCache.setInstanceValue(this.aid, iid, this.attrNo, null);
         }
-        iter.destroy();
         // change data type
         this.dataType = aaDataType;
         // set default length

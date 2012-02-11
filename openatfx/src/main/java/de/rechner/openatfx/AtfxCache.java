@@ -2,7 +2,6 @@ package de.rechner.openatfx;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,8 +41,9 @@ class AtfxCache {
     private final Map<Long, ApplicationElement> aidToAeMap;
 
     /** application attributes */
-    private final Map<Long, Map<String, ApplicationAttribute>> applicationAttributeMap; // <aid,<aaName,ApplicationAttribute>>
-    private final Map<Long, Map<String, String>> baNameToAaNameMap; // <aid,<baName,aaName>>
+    private final Map<Long, Map<Integer, ApplicationAttribute>> attrNoToAttrMap; // <aid,<attrNo,Attribute>>
+    private final Map<Long, Map<String, Integer>> aaNameToAttrNoMap; // <aid,<aaName,attrNo>>
+    private final Map<Long, Map<String, Integer>> baNameToAttrNoMap; // <aid,<baName,attrNo>>
 
     /** application relations */
     private final List<ApplicationRelation> applicationRelations;
@@ -53,7 +53,7 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** instance values */
-    private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
+    private final Map<Long, Map<Long, Map<Integer, TS_Value>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
 
     /** instance attribute values */
     private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
@@ -63,6 +63,8 @@ class AtfxCache {
 
     /** The counters for ids */
     private int nextAid;
+    private final Map<Long, Integer> nextAttrNoMap;
+    private final Map<Long, Long> nextIidMap;
 
     /**
      * Constructor.
@@ -72,15 +74,23 @@ class AtfxCache {
         this.beToAidMap = new HashMap<String, Set<Long>>();
         this.aidToAeMap = new TreeMap<Long, ApplicationElement>();
         this.aidToAeNameMap = new HashMap<Long, String>();
-        this.applicationAttributeMap = new HashMap<Long, Map<String, ApplicationAttribute>>();
+
+        /** application attributes */
+        this.attrNoToAttrMap = new HashMap<Long, Map<Integer, ApplicationAttribute>>();
+        this.aaNameToAttrNoMap = new HashMap<Long, Map<String, Integer>>();
+        this.baNameToAttrNoMap = new HashMap<Long, Map<String, Integer>>();
+
         this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();
-        this.baNameToAaNameMap = new HashMap<Long, Map<String, String>>();
         this.applicationRelations = new ArrayList<ApplicationRelation>();
+
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
-        this.instanceValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
+        this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, TS_Value>>>();
         this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
+
         this.nextAid = 1;
+        this.nextAttrNoMap = new HashMap<Long, Integer>();
+        this.nextIidMap = new HashMap<Long, Long>();
     }
 
     /**
@@ -93,17 +103,35 @@ class AtfxCache {
     }
 
     /**
+     * Returns the next free attribute number for an application element.
+     * 
+     * @param aid The application element id.
+     * @return The attribute number.
+     */
+    public int nextAttrNo(long aid) {
+        Integer nextAttrNo = this.nextAttrNoMap.get(aid);
+        if (nextAttrNo == null) {
+            nextAttrNo = 0;
+        }
+        nextAttrNo++;
+        this.nextAttrNoMap.put(aid, nextAttrNo);
+        return nextAttrNo;
+    }
+
+    /**
      * Returns the next free instance element id for an application element.
      * 
      * @param aid The application element id.
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        Set<Long> iids = this.instanceValueMap.get(aid).keySet();
-        if (iids.size() < 1) {
-            return 1;
+        Long nextIid = this.nextIidMap.get(aid);
+        if (nextIid == null) {
+            nextIid = 0l;
         }
-        return Collections.max(iids) + 1;
+        nextIid++;
+        this.nextIidMap.put(aid, nextIid);
+        return nextIid;
     }
 
     /***********************************************************************************
@@ -122,11 +150,12 @@ class AtfxCache {
         this.aidToAeMap.put(aid, ae);
         this.aidToAeNameMap.put(aid, "");
         this.nameToAeMap.put("", ae);
-        this.baNameToAaNameMap.put(aid, new HashMap<String, String>());
-        this.applicationAttributeMap.put(aid, new LinkedHashMap<String, ApplicationAttribute>());
+        this.attrNoToAttrMap.put(aid, new LinkedHashMap<Integer, ApplicationAttribute>());
+        this.aaNameToAttrNoMap.put(aid, new LinkedHashMap<String, Integer>());
+        this.baNameToAttrNoMap.put(aid, new HashMap<String, Integer>());
         this.applicationRelationMap.put(aid, new ArrayList<ApplicationRelation>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
-        this.instanceValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
+        this.instanceValueMap.put(aid, new TreeMap<Long, Map<Integer, TS_Value>>());
         this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
         this.instanceElementCache.put(aid, new TreeMap<Long, InstanceElement>());
 
@@ -200,13 +229,16 @@ class AtfxCache {
         this.nameToAeMap.remove(aidToAeNameMap.get(aid));
         this.aidToAeNameMap.remove(aid);
         this.aidToAeMap.remove(aid);
-        this.baNameToAaNameMap.remove(aid);
-        this.applicationAttributeMap.remove(aid);
+        this.aaNameToAttrNoMap.remove(aid);
+        this.baNameToAttrNoMap.remove(aid);
+        this.aaNameToAttrNoMap.remove(aid);
         this.applicationRelationMap.remove(aid);
         this.instanceRelMap.remove(aid);
         this.instanceValueMap.remove(aid);
         this.instanceAttrValueMap.remove(aid);
         this.instanceElementCache.remove(aid);
+        this.nextAttrNoMap.remove(aid);
+        this.nextIidMap.remove(aid);
     }
 
     /**
@@ -223,14 +255,8 @@ class AtfxCache {
      * application attributes
      ***********************************************************************************/
 
-    /**
-     * Adds an application attribute to the cache.
-     * 
-     * @param aid The application element id.
-     * @param aa The application attribute.
-     */
-    public void addApplicationAttribute(long aid, ApplicationAttribute aa) {
-        this.applicationAttributeMap.get(aid).put("", aa);
+    public void addApplicationAttribute(long aid, int attrNo, ApplicationAttribute aa) {
+        this.attrNoToAttrMap.get(aid).put(attrNo, aa);
     }
 
     /**
@@ -240,18 +266,27 @@ class AtfxCache {
      * @return Collection of attribute names.
      */
     public Collection<String> listApplicationAttributes(long aid) {
-        return this.applicationAttributeMap.get(aid).keySet();
+        return this.aaNameToAttrNoMap.get(aid).keySet();
     }
 
-    /**
-     * Returns an application attribute by name.
-     * 
-     * @param aid The application element id.
-     * @param aaName The application attribute name.
-     * @return The application attribute, null if not found.
-     */
-    public ApplicationAttribute getApplicationAttributeByName(long aid, String aaName) {
-        return this.applicationAttributeMap.get(aid).get(aaName);
+    public ApplicationAttribute getApplicationAttribute(long aid, int attrNo) {
+        return this.attrNoToAttrMap.get(aid).get(attrNo);
+    }
+
+    public Integer getAttrNoByName(long aid, String aaName) {
+        return this.aaNameToAttrNoMap.get(aid).get(aaName);
+    }
+
+    public Integer getAttrNoByBaName(long aid, String baName) {
+        return this.baNameToAttrNoMap.get(aid).get(baName);
+    }
+
+    public void setBaNameForAttrNo(long aid, int attrNo, String baName) {
+        if (baName == null) {
+            this.baNameToAttrNoMap.get(aid).remove(null);
+        } else {
+            this.baNameToAttrNoMap.get(aid).put(baName, attrNo);
+        }
     }
 
     /**
@@ -261,27 +296,21 @@ class AtfxCache {
      * @return Collection of application attributes.
      */
     public Collection<ApplicationAttribute> getApplicationAttributes(long aid) {
-        return this.applicationAttributeMap.get(aid).values();
+        return this.attrNoToAttrMap.get(aid).values();
     }
 
     /**
      * If application attribute name changes, all value keys has to be altered.
      * 
      * @param aid The application element id.
+     * @param attrNo The attribute number.
      * @param oldAaName The old application attribute name.
      * @param newAaName The new application attribute name.
      */
-    public void renameApplicationAttribute(long aid, String oldAaName, String newAaName) {
-        // update application attribute map
-        Map<String, ApplicationAttribute> applAttrMap = this.applicationAttributeMap.get(aid);
-        applAttrMap.put(newAaName, applAttrMap.remove(oldAaName));
-
-        // invalidate instanceValueMap
-        for (Map<String, TS_Value> map : this.instanceValueMap.get(aid).values()) {
-            if (map.containsKey(oldAaName)) {
-                map.put(newAaName, map.get(oldAaName));
-            }
-        }
+    public void renameApplicationAttribute(long aid, int attrNo, String oldAaName, String newAaName) {
+        Map<String, Integer> attrNoMap = this.aaNameToAttrNoMap.get(aid);
+        attrNoMap.remove(oldAaName);
+        attrNoMap.put(newAaName, attrNo);
     }
 
     /**
@@ -292,68 +321,26 @@ class AtfxCache {
      * @throws AoException
      */
     public void removeApplicationAttribute(long aid, String aaName) throws AoException {
+        Integer attrNo = getAttrNoByName(aid, aaName);
+        this.attrNoToAttrMap.get(aid).remove(attrNo);
+        this.aaNameToAttrNoMap.get(aid).remove(aaName);
+
         // remove from base attribute map
         String baName = null;
-        for (Entry<String, String> entry : this.baNameToAaNameMap.get(aid).entrySet()) {
-            if (entry.getValue().equals(aaName)) {
+        for (Entry<String, Integer> entry : this.baNameToAttrNoMap.get(aid).entrySet()) {
+            if (entry.getValue().equals(attrNo)) {
                 baName = entry.getKey();
-                break;
             }
         }
-        this.baNameToAaNameMap.get(aid).remove(baName);
-
-        // remove from application attribute map
-        this.applicationAttributeMap.get(aid).remove(aaName);
+        this.baNameToAttrNoMap.get(aid).remove(baName);
 
         // remove from instance value map
-        Map<Long, Map<String, TS_Value>> ieValueMap = this.instanceValueMap.get(aid);
-        for (Map<String, TS_Value> v : ieValueMap.values()) {
+        Map<Long, Map<Integer, TS_Value>> ieValueMap = this.instanceValueMap.get(aid);
+        for (Map<Integer, TS_Value> v : ieValueMap.values()) {
             if (v != null) {
-                v.remove(aaName);
+                v.remove(attrNo);
             }
         }
-    }
-
-    /**
-     * Sets the base attribute name for an application attribute.
-     * 
-     * @param aid The application element id.
-     * @param baName The base attribute name, null for no base attribute
-     * @param aaName The application attribute name.
-     */
-    public void setAaNameForBaName(long aid, String baName, String aaName) {
-        if (baName == null || baName.length() < 1) {
-            this.baNameToAaNameMap.get(aid).remove(baName);
-        } else {
-            this.baNameToAaNameMap.get(aid).put(baName, aaName);
-        }
-    }
-
-    /**
-     * Returns the application attribute name for given base attribute name.
-     * <p>
-     * The lookup will be performed case insensitive!
-     * 
-     * @param aid The application element id.
-     * @param baName The base attribute name.
-     * @return The application attribute name, null if not found.
-     */
-    public String getAaNameByBaName(long aid, String baName) {
-        return this.baNameToAaNameMap.get(aid).get(baName.toLowerCase());
-    }
-
-    /**
-     * Returns the application attribute for given base attribute name.
-     * <p>
-     * The lookup will be performed case insensitive!
-     * 
-     * @param aid The application element id.
-     * @param baName The base attribute name.
-     * @return The application attribute, null if not found.
-     */
-    public ApplicationAttribute getApplicationAttributeByBaName(long aid, String baName) {
-        String aaName = getAaNameByBaName(aid, baName);
-        return this.applicationAttributeMap.get(aid).get(aaName);
     }
 
     /***********************************************************************************
@@ -473,7 +460,7 @@ class AtfxCache {
             this.instanceRelMap.get(aid).get(iid).put(rel, new TreeSet<Long>());
         }
 
-        this.instanceValueMap.get(aid).put(iid, new HashMap<String, TS_Value>());
+        this.instanceValueMap.get(aid).put(iid, new HashMap<Integer, TS_Value>());
         this.instanceAttrValueMap.get(aid).put(iid, new LinkedHashMap<String, TS_Value>());
     }
 
@@ -646,11 +633,11 @@ class AtfxCache {
      * 
      * @param aid The application element id.
      * @param iid The instance element id.
-     * @param aaName The application attribute name.
+     * @param attrNo The application attribute number.
      * @param value The value.
      */
-    public void setInstanceValue(long aid, long iid, String aaName, TS_Value value) throws AoException {
-        this.instanceValueMap.get(aid).get(iid).put(aaName, value);
+    public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
+        this.instanceValueMap.get(aid).get(iid).put(attrNo, value);
     }
 
     /**
@@ -658,11 +645,11 @@ class AtfxCache {
      * 
      * @param aid The application element id.
      * @param iid The instance id.
-     * @param valName The application attribute name.
+     * @param valName The application attribute number.
      * @return The value, null if not found.
      */
-    public TS_Value getInstanceValue(long aid, long iid, String aaName) {
-        return this.instanceValueMap.get(aid).get(iid).get(aaName);
+    public TS_Value getInstanceValue(long aid, long iid, int attrNo) {
+        return this.instanceValueMap.get(aid).get(iid).get(attrNo);
     }
 
     /***********************************************************************************
@@ -709,15 +696,15 @@ class AtfxCache {
      * 
      * @param aid the application element id
      * @param iids the array of instance ids
-     * @param attrName the attribute name
+     * @param attrNo the attribute number
      * @return TS_ValueSeq containing all values, or null, if one or more of the instances do not possess the instance
      *         attribute.
      * @throws AoException if the conversion from tsValue array to tsValueSeq fails
      */
-    public TS_ValueSeq listInstanceValues(long aid, long[] iids, String attrName) throws AoException {
+    public TS_ValueSeq listInstanceValues(long aid, long[] iids, int attrNo) throws AoException {
         TS_Value[] tsValues = new TS_Value[iids.length];
         for (int index = 0; index < iids.length; index++) {
-            TS_Value value = getInstanceValue(aid, iids[index], attrName);
+            TS_Value value = getInstanceValue(aid, iids[index], attrNo);
             if (value == null) {
                 return null;
             }
