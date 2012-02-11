@@ -83,6 +83,15 @@ class AoSessionWriter {
         this.targetFileChannels = new HashMap<File, FileChannel>();
     }
 
+    /**
+     * Appends the data of an ATFX file to
+     * 
+     * @param iePrj The parent 'AoTest' instance.
+     * @param atfxFile The target ATFX file.
+     * @param datHeader The source DAT file content.
+     * @throws ConvertException Error converting.
+     * @throws IOException Error reading file content.
+     */
     public synchronized void writeDataToAoTest(InstanceElement iePrj, File atfxFile, DatHeader datHeader)
             throws ConvertException, IOException {
         this.atfxFile = atfxFile;
@@ -129,7 +138,7 @@ class AoSessionWriter {
         ApplicationRelation relTstMea = as.getRelations(aeTst, aeMea)[0];
 
         // create "AoMeasurement" instance and write descriptive data to instance attributes
-        InstanceElement ieMea = aeMea.createInstance("RawData");
+        InstanceElement ieMea = aeMea.createInstance(ieTst.getName());
         ieTst.createRelation(relTstMea, ieMea);
         ieMea.setValue(ODSHelper.createStringNVU("origin", datHeader.getGlobalHeaderEntry(DatHeader.KEY_ORIGIN)));
         ieMea.setValue(ODSHelper.createStringNVU("revision", datHeader.getGlobalHeaderEntry(DatHeader.KEY_REVISION)));
@@ -180,7 +189,8 @@ class AoSessionWriter {
         for (String channelName : datHeader.listChannelNames()) {
             String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
             if (noOfRowsStr == null || noOfRowsStr.length() < 1) {
-                throw new ConvertException("Unable to read number of values for channel: " + channelName);
+                LOG.warn("Unable to read number of values for channel: " + channelName);
+                noOfRowsStr = "0";
             }
             Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
             if (!smMap.containsKey(noOfRows)) {
@@ -282,6 +292,9 @@ class AoSessionWriter {
 
         // relation to SubMatrix
         String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
+        if (noOfRowsStr == null || noOfRowsStr.length() < 1) {
+            noOfRowsStr = "0";
+        }
         Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
         InstanceElement ieSm = smMap.get(noOfRows);
         ieSm.createRelation(relSmLc, ieLc);
@@ -332,11 +345,11 @@ class AoSessionWriter {
         }
 
         // write AoExternalComponent
-        writeEc(ieMea, ieMeq, ieLc, datHeader, channelName, offset, factor);
+        writeEc(ieMea, ieMeq, ieLc, datHeader, channelName, noOfRows, offset, factor);
     }
 
     private void writeEc(InstanceElement ieMea, InstanceElement ieMeq, InstanceElement ieLc, DatHeader datHeader,
-            String channelName, double offset, double factor) throws AoException, ConvertException {
+            String channelName, int noOfRows, double offset, double factor) throws AoException, ConvertException {
         ApplicationStructure as = ieLc.getApplicationElement().getApplicationStructure();
         ApplicationElement aeLc = as.getElementByName("lc");
         ApplicationElement aeEc = as.getElementByName("ec");
@@ -380,23 +393,23 @@ class AoSessionWriter {
 
             // DT_SHORT
             if (dt.equals("INT16")) {
-                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_SHORT, 2, sourceMbb,
-                              targetFile, targetChannel);
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, noOfRows, offset, factor, DataType.DT_SHORT, 2,
+                              sourceMbb, targetFile, targetChannel);
             }
             // DT_LONG
             else if (dt.equals("INT32")) {
-                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_LONG, 4, sourceMbb,
-                              targetFile, targetChannel);
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, noOfRows, offset, factor, DataType.DT_LONG, 4,
+                              sourceMbb, targetFile, targetChannel);
             }
             // DT_FLOAT
             else if (dt.equals("REAL32")) {
-                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_FLOAT, 4, sourceMbb,
-                              targetFile, targetChannel);
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, noOfRows, offset, factor, DataType.DT_FLOAT, 4,
+                              sourceMbb, targetFile, targetChannel);
             }
             // DT_DOUBLE
             if (dt.equals("REAL64")) {
-                writeEcValues(ieMeq, ieEc, datHeader, channelName, offset, factor, DataType.DT_DOUBLE, 8, sourceMbb,
-                              targetFile, targetChannel);
+                writeEcValues(ieMeq, ieEc, datHeader, channelName, noOfRows, offset, factor, DataType.DT_DOUBLE, 8,
+                              sourceMbb, targetFile, targetChannel);
             }
 
         } catch (FileNotFoundException e) {
@@ -420,10 +433,9 @@ class AoSessionWriter {
     }
 
     private void writeEcValues(InstanceElement ieMeq, InstanceElement ieEc, DatHeader datHeader, String channelName,
-            double offset, double factor, DataType dt, int blockSize, ByteBuffer sourceMbb, File targetFile,
-            FileChannel targetChannel) throws AoException, ConvertException, IOException {
+            int noOfRows, double offset, double factor, DataType dt, int blockSize, ByteBuffer sourceMbb,
+            File targetFile, FileChannel targetChannel) throws AoException, ConvertException, IOException {
         // read meta info from DAT header
-        int noOfRows = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES).trim());
         int fileOffset = Integer.valueOf(datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_FILE_OFFSET).trim());
         String datDataType = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_DATATYPE);
 
@@ -486,10 +498,27 @@ class AoSessionWriter {
         ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getName()));
 
         // calculate min/max/avg/dev and update measurement quantity instance
-        ieMeq.setValue(ODSHelper.createDoubleNVU("min", (calcMin(data) * factor) + offset));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("max", (calcMax(data) * factor) + offset));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", (calcAvg(data) * factor) + offset));
-        ieMeq.setValue(ODSHelper.createDoubleNVU("dev", (calcStdDev(data) * factor) + offset));
+        Double min = calcMin(data);
+        if (min != null) {
+            min = (min * factor) + offset;
+        }
+        Double max = calcMax(data);
+        if (max != null) {
+            max = (max * factor) + offset;
+        }
+        Double avg = calcAvg(data);
+        if (avg != null) {
+            avg = (avg * factor) + offset;
+        }
+        Double dev = calcStdDev(data);
+        if (dev != null) {
+            dev = (dev * factor) + offset;
+        }
+
+        ieMeq.setValue(ODSHelper.createDoubleNVU("min", min));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("max", max));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("avg", avg));
+        ieMeq.setValue(ODSHelper.createDoubleNVU("dev", dev));
     }
 
     /****************************************************************************************************

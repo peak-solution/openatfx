@@ -7,6 +7,7 @@ import java.net.URL;
 import java.util.Properties;
 
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import de.rechner.openatfx.converter.ConvertException;
 import de.rechner.openatfx.converter.ConverterFactory;
@@ -27,6 +28,18 @@ public class Dat2AtfxConverterTest {
         dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
+    @Test
+    public void testConvertFiles() {
+        URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
+        File sourceFile = new File(url.getFile());
+        File targetFile = new File("D:/PUBLIC/transfer.atfx");
+        try {
+            dat2AtfxConverter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
+        } catch (ConvertException e) {
+            fail(e.getMessage());
+        }
+    }
+
     // @Test
     public void testConvertDirectory() {
         URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat");
@@ -42,18 +55,6 @@ public class Dat2AtfxConverterTest {
     }
 
     // @Test
-    public void testConvertFiles() {
-        URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
-        File sourceFile = new File(url.getFile());
-        File targetFile = new File("D:/PUBLIC/transfer.atfx");
-        try {
-            dat2AtfxConverter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
-        } catch (ConvertException e) {
-            fail(e.getMessage());
-        }
-    }
-
-    // @Test
     public void testConvertBulk() {
         File sourceDir = new File("D:/PUBLIC/TestData/dat/hvb/Batterie1");
         File targetFile = new File("D:/PUBLIC/transfer.atfx");
@@ -61,9 +62,6 @@ public class Dat2AtfxConverterTest {
         Properties props = new Properties();
         props.put("attachmentFilenamePattern", "*.erg");
         try {
-            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
-            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
-            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
             dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
         } catch (ConvertException e) {
             fail(e.getMessage());

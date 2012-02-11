@@ -30,7 +30,7 @@ import de.rechner.openatfx.AoServiceFactory;
  */
 public class MemoryLeakTest {
 
-    private static final int NO_OF_TESTS = 0;
+    private static final int NO_OF_TESTS = 100;
 
     private static AoFactory aoFactory;
 
@@ -46,10 +46,13 @@ public class MemoryLeakTest {
             AoSession[] sessions = new AoSession[5];
 
             // open sessions
-            for (int x = 0; x < 5; x++) {
+            for (int x = 0; x < 1; x++) {
                 try {
                     URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-                    sessions[x] = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+                    // File file = new File(url.getFile());
+                    File file = new File("D:/PUBLIC/tmp/Batterie1/transfer.atfx");
+
+                    sessions[x] = aoFactory.newSession("FILENAME=" + file.getAbsolutePath());
                     for (ApplicationElement ae : sessions[x].getApplicationStructure().getElements("*")) {
                         InstanceElementIterator iter = ae.getInstances("*");
                         for (InstanceElement ie : iter.nextN(iter.getCount())) {
@@ -67,7 +70,7 @@ public class MemoryLeakTest {
             }
 
             // close sessions
-            for (int x = 0; x < 5; x++) {
+            for (int x = 0; x < 1; x++) {
                 try {
                     sessions[x].close();
                 } catch (AoException e) {
@@ -76,10 +79,10 @@ public class MemoryLeakTest {
             }
 
             // wait
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-            }
+//            try {
+//                Thread.sleep(2000);
+//            } catch (InterruptedException e) {
+//            }
         }
     }
 
