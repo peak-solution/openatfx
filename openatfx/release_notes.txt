@@ -26,6 +26,8 @@
 	0.2.1 (Christian Rechner)
 	
 		- Completed implementation of the DIAdem DAT to ATFX converter.
+		- Added checking of having the right base relations in case of
+		  multiple children.
 
 	0.2.0 (Christian Rechner)
 	

@@ -16,7 +16,6 @@ import org.asam.ods.AttrType;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
 import org.junit.BeforeClass;
-import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoFactoryImplTest;
@@ -40,7 +39,7 @@ public class MemoryLeakTest {
         aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
     }
 
-    @Test
+    // @Test
     public void testMemoryConsumption() throws Exception {
         File file = new File("D:/PUBLIC/transfer.atfx");
 

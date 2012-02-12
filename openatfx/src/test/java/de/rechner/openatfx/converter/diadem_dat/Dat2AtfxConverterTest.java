@@ -3,6 +3,7 @@ package de.rechner.openatfx.converter.diadem_dat;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -28,14 +29,17 @@ public class Dat2AtfxConverterTest {
         dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
-    // @Test
+    @Test
     public void testConvertFiles() {
         URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
         File sourceFile = new File(url.getFile());
-        File targetFile = new File("D:/PUBLIC/transfer.atfx");
+        // File targetFile = new File("D:/PUBLIC/transfer.atfx");
         try {
+            File targetFile = File.createTempFile("transfer", "atfx");
             dat2AtfxConverter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
         } catch (ConvertException e) {
+            fail(e.getMessage());
+        } catch (IOException e) {
             fail(e.getMessage());
         }
     }
@@ -54,7 +58,7 @@ public class Dat2AtfxConverterTest {
         }
     }
 
-    @Test
+    // @Test
     public void testConvertBulk() {
         File sourceDir = new File("D:/PUBLIC/TestData/dat/hvb/Batterie1");
         File targetFile = new File("D:/PUBLIC/transfer.atfx");

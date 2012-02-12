@@ -275,10 +275,35 @@ public class AtfxReader {
         // create missing inverse relations
         createMissingInverseRelations(as, applRelElem2Map);
 
-        // set the elem2 of all application relations (this has to be done after parsing all elements)
+        // Set the elem2 of all application relations (this has to be done after parsing all elements)
         for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
-            entry.getKey().setElem2(as.getElementByName(entry.getValue()));
+            ApplicationRelation applRel = entry.getKey();
+            ApplicationElement elem2 = as.getElementByName(entry.getValue());
+            applRel.setElem2(elem2);
+
+            // also correct base relations in case of multiple possible target base elements
+            BaseRelation baseRel = applRel.getBaseRelation();
+            if (baseRel != null) {
+                String relType = elem2.getBaseElement().getType();
+                String bTypeElem2 = baseRel.getElem2().getType();
+                if (!relType.equals(bTypeElem2)) {
+                    applRel.setBaseRelation(lookupBaseRelation(applRel.getElem1(), elem2, applRel.getBaseRelation()
+                                                                                                 .getRelationName(),
+                                                               relType));
+                }
+            }
         }
+    }
+
+    private BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
+            String bType) throws AoException {
+        for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
+            if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(bType)) {
+                return baseRel;
+            }
+        }
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
+                + bRelName + "',targetBaseType='" + bType + "'");
     }
 
     /**
@@ -609,7 +634,7 @@ public class AtfxReader {
      * 
      * @param applElem The application element
      * @param reader The XML stream reader.
-     * @param baseRelMap Map containing all base relations. of the application element.
+     * @param baseRelMap Map containing all base relations of the application element.
      * @return Map containing the elem2 ae name for the relations.
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.

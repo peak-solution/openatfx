@@ -18,6 +18,7 @@ import org.asam.ods.ApplicationRelationHelper;
 import org.asam.ods.ApplicationStructurePOA;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
+import org.asam.ods.BaseRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationAttributeStructure;
@@ -742,6 +743,26 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
                 }
                 relNames.add("[" + rel.getElem1().getName() + "]" + relName);
                 invRelNames.add("[" + rel.getElem2().getName() + "]" + invRelName);
+
+                // check if base types of application elements matches the base types of the relations
+                BaseRelation baseRel = rel.getBaseRelation();
+                if (baseRel != null) {
+                    String relType1 = rel.getElem1().getBaseElement().getType();
+                    String bTypeElem1 = baseRel.getElem1().getType();
+                    if (!relType1.equals(bTypeElem1)) {
+                        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                              "Wrong base relation targets! Expected '" + relType1 + "', found '"
+                                                      + bTypeElem1 + "' for relation '" + rel.getRelationName() + "'");
+                    }
+
+                    String relType2 = rel.getElem2().getBaseElement().getType();
+                    String bTypeElem2 = baseRel.getElem2().getType();
+                    if (!relType2.equals(bTypeElem2)) {
+                        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                              "Wrong base relation targets! Expected '" + relType2 + "', found '"
+                                                      + bTypeElem2 + "' for relation '" + rel.getRelationName() + "'");
+                    }
+                }
             }
         }
 
@@ -752,5 +773,4 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
                                   "No inverse relations found for application relations: " + relNames);
         }
     }
-
 }

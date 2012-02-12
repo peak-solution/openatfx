@@ -138,7 +138,7 @@ class AoSessionWriter {
         ApplicationRelation relTstMea = as.getRelations(aeTst, aeMea)[0];
 
         // create "AoMeasurement" instance and write descriptive data to instance attributes
-        InstanceElement ieMea = aeMea.createInstance(ieTst.getName());
+        InstanceElement ieMea = aeMea.createInstance("RawData");
         ieTst.createRelation(relTstMea, ieMea);
         ieMea.setValue(ODSHelper.createStringNVU("origin", datHeader.getGlobalHeaderEntry(DatHeader.KEY_ORIGIN)));
         ieMea.setValue(ODSHelper.createStringNVU("revision", datHeader.getGlobalHeaderEntry(DatHeader.KEY_REVISION)));

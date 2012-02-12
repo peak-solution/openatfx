@@ -144,19 +144,6 @@ public class ApplicationElementImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-
-        // test create two attributes without changing the name
-        ApplicationAttribute aa1 = null;
-        try {
-            aa1 = applicationElement.createAttribute();
-            applicationElement.createAttribute();
-        } catch (AoException e) {
-            try {
-                applicationElement.removeAttribute(aa1);
-            } catch (AoException e1) {
-                fail(e.reason);
-            }
-        }
     }
 
     @Test
