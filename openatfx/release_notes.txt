@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.2.2 (Christian Rechner)
+	
+		- Added ability to DIAdem DAT to ATFX converter to convert data sets
+		  having different no of rows in the header file as in the binary data.
+
 	0.2.1 (Christian Rechner)
 	
 		- Completed implementation of the DIAdem DAT to ATFX converter.
