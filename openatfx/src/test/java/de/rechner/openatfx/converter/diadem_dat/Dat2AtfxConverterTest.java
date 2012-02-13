@@ -29,7 +29,7 @@ public class Dat2AtfxConverterTest {
         dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
-    @Test
+    // @Test
     public void testConvertFiles() {
         URL url = Dat2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
         File sourceFile = new File(url.getFile());

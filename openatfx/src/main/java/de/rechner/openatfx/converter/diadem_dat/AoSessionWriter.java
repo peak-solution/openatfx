@@ -13,10 +13,13 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -137,7 +140,11 @@ class AoSessionWriter {
         ApplicationStructure as = ieTst.getApplicationElement().getApplicationStructure();
         ApplicationElement aeTst = as.getElementByName("tst");
         ApplicationElement aeMea = as.getElementByName("mea");
+        ApplicationElement aeSm = as.getElementByName("sm");
+        ApplicationElement aeLc = as.getElementByName("lc");
         ApplicationRelation relTstMea = as.getRelations(aeTst, aeMea)[0];
+        ApplicationRelation relMeaSm = as.getRelations(aeMea, aeSm)[0];
+        ApplicationRelation relSmLc = as.getRelations(aeSm, aeLc)[0];
 
         // create "AoMeasurement" instance and write descriptive data to instance attributes
         InstanceElement ieMea = aeMea.createInstance("RawData");
@@ -163,47 +170,20 @@ class AoSessionWriter {
             ieMea.addInstanceAttribute(ODSHelper.createStringNVU(commentKey, commentValue));
         }
 
-        // write "AoSubMatrix" instances
-        Map<Integer, InstanceElement> smMap = writeSubMatrices(ieMea, datHeader);
+        // write 'AoMeasurementQuantity' instances
+        Map<Integer, Collection<InstanceElement>> lcInstMap = writeMeq(ieMea, datHeader);
 
-        // write "AoMeasurementQuantity" instances
-        writeMeq(ieMea, smMap, datHeader);
-    }
-
-    /**
-     * Writes the instances of 'AoSubMatrix'.
-     * 
-     * @param ieMea The 'AoMeasurement' instance.
-     * @param datHeader The DAT header.
-     * @return Map having the number of values as key and the SubMatrix instance as value.
-     * @throws AoException Error writing SubMatrix instances.
-     * @throws ConvertException Information not found.
-     */
-    private Map<Integer, InstanceElement> writeSubMatrices(InstanceElement ieMea, DatHeader datHeader)
-            throws AoException, ConvertException {
-        ApplicationStructure as = ieMea.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeMea = as.getElementByName("mea");
-        ApplicationElement aeSm = as.getElementByName("sm");
-        ApplicationRelation relMeaSm = as.getRelations(aeMea, aeSm)[0];
-
-        // key=number_of_rows, value=instance
-        Map<Integer, InstanceElement> smMap = new HashMap<Integer, InstanceElement>();
-        for (String channelName : datHeader.listChannelNames()) {
-            String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
-            if (noOfRowsStr == null || noOfRowsStr.length() < 1) {
-                LOG.warn("Unable to read number of values for channel: " + channelName);
-                noOfRowsStr = "0";
+        // write 'AoSubMatrix' instances
+        int smNo = 1;
+        for (Entry<Integer, Collection<InstanceElement>> entry : lcInstMap.entrySet()) {
+            InstanceElement ieSm = aeSm.createInstance("SubMatrix#" + smNo);
+            ieMea.createRelation(relMeaSm, ieSm);
+            ieSm.setValue(ODSHelper.createLongNVU("number_of_rows", entry.getKey()));
+            for (InstanceElement ieLc : entry.getValue()) {
+                ieSm.createRelation(relSmLc, ieLc);
             }
-            Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
-            if (!smMap.containsKey(noOfRows)) {
-                InstanceElement ieSm = aeSm.createInstance("SubMatrix#" + (smMap.size() + 1));
-                ieMea.createRelation(relMeaSm, ieSm);
-                ieSm.setValue(ODSHelper.createLongNVU("number_of_rows", noOfRows));
-                smMap.put(noOfRows, ieSm);
-            }
+            smNo++;
         }
-
-        return smMap;
     }
 
     /**
@@ -212,19 +192,22 @@ class AoSessionWriter {
      * @param ieMea The 'AoMeasurement' instance.
      * @param smMap The SubMatrix map.
      * @param datHeader The DAT header data.
+     * @return Map, key=numberOfRows, value=list of 'AoLocalColumn' instances.
      * @throws AoException Error writing data.
      * @throws ConvertException
      */
-    private void writeMeq(InstanceElement ieMea, Map<Integer, InstanceElement> smMap, DatHeader datHeader)
+    private Map<Integer, Collection<InstanceElement>> writeMeq(InstanceElement ieMea, DatHeader datHeader)
             throws AoException, ConvertException {
         ApplicationStructure as = ieMea.getApplicationElement().getApplicationStructure();
         ApplicationElement aeMea = as.getElementByName("mea");
         ApplicationElement aeMeq = as.getElementByName("meq");
         ApplicationElement aeUnt = as.getElementByName("unt");
+
         ApplicationRelation relMeaMeq = as.getRelations(aeMea, aeMeq)[0];
         ApplicationRelation relMeqUnt = as.getRelations(aeMeq, aeUnt)[0];
 
         // iterate over channels
+        Map<Integer, Collection<InstanceElement>> noValuesLcMap = new TreeMap<Integer, Collection<InstanceElement>>();
         for (String channelName : datHeader.listChannelNames()) {
 
             InstanceElement ieMeq = aeMeq.createInstance(channelName);
@@ -265,8 +248,16 @@ class AoSessionWriter {
             }
 
             // 'AoLocalColumn'
-            writeLc(ieMea, ieMeq, smMap, datHeader);
+            Map<Integer, InstanceElement> lcMap = writeLc(ieMea, ieMeq, datHeader);
+            Collection<InstanceElement> c = noValuesLcMap.get(lcMap.keySet().iterator().next());
+            if (c == null) {
+                c = new ArrayList<InstanceElement>();
+                noValuesLcMap.put(lcMap.keySet().iterator().next(), c);
+            }
+            c.add(lcMap.values().iterator().next());
         }
+
+        return noValuesLcMap;
     }
 
     /**
@@ -279,27 +270,17 @@ class AoSessionWriter {
      * @throws AoException
      * @throws ConvertException
      */
-    private void writeLc(InstanceElement ieMea, InstanceElement ieMeq, Map<Integer, InstanceElement> smMap,
-            DatHeader datHeader) throws AoException, ConvertException {
+    private Map<Integer, InstanceElement> writeLc(InstanceElement ieMea, InstanceElement ieMeq, DatHeader datHeader)
+            throws AoException, ConvertException {
         ApplicationStructure as = ieMeq.getApplicationElement().getApplicationStructure();
         ApplicationElement aeMeq = as.getElementByName("meq");
         ApplicationElement aeLc = as.getElementByName("lc");
-        ApplicationElement aeSm = as.getElementByName("sm");
         ApplicationRelation relMeqLc = as.getRelations(aeMeq, aeLc)[0];
-        ApplicationRelation relSmLc = as.getRelations(aeSm, aeLc)[0];
         String channelName = ieMeq.getName();
 
+        Map<Integer, InstanceElement> lcMap = new HashMap<Integer, InstanceElement>();
         InstanceElement ieLc = aeLc.createInstance(channelName);
         ieMeq.createRelation(relMeqLc, ieLc);
-
-        // relation to SubMatrix
-        String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
-        if (noOfRowsStr == null || noOfRowsStr.length() < 1) {
-            noOfRowsStr = "0";
-        }
-        Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
-        InstanceElement ieSm = smMap.get(noOfRows);
-        ieSm.createRelation(relSmLc, ieLc);
 
         // global_flag
         ieLc.setValue(ODSHelper.createShortNVU("global", (short) 15));
@@ -319,6 +300,13 @@ class AoSessionWriter {
             factor = Double.valueOf(factorStr);
         }
 
+        // number of rows
+        String noOfRowsStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_NO_OF_VALUES);
+        if (noOfRowsStr == null || noOfRowsStr.length() < 1) {
+            noOfRowsStr = "0";
+        }
+        Integer noOfRows = Integer.valueOf(noOfRowsStr.trim());
+
         // sequence_representation and factor / offset
         String seqRepStr = datHeader.getChannelHeaderEntry(channelName, DatHeader.KEY_CHANNEL_TYPE);
         if (seqRepStr == null || seqRepStr.length() < 1) {
@@ -334,7 +322,8 @@ class AoSessionWriter {
             ieMeq.setValue(ODSHelper.createDoubleNVU("min", min));
             ieMeq.setValue(ODSHelper.createDoubleNVU("max", max));
             ieMeq.setValue(ODSHelper.createDoubleNVU("avg", avg));
-            return;
+            lcMap.put(noOfRows, ieLc);
+            return lcMap;
         }
         // raw_linear_external / external component
         else if (offset != 0d || factor != 1d) {
@@ -347,18 +336,16 @@ class AoSessionWriter {
         }
 
         // write AoExternalComponent
-        int realNoOfRows = writeEc(ieMea, ieMeq, ieLc, datHeader, channelName, noOfRows, offset, factor);
-
-        // update the SubMatrix number of rows because the real values may differ from the values given in the
-        // header file
-        ieSm.setValue(ODSHelper.createLongNVU("number_of_rows", realNoOfRows));
+        noOfRows = writeEc(ieMea, ieMeq, ieLc, datHeader, channelName, noOfRows, offset, factor);
+        lcMap.put(noOfRows, ieLc);
+        return lcMap;
     }
 
     /**
      * Write the instance of 'AoExternalCompontent'.
      * 
-     * @param ieMea
-     * @param ieMeq
+     * @param ieMea The 'AoMeasurement' instance.
+     * @param ieMeq The 'AoMeasurementQuantity' instance.
      * @param ieLc
      * @param datHeader
      * @param channelName
@@ -553,8 +540,7 @@ class AoSessionWriter {
         ieEc.setValue(ODSHelper.createLongNVU("valoffset", 0));
         ieEc.setValue(ODSHelper.createEnumNVU("type", EC_TYPE_MAP.get(datDataType)));
         ieEc.setValue(ODSHelper.createLongNVU("blocksize", blockSize));
-        ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getAbsolutePath()));
-        // ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getName()));
+        ieEc.setValue(ODSHelper.createStringNVU("filename_url", targetFile.getName()));
 
         // calculate min/max/avg/dev and update measurement quantity instance
         Number[] dataAr = data.toArray(new Number[0]);

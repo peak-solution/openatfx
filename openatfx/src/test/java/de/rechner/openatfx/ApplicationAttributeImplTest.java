@@ -151,11 +151,6 @@ public class ApplicationAttributeImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-        try {
-            aaId.setDataType(DataType.DT_BOOLEAN);
-            fail("AoException expected");
-        } catch (AoException e) {
-        }
     }
 
     @Test

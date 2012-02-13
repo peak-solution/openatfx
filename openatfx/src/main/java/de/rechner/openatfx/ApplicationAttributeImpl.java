@@ -94,7 +94,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         this.attrNo = attrNo;
 
         this.aaName = "";
-        this.dataType = DataType.DT_UNKNOWN;
+        this.dataType = null;
         this.length = 1;
         this.obligatory = false;
         this.unique = false;
@@ -164,11 +164,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      */
     public void setBaseAttribute(BaseAttribute baseAttr) throws AoException {
         if (baseAttr != null) {
-            // check data type
-            if ((this.dataType != DataType.DT_UNKNOWN) && (this.dataType != baseAttr.getDataType())) {
-                throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Incompatible datatypes");
-            }
-
             // check if already an application attribute exists with same base attribute
             Integer existingAttrNo = this.atfxCache.getAttrNoByBaName(aid, baseAttr.getName());
             if (existingAttrNo != null && !existingAttrNo.equals(this.attrNo)) {
@@ -176,17 +171,23 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                                       "Duplicate base attribute '" + baseAttr.getName() + "'");
             }
 
-            // set new datatype
-            setDataType(baseAttr.getDataType());
-            this.obligatory = baseAttr.isObligatory();
-            this.unique = baseAttr.isUnique();
-            if (dataType == DataType.DT_ENUM || dataType == DataType.DS_ENUM) {
+            this.baseAttribute = baseAttr;
+
+            // set new datatype from base attribute
+            if (this.dataType == null) {
+                this.dataType = baseAttr.getDataType();
+            }
+
+            // set enumeration definition from base attribute
+            if (this.dataType == DataType.DT_ENUM || this.dataType == DataType.DS_ENUM) {
                 this.enumerationDefinition = baseAttr.getEnumerationDefinition();
             } else {
                 this.enumerationDefinition = null;
             }
 
-            this.baseAttribute = baseAttr;
+            this.obligatory = baseAttr.isObligatory();
+            this.unique = baseAttr.isUnique();
+
             this.atfxCache.setBaNameForAttrNo(aid, attrNo, baseAttr.getName());
         } else {
             this.baseAttribute = null;
@@ -200,7 +201,16 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#getDataType()
      */
     public DataType getDataType() throws AoException {
-        return this.dataType;
+        // custom type set
+        if (this.dataType != null) {
+            return this.dataType;
+        }
+        // no custom type set use type from base attribute
+        else if (this.baseAttribute != null) {
+            return this.baseAttribute.getDataType();
+        }
+        // no datatype, return DT_UNKNOWN
+        return DataType.DT_UNKNOWN;
     }
 
     /**
@@ -214,23 +224,14 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                                   "Parameter 'aaDataType' must not be null");
         }
 
-        // check if datatype has to be changed
-        if (this.dataType == aaDataType) {
-            return;
-        }
-
-        // check if base attribute is set
-        if (getBaseAttribute() != null) {
-            throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
-                                  "Changing the datatype of an attribute derived from a base attribute is not allowed");
-        }
-
         // clear for existing instance values
         for (long iid : this.atfxCache.getInstanceIds(this.aid)) {
             this.atfxCache.setInstanceValue(this.aid, iid, this.attrNo, null);
         }
+
         // change data type
         this.dataType = aaDataType;
+
         // set default length
         if (dataType == DataType.DT_STRING || dataType == DataType.DS_STRING
                 || dataType == DataType.DT_EXTERNALREFERENCE || dataType == DataType.DS_EXTERNALREFERENCE) {
