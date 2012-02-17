@@ -134,8 +134,13 @@ public class ApplicationAttributeImplTest {
     @Test
     public void testGetDataType() {
         try {
-            assertEquals(DataType.DT_LONGLONG.value(), aaId.getDataType().value());
-            assertEquals(DataType.DT_SHORT.value(), aaDB.getDataType().value());
+            assertEquals(DataType.DT_LONGLONG, aaId.getDataType());
+            assertEquals(DataType.DT_SHORT, aaDB.getDataType());
+
+            // changed base attribute
+            ApplicationElement aeExtComp = aoSession.getApplicationStructure().getElementByName("ec");
+            assertEquals(DataType.DT_LONG, aeExtComp.getAttributeByName("start_offset").getDataType());
+
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -148,6 +153,15 @@ public class ApplicationAttributeImplTest {
             aaDB.setDataType(DataType.DT_DOUBLE);
             assertEquals(DataType.DT_DOUBLE.value(), aaDB.getDataType().value());
             aaDB.setDataType(DataType.DT_SHORT);
+
+            // new attribute
+            ApplicationElement ae = aaDB.getApplicationElement();
+            ApplicationAttribute aaNew = ae.createAttribute();
+            assertEquals(DataType.DT_UNKNOWN, aaNew.getDataType());
+            aaNew.setDataType(DataType.DT_BLOB);
+            assertEquals(DataType.DT_BLOB, aaNew.getDataType());
+            ae.removeAttribute(aaNew);
+
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -207,6 +221,15 @@ public class ApplicationAttributeImplTest {
             assertEquals(true, as.getElementByName("tstser").getAttributeByName("mime_type").isObligatory());
             // explicit with having base attribute
             assertEquals(true, as.getElementByName("unt").getAttributeByBaseName("offset").isObligatory());
+            // explicit without having base attribute
+            assertEquals(true, as.getElementByName("env").getAttributeByName("version").isObligatory());
+
+            // AoLocalColumn attrs
+            ApplicationElement aeLc = as.getElementByName("lc");
+            assertEquals(true, aeLc.getAttributeByBaseName("independent").isObligatory());
+            assertEquals(false, aeLc.getAttributeByBaseName("sequence_representation").isObligatory());
+            assertEquals(false, aeLc.getAttributeByBaseName("generation_parameters").isObligatory());
+
         } catch (AoException e) {
             fail(e.reason);
         }

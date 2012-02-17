@@ -55,8 +55,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes.put("datatype", Arrays.asList(new String[] { "AoMeasurementQuantity" }));
         obligatoryAttributes.put("number_of_rows", Arrays.asList(new String[] { "AoSubmatrix" }));
         obligatoryAttributes.put("independent", Arrays.asList(new String[] { "AoLocalColumn" }));
-        obligatoryAttributes.put("sequence_representation", Arrays.asList(new String[] { "AoLocalColumn" }));
-        obligatoryAttributes.put("generation_parameters", Arrays.asList(new String[] { "AoLocalColumn" }));
         obligatoryAttributes.put("component_length", Arrays.asList(new String[] { "AoExternalComponent" }));
         obligatoryAttributes.put("filename_url", Arrays.asList(new String[] { "AoExternalComponent" }));
         obligatoryAttributes.put("value_type", Arrays.asList(new String[] { "AoExternalComponent" }));
@@ -185,9 +183,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                 this.enumerationDefinition = null;
             }
 
-            this.obligatory = baseAttr.isObligatory();
             this.unique = baseAttr.isUnique();
-
             this.atfxCache.setBaNameForAttrNo(aid, attrNo, baseAttr.getName());
         } else {
             this.baseAttribute = null;
@@ -308,10 +304,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#setIsObligatory(boolean)
      */
     public void setIsObligatory(boolean aaIsObligatory) throws AoException {
-        if (this.obligatory == aaIsObligatory) {
-            return;
-        }
-
         // obligatory flag of obligatory base attribute is not reducable
         boolean mustBeObligatory = false;
         if (this.baseAttribute != null) {

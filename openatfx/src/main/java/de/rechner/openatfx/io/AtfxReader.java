@@ -586,11 +586,11 @@ public class AtfxReader {
         aa.setName(aaNameStr);
 
         // base attribute?
-        if (baseAttrStr != null && baseAttrStr.length() > 0) {
+        if (baseAttr != null) {
             aa.setBaseAttribute(baseAttr);
         }
         // datatype & obligatory
-        else {
+        if (dataTypeStr != null && dataTypeStr.length() > 0) {
             DataType datatype = ODSHelper.string2dataType(dataTypeStr);
             aa.setDataType(datatype);
         }
