@@ -1,7 +1,11 @@
 package de.rechner.openatfx;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationRelation;
+import org.asam.ods.ApplicationRelationHelper;
 import org.asam.ods.ApplicationRelationPOA;
 import org.asam.ods.BaseRelation;
 import org.asam.ods.ErrorCode;
@@ -9,6 +13,9 @@ import org.asam.ods.RelationRange;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -20,24 +27,52 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 class ApplicationRelationImpl extends ApplicationRelationPOA {
 
+    private static final Log LOG = LogFactory.getLog(ApplicationRelationImpl.class);
+
+    private final POA modelPOA;
     private final AtfxCache atfxCache;
 
-    private BaseRelation baseRelation;
+    public BaseRelation baseRelation;
     private ApplicationElement elem1;
-    private ApplicationElement elem2;
-    private String relationName;
-    private String inverseRelationName;
     private RelationRange relationRange;
+    private String relationName;
     private RelationType relationType;
+
+    private ApplicationRelationImpl inverseRelation;
 
     /**
      * Constructor.
      * 
      * @param atfxCache The ATFX cache.
      */
-    public ApplicationRelationImpl(AtfxCache atfxCache) {
+    public ApplicationRelationImpl(POA modelPOA, AtfxCache atfxCache) {
+        this.modelPOA = modelPOA;
         this.atfxCache = atfxCache;
+
+        // default values as specified in ASAM ODS specification CH10
+        this.baseRelation = null;
+        this.elem1 = null;
+        this.relationRange = new RelationRange((short) -2, (short) -2);
+        this.relationName = "AUTOGEN";
         this.relationType = RelationType.INFO;
+    }
+
+    /**
+     * Returns the inverse relation.
+     * 
+     * @return The inverse relation.
+     */
+    public ApplicationRelationImpl getInverseRelation() {
+        return this.inverseRelation;
+    }
+
+    /**
+     * Sets the inverse relation.
+     * 
+     * @param inverseRelation The inverse relation.
+     */
+    public void setInverseRelation(ApplicationRelationImpl inverseRelation) {
+        this.inverseRelation = inverseRelation;
     }
 
     /**
@@ -64,6 +99,59 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
             this.relationType = baseRel.getRelationType();
         }
         this.baseRelation = baseRel;
+
+        // set base relation to inverse relation
+        BaseRelation invBaseRel = null;
+        if (baseRel != null) {
+            invBaseRel = getInverseBaseRelation(baseRel);
+        }
+
+        this.inverseRelation.baseRelation = invBaseRel;
+    }
+
+    /**
+     * Correct base relations in case of multiple possible target base elements.
+     * 
+     * @throws AoException Error getting/setting base relations.
+     */
+    private void correctBaseRelation() throws AoException {
+        if ((this.baseRelation != null) && (getElem1() != null) && (getElem2() != null)) {
+            String relType = getElem2().getBaseElement().getType();
+            String bTypeElem2 = this.baseRelation.getElem2().getType();
+            if (!relType.equals(bTypeElem2)) {
+                setBaseRelation(lookupBaseRelation(getElem1(), getElem2(), this.baseRelation.getRelationName(), relType));
+            }
+        }
+    }
+
+    /**
+     * Returns the inverse relation for given base relation.
+     * 
+     * @param baseRel The base relation.
+     * @return The inverse base relation.
+     * @throws AoException Inverse base relation not found.
+     */
+    private static BaseRelation getInverseBaseRelation(BaseRelation baseRel) throws AoException {
+        for (BaseRelation invBaseRel : baseRel.getElem2().getAllRelations()) {
+            if (invBaseRel.getElem2().getType().equals(baseRel.getElem1().getType())
+                    && invBaseRel.getElem1().getType().equals(baseRel.getElem2().getType())
+                    && invBaseRel.getRelationName().equals(baseRel.getInverseRelationName())) {
+                return invBaseRel;
+            }
+        }
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                              "Unable to find inverse relation for base relation: " + baseRel.getRelationName());
+    }
+
+    private static BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
+            String bType) throws AoException {
+        for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
+            if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(bType)) {
+                return baseRel;
+            }
+        }
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
+                + bRelName + "',targetBaseType='" + bType + "'");
     }
 
     /**
@@ -81,16 +169,27 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setElem1(org.asam.ods.ApplicationElement)
      */
     public void setElem1(ApplicationElement applElem) throws AoException {
-        // update cache
-        if (this.elem1 != null && applElem == null) {
-            long aid = ODSHelper.asJLong(this.elem1.getId());
-            this.atfxCache.removeApplicationRelationElem1(aid, _this());
-        } else if (applElem != null) {
-            long aid = ODSHelper.asJLong(applElem.getId());
-            this.atfxCache.setApplicationRelationElem1(aid, _this());
-        }
+        try {
+            ApplicationRelation rel = ApplicationRelationHelper.narrow(this.modelPOA.servant_to_reference(this));
 
-        this.elem1 = applElem;
+            // update cache
+            if (this.elem1 != null && applElem == null) {
+                long aid = ODSHelper.asJLong(this.elem1.getId());
+                this.atfxCache.removeApplicationRelationElem1(aid, rel);
+            } else if (applElem != null) {
+                long aid = ODSHelper.asJLong(applElem.getId());
+                this.atfxCache.setApplicationRelationElem1(aid, rel);
+            }
+            this.elem1 = applElem;
+
+            correctBaseRelation();
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -99,7 +198,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getElem2()
      */
     public ApplicationElement getElem2() throws AoException {
-        return this.elem2;
+        return this.inverseRelation.getElem1();
     }
 
     /**
@@ -108,7 +207,9 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setElem2(org.asam.ods.ApplicationElement)
      */
     public void setElem2(ApplicationElement applElem) throws AoException {
-        this.elem2 = applElem;
+        this.inverseRelation.setElem1(applElem);
+
+        correctBaseRelation();
     }
 
     /**
@@ -135,7 +236,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getInverseRelationName()
      */
     public String getInverseRelationName() throws AoException {
-        return this.inverseRelationName;
+        if (this.inverseRelation == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Inverse relation not found!");
+        }
+        return this.inverseRelation.getRelationName();
     }
 
     /**
@@ -144,7 +248,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setInverseRelationName(java.lang.String)
      */
     public void setInverseRelationName(String arInvName) throws AoException {
-        this.inverseRelationName = arInvName;
+        if (this.inverseRelation == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Inverse relation not found!");
+        }
+        this.inverseRelation.setRelationName(arInvName);
     }
 
     /**
@@ -171,7 +278,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#setInverseRelationRange(org.asam.ods.RelationRange)
      */
     public void setInverseRelationRange(RelationRange arRelationRange) throws AoException {
-        // this.inverseRelationRange = arRelationRange;
+        if (this.inverseRelation == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Inverse relation not found!");
+        }
+        this.inverseRelation.setRelationRange(arRelationRange);
     }
 
     /**
@@ -212,7 +322,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getInverseRelationship()
      */
     public Relationship getInverseRelationship() throws AoException {
-        return this.atfxCache.getInverseRelation(_this()).getRelationship();
+        if (this.inverseRelation == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Inverse relation not found!");
+        }
+        return this.inverseRelation.getRelationship();
     }
 
     /**
@@ -221,7 +334,10 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      * @see org.asam.ods.ApplicationRelationOperations#getInverseRelationRange()
      */
     public RelationRange getInverseRelationRange() throws AoException {
-        return this.atfxCache.getInverseRelation(_this()).getRelationRange();
+        if (this.inverseRelation == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Inverse relation not found!");
+        }
+        return this.inverseRelation.getRelationRange();
     }
 
     /**

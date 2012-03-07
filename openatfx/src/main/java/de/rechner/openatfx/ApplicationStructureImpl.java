@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,6 +32,7 @@ import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ObjectAlreadyActive;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
@@ -466,10 +468,23 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      */
     public ApplicationRelation createRelation() throws AoException {
         try {
-            ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.atfxCache);
-            this.modelPOA.activate_object(arImpl);
+            // create relation
+            ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.modelPOA, this.atfxCache);
+            this.modelPOA.activate_object_with_id(UUID.randomUUID().toString().getBytes(), arImpl);
             ApplicationRelation ar = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arImpl));
-            this.atfxCache.addApplicationRelation(ar);
+
+            // create inverse relation (ASAM ODS spec. CH10)
+            ApplicationRelationImpl arInvImpl = new ApplicationRelationImpl(this.modelPOA, this.atfxCache);
+            this.modelPOA.activate_object(arInvImpl);
+            ApplicationRelation arInv = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arInvImpl));
+
+            // set bidirectional reference
+            arImpl.setInverseRelation(arInvImpl);
+            arInvImpl.setInverseRelation(arImpl);
+
+            // add to cache
+            this.atfxCache.addApplicationRelation(ar, arInv);
+
             return ar;
         } catch (ServantNotActive e) {
             LOG.error(e.getMessage(), e);
@@ -478,6 +493,9 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ServantAlreadyActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ObjectAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }

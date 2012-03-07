@@ -264,6 +264,7 @@ public class AtfxReader {
             reader.next();
         }
 
+        // implicit create application element of "AoExternalComponent" if missing
         ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
         if (aes.length < 1) {
             applRelElem2Map.putAll(implicitCreateAoExternalComponent(as));
@@ -272,38 +273,10 @@ public class AtfxReader {
                                   "Multiple application elements of type 'AoExternalComponent' found");
         }
 
-        // create missing inverse relations
-        createMissingInverseRelations(as, applRelElem2Map);
-
         // Set the elem2 of all application relations (this has to be done after parsing all elements)
         for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
-            ApplicationRelation applRel = entry.getKey();
-            ApplicationElement elem2 = as.getElementByName(entry.getValue());
-            applRel.setElem2(elem2);
-
-            // also correct base relations in case of multiple possible target base elements
-            BaseRelation baseRel = applRel.getBaseRelation();
-            if (baseRel != null) {
-                String relType = elem2.getBaseElement().getType();
-                String bTypeElem2 = baseRel.getElem2().getType();
-                if (!relType.equals(bTypeElem2)) {
-                    applRel.setBaseRelation(lookupBaseRelation(applRel.getElem1(), elem2, applRel.getBaseRelation()
-                                                                                                 .getRelationName(),
-                                                               relType));
-                }
-            }
+            entry.getKey().setElem2(as.getElementByName(entry.getValue()));
         }
-    }
-
-    private BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
-            String bType) throws AoException {
-        for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
-            if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(bType)) {
-                return baseRel;
-            }
-        }
-        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
-                + bRelName + "',targetBaseType='" + bType + "'");
     }
 
     /**
@@ -339,65 +312,7 @@ public class AtfxReader {
         rel.setInverseRelationName("rel_ec");
         applRel2Elem2Map.put(rel, aeExtComp.getName());
 
-        ApplicationRelation invRel = as.createRelation();
-        invRel.setElem1(aeExtComp);
-        invRel.setElem2(aeLC);
-        invRel.setBaseRelation(bs.getRelation(beExtComp, aeLC.getBaseElement()));
-        invRel.setRelationName("rel_ec");
-        invRel.setInverseRelationName("rel_lc");
-        applRel2Elem2Map.put(invRel, aeLC.getName());
-
         return applRel2Elem2Map;
-    }
-
-    /**
-     * Creates missing inverse relations.
-     * 
-     * @param as The application structure.
-     * @param applRelElem2Map Map containing the elem2 ae name for the relations.
-     * @throws AoException Error creating inverse relations.
-     */
-    private void createMissingInverseRelations(ApplicationStructure as, Map<ApplicationRelation, String> applRelElem2Map)
-            throws AoException {
-        for (String elem1Name : this.applRels.keySet()) {
-            for (String relName : this.applRels.get(elem1Name).keySet()) {
-                ApplicationRelation rel = this.applRels.get(elem1Name).get(relName);
-                String elem2Name = applRelElem2Map.get(rel);
-                String invRelName = rel.getInverseRelationName();
-
-                ApplicationRelation invRel = this.applRels.get(elem2Name).get(invRelName);
-                if (invRel == null) {
-                    LOG.warn("Inverse relation for aeName='" + elem1Name + "',relName='" + relName + "',invRelName='"
-                            + invRelName + "' not found!");
-
-                    // implicit create inverse relation
-                    invRel = as.createRelation();
-                    // empty inverse relation name
-                    if (invRelName == null || invRelName.length() < 1) {
-                        invRelName = elem1Name;
-                        rel.setInverseRelationName(invRelName);
-                    }
-                    invRel.setRelationName(invRelName);
-                    invRel.setInverseRelationName(relName);
-                    invRel.setElem1(as.getElementByName(elem2Name));
-                    invRel.setElem2(as.getElementByName(elem1Name));
-
-                    BaseRelation baseRel = rel.getBaseRelation();
-                    if (baseRel != null) {
-                        BaseStructure bs = as.getSession().getBaseStructure();
-                        BaseRelation invBaseRel = bs.getRelation(baseRel.getElem2(), baseRel.getElem1());
-                        invRel.setBaseRelation(invBaseRel);
-                    } else {
-                        // default relation range (unknown information)
-                        invRel.setRelationRange(new RelationRange((short) 0, (short) -1));
-                    }
-
-                    // put to maps
-                    applRelElem2Map.put(invRel, elem1Name);
-                    this.applRels.get(elem2Name).put(invRelName, invRel);
-                }
-            }
-        }
     }
 
     /**
@@ -675,36 +590,60 @@ public class AtfxReader {
             reader.next();
         }
 
-        ApplicationStructure as = applElem.getApplicationStructure();
-        ApplicationRelation rel = as.createRelation();
+        // check if relation has already been defined by the created inverse relation
+        ApplicationRelation rel = getApplRel(elem2Name, inverseRelName);
 
-        rel.setElem1(applElem);
-        rel.setRelationName(relName);
-
-        if (minStr.length() > 0 && maxStr.length() > 0) {
-            RelationRange relRange = new RelationRange();
-            relRange.min = ODSHelper.string2relRange(minStr);
-            relRange.max = ODSHelper.string2relRange(maxStr);
-            rel.setRelationRange(relRange);
-        }
-
-        rel.setInverseRelationName(inverseRelName);
-        if (brName != null && brName.length() > 0) {
-            BaseRelation baseRel = baseRelMap.get(brName.toLowerCase());
-            if (baseRel == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "BaseRelation '" + brName
-                        + "' not found'");
+        // NEW
+        if (rel == null) {
+            ApplicationStructure as = applElem.getApplicationStructure();
+            rel = as.createRelation();
+            rel.setElem1(applElem);
+            rel.setRelationName(relName);
+            rel.setInverseRelationName(inverseRelName);
+            if (minStr.length() > 0 && maxStr.length() > 0) {
+                RelationRange relRange = new RelationRange();
+                relRange.min = ODSHelper.string2relRange(minStr);
+                relRange.max = ODSHelper.string2relRange(maxStr);
+                rel.setRelationRange(relRange);
             }
-            rel.setBaseRelation(baseRel);
+            if (brName != null && brName.length() > 0) {
+                BaseRelation baseRel = baseRelMap.get(brName.toLowerCase());
+                if (baseRel == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "BaseRelation '" + brName
+                            + "' not found'");
+                }
+                rel.setBaseRelation(baseRel);
+            }
+            // add to global map
+            this.applRels.get(applElem.getName()).put(relName, rel);
+
+            // return the information of the ref to application element
+            Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
+            applRelElem2Map.put(rel, elem2Name);
+            return applRelElem2Map;
         }
 
-        // add to global map
-        this.applRels.get(applElem.getName()).put(relName, rel);
+        // EXISTING
+        else {
+            rel.setInverseRelationName(relName);
+            rel.setRelationName(inverseRelName);
 
-        // return the information of the ref to application element
-        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
-        applRelElem2Map.put(rel, elem2Name);
-        return applRelElem2Map;
+            if (minStr.length() > 0 && maxStr.length() > 0) {
+                RelationRange relRange = new RelationRange();
+                relRange.min = ODSHelper.string2relRange(minStr);
+                relRange.max = ODSHelper.string2relRange(maxStr);
+                rel.setInverseRelationRange(relRange);
+            }
+
+            // add to global map
+//            this.applRels.get(rel.getElem1().getName()).put(relName, rel);
+
+            // return the information of the ref to application element
+            Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
+//            applRelElem2Map.put(rel, applElem.getName());
+            return applRelElem2Map;
+        }
+
     }
 
     /***************************************************************************************

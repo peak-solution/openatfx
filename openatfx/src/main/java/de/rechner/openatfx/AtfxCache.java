@@ -46,8 +46,8 @@ class AtfxCache {
     private final Map<Long, Map<String, Integer>> baNameToAttrNoMap; // <aid,<baName,attrNo>>
 
     /** application relations */
-    private final List<ApplicationRelation> applicationRelations;
     private final Map<Long, List<ApplicationRelation>> applicationRelationMap; // <aid,<applRels>
+    private final Map<ApplicationRelation, ApplicationRelation> inverseRelationMap; // <rel, invRel>
 
     /** instance relations */
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
@@ -81,7 +81,7 @@ class AtfxCache {
         this.baNameToAttrNoMap = new HashMap<Long, Map<String, Integer>>();
 
         this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();
-        this.applicationRelations = new ArrayList<ApplicationRelation>();
+        this.inverseRelationMap = new HashMap<ApplicationRelation, ApplicationRelation>();
 
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, TS_Value>>>();
@@ -353,7 +353,7 @@ class AtfxCache {
      * @return Collection of application relations.
      */
     public Collection<ApplicationRelation> getApplicationRelations() {
-        return this.applicationRelations;
+        return this.inverseRelationMap.keySet();
     }
 
     /**
@@ -397,18 +397,26 @@ class AtfxCache {
         this.applicationRelationMap.get(aid).remove(applRel);
     }
 
-    public void addApplicationRelation(ApplicationRelation applRel) throws AoException {
-        this.applicationRelations.add(applRel);
+    public void addApplicationRelation(ApplicationRelation applRel, ApplicationRelation invApplRel) throws AoException {
+        this.inverseRelationMap.put(applRel, invApplRel);
+        this.inverseRelationMap.put(invApplRel, applRel);
         // prepare application relation maps for all aids
         for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
             for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
                 iMap.put(applRel, new TreeSet<Long>());
             }
         }
+        // prepare application relation maps for all aids
+        for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
+            for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
+                iMap.put(invApplRel, new TreeSet<Long>());
+            }
+        }
     }
 
     public void removeApplicationRelation(ApplicationRelation applRel) {
-        this.applicationRelations.remove(applRel);
+        this.inverseRelationMap.remove(applRel);
+
         for (List<ApplicationRelation> relList : this.applicationRelationMap.values()) {
             if (relList.contains(applRel)) {
                 relList.remove(applRel);
@@ -430,18 +438,12 @@ class AtfxCache {
      * @throws AoException Unable to find inverse application relation.
      */
     public ApplicationRelation getInverseRelation(ApplicationRelation applRel) throws AoException {
-        if (applRel.getElem2() != null) {
-            long elem1Aid = ODSHelper.asJLong(applRel.getElem1().getId());
-            long elem2Aid = ODSHelper.asJLong(applRel.getElem2().getId());
-            for (ApplicationRelation invRel : this.applicationRelationMap.get(elem2Aid)) {
-                if ((elem1Aid == ODSHelper.asJLong(invRel.getElem2().getId()))
-                        && applRel.getRelationName().equals(invRel.getInverseRelationName())) {
-                    return invRel;
-                }
-            }
+        ApplicationRelation invRel = this.inverseRelationMap.get(applRel);
+        if (invRel == null) {
+            throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                                  "Unable to find inverse relation for '" + applRel.getRelationName() + "'");
         }
-        throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
-                              "Unable to find inverse relation for '" + applRel.getRelationName() + "'");
+        return invRel;
     }
 
     /***********************************************************************************
@@ -745,6 +747,12 @@ class AtfxCache {
 
         // add inverse relation
         ApplicationRelation invApplRel = getInverseRelation(applRel);
+        ApplicationElement elem1 = invApplRel.getElem1();
+        if (elem1 == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Elem1 not set for relation: "
+                    + invApplRel.getRelationName());
+        }
+
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         for (Long otherIid : otherIids) {
             Set<Long> invRelInstIds = this.instanceRelMap.get(otherAid).get(otherIid).get(invApplRel);

@@ -331,7 +331,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
         for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(this.aid)) {
             BaseRelation baseRel = rel.getBaseRelation();
-            if ((baseRel != null) && baseRel.getRelationName().equals(baseRelName)) {
+            if ((baseRel != null) && baseRel.getRelationName().equalsIgnoreCase(baseRelName)) {
                 list.add(rel);
             }
         }

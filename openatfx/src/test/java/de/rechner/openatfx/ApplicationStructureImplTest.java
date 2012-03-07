@@ -341,15 +341,6 @@ public class ApplicationStructureImplTest {
             rel.setRelationRange(new RelationRange((short) 0, (short) -1));
             rel.setInverseRelationRange(new RelationRange((short) 0, (short) 1));
 
-            // create inverse relation
-            ApplicationRelation invRel = applicationStructure.createRelation();
-            invRel.setElem1(elem2);
-            invRel.setElem2(elem1);
-            invRel.setRelationName("test_inv_rel");
-            invRel.setInverseRelationName("test_rel");
-            invRel.setRelationRange(new RelationRange((short) 0, (short) 1));
-            invRel.setInverseRelationRange(new RelationRange((short) 0, (short) -1));
-
             // check relation
             ApplicationRelation[] rels = applicationStructure.getRelations(elem1, elem2);
             assertEquals(1, rels.length);
