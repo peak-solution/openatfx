@@ -32,7 +32,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
     private final POA modelPOA;
     private final AtfxCache atfxCache;
 
-    public BaseRelation baseRelation;
+    private BaseRelation baseRelation;
     private ApplicationElement elem1;
     private RelationRange relationRange;
     private String relationName;
@@ -52,7 +52,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         // default values as specified in ASAM ODS specification CH10
         this.baseRelation = null;
         this.elem1 = null;
-        this.relationRange = new RelationRange((short) 0, (short) -1);
+        this.relationRange = new RelationRange((short) -2, (short) -2);
         this.relationName = "AUTOGEN";
         this.relationType = RelationType.INFO;
     }
@@ -93,19 +93,28 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         // set default values for base relation
         if (baseRel != null) {
             // only set the relation range if there is none set
-            if (this.relationRange == null) {
-                this.relationRange = baseRel.getRelationRange();
+            if (this.relationRange.min == -2 && this.relationRange.max == -2) {
+                setRelationRange(baseRel.getRelationRange());
             }
             this.relationType = baseRel.getRelationType();
+        } else {
+            this.relationType = RelationType.INFO;
         }
-        this.baseRelation = baseRel;
 
         // set base relation to inverse relation
         BaseRelation invBaseRel = null;
         if (baseRel != null) {
             invBaseRel = getInverseBaseRelation(baseRel);
+            // only set the inverse relation range if there is none set
+            if (getInverseRelationRange().min == -2 && getInverseRelationRange().max == -2) {
+                setInverseRelationRange(invBaseRel.getRelationRange());
+            }
+            this.inverseRelation.relationType = baseRel.getRelationType();
+        } else {
+            this.relationType = RelationType.INFO;
         }
 
+        this.baseRelation = baseRel;
         this.inverseRelation.baseRelation = invBaseRel;
     }
 

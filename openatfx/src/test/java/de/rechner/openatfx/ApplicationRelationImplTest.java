@@ -21,6 +21,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 
+import de.rechner.openatfx.util.ODSHelper;
+
 
 /**
  * Test case for <code>de.rechner.openatfx.util.atfx.ApplicationRelationImpl</code>.
@@ -137,6 +139,7 @@ public class ApplicationRelationImplTest {
             assertEquals(1, baseRelRange.max);
 
             RelationRange infoRelRange = infoRel.getInverseRelationRange();
+            System.out.println(infoRel.getRelationName());
             assertEquals(0, infoRelRange.min);
             assertEquals(1, infoRelRange.max);
 
@@ -152,7 +155,7 @@ public class ApplicationRelationImplTest {
     public void testGetRelationship() {
         try {
             assertEquals(Relationship.CHILD, baseRel.getRelationship());
-            assertEquals(Relationship.INFO_FROM, infoRel.getRelationship());
+            assertEquals("INFO_FROM", ODSHelper.relationship2string(infoRel.getRelationship()));
             assertEquals(Relationship.INFO_REL, m2nRel.getRelationship());
         } catch (AoException e) {
             fail(e.reason);

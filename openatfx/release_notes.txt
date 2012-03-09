@@ -23,6 +23,12 @@
 
 1. Changes
 
+	0.3.0 (Christian Rechner
+	
+		- Completely changed the behaviour of creating application relations
+		  the fulfil the ODS specification in automatically creating inverse
+		  relations.
+
 	0.2.2 (Christian Rechner)
 	
 		- Added ability to DIAdem DAT to ATFX converter to convert data sets

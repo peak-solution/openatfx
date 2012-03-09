@@ -11,6 +11,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.BaseStructure;
+import org.asam.ods.RelationRange;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -84,6 +85,27 @@ public class ApplicationRelationStandaloneTest {
             assertEquals("invrelname", rel.getInverseRelationName());
             assertEquals("invrelname", invRel.getRelationName());
             assertEquals("relname", invRel.getInverseRelationName());
+
+            // relation range
+            assertEquals(0, rel.getRelationRange().min);
+            assertEquals(-1, rel.getRelationRange().max);
+            assertEquals(0, rel.getInverseRelationRange().min);
+            assertEquals(1, rel.getInverseRelationRange().max);
+            assertEquals(0, invRel.getRelationRange().min);
+            assertEquals(1, invRel.getRelationRange().max);
+            assertEquals(0, invRel.getInverseRelationRange().min);
+            assertEquals(-1, invRel.getInverseRelationRange().max);
+
+            // change relation range
+            rel.setRelationRange(new RelationRange((short) 1, (short) 1));
+            assertEquals(1, rel.getRelationRange().min);
+            assertEquals(1, rel.getRelationRange().max);
+            assertEquals(0, rel.getInverseRelationRange().min);
+            assertEquals(1, rel.getInverseRelationRange().max);
+            assertEquals(0, invRel.getRelationRange().min);
+            assertEquals(1, invRel.getRelationRange().max);
+            assertEquals(1, invRel.getInverseRelationRange().min);
+            assertEquals(1, invRel.getInverseRelationRange().max);
 
         } catch (AoException e) {
             fail(e.reason);

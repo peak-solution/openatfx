@@ -288,9 +288,15 @@ public class AtfxReader {
             entry.getKey().setElem2(as.getElementByName(entry.getValue()));
         }
 
-        // fill map with application relations
+        // fill map with application relations and sets the default relation range
         for (ApplicationElement ae : as.getElements("*")) {
             for (ApplicationRelation rel : ae.getAllRelations()) {
+                // setting default relation range
+                RelationRange relRange = rel.getRelationRange();
+                if (relRange.min == -2 && relRange.max == -2) {
+                    rel.setRelationRange(new RelationRange((short) 0, (short) -1));
+                    LOG.warn("Setting default relation range [0,-1] to relation: " + rel.getRelationName());
+                }
                 this.applRels.get(ae.getName()).put(rel.getRelationName(), rel);
             }
         }
@@ -617,23 +623,18 @@ public class AtfxReader {
         if (rel == null) {
             ApplicationStructure as = applElem.getApplicationStructure();
             rel = as.createRelation();
+            // relation names
+            rel.setRelationName(relName);
+            rel.setInverseRelationName(inverseRelName);
+            // elems
             rel.setElem1(applElem);
-
             ApplicationElement elem2 = getApplElem(elem2Name);
             if (elem2 != null) {
                 rel.setElem2(elem2);
             } else {
                 applRelElem2Map.put(rel, elem2Name);
             }
-
-            rel.setRelationName(relName);
-            rel.setInverseRelationName(inverseRelName);
-            if (minStr.length() > 0 && maxStr.length() > 0) {
-                RelationRange relRange = new RelationRange();
-                relRange.min = ODSHelper.string2relRange(minStr);
-                relRange.max = ODSHelper.string2relRange(maxStr);
-                rel.setRelationRange(relRange);
-            }
+            // base relation
             if (brName != null && brName.length() > 0) {
                 BaseRelation baseRel = baseRelMap.get(brName.toLowerCase());
                 if (baseRel == null) {
@@ -642,13 +643,22 @@ public class AtfxReader {
                 }
                 rel.setBaseRelation(baseRel);
             }
+            // relation range
+            if (minStr.length() > 0 && maxStr.length() > 0) {
+                RelationRange relRange = new RelationRange();
+                relRange.min = ODSHelper.string2relRange(minStr);
+                relRange.max = ODSHelper.string2relRange(maxStr);
+                rel.setRelationRange(relRange);
+            }
+            this.applRels.get(applElem.getName()).put(relName, rel);
         }
 
         // EXISTING
         else {
+            // relation names
             rel.setInverseRelationName(relName);
             rel.setRelationName(inverseRelName);
-
+            // relation range
             if (minStr.length() > 0 && maxStr.length() > 0) {
                 RelationRange relRange = new RelationRange();
                 relRange.min = ODSHelper.string2relRange(minStr);
