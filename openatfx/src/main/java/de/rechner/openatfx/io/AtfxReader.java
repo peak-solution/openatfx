@@ -69,6 +69,7 @@ public class AtfxReader {
     /** cached model information for faster parsing */
     private final Map<String, String> documentation;
     private final Map<String, String> files;
+    private final Map<String, ApplicationElement> applElems;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
     private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
 
@@ -82,6 +83,7 @@ public class AtfxReader {
     private AtfxReader() {
         this.documentation = new HashMap<String, String>();
         this.files = new HashMap<String, String>();
+        this.applElems = new HashMap<String, ApplicationElement>();
         this.applAttrs = new HashMap<String, Map<String, ApplicationAttribute>>();
         this.applRels = new HashMap<String, Map<String, ApplicationRelation>>();
     }
@@ -98,6 +100,7 @@ public class AtfxReader {
         long start = System.currentTimeMillis();
         this.documentation.clear();
         this.files.clear();
+        this.applElems.clear();
         this.applAttrs.clear();
         this.applRels.clear();
         this.lcAeName = null;
@@ -165,6 +168,13 @@ public class AtfxReader {
                     LOG.error(e.getMessage(), e);
                 }
             }
+            this.documentation.clear();
+            this.files.clear();
+            this.applElems.clear();
+            this.applAttrs.clear();
+            this.applRels.clear();
+            this.lcAeName = null;
+            this.lcValuesAaName = null;
         }
     }
 
@@ -276,6 +286,13 @@ public class AtfxReader {
         // Set the elem2 of all application relations (this has to be done after parsing all elements)
         for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
             entry.getKey().setElem2(as.getElementByName(entry.getValue()));
+        }
+
+        // fill map with application relations
+        for (ApplicationElement ae : as.getElements("*")) {
+            for (ApplicationRelation rel : ae.getAllRelations()) {
+                this.applRels.get(ae.getName()).put(rel.getRelationName(), rel);
+            }
         }
     }
 
@@ -402,6 +419,7 @@ public class AtfxReader {
         }
 
         // add to global map
+        this.applElems.put(aeName, applElem);
         this.applAttrs.put(aeName, new HashMap<String, ApplicationAttribute>());
         this.applRels.put(aeName, new HashMap<String, ApplicationRelation>());
 
@@ -556,6 +574,8 @@ public class AtfxReader {
      */
     private Map<ApplicationRelation, String> parseApplicationRelation(ApplicationElement applElem,
             XMLStreamReader reader, Map<String, BaseRelation> baseRelMap) throws XMLStreamException, AoException {
+        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
+
         String elem2Name = "";
         String relName = "";
         String inverseRelName = "";
@@ -598,6 +618,14 @@ public class AtfxReader {
             ApplicationStructure as = applElem.getApplicationStructure();
             rel = as.createRelation();
             rel.setElem1(applElem);
+
+            ApplicationElement elem2 = getApplElem(elem2Name);
+            if (elem2 != null) {
+                rel.setElem2(elem2);
+            } else {
+                applRelElem2Map.put(rel, elem2Name);
+            }
+
             rel.setRelationName(relName);
             rel.setInverseRelationName(inverseRelName);
             if (minStr.length() > 0 && maxStr.length() > 0) {
@@ -614,13 +642,6 @@ public class AtfxReader {
                 }
                 rel.setBaseRelation(baseRel);
             }
-            // add to global map
-            this.applRels.get(applElem.getName()).put(relName, rel);
-
-            // return the information of the ref to application element
-            Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
-            applRelElem2Map.put(rel, elem2Name);
-            return applRelElem2Map;
         }
 
         // EXISTING
@@ -634,16 +655,9 @@ public class AtfxReader {
                 relRange.max = ODSHelper.string2relRange(maxStr);
                 rel.setInverseRelationRange(relRange);
             }
-
-            // add to global map
-//            this.applRels.get(rel.getElem1().getName()).put(relName, rel);
-
-            // return the information of the ref to application element
-            Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
-//            applRelElem2Map.put(rel, applElem.getName());
-            return applRelElem2Map;
         }
 
+        return applRelElem2Map;
     }
 
     /***************************************************************************************
@@ -829,6 +843,16 @@ public class AtfxReader {
         retMap.put(new ElemId(aid, elemId.iid), instRelMap);
 
         return retMap;
+    }
+
+    /**
+     * Returns the application element object for given application element name.
+     * 
+     * @param aeName The application element name.
+     * @return The application element, null if not found.
+     */
+    private ApplicationElement getApplElem(String aeName) {
+        return this.applElems.get(aeName);
     }
 
     /**

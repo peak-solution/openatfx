@@ -79,7 +79,10 @@ public class ApplicationRelationStandaloneTest {
 
             // relation name and inverse relation name
             rel.setRelationName("relname");
+            rel.setInverseRelationName("invrelname");
             assertEquals("relname", rel.getRelationName());
+            assertEquals("invrelname", rel.getInverseRelationName());
+            assertEquals("invrelname", invRel.getRelationName());
             assertEquals("relname", invRel.getInverseRelationName());
 
         } catch (AoException e) {
