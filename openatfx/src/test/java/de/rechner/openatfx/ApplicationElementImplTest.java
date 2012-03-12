@@ -340,7 +340,14 @@ public class ApplicationElementImplTest {
     public void testCreateInstance() {
         try {
             InstanceElement ie = applicationElement.createInstance("new_instance");
+            assertEquals(83, ODSHelper.asJLong(ie.getId()));
+            InstanceElement ie1 = applicationElement.createInstance("ni1");
+            assertEquals(84, ODSHelper.asJLong(ie1.getId()));
             applicationElement.removeInstance(ie.getId(), false);
+            InstanceElement ie2 = applicationElement.createInstance("ni2");
+            assertEquals(85, ODSHelper.asJLong(ie2.getId()));
+            applicationElement.removeInstance(ie1.getId(), false);
+            applicationElement.removeInstance(ie2.getId(), false);
         } catch (AoException e) {
             fail(e.reason);
         }

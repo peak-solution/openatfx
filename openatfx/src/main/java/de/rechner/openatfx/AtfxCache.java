@@ -64,7 +64,6 @@ class AtfxCache {
     /** The counters for ids */
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
-    private final Map<Long, Long> nextIidMap;
 
     /**
      * Constructor.
@@ -90,7 +89,6 @@ class AtfxCache {
 
         this.nextAid = 1;
         this.nextAttrNoMap = new HashMap<Long, Integer>();
-        this.nextIidMap = new HashMap<Long, Long>();
     }
 
     /**
@@ -125,13 +123,11 @@ class AtfxCache {
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        Long nextIid = this.nextIidMap.get(aid);
-        if (nextIid == null) {
-            nextIid = 0l;
+        Long[] instIids = getInstanceIds(aid).toArray(new Long[0]);
+        if (instIids.length > 0) {
+            return instIids[instIids.length - 1] + 1;
         }
-        nextIid++;
-        this.nextIidMap.put(aid, nextIid);
-        return nextIid;
+        return 1;
     }
 
     /***********************************************************************************
@@ -238,7 +234,6 @@ class AtfxCache {
         this.instanceAttrValueMap.remove(aid);
         this.instanceElementCache.remove(aid);
         this.nextAttrNoMap.remove(aid);
-        this.nextIidMap.remove(aid);
     }
 
     /**

@@ -556,17 +556,13 @@ public class InstanceElementImplTest {
             InstanceElement ieSMx = aeSM.getInstanceById(ODSHelper.asODSLongLong(62));
             assertEquals(7, aeSM.getAllRelations().length);
 
-            for (ApplicationRelation rel : aeSM.getAllRelations()) {
-                System.out.println(rel.getRelationName());
-            }
-
             // re-set y->x
             ApplicationRelation arSMx = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[0]; // x-axis-for-y-axis
             assertEquals(1, ieSMy.getRelatedInstances(arSMx, "*").getCount());
             ieSMy.createRelation(arSMx, ieSMx);
             assertEquals(1, ieSMy.getRelatedInstances(arSMx, "*").getCount());
             // re-set x->y
-            ApplicationRelation arSMy = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[2]; // y-axis-for-x-axis
+            ApplicationRelation arSMy = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[1]; // y-axis-for-x-axis
             assertEquals(1, ieSMx.getRelatedInstances(arSMy, "*").getCount());
             ieSMx.createRelation(arSMy, ieSMy);
             assertEquals(1, ieSMx.getRelatedInstances(arSMy, "*").getCount());

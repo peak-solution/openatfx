@@ -327,6 +327,12 @@ public class AtfxReader {
      * @throws AoException Error creating application element.
      */
     private void implicitCreateAoExternalComponent(ApplicationStructure as) throws AoException {
+        ApplicationElement[] aeLCs = as.getElementsByBaseType("AoLocalColumn");
+        if (aeLCs.length < 1) {
+            return;
+        }
+        ApplicationElement aeLC = aeLCs[0];
+
         LOG.warn("No application element of type 'AoExternalComponent' found, creating dummy");
 
         // create application element
@@ -336,18 +342,14 @@ public class AtfxReader {
         aeExtComp.setName("ec");
 
         // create relation to LocalColumn
-        ApplicationElement[] aeLCs = as.getElementsByBaseType("AoLocalColumn");
-        if (aeLCs.length != 1) {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                  "None or multiple application elements of type 'AoLocalColumn' found");
-        }
-        ApplicationElement aeLC = aeLCs[0];
         ApplicationRelation rel = as.createRelation();
         rel.setElem1(aeLC);
         rel.setElem2(aeExtComp);
         rel.setBaseRelation(bs.getRelation(aeLC.getBaseElement(), beExtComp));
         rel.setRelationName("rel_lc");
         rel.setInverseRelationName("rel_ec");
+
+        this.applRels.put("ec", new HashMap<String, ApplicationRelation>());
     }
 
     /**

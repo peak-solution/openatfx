@@ -23,11 +23,14 @@
 
 1. Changes
 
-	0.3.0 (Christian Rechner
+	0.3.0 (Christian Rechner)
 	
 		- Completely changed the behaviour of creating application relations
 		  the fulfil the ODS specification in automatically creating inverse
 		  relations.
+		- Added skipping the implicit creation the 'AoExternalComponent' applElem
+		  if no 'AoLocalColumn' application element exists.
+		- Fixed incrementing the instance ids.
 
 	0.2.2 (Christian Rechner)
 	
