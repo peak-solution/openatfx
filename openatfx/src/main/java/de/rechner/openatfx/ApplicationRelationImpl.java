@@ -118,21 +118,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         this.inverseRelation.baseRelation = invBaseRel;
     }
 
-    // /**
-    // * Correct base relations in case of multiple possible target base elements.
-    // *
-    // * @throws AoException Error getting/setting base relations.
-    // */
-    // private void correctBaseRelation() throws AoException {
-    // if ((this.baseRelation != null) && (getElem1() != null) && (getElem2() != null)) {
-    // String relType = getElem2().getBaseElement().getType();
-    // String bTypeElem2 = this.baseRelation.getElem2().getType();
-    // if (!relType.equals(bTypeElem2)) {
-    // setBaseRelation(lookupBaseRelation(getElem1(), getElem2(), this.baseRelation.getRelationName(), relType));
-    // }
-    // }
-    // }
-
     /**
      * Returns the inverse relation for given base relation.
      * 
@@ -151,18 +136,6 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
         throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
                               "Unable to find inverse relation for base relation: " + baseRel.getRelationName());
     }
-
-    // private static BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String
-    // bRelName,
-    // String bType) throws AoException {
-    // for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
-    // if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(bType)) {
-    // return baseRel;
-    // }
-    // }
-    // throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
-    // + bRelName + "',targetBaseType='" + bType + "'");
-    // }
 
     /**
      * {@inheritDoc}

@@ -301,13 +301,6 @@ public class ApplicationStructureImplTest {
             rel.setInverseRelationName("inv_rel");
             rel.setRelationRange(new RelationRange((short) 1, (short) 1));
             rel.setInverseRelationRange(new RelationRange((short) -1, (short) 1));
-            ApplicationRelation invRel = applicationStructure.createRelation();
-            invRel.setElem1(elem2);
-            invRel.setElem2(applElem);
-            invRel.setRelationName("inv_rel");
-            invRel.setInverseRelationName("rel");
-            invRel.setRelationRange(new RelationRange((short) -1, (short) 1));
-            invRel.setInverseRelationRange(new RelationRange((short) 1, (short) 1));
             assertEquals(34, applicationStructure.getElements("*").length);
             assertEquals(2, applicationStructure.getElementByName("newElement").getAttributes("*").length);
             assertEquals(1, applicationStructure.getElementByName("newElement").getAllRelations().length);
@@ -372,6 +365,12 @@ public class ApplicationStructureImplTest {
             ApplicationElement elem2 = applicationStructure.getElementsByBaseType("AoSubTest")[0];
             ApplicationRelation[] rels = applicationStructure.getRelations(elem1, elem2);
             assertEquals(1, rels.length);
+
+            // sm->sm (self relation)
+            ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+            ApplicationRelation[] applRels = applicationStructure.getRelations(aeSm, aeSm);
+            assertEquals(4, applRels.length);
+
         } catch (AoException e) {
             fail(e.reason);
         }

@@ -153,7 +153,7 @@ public class AoServiceFactory {
                                                  rootPOA.create_id_assignment_policy(IdAssignmentPolicyValue.SYSTEM_ID),
                                                  rootPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
                                                  rootPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
-                                                 rootPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.NO_IMPLICIT_ACTIVATION),
+                                                 rootPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.IMPLICIT_ACTIVATION),
                                                  rootPOA.create_servant_retention_policy(ServantRetentionPolicyValue.RETAIN),
                                                  rootPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_ACTIVE_OBJECT_MAP_ONLY),
                                                  rootPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });

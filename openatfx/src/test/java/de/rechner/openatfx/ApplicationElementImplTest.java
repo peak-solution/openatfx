@@ -223,8 +223,8 @@ public class ApplicationElementImplTest {
             ApplicationElement ae = applicationElement.getApplicationStructure().getElementByName("prj");
 
             assertEquals(2, ae.getAllRelations().length);
-            
-            ApplicationRelation firstRel = ae.getAllRelations()[1];
+
+            ApplicationRelation firstRel = ae.getAllRelations()[0];
             assertEquals("env_iid", firstRel.getRelationName());
             assertEquals("prj_iid", firstRel.getInverseRelationName());
             assertEquals("environment", firstRel.getBaseRelation().getRelationName());
@@ -237,7 +237,7 @@ public class ApplicationElementImplTest {
             assertEquals(Relationship.FATHER, firstRel.getRelationship());
             assertEquals(Relationship.CHILD, firstRel.getInverseRelationship());
 
-            ApplicationRelation secRel = ae.getAllRelations()[0];
+            ApplicationRelation secRel = ae.getAllRelations()[1];
             assertEquals("tstser_iid", secRel.getRelationName());
             assertEquals("prj_iid", secRel.getInverseRelationName());
             assertEquals("children", secRel.getBaseRelation().getRelationName());

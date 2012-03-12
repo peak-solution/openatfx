@@ -70,7 +70,7 @@ public class AtfxReader {
     private final Map<String, String> documentation;
     private final Map<String, String> files;
     private final Map<String, ApplicationElement> applElems;
-    private final Map<String, Map<String, ApplicationAttribute>> applAttrs;
+    private final Map<String, Map<String, ApplicationAttribute>> applAttrs; // aeName, aaName, aa
     private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
 
     /** information where the mass data is stored in the model */
@@ -261,7 +261,6 @@ public class AtfxReader {
      */
     private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
             AoException {
-        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL))) {
             // 'application_enumeration'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM)) {
@@ -269,7 +268,7 @@ public class AtfxReader {
             }
             // 'application_element'
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM)) {
-                applRelElem2Map.putAll(parseApplicationElement(as, reader));
+                parseApplicationElement(as, reader);
             }
             reader.next();
         }
@@ -277,15 +276,10 @@ public class AtfxReader {
         // implicit create application element of "AoExternalComponent" if missing
         ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
         if (aes.length < 1) {
-            applRelElem2Map.putAll(implicitCreateAoExternalComponent(as));
+            implicitCreateAoExternalComponent(as);
         } else if (aes.length > 1) {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "Multiple application elements of type 'AoExternalComponent' found");
-        }
-
-        // Set the elem2 of all application relations (this has to be done after parsing all elements)
-        for (Entry<ApplicationRelation, String> entry : applRelElem2Map.entrySet()) {
-            entry.getKey().setElem2(as.getElementByName(entry.getValue()));
         }
 
         // fill map with application relations and sets the default relation range
@@ -298,8 +292,31 @@ public class AtfxReader {
                     LOG.warn("Setting default relation range [0,-1] to relation: " + rel.getRelationName());
                 }
                 this.applRels.get(ae.getName()).put(rel.getRelationName(), rel);
+
+                // correct base relations in case of multiple possible target base elements
+                BaseRelation baseRelation = rel.getBaseRelation();
+                ApplicationElement elem1 = rel.getElem1();
+                ApplicationElement elem2 = rel.getElem2();
+                if ((baseRelation != null) && (elem1 != null) && (elem2 != null)) {
+                    String relType = elem2.getBaseElement().getType();
+                    String bTypeElem2 = baseRelation.getElem2().getType();
+                    if (!relType.equals(bTypeElem2)) {
+                        rel.setBaseRelation(lookupBaseRelation(elem1, elem2, baseRelation.getRelationName(), relType));
+                    }
+                }
             }
         }
+    }
+
+    private static BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
+            String bType) throws AoException {
+        for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
+            if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(bType)) {
+                return baseRel;
+            }
+        }
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
+                + bRelName + "',targetBaseType='" + bType + "'");
     }
 
     /**
@@ -309,10 +326,8 @@ public class AtfxReader {
      * @return The map containing the application relation as key, the elem2 name as value.
      * @throws AoException Error creating application element.
      */
-    private Map<ApplicationRelation, String> implicitCreateAoExternalComponent(ApplicationStructure as)
-            throws AoException {
+    private void implicitCreateAoExternalComponent(ApplicationStructure as) throws AoException {
         LOG.warn("No application element of type 'AoExternalComponent' found, creating dummy");
-        Map<ApplicationRelation, String> applRel2Elem2Map = new HashMap<ApplicationRelation, String>();
 
         // create application element
         BaseStructure bs = as.getSession().getBaseStructure();
@@ -333,9 +348,6 @@ public class AtfxReader {
         rel.setBaseRelation(bs.getRelation(aeLC.getBaseElement(), beExtComp));
         rel.setRelationName("rel_lc");
         rel.setInverseRelationName("rel_ec");
-        applRel2Elem2Map.put(rel, aeExtComp.getName());
-
-        return applRel2Elem2Map;
     }
 
     /**
@@ -388,12 +400,11 @@ public class AtfxReader {
      * 
      * @param as The application structure.
      * @param reader The XML stream reader.
-     * @return Map containing the elem2 ae name for the relations.
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Map<ApplicationRelation, String> parseApplicationElement(ApplicationStructure as, XMLStreamReader reader)
-            throws XMLStreamException, AoException {
+    private void parseApplicationElement(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         // 'name'
         reader.nextTag();
         if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM_NAME)) {
@@ -430,7 +441,6 @@ public class AtfxReader {
         this.applRels.put(aeName, new HashMap<String, ApplicationRelation>());
 
         // attributes and relations
-        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM))) {
             // 'application_attribute'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR)) {
@@ -438,12 +448,10 @@ public class AtfxReader {
             }
             // 'relation_attribute'
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL)) {
-                applRelElem2Map.putAll(parseApplicationRelation(applElem, reader, baseRelMap));
+                parseApplicationRelation(applElem, reader, baseRelMap);
             }
             reader.next();
         }
-
-        return applRelElem2Map;
     }
 
     /**
@@ -574,14 +582,11 @@ public class AtfxReader {
      * @param applElem The application element
      * @param reader The XML stream reader.
      * @param baseRelMap Map containing all base relations of the application element.
-     * @return Map containing the elem2 ae name for the relations.
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Map<ApplicationRelation, String> parseApplicationRelation(ApplicationElement applElem,
-            XMLStreamReader reader, Map<String, BaseRelation> baseRelMap) throws XMLStreamException, AoException {
-        Map<ApplicationRelation, String> applRelElem2Map = new HashMap<ApplicationRelation, String>();
-
+    private void parseApplicationRelation(ApplicationElement applElem, XMLStreamReader reader,
+            Map<String, BaseRelation> baseRelMap) throws XMLStreamException, AoException {
         String elem2Name = "";
         String relName = "";
         String inverseRelName = "";
@@ -621,8 +626,7 @@ public class AtfxReader {
 
         // NEW
         if (rel == null) {
-            ApplicationStructure as = applElem.getApplicationStructure();
-            rel = as.createRelation();
+            rel = applElem.getApplicationStructure().createRelation();
             // relation names
             rel.setRelationName(relName);
             rel.setInverseRelationName(inverseRelName);
@@ -631,8 +635,6 @@ public class AtfxReader {
             ApplicationElement elem2 = getApplElem(elem2Name);
             if (elem2 != null) {
                 rel.setElem2(elem2);
-            } else {
-                applRelElem2Map.put(rel, elem2Name);
             }
             // base relation
             if (brName != null && brName.length() > 0) {
@@ -655,6 +657,8 @@ public class AtfxReader {
 
         // EXISTING
         else {
+            // set elem2 (may not exist because application element may have not yet been living)
+            rel.setElem2(applElem);
             // relation names
             rel.setInverseRelationName(relName);
             rel.setRelationName(inverseRelName);
@@ -666,8 +670,6 @@ public class AtfxReader {
                 rel.setInverseRelationRange(relRange);
             }
         }
-
-        return applRelElem2Map;
     }
 
     /***************************************************************************************

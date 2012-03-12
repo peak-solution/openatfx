@@ -464,6 +464,7 @@ public class InstanceElementImplTest {
             ApplicationElement aeSm = as.getElementByName("sm");
             ApplicationRelation[] applRels = as.getRelations(aeSm, aeSm);
             assertEquals(4, applRels.length);
+
             // 'y-axis-for-x-axis'
             ApplicationRelation relYforX = getApplicationRelationByName(applRels, "y-axis-for-x-axis");
             InstanceElement ie = aeSm.getInstanceById(ODSHelper.asODSLongLong(62));
@@ -554,6 +555,10 @@ public class InstanceElementImplTest {
             InstanceElement ieSMy = aeSM.getInstanceById(ODSHelper.asODSLongLong(59));
             InstanceElement ieSMx = aeSM.getInstanceById(ODSHelper.asODSLongLong(62));
             assertEquals(7, aeSM.getAllRelations().length);
+
+            for (ApplicationRelation rel : aeSM.getAllRelations()) {
+                System.out.println(rel.getRelationName());
+            }
 
             // re-set y->x
             ApplicationRelation arSMx = aoSession.getApplicationStructure().getRelations(aeSM, aeSM)[0]; // x-axis-for-y-axis

@@ -1,7 +1,6 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +31,6 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
-import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongAdapter;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
@@ -126,7 +124,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             int index = getMaxEnumDefIndex() + 1;
             EnumerationDefinitionImpl enumDefImpl = new EnumerationDefinitionImpl(_this(), index, enumName);
-            this.modelPOA.activate_object(enumDefImpl);
             EnumerationDefinition enumDef = EnumerationDefinitionHelper.narrow(modelPOA.servant_to_reference(enumDefImpl));
             this.enumerationDefinitions.add(enumDef);
             return enumDef;
@@ -134,9 +131,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -254,7 +248,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             long aid = this.atfxCache.nextAid();
             ApplicationElementImpl aeImpl = new ApplicationElementImpl(this.modelPOA, this.instancePOA, this.atfxCache,
                                                                        _this(), baseElem, aid);
-            this.modelPOA.activate_object(aeImpl);
             ApplicationElement ae = ApplicationElementHelper.narrow(modelPOA.servant_to_reference(aeImpl));
             this.atfxCache.addApplicationElement(aid, baseElem.getType(), ae);
 
@@ -272,9 +265,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -468,12 +458,10 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             // create relation
             ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.modelPOA, this.atfxCache);
-            this.modelPOA.activate_object(arImpl);
             ApplicationRelation ar = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arImpl));
 
             // create inverse relation (ASAM ODS spec. CH10)
             ApplicationRelationImpl arInvImpl = new ApplicationRelationImpl(this.modelPOA, this.atfxCache);
-            this.modelPOA.activate_object(arInvImpl);
             ApplicationRelation arInv = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arInvImpl));
 
             // set bidirectional reference
@@ -488,9 +476,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -515,14 +500,15 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
 
         long aidElem1 = ODSHelper.asJLong(applElem1.getId());
         long aidElem2 = ODSHelper.asJLong(applElem2.getId());
+
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
-        Collection<ApplicationRelation> result = this.atfxCache.getApplicationRelations(aidElem1);
-        for (ApplicationRelation rel : result) {
+        for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(aidElem1)) {
             long relAidElem2 = ODSHelper.asJLong(rel.getElem2().getId());
             if (aidElem2 == relAidElem2) {
                 list.add(rel);
             }
         }
+
         return list.toArray(new ApplicationRelation[0]);
     }
 
@@ -741,6 +727,19 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(aid)) {
                 String relName = rel.getRelationName();
                 String invRelName = rel.getInverseRelationName();
+
+                // elem1 / elem2
+                if (rel.getElem1() == null) {
+                    throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                          "Elem1 of relation not set. aid=" + aid + ",relName=" + relName
+                                                  + ",invRelname=" + invRelName);
+                }
+                if (rel.getElem2() == null) {
+                    throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                          "Elem2 of relation not set. aid=" + aid + ",relName=" + relName
+                                                  + ",invRelname=" + invRelName);
+                }
+
                 if ((relName.length() < 1) || (relName.length() > 30)) {
                     throw new AoException(ErrorCode.AO_INVALID_LENGTH, SeverityFlag.ERROR, 0,
                                           "Relation name length must be between 1 and 30 characters. aid=" + aid

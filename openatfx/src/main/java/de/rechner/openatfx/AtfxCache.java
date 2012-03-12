@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -46,7 +46,7 @@ class AtfxCache {
     private final Map<Long, Map<String, Integer>> baNameToAttrNoMap; // <aid,<baName,attrNo>>
 
     /** application relations */
-    private final Map<Long, List<ApplicationRelation>> applicationRelationMap; // <aid,<applRels>
+    private final Map<Long, Set<ApplicationRelation>> applicationRelationMap; // <aid,<applRels>
     private final Map<ApplicationRelation, ApplicationRelation> inverseRelationMap; // <rel, invRel>
 
     /** instance relations */
@@ -80,7 +80,7 @@ class AtfxCache {
         this.aaNameToAttrNoMap = new HashMap<Long, Map<String, Integer>>();
         this.baNameToAttrNoMap = new HashMap<Long, Map<String, Integer>>();
 
-        this.applicationRelationMap = new HashMap<Long, List<ApplicationRelation>>();
+        this.applicationRelationMap = new HashMap<Long, Set<ApplicationRelation>>();
         this.inverseRelationMap = new HashMap<ApplicationRelation, ApplicationRelation>();
 
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
@@ -153,7 +153,7 @@ class AtfxCache {
         this.attrNoToAttrMap.put(aid, new LinkedHashMap<Integer, ApplicationAttribute>());
         this.aaNameToAttrNoMap.put(aid, new LinkedHashMap<String, Integer>());
         this.baNameToAttrNoMap.put(aid, new HashMap<String, Integer>());
-        this.applicationRelationMap.put(aid, new ArrayList<ApplicationRelation>());
+        this.applicationRelationMap.put(aid, new LinkedHashSet<ApplicationRelation>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
         this.instanceValueMap.put(aid, new TreeMap<Long, Map<Integer, TS_Value>>());
         this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
@@ -433,7 +433,7 @@ class AtfxCache {
         this.inverseRelationMap.remove(invApplRel);
 
         // remove application relation maps for all aids
-        for (List<ApplicationRelation> relList : this.applicationRelationMap.values()) {
+        for (Set<ApplicationRelation> relList : this.applicationRelationMap.values()) {
             relList.remove(applRel);
             relList.remove(invApplRel);
         }
