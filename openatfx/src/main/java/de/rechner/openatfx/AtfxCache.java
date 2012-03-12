@@ -397,15 +397,23 @@ class AtfxCache {
         this.applicationRelationMap.get(aid).remove(applRel);
     }
 
-    public void addApplicationRelation(ApplicationRelation applRel, ApplicationRelation invApplRel) throws AoException {
+    /**
+     * Adds an application relation.
+     * 
+     * @param applRel The relation to add, may not be null.
+     * @param invApplRel The inverse relation, may not be null.
+     */
+    public void addApplicationRelation(ApplicationRelation applRel, ApplicationRelation invApplRel) {
         this.inverseRelationMap.put(applRel, invApplRel);
         this.inverseRelationMap.put(invApplRel, applRel);
+
         // prepare application relation maps for all aids
         for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
             for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
                 iMap.put(applRel, new TreeSet<Long>());
             }
         }
+
         // prepare application relation maps for all aids
         for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
             for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
@@ -414,18 +422,26 @@ class AtfxCache {
         }
     }
 
-    public void removeApplicationRelation(ApplicationRelation applRel) {
+    /**
+     * Removes an application relation from the cache.
+     * 
+     * @param applRel The application relation.
+     * @param invApplRel The inverse application relation.
+     */
+    public void removeApplicationRelation(ApplicationRelation applRel, ApplicationRelation invApplRel) {
         this.inverseRelationMap.remove(applRel);
+        this.inverseRelationMap.remove(invApplRel);
 
-        for (List<ApplicationRelation> relList : this.applicationRelationMap.values()) {
-            if (relList.contains(applRel)) {
-                relList.remove(applRel);
-            }
-        }
         // remove application relation maps for all aids
+        for (List<ApplicationRelation> relList : this.applicationRelationMap.values()) {
+            relList.remove(applRel);
+            relList.remove(invApplRel);
+        }
+        // remove application relation maps for all instances
         for (Map<Long, Map<ApplicationRelation, Set<Long>>> map : this.instanceRelMap.values()) {
             for (Map<ApplicationRelation, Set<Long>> iMap : map.values()) {
                 iMap.remove(applRel);
+                iMap.remove(invApplRel);
             }
         }
     }

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,7 +31,6 @@ import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAPackage.ObjectAlreadyActive;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
@@ -470,7 +468,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             // create relation
             ApplicationRelationImpl arImpl = new ApplicationRelationImpl(this.modelPOA, this.atfxCache);
-            this.modelPOA.activate_object_with_id(UUID.randomUUID().toString().getBytes(), arImpl);
+            this.modelPOA.activate_object(arImpl);
             ApplicationRelation ar = ApplicationRelationHelper.narrow(modelPOA.servant_to_reference(arImpl));
 
             // create inverse relation (ASAM ODS spec. CH10)
@@ -495,9 +493,6 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         } catch (ServantAlreadyActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ObjectAlreadyActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
     }
 
@@ -509,11 +504,22 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      */
     public ApplicationRelation[] getRelations(ApplicationElement applElem1, ApplicationElement applElem2)
             throws AoException {
+        if (applElem1 == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                  "Parameter applElem1 must not be null!");
+        }
+        if (applElem2 == null) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                  "Parameter applElem2 must not be null!");
+        }
+
+        long aidElem1 = ODSHelper.asJLong(applElem1.getId());
+        long aidElem2 = ODSHelper.asJLong(applElem2.getId());
         List<ApplicationRelation> list = new ArrayList<ApplicationRelation>();
-        Collection<ApplicationRelation> result = this.atfxCache.getApplicationRelations(ODSHelper.asJLong(applElem1.getId()));
+        Collection<ApplicationRelation> result = this.atfxCache.getApplicationRelations(aidElem1);
         for (ApplicationRelation rel : result) {
-            if (rel.getElem1().getName().equals(applElem1.getName())
-                    && rel.getElem2().getName().equals(applElem2.getName())) {
+            long relAidElem2 = ODSHelper.asJLong(rel.getElem2().getId());
+            if (aidElem2 == relAidElem2) {
                 list.add(rel);
             }
         }
@@ -526,33 +532,19 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      * @see org.asam.ods.ApplicationStructureOperations#removeRelation(org.asam.ods.ApplicationRelation)
      */
     public void removeRelation(ApplicationRelation applRel) throws AoException {
-        // lookup relation and inverse relation
-        ApplicationRelation relToRemove = null;
-        ApplicationRelation invRelToRemove = null;
-        for (ApplicationRelation rel : this.atfxCache.getApplicationRelations()) {
-            if (ODSHelper.asJLong(applRel.getElem1().getId()) == ODSHelper.asJLong(rel.getElem1().getId())
-                    && applRel.getRelationName().equals(rel.getRelationName())) {
-                relToRemove = rel;
-            } else if (ODSHelper.asJLong(applRel.getElem2().getId()) == ODSHelper.asJLong(rel.getElem1().getId())
-                    && applRel.getInverseRelationName().equals(rel.getRelationName())) {
-                invRelToRemove = rel;
-            }
+        if (applRel == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Parameter applRel may not be null!");
         }
 
-        // remove relation and inverse relation from cache
-        if (relToRemove != null) {
-            this.atfxCache.removeApplicationRelation(relToRemove);
-        } else {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Relation not found");
-        }
-        if (invRelToRemove != null) {
-            this.atfxCache.removeApplicationRelation(invRelToRemove);
-        } else {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Inverse relation not found");
-        }
-        // deactivate CORBA object
+        // remove from cache
+        ApplicationRelation invApplRel = this.atfxCache.getInverseRelation(applRel);
+        this.atfxCache.removeApplicationRelation(applRel, invApplRel);
+
+        // deactivate CORBA objects
         try {
             byte[] id = modelPOA.reference_to_id(applRel);
+            modelPOA.deactivate_object(id);
+            id = modelPOA.reference_to_id(invApplRel);
             modelPOA.deactivate_object(id);
         } catch (WrongAdapter e) {
             LOG.error(e.getMessage(), e);

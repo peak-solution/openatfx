@@ -386,6 +386,8 @@ public class ApplicationStructureImplTest {
         try {
             ApplicationElement elem1 = applicationStructure.getElementsByBaseType("AoTest")[0];
             ApplicationElement elem2 = applicationStructure.getElementsByBaseType("AoSubTest")[0];
+            assertEquals(2, elem1.getAllRelations().length);
+            assertEquals(2, elem2.getAllRelations().length);
             assertEquals(1, applicationStructure.getRelations(elem1, elem2).length);
             assertEquals(1, applicationStructure.getRelations(elem2, elem1).length);
 
@@ -396,13 +398,6 @@ public class ApplicationStructureImplTest {
             rel.setInverseRelationName("inv_rel");
             rel.setRelationRange(new RelationRange((short) 1, (short) 1));
             rel.setInverseRelationRange(new RelationRange((short) -1, (short) 1));
-            ApplicationRelation invRel = applicationStructure.createRelation();
-            invRel.setElem1(elem2);
-            invRel.setElem2(elem1);
-            invRel.setRelationName("inv_rel");
-            invRel.setInverseRelationName("rel");
-            invRel.setRelationRange(new RelationRange((short) -1, (short) 1));
-            invRel.setInverseRelationRange(new RelationRange((short) 1, (short) 1));
             assertEquals(3, elem1.getAllRelations().length);
             assertEquals(3, elem2.getAllRelations().length);
             assertEquals(2, applicationStructure.getRelations(elem1, elem2).length);

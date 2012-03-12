@@ -223,10 +223,6 @@ public class ApplicationElementImplTest {
             ApplicationElement ae = applicationElement.getApplicationStructure().getElementByName("prj");
 
             assertEquals(2, ae.getAllRelations().length);
-
-            for (ApplicationRelation r : ae.getAllRelations()) {
-                System.out.println(r.getRelationName());
-            }
             
             ApplicationRelation firstRel = ae.getAllRelations()[1];
             assertEquals("env_iid", firstRel.getRelationName());

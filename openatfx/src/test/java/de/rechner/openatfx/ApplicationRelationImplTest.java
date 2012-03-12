@@ -139,7 +139,6 @@ public class ApplicationRelationImplTest {
             assertEquals(1, baseRelRange.max);
 
             RelationRange infoRelRange = infoRel.getInverseRelationRange();
-            System.out.println(infoRel.getRelationName());
             assertEquals(0, infoRelRange.min);
             assertEquals(1, infoRelRange.max);
 
