@@ -21,6 +21,8 @@ import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
+import org.asam.ods.T_COMPLEX;
+import org.asam.ods.T_DCOMPLEX;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -84,6 +86,40 @@ public class ExtCompReader {
             }
             tsValue.u.doubleSeq(ar);
         }
+        // DS_COMPLEX
+        else if (targetDataType == DataType.DS_COMPLEX) {
+            List<Float> list = new ArrayList<Float>();
+            for (InstanceElement ieExtComp : ieExtComps) {
+                for (Number value : readNumberValues(ieExtComp)) {
+                    list.add(value.floatValue());
+                }
+            }
+            int size = list.size() / 2;
+            T_COMPLEX[] ar = new T_COMPLEX[size];
+            for (int i = 0; i < size; i++) {
+                ar[i] = new T_COMPLEX();
+                ar[i].r = list.get(i * 2);
+                ar[i].i = list.get(i * 2 + 1);
+            }
+            tsValue.u.complexSeq(ar);
+        }
+        // DS_DCOMPLEX
+        else if (targetDataType == DataType.DS_DCOMPLEX) {
+            List<Double> list = new ArrayList<Double>();
+            for (InstanceElement ieExtComp : ieExtComps) {
+                for (Number value : readNumberValues(ieExtComp)) {
+                    list.add(value.doubleValue());
+                }
+            }
+            int size = list.size() / 2;
+            T_DCOMPLEX[] ar = new T_DCOMPLEX[size];
+            for (int i = 0; i < size; i++) {
+                ar[i] = new T_DCOMPLEX();
+                ar[i].r = list.get(i * 2);
+                ar[i].i = list.get(i * 2 + 1);
+            }
+            tsValue.u.dcomplexSeq(ar);
+        }
         // unsupported
         else {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
@@ -146,12 +182,8 @@ public class ExtCompReader {
                 // calculate index
                 int idx = (startOffset + valueOffset) + (i * blockSize);
 
-                if (idx >= extCompFile.length() - 1) {
-                    list.add(0);
-                }
-
                 // 3=dt_long, 8=dt_long_beo
-                else if ((valueType == 3) || (valueType == 8)) {
+                if ((valueType == 3) || (valueType == 8)) {
                     list.add(sourceMbb.getInt(idx));
                 }
                 // 5=ieeefloat4, 10=ieeefloat4_beo

@@ -300,9 +300,9 @@ class InstanceElementImpl extends InstanceElementPOA {
                 return DataType.DS_DATE;
             } else if (val == 11) { // DT_BYTESTR
                 return DataType.DS_BYTESTR;
-            } else if (val == 14) { // DT_COMPLEX
+            } else if (val == 13) { // DT_COMPLEX
                 return DataType.DS_COMPLEX;
-            } else if (val == 15) { // DT_DCOMPLEX
+            } else if (val == 14) { // DT_DCOMPLEX
                 return DataType.DS_DCOMPLEX;
             } else if (val == 28) { // DT_EXTERNALREFERENCE
                 return DataType.DS_EXTERNALREFERENCE;

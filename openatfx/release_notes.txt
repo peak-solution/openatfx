@@ -30,6 +30,8 @@
 		  * DS_LONG
 		  * DS_FLOAT
 		  * DS_DOUBLE
+		  * DS_COMPLEX
+		  * DS_DCOMPLEX
 		  and type specs
 		  * dt_long
 		  * dt_long_beo
