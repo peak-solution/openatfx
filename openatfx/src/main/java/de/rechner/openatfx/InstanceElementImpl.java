@@ -41,6 +41,7 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
+import de.rechner.openatfx.io.ExtCompReader;
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
 
@@ -207,9 +208,9 @@ class InstanceElementImpl extends InstanceElementPOA {
         // unit
         String unitName = "";
         if (lcValuesAttr) {
-            unitName = getUnitNameForLocalColumnValues();
+            unitName = getUnitNameForLocalColumnValues(); // read from relation to measurement quantity
         } else {
-            long unitIid = ODSHelper.asJLong(aa.getUnit());
+            long unitIid = ODSHelper.asJLong(aa.getUnit()); // read from application attribute
             if (unitIid > 0) {
                 long unitAid = this.atfxCache.getAidsByBaseType("aounit").iterator().next();
                 InstanceElement ieUnit = this.atfxCache.getInstanceById(instancePOA, unitAid, unitIid);
@@ -223,6 +224,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             InstanceElementIterator iter = getRelatedInstancesByRelationship(Relationship.CHILD, "*");
             InstanceElement[] ieExtComps = iter.nextN(iter.getCount());
             iter.destroy();
+            value = ExtCompReader.getInstance().readValues(ieExtComps, dataType);
         }
 
         // no instance attribute, check application attribute

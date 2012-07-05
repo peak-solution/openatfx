@@ -498,9 +498,9 @@ class AoSessionWriter {
 
             // calc file idx
             int idx = 0;
-            if (methodNo == 0) {
+            if (methodNo == 0) { // BLOCK
                 idx = (fileOffset - 1 + (chOffset * i)) * blockSize;
-            } else {
+            } else { // CHANNEL
                 idx = (fileOffset + i - 1) * blockSize;
             }
 

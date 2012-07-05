@@ -25,7 +25,18 @@
 
 	0.3.1 (Christian Rechner)
 	
-		- Implemented return the unit at methods 'getValue' and 'getValueSeq'
+		- Implemented returning the unit at methods 'getValue' and 'getValueSeq'
+		- Implemented reading external component files for data types
+		  * DS_LONG
+		  * DS_FLOAT
+		  * DS_DOUBLE
+		  and type specs
+		  * dt_long
+		  * dt_long_beo
+		  * ieeefloat4
+		  * ieeefloat4_beo
+		  * ieeefloat8
+		  * ieeefloat8_beo
 		
 	0.3.0 (Christian Rechner)
 	

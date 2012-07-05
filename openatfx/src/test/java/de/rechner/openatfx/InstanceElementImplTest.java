@@ -252,6 +252,16 @@ public class InstanceElementImplTest {
             assertEquals(31, nvu.value.u.doubleSeq().length);
             assertEquals("Hz", nvu.unit);
 
+            // values 'external_component'
+            ieLc = aoSession.getApplicationStructure().getElementByName("lc")
+                            .getInstanceById(ODSHelper.asODSLongLong(47));
+            nvu = ieLc.getValue("values");
+            assertEquals(15, nvu.value.flag);
+            assertEquals(167, nvu.value.u.floatSeq().length);
+            assertEquals(Float.valueOf((float) 0.020362169), Float.valueOf((float) nvu.value.u.floatSeq()[0])); // first
+            assertEquals(Float.valueOf((float) 0.01960019), Float.valueOf((float) nvu.value.u.floatSeq()[166])); // last
+            assertEquals("Pa", nvu.unit);
+
         } catch (AoException e) {
             fail(e.reason);
         }
