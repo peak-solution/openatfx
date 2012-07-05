@@ -186,30 +186,51 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValue(java.lang.String)
      */
     public NameValueUnit getValue(String aaName) throws AoException {
-        if (isExternalComponentValue(aaName)) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "Reading the 'values' of external components is not yet implemented");
-        }
-
         // check if instance attribute
         TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
+        if (value != null) {
+            return new NameValueUnit(aaName, value, "");
+        }
+
+        boolean lcValuesAttr = isLocalColumnValuesAttribute(aaName);
+        Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
+        if (attrNo == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
+                    + "' not found");
+        }
+        ApplicationAttribute aa = this.atfxCache.getApplicationAttribute(aid, attrNo);
+        if (aa == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
+                    + "' not found");
+        }
+
+        // unit
+        String unitName = "";
+        if (lcValuesAttr) {
+            unitName = getUnitNameForLocalColumnValues();
+        } else {
+            long unitIid = ODSHelper.asJLong(aa.getUnit());
+            if (unitIid > 0) {
+                long unitAid = this.atfxCache.getAidsByBaseType("aounit").iterator().next();
+                InstanceElement ieUnit = this.atfxCache.getInstanceById(instancePOA, unitAid, unitIid);
+                unitName = ieUnit.getName();
+            }
+        }
+
+        // check if attribute "value" is in external component
+        if (isExternalComponentValue(aaName)) {
+            DataType dataType = getDataTypeForLocalColumnValues();
+            InstanceElementIterator iter = getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+            InstanceElement[] ieExtComps = iter.nextN(iter.getCount());
+            iter.destroy();
+        }
 
         // no instance attribute, check application attribute
         if (value == null) {
-            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
-            if (attrNo == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
-                        + "' not found");
-            }
             value = this.atfxCache.getInstanceValue(this.aid, this.iid, attrNo);
 
             // value not found, return empty
             if (value == null) {
-                ApplicationAttribute aa = this.atfxCache.getApplicationAttribute(aid, attrNo);
-                if (aa == null) {
-                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '"
-                            + aaName + "' not found");
-                }
                 DataType dt = aa.getDataType();
                 // special case: attribute "values" of "AoLocalColumn" is not set!
                 if (dt == DataType.DT_UNKNOWN && isLocalColumnValuesAttribute(aaName)) {
@@ -218,68 +239,100 @@ class InstanceElementImpl extends InstanceElementPOA {
                 value = ODSHelper.createEmptyTS_Value(dt);
                 this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
             }
-
         }
 
-        return new NameValueUnit(aaName, value, "");
+        return new NameValueUnit(aaName, value, unitName);
+    }
+
+    /**
+     * Returns the instance of the related measurement quantity.
+     * 
+     * @return The measurement quantity instance.
+     * @throws AoException Error getting instance.
+     */
+    private InstanceElement getMeaQuantityInstance() throws AoException {
+        ApplicationRelation[] rels = getApplicationElement().getRelationsByBaseName("measurement_quantity");
+        if (rels.length != 1) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "None or multiple application relations with base name 'measurement_quantity' found");
+        }
+        ApplicationRelation relLcMeaQua = rels[0]; // AoLocalColumn->AoMeasurementQuantity
+        InstanceElementIterator iter = getRelatedInstances(relLcMeaQua, "*");
+        if (iter.getCount() != 1) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "None or multiple related instances found for base relation 'measurement_quantity'");
+        }
+        InstanceElement ieMeaQua = iter.nextOne();
+        iter.destroy();
+        return ieMeaQua;
     }
 
     /**
      * In case this InstanceElement is from the ApplicationElement derived from "AoLocalColumn", the datatype of the
      * related "AoMeasurementQuantity" instance is returned.
      * 
-     * @throws AoException
+     * @throws AoException Error getting datatype.
      */
     private DataType getDataTypeForLocalColumnValues() throws AoException {
-        ApplicationRelation[] rels = getApplicationElement().getRelationsByBaseName("measurement_quantity");
-        if (rels.length > 0) {
-            ApplicationRelation rel = rels[0];
-
-            Collection<Long> meaQuaIids = this.atfxCache.getRelatedInstanceIds(aid, iid, rels[0]);
-            if (!meaQuaIids.isEmpty()) {
-                long meaQuaAid = ODSHelper.asJLong(rel.getElem2().getId());
-                long meaQuaIid = meaQuaIids.iterator().next();
-                Integer attrNoDt = this.atfxCache.getAttrNoByBaName(meaQuaAid, "datatype");
-                if (attrNoDt != null) {
-                    TS_Value dtValue = this.atfxCache.getInstanceValue(meaQuaAid, meaQuaIid, attrNoDt);
-                    if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
-                        int val = dtValue.u.enumVal();
-                        if (val == 1) { // DT_STRING
-                            return DataType.DS_STRING;
-                        } else if (val == 2) { // DT_SHORT
-                            return DataType.DS_SHORT;
-                        } else if (val == 3) { // DT_FLOAT
-                            return DataType.DS_FLOAT;
-                        } else if (val == 4) { // DT_BOOLEAN
-                            return DataType.DS_BOOLEAN;
-                        } else if (val == 5) { // DT_BYTE
-                            return DataType.DS_BYTE;
-                        } else if (val == 6) { // DT_LONG
-                            return DataType.DS_LONG;
-                        } else if (val == 7) { // DT_DOUBLE
-                            return DataType.DS_DOUBLE;
-                        } else if (val == 8) { // DT_LONGLONG
-                            return DataType.DS_LONGLONG;
-                        } else if (val == 10) { // DT_DATE
-                            return DataType.DS_DATE;
-                        } else if (val == 11) { // DT_BYTESTR
-                            return DataType.DS_BYTESTR;
-                        } else if (val == 14) { // DT_COMPLEX
-                            return DataType.DS_COMPLEX;
-                        } else if (val == 15) { // DT_DCOMPLEX
-                            return DataType.DS_DCOMPLEX;
-                        } else if (val == 28) { // DT_EXTERNALREFERENCE
-                            return DataType.DS_EXTERNALREFERENCE;
-                        } else if (val == 30) { // DT_ENUM
-                            return DataType.DS_ENUM;
-                        }
-                    }
-                }
+        InstanceElement ieMeaQua = getMeaQuantityInstance();
+        TS_Value dtValue = ieMeaQua.getValueByBaseName("datatype").value;
+        if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
+            int val = dtValue.u.enumVal();
+            if (val == 1) { // DT_STRING
+                return DataType.DS_STRING;
+            } else if (val == 2) { // DT_SHORT
+                return DataType.DS_SHORT;
+            } else if (val == 3) { // DT_FLOAT
+                return DataType.DS_FLOAT;
+            } else if (val == 4) { // DT_BOOLEAN
+                return DataType.DS_BOOLEAN;
+            } else if (val == 5) { // DT_BYTE
+                return DataType.DS_BYTE;
+            } else if (val == 6) { // DT_LONG
+                return DataType.DS_LONG;
+            } else if (val == 7) { // DT_DOUBLE
+                return DataType.DS_DOUBLE;
+            } else if (val == 8) { // DT_LONGLONG
+                return DataType.DS_LONGLONG;
+            } else if (val == 10) { // DT_DATE
+                return DataType.DS_DATE;
+            } else if (val == 11) { // DT_BYTESTR
+                return DataType.DS_BYTESTR;
+            } else if (val == 14) { // DT_COMPLEX
+                return DataType.DS_COMPLEX;
+            } else if (val == 15) { // DT_DCOMPLEX
+                return DataType.DS_DCOMPLEX;
+            } else if (val == 28) { // DT_EXTERNALREFERENCE
+                return DataType.DS_EXTERNALREFERENCE;
+            } else if (val == 30) { // DT_ENUM
+                return DataType.DS_ENUM;
             }
         }
         throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                               "Implementation problem at method 'getDataTypeForLocalColumnValues()' for instance '"
                                       + getAsamPath() + "'");
+    }
+
+    /**
+     * Returns the unit name by following the relation to the measurement quantity and then to AoUnit.
+     * 
+     * @return
+     * @throws AoException
+     */
+    private String getUnitNameForLocalColumnValues() throws AoException {
+        InstanceElement ieMeaQuantity = getMeaQuantityInstance();
+        ApplicationRelation[] rels = ieMeaQuantity.getApplicationElement().getRelationsByBaseName("unit");
+        if (rels.length != 1) {
+            return "";
+        }
+        ApplicationRelation relMeaQuaUnit = rels[0]; // AoMeasurementQuantity->AoUnit
+        InstanceElementIterator iter = ieMeaQuantity.getRelatedInstances(relMeaQuaUnit, "*");
+        if (iter.getCount() != 1) {
+            return "";
+        }
+        InstanceElement ieMeaQua = iter.nextOne();
+        iter.destroy();
+        return ieMeaQua.getName();
     }
 
     /**

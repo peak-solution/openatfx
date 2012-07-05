@@ -172,6 +172,7 @@ public class InstanceElementImplTest {
             // 0.000001);
             // DT_DOUBLE
             assertEquals(1726381.1234567, ieTstSer.getValue("appl_attr_dt_double").value.u.doubleVal(), 0.000001);
+            assertEquals("V", ieTstSer.getValue("appl_attr_dt_double").unit);
             // DT_ENUM
             assertEquals(28, ieTstSer.getValue("appl_attr_dt_enum").value.u.enumVal());
             // DT_EXTERNALREFERENCE
@@ -242,6 +243,15 @@ public class InstanceElementImplTest {
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
             assertEquals("test", ieDts.getValue("instattr").value.u.stringVal());
             ieDts.removeInstanceAttribute("instattr");
+
+            // values 'implicit'
+            InstanceElement ieLc = aoSession.getApplicationStructure().getElementByName("lc")
+                                            .getInstanceById(ODSHelper.asODSLongLong(67));
+            NameValueUnit nvu = ieLc.getValue("values");
+            assertEquals(15, nvu.value.flag);
+            assertEquals(31, nvu.value.u.doubleSeq().length);
+            assertEquals("Hz", nvu.unit);
+
         } catch (AoException e) {
             fail(e.reason);
         }
