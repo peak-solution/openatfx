@@ -29,6 +29,7 @@ import org.asam.ods.ApplRel;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ApplicationStructureValue;
 import org.asam.ods.AttrType;
 import org.asam.ods.BaseAttribute;
@@ -109,7 +110,6 @@ public class AtfxWriter {
             writeDocumentation(streamWriter);
             // base model version
             writeBaseModelVersion(streamWriter, aoSession);
-            // TODO: write files
             // application model
             writeApplicationModel(streamWriter, aoSession);
             // instance data
@@ -194,7 +194,7 @@ public class AtfxWriter {
         writeElement(streamWriter, AtfxTagConstants.EXPORTED_BY, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORTER, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORT_DATETIME, ODSHelper.getCurrentODSDate());
-        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.3.0");
+        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.3.1");
         streamWriter.writeEndElement();
     }
 
@@ -225,6 +225,7 @@ public class AtfxWriter {
      */
     private void writeApplicationModel(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
             AoException {
+        ApplicationStructure as = aoSession.getApplicationStructure();
         ApplicationStructureValue av = aoSession.getApplicationStructureValue();
         EnumerationAttributeStructure[] eas = aoSession.getEnumerationAttributes();
         streamWriter.writeStartElement(AtfxTagConstants.APPL_MODEL);
@@ -262,7 +263,8 @@ public class AtfxWriter {
 
         // application elements
         for (ApplElem applElem : av.applElems) {
-            writeApplElem(streamWriter, applElem, applElemMap, applRelsMap, eas);
+            ApplicationElement applicationElement = as.getElementById(applElem.aid);
+            writeApplElem(streamWriter, applicationElement, applElem, applElemMap, applRelsMap, eas);
         }
 
         streamWriter.writeEndElement();
@@ -292,14 +294,17 @@ public class AtfxWriter {
      * Writes an application element to the XML stream.
      * 
      * @param streamWriter The XML stream writer.
-     * @param applElem The application element.
+     * @param applicationElement The application element object.
+     * @param applElem The application element structure.
      * @param applElemMap Map containing all application elements.
      * @param applRelsMap Map containing all application relations.
      * @param eas The enumeration attributes.
      * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading application model.
      */
-    private void writeApplElem(XMLStreamWriter streamWriter, ApplElem applElem, Map<Long, ApplElem> applElemMap,
-            Map<Long, List<ApplRel>> applRelsMap, EnumerationAttributeStructure[] eas) throws XMLStreamException {
+    private void writeApplElem(XMLStreamWriter streamWriter, ApplicationElement applicationElement, ApplElem applElem,
+            Map<Long, ApplElem> applElemMap, Map<Long, List<ApplRel>> applRelsMap, EnumerationAttributeStructure[] eas)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.APPL_ELEM);
         writeElement(streamWriter, AtfxTagConstants.APPL_ELEM_NAME, applElem.aeName);
         writeElement(streamWriter, AtfxTagConstants.APPL_ELEM_BASETYPE, applElem.beName);
@@ -307,7 +312,9 @@ public class AtfxWriter {
 
         // application attributes
         for (ApplAttr applAttr : applElem.attributes) {
-            writeApplAttr(streamWriter, aid, applAttr, eas);
+            ApplicationAttribute applicationAttribute = applicationElement.getAttributeByName(applAttr.aaName);
+            writeApplAttr(streamWriter, aid, applicationAttribute, applAttr, eas);
+
             // set global attributes
             if (applElem.beName.equalsIgnoreCase("AoLocalColumn")) {
                 this.aidLocalColumn = ODSHelper.asJLong(applElem.aid);
@@ -335,18 +342,27 @@ public class AtfxWriter {
      * 
      * @param streamWriter The XML stream writer.
      * @param aid The application element id.
+     * @param applicationAttribute The application attribute object.
      * @param applAttr The application attribute.
      * @param eas All enumeration attributes to find out the enumeration name.
      * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading application structure values.
      */
-    private void writeApplAttr(XMLStreamWriter streamWriter, long aid, ApplAttr applAttr,
-            EnumerationAttributeStructure[] eas) throws XMLStreamException {
+    private void writeApplAttr(XMLStreamWriter streamWriter, long aid, ApplicationAttribute applicationAttribute,
+            ApplAttr applAttr, EnumerationAttributeStructure[] eas) throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.APPL_ATTR);
         // name
         writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_NAME, applAttr.aaName);
         // base attr / datatype
-        if (applAttr.baName.length() > 0) {
+        String baName = applAttr.baName;
+        if (baName.length() > 0) {
             writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_BASEATTR, applAttr.baName);
+            // write datatype for attributes of 'AoExternalComponent', because these can be DT_LONG or DT_LONGLONG
+            if (baName.equals("start_offset") || baName.equals("flags_start_offset")) {
+                writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_DATATYPE,
+                             ODSHelper.dataType2String(applAttr.dType));
+            }
+
         } else {
             writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_DATATYPE, ODSHelper.dataType2String(applAttr.dType));
         }
@@ -360,9 +376,13 @@ public class AtfxWriter {
                 }
             }
         }
+        // autogenerated
+        if (applicationAttribute.isAutogenerated()) {
+            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_AUTOGENERATE, "true");
+        }
         // obligatory
-        if (applAttr.baName.length() < 1 && applAttr.isObligatory) {
-            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_OBLIGATORY, String.valueOf(applAttr.isObligatory));
+        if (applAttr.isObligatory) {
+            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_OBLIGATORY, "true");
         }
         // unique
         if (!applAttr.baName.equalsIgnoreCase("id") && applAttr.isUnique) {

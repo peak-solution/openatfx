@@ -434,11 +434,17 @@ class AoSessionWriter {
             throw new ConvertException(e.getMessage(), e);
         } finally {
             try {
-                unmap(sourceChannel, sourceMbb);
-                sourceChannel.close();
+                if (sourceChannel != null && raf != null) {
+                    unmap(sourceChannel, sourceMbb);
+                }
+                if (sourceChannel != null) {
+                    sourceChannel.close();
+                }
+                if (raf != null) {
+                    raf.close();
+                }
                 sourceChannel = null;
                 sourceMbb = null;
-                raf.close();
                 raf = null;
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
