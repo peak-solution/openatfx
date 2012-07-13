@@ -216,10 +216,10 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
         // check relation
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, relName);
-        if (applRel == null || applRel.getElem2() == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
-                    + aid + ",relName=" + relName);
-        }
+//        if (applRel == null || applRel.getElem2() == null) {
+//            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
+//                    + aid + ",relName=" + relName);
+//        }
 
         // alter relations
         Collection<Long> otherIidsToSet = new ArrayList<Long>();
