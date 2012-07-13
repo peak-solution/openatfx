@@ -26,8 +26,9 @@ public class PerformanceTest {
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-        aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
-                                    .newSession("FILENAME=" + new File("D:/PUBLIC/large.atfx"));
+        // aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
+        // .newSession("FILENAME=" + new File("D:/PUBLIC/large.atfx"));
+        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
     }
 
     @AfterClass

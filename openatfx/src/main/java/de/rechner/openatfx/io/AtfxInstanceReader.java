@@ -80,6 +80,8 @@ class AtfxInstanceReader {
                                                aoSession.getEnumerationStructure());
         Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
 
+        long start = System.currentTimeMillis();
+
         // parse instances
         reader.next();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
@@ -89,7 +91,10 @@ class AtfxInstanceReader {
             reader.next();
         }
 
+        LOG.info("Parsed instances in " + (System.currentTimeMillis() - start) + " ms");
+
         // create relations
+        start = System.currentTimeMillis();
         ApplElemAccess applElemAccess = aoSession.getApplElemAccess();
         for (Entry<ElemId, Map<String, T_LONGLONG[]>> entry : relMap.entrySet()) {
             ElemId elemId = entry.getKey();
@@ -99,6 +104,8 @@ class AtfxInstanceReader {
                 applElemAccess.setRelInst(elemId, relName, relIids, SetType.APPEND);
             }
         }
+
+        LOG.info("Set relations in " + (System.currentTimeMillis() - start) + " ms");
     }
 
     /**
@@ -179,11 +186,11 @@ class AtfxInstanceReader {
 
             // application relation
             else if (reader.isStartElement() && (modelCache.getApplRel(aid, currentTagName) != null)) {
-                // only read the non inverse relations for performance reasons!
+                // only read the INVERSE relations for performance reasons!
                 ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
                 short relMax = applRel.arRelationRange.max;
                 short invMax = applRel.invRelationRange.max;
-                if ((invMax == -1) || (relMax == 1 && invMax == 1)) {
+                if (relMax == -1 || (relMax == 1 && invMax == 1)) {
                     String textContent = reader.getElementText();
                     if (textContent.length() > 0) {
                         T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);

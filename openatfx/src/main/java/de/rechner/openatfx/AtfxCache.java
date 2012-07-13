@@ -751,7 +751,7 @@ class AtfxCache {
 
         // add relation, if none multiple cardinality, overwrite
         Set<Long> relInstIds = this.instanceRelMap.get(aid).get(iid).get(applRel);
-        if (applRel.getRelationRange().max != -1) {
+        if ((relInstIds.size() > 0) && (applRel.getRelationRange().max != -1)) {
             relInstIds.clear();
         }
         relInstIds.addAll(otherIids);
@@ -767,7 +767,7 @@ class AtfxCache {
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         for (Long otherIid : otherIids) {
             Set<Long> invRelInstIds = this.instanceRelMap.get(otherAid).get(otherIid).get(invApplRel);
-            if (invApplRel.getRelationRange().max != -1) {
+            if ((invRelInstIds.size() > 0) && (invApplRel.getRelationRange().max != -1)) {
                 invRelInstIds.clear();
             }
             invRelInstIds.add(iid);

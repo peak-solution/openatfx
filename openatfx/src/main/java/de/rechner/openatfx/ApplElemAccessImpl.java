@@ -103,7 +103,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         }
 
         // create instances per application element
-        List<ElemId> elemIdList = new ArrayList<ElemId>();
+        List<ElemId> elemIdList = new ArrayList<ElemId>(numberOfRows);
         for (long aid : aeGroupColumns.keySet()) {
             AIDNameValueSeqUnitId idCol = idColumns.get(aid);
             // iterate over rows
@@ -216,25 +216,24 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
         // check relation
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, relName);
-//        if (applRel == null || applRel.getElem2() == null) {
-//            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
-//                    + aid + ",relName=" + relName);
-//        }
-
-        // alter relations
-        Collection<Long> otherIidsToSet = new ArrayList<Long>();
-        Collection<Long> otherIidsToRemove = new ArrayList<Long>();
-        for (T_LONGLONG otherIidT : instIds) {
-            long otherIid = ODSHelper.asJLong(otherIidT);
-            if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {
-                otherIidsToSet.add(otherIid);
-            } else if (type == SetType.REMOVE) {
-                otherIidsToSet.add(otherIid);
-            }
+        if (applRel == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
+                    + aid + ",relName=" + relName);
         }
 
-        this.atfxCache.createInstanceRelations(aid, iid, applRel, otherIidsToSet);
-        this.atfxCache.removeInstanceRelations(aid, iid, applRel, otherIidsToRemove);
+        if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {
+            Collection<Long> otherIidsToSet = new ArrayList<Long>(instIds.length);
+            for (T_LONGLONG otherIidT : instIds) {
+                otherIidsToSet.add(ODSHelper.asJLong(otherIidT));
+            }
+            this.atfxCache.createInstanceRelations(aid, iid, applRel, otherIidsToSet);
+        } else if (type == SetType.REMOVE) {
+            Collection<Long> otherIidsToRemove = new ArrayList<Long>(instIds.length);
+            for (T_LONGLONG otherIidT : instIds) {
+                otherIidsToRemove.add(ODSHelper.asJLong(otherIidT));
+            }
+            this.atfxCache.createInstanceRelations(aid, iid, applRel, otherIidsToRemove);
+        }
     }
 
     /***********************************************************************************

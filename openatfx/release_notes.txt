@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.3.2 (Christian Rechner)
+	
+		- Multiple performance tunings (up to 50% faster :-))
+
 	0.3.1 (Christian Rechner)
 	
 		- The data type of base attributes "start_offset" and "flags_start_offset" now
