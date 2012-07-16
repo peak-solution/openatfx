@@ -20,11 +20,9 @@ import org.asam.ods.ApplAttr;
 import org.asam.ods.ApplElem;
 import org.asam.ods.ApplElemAccess;
 import org.asam.ods.ApplRel;
-import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
-import org.asam.ods.BaseAttribute;
 import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
@@ -154,7 +152,7 @@ class AtfxInstanceReader {
                 reader.nextTag();
                 // external component
                 if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-                    ieExternalComponent = parseLocalColumnComponent(aoSession, files, reader);
+                    ieExternalComponent = parseLocalColumnComponent(aoSession, files, modelCache, reader);
                 }
                 // explicit values inline XML
                 else if (reader.isStartElement()) {
@@ -268,13 +266,14 @@ class AtfxInstanceReader {
      * 
      * @param aoSession The session.
      * @param files Map with component files.
+     * @param modelCache The application model cache.
      * @param reader The XML stream reader.
      * @return The created instance element of base type 'external_component'
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error creating instance element.
      */
     private InstanceElement parseLocalColumnComponent(AoSession aoSession, Map<String, String> files,
-            XMLStreamReader reader) throws XMLStreamException, AoException {
+            ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
         ApplicationStructure as = aoSession.getApplicationStructure();
         EnumerationDefinition typeSpectEnum = as.getEnumerationDefinition("typespec_enum");
         String description = "";
@@ -328,55 +327,59 @@ class AtfxInstanceReader {
 
         // create attribute values of external component
         ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
-        ApplicationElement aeExtComp = null;
         if (aes.length != 1) {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "None or multiple application elements of type 'AoExternalComponent' found");
         }
-        aeExtComp = aes[0];
-
-        // collect base attributes and map to application attributes
-        Map<String, String> baseAttrMap = new HashMap<String, String>();
-        for (ApplicationAttribute aa : aeExtComp.getAttributes("*")) {
-            BaseAttribute ba = aa.getBaseAttribute();
-            if (ba != null) {
-                baseAttrMap.put(ba.getName(), aa.getName());
-            }
-        }
+        ApplicationElement aeExtComp = aes[0];
+        long aidExtComp = ODSHelper.asJLong(aeExtComp.getId());
 
         // create external component instance
         InstanceElement ieExtComp = aeExtComp.createInstance("ExtComp");
         List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
+
         // mandatory base attribute 'filename_url'
-        String attrname = baseAttrMap.get("filename_url");
-        attrsList.add(ODSHelper.createStringNVU(attrname, fileName));
+        ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "filename_url");
+        attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, fileName));
+
         // mandatory base attribute 'value_type'
-        attrname = baseAttrMap.get("value_type");
-        attrsList.add(ODSHelper.createEnumNVU(attrname, dataType));
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "value_type");
+        attrsList.add(ODSHelper.createEnumNVU(applAttr.aaName, dataType));
+
         // mandatory base attribute 'component_length'
-        attrname = baseAttrMap.get("component_length");
-        attrsList.add(ODSHelper.createLongNVU(attrname, length));
-        // mandatory base attribute 'start_offset'
-        attrname = baseAttrMap.get("start_offset");
-        attrsList.add(ODSHelper.createLongLongNVU(attrname, inioffset));
-        // mandatory base attribute 'block_size'
-        attrname = baseAttrMap.get("block_size");
-        attrsList.add(ODSHelper.createLongNVU(attrname, blockSize));
-        // mandatory base attribute 'valuesperblock'
-        attrname = baseAttrMap.get("valuesperblock");
-        attrsList.add(ODSHelper.createLongNVU(attrname, valPerBlock));
-        // mandatory base attribute 'value_offset'
-        attrname = baseAttrMap.get("value_offset");
-        attrsList.add(ODSHelper.createLongNVU(attrname, valOffsets));
-        // optional base attribute 'description'
-        attrname = baseAttrMap.get("description");
-        if (attrname != null && attrname.length() > 0) {
-            attrsList.add(ODSHelper.createStringNVU(attrname, description));
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "component_length");
+        attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, length));
+
+        // mandatory base attribute 'start_offset', may be DT_LONG or DT_LONGLONG
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "start_offset");
+        if (applAttr.dType == DataType.DT_LONG) {
+            attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) inioffset));
+        } else {
+            attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, inioffset));
         }
+
+        // mandatory base attribute 'block_size'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "block_size");
+        attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, blockSize));
+
+        // mandatory base attribute 'valuesperblock'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "valuesperblock");
+        attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, valPerBlock));
+
+        // mandatory base attribute 'value_offset'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "value_offset");
+        attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, valOffsets));
+
+        // optional base attribute 'description'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "description");
+        if (applAttr != null && applAttr.aaName.length() > 0) {
+            attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, description));
+        }
+
         // optional base attribute 'ordinal_number'
-        attrname = baseAttrMap.get("ordinal_number");
-        if (attrname != null && attrname.length() > 0) {
-            attrsList.add(ODSHelper.createLongNVU(attrname, 1));
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "ordinal_number");
+        if (applAttr != null && applAttr.aaName.length() > 0) {
+            attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, 1));
         }
         ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
 

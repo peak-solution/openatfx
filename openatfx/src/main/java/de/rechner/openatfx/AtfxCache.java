@@ -16,6 +16,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementHelper;
@@ -53,7 +54,7 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** instance values */
-    private final Map<Long, Map<Long, Map<Integer, TS_Value>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
+    private final Map<Long, Map<Long, Map<Integer, Object>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
 
     /** instance attribute values */
     private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
@@ -83,7 +84,7 @@ class AtfxCache {
         this.inverseRelationMap = new HashMap<ApplicationRelation, ApplicationRelation>();
 
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
-        this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, TS_Value>>>();
+        this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, Object>>>();
         this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
 
@@ -151,7 +152,7 @@ class AtfxCache {
         this.baNameToAttrNoMap.put(aid, new HashMap<String, Integer>());
         this.applicationRelationMap.put(aid, new LinkedHashSet<ApplicationRelation>());
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
-        this.instanceValueMap.put(aid, new TreeMap<Long, Map<Integer, TS_Value>>());
+        this.instanceValueMap.put(aid, new TreeMap<Long, Map<Integer, Object>>());
         this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
         this.instanceElementCache.put(aid, new TreeMap<Long, InstanceElement>());
 
@@ -330,8 +331,8 @@ class AtfxCache {
         this.baNameToAttrNoMap.get(aid).remove(baName);
 
         // remove from instance value map
-        Map<Long, Map<Integer, TS_Value>> ieValueMap = this.instanceValueMap.get(aid);
-        for (Map<Integer, TS_Value> v : ieValueMap.values()) {
+        Map<Long, Map<Integer, Object>> ieValueMap = this.instanceValueMap.get(aid);
+        for (Map<Integer, Object> v : ieValueMap.values()) {
             if (v != null) {
                 v.remove(attrNo);
             }
@@ -473,7 +474,7 @@ class AtfxCache {
             this.instanceRelMap.get(aid).get(iid).put(rel, new TreeSet<Long>());
         }
 
-        this.instanceValueMap.get(aid).put(iid, new HashMap<Integer, TS_Value>());
+        this.instanceValueMap.get(aid).put(iid, new HashMap<Integer, Object>());
         this.instanceAttrValueMap.get(aid).put(iid, new LinkedHashMap<String, TS_Value>());
     }
 
@@ -649,7 +650,7 @@ class AtfxCache {
      * @param attrNo The application attribute number.
      * @param value The value.
      */
-    public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
+    public void setInstanceValue(long aid, long iid, int attrNo, java.lang.Object value) throws AoException {
         this.instanceValueMap.get(aid).get(iid).put(attrNo, value);
     }
 
@@ -660,8 +661,9 @@ class AtfxCache {
      * @param iid The instance id.
      * @param valName The application attribute number.
      * @return The value, null if not found.
+     * @throws AoException
      */
-    public TS_Value getInstanceValue(long aid, long iid, int attrNo) {
+    public java.lang.Object getInstanceValue(long aid, int attrNo, long iid) throws AoException {
         return this.instanceValueMap.get(aid).get(iid).get(attrNo);
     }
 
@@ -708,16 +710,17 @@ class AtfxCache {
      * Returns all values of an instance attribute of a given list of instances.
      * 
      * @param aid the application element id
-     * @param iids the array of instance ids
      * @param attrNo the attribute number
+     * @param iids the array of instance ids
      * @return TS_ValueSeq containing all values, or null, if one or more of the instances do not possess the instance
      *         attribute.
      * @throws AoException if the conversion from tsValue array to tsValueSeq fails
      */
-    public TS_ValueSeq listInstanceValues(long aid, long[] iids, int attrNo) throws AoException {
+    public TS_ValueSeq listInstanceValues(long aid, int attrNo, long[] iids) throws AoException {
         TS_Value[] tsValues = new TS_Value[iids.length];
+        DataType dt = getApplicationAttribute(aid, attrNo).getDataType();
         for (int index = 0; index < iids.length; index++) {
-            TS_Value value = getInstanceValue(aid, iids[index], attrNo);
+            TS_Value value = ODSHelper.jObject2tsValue(dt, getInstanceValue(aid, attrNo, iids[index]));
             if (value == null) {
                 return null;
             }

@@ -26,9 +26,20 @@ public class PerformanceTest {
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-        // aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
-        // .newSession("FILENAME=" + new File("D:/PUBLIC/large.atfx"));
-        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+        aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
+                                    .newSession("FILENAME=" + new File("D:/PUBLIC/large.atfx"));
+
+        // aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new
+        // File(url.getFile()));
+        System.gc();
+        // Print used memory
+        int mb = 1024 * 1024;
+        Runtime runtime = Runtime.getRuntime();
+        System.out.println("##### Heap utilization statistics [MB] #####"); // Print used memory
+        System.out.println("Used Memory:" + (runtime.totalMemory() - runtime.freeMemory()) / mb); // Print free memory
+        System.out.println("Free Memory:" + runtime.freeMemory() / mb); // Print total available memory
+        System.out.println("Total Memory:" + runtime.totalMemory() / mb); // Print Maximum available memory
+        System.out.println("Max Memory:" + runtime.maxMemory() / mb);
     }
 
     @AfterClass

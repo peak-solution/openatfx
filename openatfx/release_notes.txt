@@ -23,7 +23,7 @@
 
 1. Changes
 
-	0.3.2 (Christian Rechner)
+	0.4.0 (Christian Rechner)
 	
 		- Multiple performance tunings (up to 50% faster :-))
 

@@ -1430,6 +1430,268 @@ public abstract class ODSHelper {
         return tsValue;
     }
 
+    public static java.lang.Object tsValue2jObject(TS_Value value) throws AoException {
+        if (value == null || value.flag != 15) {
+            return null;
+        }
+
+        DataType dt = value.u.discriminator();
+        // DT_BLOB
+        if (dt == DataType.DT_BLOB) {
+            return value.u.blobVal();
+        }
+        // DT_BOOLEAN
+        else if (dt == DataType.DT_BOOLEAN) {
+            return value.u.booleanVal();
+        }
+        // DT_BYTE
+        else if (dt == DataType.DT_BYTE) {
+            return value.u.byteVal();
+        }
+        // DT_BYTESTR
+        else if (dt == DataType.DT_BYTESTR) {
+            return value.u.bytestrVal();
+        }
+        // DT_COMPLEX
+        else if (dt == DataType.DT_COMPLEX) {
+            return value.u.complexVal();
+        }
+        // DT_DATE
+        else if (dt == DataType.DT_DATE) {
+            return value.u.dateVal();
+        }
+        // DT_DCOMPLEX
+        else if (dt == DataType.DT_DCOMPLEX) {
+            return value.u.dcomplexVal();
+        }
+        // DT_DOUBLE
+        else if (dt == DataType.DT_DOUBLE) {
+            return value.u.doubleVal();
+        }
+        // DT_ENUM
+        else if (dt == DataType.DT_ENUM) {
+            return value.u.enumVal();
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dt == DataType.DT_EXTERNALREFERENCE) {
+            return value.u.extRefVal();
+        }
+        // DT_FLOAT
+        else if (dt == DataType.DT_FLOAT) {
+            return value.u.floatVal();
+        }
+        // DT_LONG
+        else if (dt == DataType.DT_LONG) {
+            return value.u.longVal();
+        }
+        // DT_LONGLONG
+        else if (dt == DataType.DT_LONGLONG) {
+            return value.u.longlongVal();
+        }
+        // DT_SHORT
+        else if (dt == DataType.DT_SHORT) {
+            return value.u.shortVal();
+        }
+        // DT_STRING
+        else if (dt == DataType.DT_STRING) {
+            return value.u.stringVal();
+        }
+        // DS_BOOLEAN
+        else if (dt == DataType.DS_BOOLEAN) {
+            return value.u.booleanSeq();
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            return value.u.byteSeq();
+        }
+        // DS_BYTESTR
+        else if (dt == DataType.DS_BYTESTR) {
+            return value.u.bytestrSeq();
+        }
+        // DS_COMPLEX
+        else if (dt == DataType.DS_COMPLEX) {
+            return value.u.complexSeq();
+        }
+        // DS_DATE
+        else if (dt == DataType.DS_DATE) {
+            return value.u.dateSeq();
+        }
+        // DS_DCOMPLEX
+        else if (dt == DataType.DS_DCOMPLEX) {
+            return value.u.dcomplexSeq();
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            return value.u.doubleSeq();
+        }
+        // DS_ENUM
+        else if (dt == DataType.DS_ENUM) {
+            return value.u.enumSeq();
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dt == DataType.DS_EXTERNALREFERENCE) {
+            return value.u.extRefSeq();
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            return value.u.floatSeq();
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            return value.u.longSeq();
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            return value.u.longlongSeq();
+        }
+        // DS_SHORT
+        else if (dt == DataType.DS_SHORT) {
+            return value.u.shortSeq();
+        }
+        // DS_STRING
+        else if (dt == DataType.DS_STRING) {
+            return value.u.stringSeq();
+        }
+        // unknown dataType
+        else {
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
+                    + dataType2String(dt));
+        }
+    }
+
+    public static TS_Value jObject2tsValue(DataType dt, java.lang.Object obj) throws AoException {
+        if (obj == null) {
+            return createEmptyTS_Value(dt);
+        }
+
+        TS_Value value = new TS_Value();
+        value.flag = 15;
+        value.u = new TS_Union();
+
+        // DT_BLOB
+        if (dt == DataType.DT_BLOB) {
+            value.u.blobVal((Blob) obj);
+        }
+        // DT_BOOLEAN
+        else if (dt == DataType.DT_BOOLEAN) {
+            value.u.booleanVal((Boolean) obj);
+        }
+        // DT_BYTE
+        else if (dt == DataType.DT_BYTE) {
+            value.u.byteVal((Byte) obj);
+        }
+        // DT_BYTESTR
+        else if (dt == DataType.DT_BYTESTR) {
+            value.u.bytestrVal((byte[]) obj);
+        }
+        // DT_COMPLEX
+        else if (dt == DataType.DT_COMPLEX) {
+            value.u.complexVal((T_COMPLEX) obj);
+        }
+        // DT_DATE
+        else if (dt == DataType.DT_DATE) {
+            value.u.dateVal((String) obj);
+        }
+        // DT_DCOMPLEX
+        else if (dt == DataType.DT_DCOMPLEX) {
+            value.u.complexVal((T_COMPLEX) obj);
+        }
+        // DT_DOUBLE
+        else if (dt == DataType.DT_DOUBLE) {
+            value.u.doubleVal((Double) obj);
+        }
+        // DT_ENUM
+        else if (dt == DataType.DT_ENUM) {
+            value.u.enumVal((Integer) obj);
+        }
+        // DT_EXTERNALREFERENCE
+        else if (dt == DataType.DT_EXTERNALREFERENCE) {
+            value.u.extRefVal((T_ExternalReference) obj);
+        }
+        // DT_FLOAT
+        else if (dt == DataType.DT_FLOAT) {
+            value.u.floatVal((Float) obj);
+        }
+        // DT_LONG
+        else if (dt == DataType.DT_LONG) {
+            value.u.longVal((Integer) obj);
+        }
+        // DT_LONGLONG
+        else if (dt == DataType.DT_LONGLONG) {
+            value.u.longlongVal((T_LONGLONG) obj);
+        }
+        // DT_SHORT
+        else if (dt == DataType.DT_SHORT) {
+            value.u.shortVal((Short) obj);
+        }
+        // DT_STRING
+        else if (dt == DataType.DT_STRING) {
+            value.u.stringVal((String) obj);
+        }
+        // DS_BOOLEAN
+        else if (dt == DataType.DS_BOOLEAN) {
+            value.u.booleanSeq((boolean[]) obj);
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            value.u.byteSeq((byte[]) obj);
+        }
+        // DS_BYTESTR
+        else if (dt == DataType.DS_BYTESTR) {
+            value.u.bytestrVal((byte[]) obj);
+        }
+        // DS_COMPLEX
+        else if (dt == DataType.DS_COMPLEX) {
+            value.u.complexSeq((T_COMPLEX[]) obj);
+        }
+        // DS_DATE
+        else if (dt == DataType.DS_DATE) {
+            value.u.dateSeq((String[]) obj);
+        }
+        // DS_DCOMPLEX
+        else if (dt == DataType.DS_DCOMPLEX) {
+            value.u.dcomplexSeq((T_DCOMPLEX[]) obj);
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            value.u.doubleSeq((double[]) obj);
+        }
+        // DS_ENUM
+        else if (dt == DataType.DS_ENUM) {
+            value.u.enumSeq((int[]) obj);
+        }
+        // DS_EXTERNALREFERENCE
+        else if (dt == DataType.DS_EXTERNALREFERENCE) {
+            value.u.extRefSeq((T_ExternalReference[]) obj);
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            value.u.floatSeq((float[]) obj);
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            value.u.longSeq((int[]) obj);
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            value.u.longlongSeq((T_LONGLONG[]) obj);
+        }
+        // DS_SHORT
+        else if (dt == DataType.DS_SHORT) {
+            value.u.shortSeq((short[]) obj);
+        }
+        // DS_STRING
+        else if (dt == DataType.DS_STRING) {
+            value.u.stringSeq((String[]) obj);
+        }
+        // unknown dataType
+        else {
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
+                    + dataType2String(dt));
+        }
+        return value;
+    }
+
     public static TS_Union tsUnionSeq2tsUnion(TS_UnionSeq uSeq, int pos) throws AoException {
         TS_Union u = new TS_Union();
         DataType dt = uSeq.discriminator();
@@ -1527,11 +1789,7 @@ public abstract class ODSHelper {
         }
         // DS_EXTERNALREFERENCE
         else if (dt == DataType.DS_EXTERNALREFERENCE) {
-            if (uSeq.extRefSeq().length <= pos) {
-                u.extRefSeq(new T_ExternalReference[0]);
-            } else {
-                u.extRefSeq(uSeq.extRefSeq()[pos]);
-            }
+            u.extRefSeq(uSeq.extRefSeq()[pos]);
         }
         // DS_FLOAT
         else if (dt == DataType.DS_FLOAT) {
@@ -1587,11 +1845,7 @@ public abstract class ODSHelper {
         }
         // DT_EXTERNALREFERENCE
         else if (dt == DataType.DT_EXTERNALREFERENCE) {
-            if (uSeq.extRefVal().length <= pos) {
-                u.extRefVal(null);
-            } else {
-                u.extRefVal(uSeq.extRefVal()[pos]);
-            }
+            u.extRefVal(uSeq.extRefVal()[pos]);
         }
         // DT_FLOAT
         else if (dt == DataType.DT_FLOAT) {
@@ -1615,8 +1869,8 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: "
-                    + dt.value());
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
+                    + ODSHelper.dataType2String(dt));
         }
         return u;
     }
@@ -1627,8 +1881,9 @@ public abstract class ODSHelper {
      * @param valName The attribute name.
      * @param dt The datatype.
      * @return TS_Value The TS_Value object.
+     * @throws AoException
      */
-    public static NameValueUnit createEmptyNVU(String valName, DataType dt) {
+    public static NameValueUnit createEmptyNVU(String valName, DataType dt) throws AoException {
         NameValueUnit nvu = new NameValueUnit();
         nvu.valName = valName;
         nvu.unit = "";
@@ -1641,8 +1896,9 @@ public abstract class ODSHelper {
      * 
      * @param dt The datatype.
      * @return TS_Value The TS_Value object.
+     * @throws AoException
      */
-    public static TS_Value createEmptyTS_Value(DataType dt) {
+    public static TS_Value createEmptyTS_Value(DataType dt) throws AoException {
         TS_Value value = new TS_Value();
         value.flag = 0;
         value.u = createEmptyTS_Union(dt);
@@ -1654,8 +1910,9 @@ public abstract class ODSHelper {
      * 
      * @param dt The datatype.
      * @return The TS_Union object.
+     * @throws AoException
      */
-    public static TS_Union createEmptyTS_Union(DataType dt) {
+    public static TS_Union createEmptyTS_Union(DataType dt) throws AoException {
         TS_Union u = new TS_Union();
         // DS_BOOLEAN
         if (dt == DataType.DS_BOOLEAN) {
@@ -1712,6 +1969,10 @@ public abstract class ODSHelper {
         // DS_STRING
         else if (dt == DataType.DS_STRING) {
             u.stringSeq(new String[0]);
+        }
+        // DT_BLOB
+        else if (dt == DataType.DT_BLOB) {
+            u.blobVal(null);
         }
         // DT_BOOLEAN
         else if (dt == DataType.DT_BOOLEAN) {
@@ -1778,6 +2039,11 @@ public abstract class ODSHelper {
         // DT_STRING
         else if (dt == DataType.DT_STRING) {
             u.stringVal("");
+        }
+        // unknown
+        else {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported datatype: "
+                    + dataType2String(dt));
         }
         return u;
     }
@@ -1986,6 +2252,14 @@ public abstract class ODSHelper {
             }
             return str.toString();
         }
+        // DT_UNKNOWN
+        else if (dt == DataType.DT_UNKNOWN) {
+            return "";
+        }
+        // DT_BLOB
+        else if (dt == DataType.DT_BLOB) {
+            return u.blobVal().getHeader();
+        }
         // DT_BOOLEAN
         else if (dt == DataType.DT_BOOLEAN) {
             return String.valueOf(u.booleanVal());
@@ -2069,7 +2343,8 @@ public abstract class ODSHelper {
             return u.stringVal();
         }
         // unknown datatype
-        throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: " + dt.value());
+        throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: "
+                + dataType2String(dt));
     }
 
     public static NameValueUnit string2NameValueUnit(DataType dt, String value, String valName, String unit)

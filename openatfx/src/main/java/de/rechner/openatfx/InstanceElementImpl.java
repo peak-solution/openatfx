@@ -34,7 +34,6 @@ import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.SubMatrix;
-import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
@@ -145,14 +144,8 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "Not application attribute of base attribute 'name' found for aid=" + aid);
         }
 
-        // create value
-        TS_Value value = new TS_Value();
-        value.flag = 15;
-        value.u = new TS_Union();
-        value.u.stringVal(iaName);
-
         // set value
-        this.atfxCache.setInstanceValue(this.aid, this.iid, attrNo, value);
+        this.atfxCache.setInstanceValue(this.aid, this.iid, attrNo, iaName);
     }
 
     /**
@@ -188,11 +181,12 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public NameValueUnit getValue(String aaName) throws AoException {
         // check if instance attribute
-        TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
-        if (value != null) {
-            return new NameValueUnit(aaName, value, "");
+        TS_Value iaValue = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
+        if (iaValue != null) {
+            return new NameValueUnit(aaName, iaValue, "");
         }
 
+        // check if attribute 'values' of 'AoLocalColumn'
         boolean lcValuesAttr = isLocalColumnValuesAttribute(aaName);
         Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
         if (attrNo == null) {
@@ -203,6 +197,14 @@ class InstanceElementImpl extends InstanceElementPOA {
         if (aa == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
                     + "' not found");
+        }
+
+        // datatype
+        DataType dt = null;
+        if (isLocalColumnValuesAttribute(aaName)) {
+            dt = getDataTypeForLocalColumnValues();
+        } else {
+            dt = aa.getDataType();
         }
 
         // unit
@@ -219,27 +221,26 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
 
         // check if attribute "value" is in external component
+        TS_Value value = null;
         if (isExternalComponentValue(aaName)) {
-            DataType dataType = getDataTypeForLocalColumnValues();
             InstanceElementIterator iter = getRelatedInstancesByRelationship(Relationship.CHILD, "*");
             InstanceElement[] ieExtComps = iter.nextN(iter.getCount());
             iter.destroy();
-            value = ExtCompReader.getInstance().readValues(ieExtComps, dataType);
+            value = ExtCompReader.getInstance().readValues(ieExtComps, dt);
         }
 
         // no instance attribute, check application attribute
         if (value == null) {
-            value = this.atfxCache.getInstanceValue(this.aid, this.iid, attrNo);
+            java.lang.Object obj = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
+            value = ODSHelper.jObject2tsValue(dt, obj);
 
             // value not found, return empty
             if (value == null) {
-                DataType dt = aa.getDataType();
                 // special case: attribute "values" of "AoLocalColumn" is not set!
                 if (dt == DataType.DT_UNKNOWN && isLocalColumnValuesAttribute(aaName)) {
                     dt = getDataTypeForLocalColumnValues();
                 }
                 value = ODSHelper.createEmptyTS_Value(dt);
-                this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
             }
         }
 
@@ -447,7 +448,7 @@ class InstanceElementImpl extends InstanceElementPOA {
                 throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
                                       "Updating the id of an instance element is not allowed!");
             }
-            this.atfxCache.setInstanceValue(aid, this.iid, attrNo, nvu.value);
+            this.atfxCache.setInstanceValue(aid, this.iid, attrNo, ODSHelper.tsValue2jObject(nvu.value));
         }
     }
 

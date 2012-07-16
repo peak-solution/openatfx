@@ -121,7 +121,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 for (AIDNameValueSeqUnitId avsui : aeGroupColumns.get(aid)) {
                     TS_Value value = ODSHelper.tsValueSeq2tsValue(avsui.values, row);
                     Integer attrNo = this.atfxCache.getAttrNoByName(aid, avsui.attr.aaName);
-                    this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
+                    this.atfxCache.setInstanceValue(aid, iid, attrNo, ODSHelper.tsValue2jObject(value));
                 }
                 // TODO: create relations
 
@@ -389,7 +389,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             } else {
                 String conditionString = condition.value.u.stringVal();
                 Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
-                TS_Value instanceAttributeValue = atfxCache.getInstanceValue(aid, iid, attrNo);
+                DataType dt = this.atfxCache.getApplicationAttribute(aid, attrNo).getDataType();
+                TS_Value instanceAttributeValue = ODSHelper.jObject2tsValue(dt, atfxCache.getInstanceValue(aid, attrNo,
+                                                                                                           iid));
                 if (instanceAttributeValue != null && instanceAttributeValue.u != null
                         && instanceAttributeValue.u.stringVal() != null) {
                     String instanceAttributeStringValue = instanceAttributeValue.u.stringVal();
@@ -410,7 +412,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             NameValueSeqUnitId nvsui = new NameValueSeqUnitId();
             nvsui.valName = selectedAttribute.attr.aaName;
             Integer attrNo = this.atfxCache.getAttrNoByName(aid, nvsui.valName);
-            nvsui.value = atfxCache.listInstanceValues(aid, iids, attrNo);
+            nvsui.value = atfxCache.listInstanceValues(aid, attrNo, iids);
             nvsui.unitId = selectedAttribute.unitId;
             resultValues.add(nvsui);
         }

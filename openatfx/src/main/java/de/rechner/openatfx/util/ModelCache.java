@@ -18,6 +18,7 @@ public class ModelCache {
     /** application structure */
     private final Map<String, ApplElem> applElems;
     private final Map<Long, Map<String, ApplAttr>> applAttrs; // aid, aaName, aa
+    private final Map<Long, Map<String, ApplAttr>> applAttrsByBaseName; // aid, baName, aa
     private final Map<Long, Map<String, ApplRel>> applRels; // aid, relName, rel
 
     /** enumerations */
@@ -31,6 +32,7 @@ public class ModelCache {
     public ModelCache(ApplicationStructureValue asv, EnumerationAttributeStructure[] easAr, EnumerationStructure[] esAr) {
         this.applElems = new HashMap<String, ApplElem>();
         this.applAttrs = new HashMap<Long, Map<String, ApplAttr>>();
+        this.applAttrsByBaseName = new HashMap<Long, Map<String, ApplAttr>>();
         this.applRels = new HashMap<Long, Map<String, ApplRel>>();
         this.applAttrEnums = new HashMap<Long, Map<String, String>>();
         this.enumItems = new HashMap<String, Map<String, Integer>>();
@@ -48,8 +50,10 @@ public class ModelCache {
 
             // attributes
             Map<String, ApplAttr> attrMap = new HashMap<String, ApplAttr>();
+            Map<String, ApplAttr> attrByBaseNameMap = new HashMap<String, ApplAttr>();
             for (ApplAttr applAttr : applElem.attributes) {
                 attrMap.put(applAttr.aaName, applAttr);
+                attrByBaseNameMap.put(applAttr.baName, applAttr);
 
                 // lcAeName
                 if (applElem.beName.equalsIgnoreCase("AoLocalColumn") && applAttr.baName.equals("values")) {
@@ -58,6 +62,7 @@ public class ModelCache {
 
             }
             this.applAttrs.put(ODSHelper.asJLong(applElem.aid), attrMap);
+            this.applAttrsByBaseName.put(ODSHelper.asJLong(applElem.aid), attrByBaseNameMap);
         }
 
         // relations
@@ -101,6 +106,10 @@ public class ModelCache {
 
     public ApplAttr getApplAttr(Long aid, String aaName) {
         return this.applAttrs.get(aid).get(aaName);
+    }
+
+    public ApplAttr getApplAttrByBaseName(Long aid, String baName) {
+        return this.applAttrsByBaseName.get(aid).get(baName);
     }
 
     public ApplRel getApplRel(Long aid, String relName) {

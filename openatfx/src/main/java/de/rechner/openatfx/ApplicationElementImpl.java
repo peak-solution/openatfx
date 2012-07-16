@@ -29,8 +29,6 @@ import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
-import org.asam.ods.TS_Union;
-import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
@@ -397,11 +395,7 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         this.atfxCache.addInstance(this.aid, iid);
 
         // set id value
-        TS_Value value = new TS_Value();
-        value.flag = 15;
-        value.u = new TS_Union();
-        value.u.longlongVal(ODSHelper.asODSLongLong(iid));
-        this.atfxCache.setInstanceValue(this.aid, iid, idAttrNo, value);
+        this.atfxCache.setInstanceValue(this.aid, iid, idAttrNo, ODSHelper.asODSLongLong(iid));
 
         // set instance name and return reference
         InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
