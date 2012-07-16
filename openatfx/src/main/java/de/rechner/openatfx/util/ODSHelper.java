@@ -1594,7 +1594,7 @@ public abstract class ODSHelper {
         }
         // DT_DCOMPLEX
         else if (dt == DataType.DT_DCOMPLEX) {
-            value.u.complexVal((T_COMPLEX) obj);
+            value.u.dcomplexVal((T_DCOMPLEX) obj);
         }
         // DT_DOUBLE
         else if (dt == DataType.DT_DOUBLE) {

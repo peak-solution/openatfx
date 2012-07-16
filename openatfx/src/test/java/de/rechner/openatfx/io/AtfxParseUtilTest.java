@@ -73,7 +73,7 @@ public class AtfxParseUtilTest {
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseLong("asd"));
+            assertEquals(0, AtfxParseUtil.parseLong("asd"));
         } catch (AoException e) {
         }
     }
@@ -99,12 +99,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseLong(""));
+            assertEquals(0, AtfxParseUtil.parseLong(""));
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseLong("asd"));
+            assertEquals(0, AtfxParseUtil.parseLong("asd"));
         } catch (AoException e) {
         }
     }
@@ -129,12 +129,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseFloat(""));
+            assertEquals(0f, AtfxParseUtil.parseFloat(""), 0.00001);
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseFloat("asd"));
+            assertEquals(0f, AtfxParseUtil.parseFloat("asd"), 0.00001);
         } catch (AoException e) {
         }
     }
@@ -160,12 +160,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseDouble(""));
+            assertEquals(0d, AtfxParseUtil.parseDouble(""), 0.00001);
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseDouble("asd"));
+            assertEquals(0d, AtfxParseUtil.parseDouble("asd"), 0.00001);
         } catch (AoException e) {
         }
     }
@@ -191,12 +191,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseShort(""));
+            assertEquals((short) 0, AtfxParseUtil.parseShort(""));
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseShort("asd"));
+            assertEquals((short) 0, AtfxParseUtil.parseShort("asd"));
         } catch (AoException e) {
         }
     }
