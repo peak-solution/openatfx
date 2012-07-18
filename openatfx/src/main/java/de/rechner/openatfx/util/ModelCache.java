@@ -3,6 +3,7 @@ package de.rechner.openatfx.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -90,11 +91,11 @@ public class ModelCache {
 
         // relations
         for (ApplRel applRel : asv.applRels) {
-            Long elem1 = ODSHelper.asJLong(applRel.elem1);
-            Map<String, ApplRel> map = this.applRels.get(elem1);
+            Long aidElem1 = ODSHelper.asJLong(applRel.elem1);
+            Map<String, ApplRel> map = this.applRels.get(aidElem1);
             if (map == null) {
                 map = new HashMap<String, ApplRel>();
-                this.applRels.put(elem1, map);
+                this.applRels.put(aidElem1, map);
             }
             map.put(applRel.arName, applRel);
         }
@@ -165,7 +166,11 @@ public class ModelCache {
     }
 
     public Collection<ApplRel> getApplRels(Long aid) throws AoException {
-        return this.applRels.get(aid).values();
+        Map<String, ApplRel> map = this.applRels.get(aid);
+        if (map == null) {
+            map = Collections.emptyMap();
+        }
+        return map.values();
     }
 
     public ApplRel getApplRel(Long aid, String relName) throws AoException {

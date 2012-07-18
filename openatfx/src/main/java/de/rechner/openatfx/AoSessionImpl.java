@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -57,6 +58,7 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.io.AtfxWriter;
+import de.rechner.openatfx.util.FileUtil;
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
 
@@ -79,7 +81,6 @@ class AoSessionImpl extends AoSessionPOA {
         STATIC_CONTEXT.put("USER", ODSHelper.createStringNV("USER", ""));
         STATIC_CONTEXT.put("PASSWORD", ODSHelper.createStringNV("PASSWORD", ""));
         STATIC_CONTEXT.put("ODSVERSION", ODSHelper.createStringNV("ODSVERSION", "5.2.0"));
-        STATIC_CONTEXT.put("write_mode", ODSHelper.createStringNV("write_mode", "database"));
         STATIC_CONTEXT.put("EXT_COMP_SEGSIZE", ODSHelper.createStringNV("EXT_COMP_SEGSIZE", ""));
         STATIC_CONTEXT.put("CREATE_COSESSION_ALLOWED", ODSHelper.createStringNV("CREATE_COSESSION_ALLOWED", "FALSE"));
         STATIC_CONTEXT.put("FILE_NOTATION", ODSHelper.createStringNV("FILE_NOTATION", "UNC_UNIX"));
@@ -103,6 +104,9 @@ class AoSessionImpl extends AoSessionPOA {
     private ApplicationStructure applicationStructure;
     private ApplElemAccess applElemAccess;
 
+    /** the temporary backup original file for transaction handling */
+    private File transactionFile;
+
     /**
      * Constructor.
      * 
@@ -121,6 +125,7 @@ class AoSessionImpl extends AoSessionPOA {
         String fileStr = atfxFile.getAbsolutePath().replaceAll("\\\\", "/");
         String directoryStr = atfxFile.getParentFile().getAbsolutePath().replaceAll("\\\\", "/");
         this.context.putAll(STATIC_CONTEXT);
+        this.context.put("write_mode", ODSHelper.createStringNV("write_mode", "database"));
         this.context.put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
         this.context.put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
         this.context.put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
@@ -306,10 +311,9 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#getContextByName(java.lang.String)
      */
     public NameValue getContextByName(String varName) throws AoException {
-        for (NameValue nv : this.context.values()) {
-            if (nv.valName.equals(varName)) {
-                return ODSHelper.cloneNV(nv);
-            }
+        NameValue nv = this.context.get(varName);
+        if (nv != null) {
+            return nv;
         }
         throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Context '" + varName + "' not found");
     }
@@ -435,7 +439,24 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#startTransaction()
      */
     public void startTransaction() throws AoException {
-        // TODO To be implemented
+        // check if already a transaction is opened - multiple transactions are not supported!
+        if (this.transactionFile != null) {
+            throw new AoException(ErrorCode.AO_TRANSACTION_ALREADY_ACTIVE, SeverityFlag.ERROR, 0,
+                                  "A transaction is already open and not yet commited or aborted");
+        }
+
+        // copy original file to tmp for backup
+        try {
+            File backupFile = File.createTempFile("openatfx_backup", ".atfx");
+            backupFile.deleteOnExit();
+            FileUtil.copyFile(this.atfxFile, backupFile);
+            this.transactionFile = backupFile;
+
+            LOG.info("Started transaction [backupFile=" + backupFile + "]");
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -444,7 +465,22 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#abortTransaction()
      */
     public void abortTransaction() throws AoException {
-        // TODO To be implemented
+        // check if already a transaction is opened - multiple transactions are not supported!
+        if (this.transactionFile == null) {
+            throw new AoException(ErrorCode.AO_TRANSACTION_NOT_ACTIVE, SeverityFlag.ERROR, 0, "No transaction active");
+        }
+
+        // restore backup
+        try {
+            FileUtil.copyFile(this.transactionFile, this.atfxFile);
+            this.transactionFile.delete();
+            this.transactionFile = null;
+
+            LOG.info("Aborted transaction");
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -453,7 +489,24 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#commitTransaction()
      */
     public void commitTransaction() throws AoException {
-        AtfxWriter.getInstance().writeXML(this.atfxFile, _this());
+        // check if already a transaction is opened - multiple transactions are not supported!
+        if (this.transactionFile == null) {
+            throw new AoException(ErrorCode.AO_TRANSACTION_NOT_ACTIVE, SeverityFlag.ERROR, 0, "No transaction active");
+        }
+
+        try {
+            // overwrite backup file
+            AtfxWriter.getInstance().writeXML(this.transactionFile, _this());
+
+            FileUtil.copyFile(this.transactionFile, this.atfxFile);
+            this.transactionFile.delete();
+            this.transactionFile = null;
+
+            LOG.info("Commited transaction");
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**

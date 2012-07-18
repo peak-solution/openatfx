@@ -1,4 +1,4 @@
-package de.rechner.openatfx.io;
+package de.rechner.openatfx;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,12 @@ import org.asam.ods.T_DCOMPLEX;
 import de.rechner.openatfx.util.ODSHelper;
 
 
-public class ExtCompReader {
+/**
+ * Utility class for reading values from external component files.
+ * 
+ * @author Christian Rechner
+ */
+class ExtCompReader {
 
     private static final Log LOG = LogFactory.getLog(ExtCompReader.class);
 

@@ -404,12 +404,12 @@ public class AtfxWriter {
         streamWriter.writeStartElement(AtfxTagConstants.INSTANCE_DATA);
 
         // iterate over all application elements/instance elements
+        ApplElemAccess aea = aoSession.getApplElemAccess();
         for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
             long aid = ODSHelper.asJLong(ae.getId());
             InstanceElementIterator iter = ae.getInstances("*");
             for (InstanceElement ie : iter.nextN(iter.getCount())) {
-                writeInstanceElement(streamWriter, modelCache.getApplElem(aid), modelCache,
-                                     aoSession.getApplElemAccess(), ie);
+                writeInstanceElement(streamWriter, modelCache.getApplElem(aid), modelCache, aea, ie);
             }
             iter.destroy();
         }

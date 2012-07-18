@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
@@ -28,6 +29,7 @@ import org.asam.ods.Measurement;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameIteratorHelper;
 import org.asam.ods.NameUnit;
+import org.asam.ods.NameValue;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.Relationship;
@@ -40,7 +42,6 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
-import de.rechner.openatfx.io.ExtCompReader;
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
 
@@ -437,27 +438,40 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#setValue(org.asam.ods.NameValueUnit)
      */
     public void setValue(NameValueUnit nvu) throws AoException {
-        // check if instance attribute
-        if (this.atfxCache.getInstanceAttributeValue(aid, iid, nvu.valName) != null) {
+        Integer attrNo = this.atfxCache.getAttrNoByName(this.aid, nvu.valName);
+
+        // instance attribute?
+        if ((attrNo == null) && (this.atfxCache.getInstanceAttributeValue(aid, iid, nvu.valName) != null)) {
             this.atfxCache.setInstanceAttributeValue(aid, iid, nvu.valName, nvu.value);
+            return;
         }
 
-        // application attribute
-        else {
-            Integer attrNo = this.atfxCache.getAttrNoByName(this.aid, nvu.valName);
-            if (attrNo == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '"
-                        + nvu.valName + "' not found");
-            }
-
-            // check if id has been updated
-            Integer baseAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
-            if (baseAttrNo != null && baseAttrNo.equals(attrNo)) {
-                throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
-                                      "Updating the id of an instance element is not allowed!");
-            }
-            this.atfxCache.setInstanceValue(aid, this.iid, attrNo, ODSHelper.tsValue2jObject(nvu.value));
+        // application attribute exists?
+        else if (attrNo == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + nvu.valName
+                    + "' not found");
         }
+
+        // check if attribute is 'values' of 'AoLocalColumn'
+        if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(this.aid)) {
+            if ((attrNo == this.atfxCache.getAttrNoByBaName(aid, "values"))) {
+                // write mode 'file', then write to external component
+                AoSession session = this.getApplicationElement().getApplicationStructure().getSession();
+                NameValue nv = session.getContextByName("write_mode");
+                if (nv.value.u.stringVal().equals("file")) {
+                    ExtCompWriter.getInstance().writeValues(atfxCache, _this(), nvu.value);
+                    return;
+                }
+            }
+        }
+
+        // check if id has been updated
+        Integer baseAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
+        if (baseAttrNo != null && baseAttrNo.equals(attrNo)) {
+            throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                                  "Updating the id of an instance element is not allowed!");
+        }
+        this.atfxCache.setInstanceValue(aid, this.iid, attrNo, ODSHelper.tsValue2jObject(nvu.value));
     }
 
     /**
