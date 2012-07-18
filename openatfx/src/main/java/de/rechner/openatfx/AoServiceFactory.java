@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.UUID;
 
 import org.apache.commons.logging.Log;
@@ -112,6 +113,9 @@ public class AoServiceFactory {
      */
     public AoSession newEmptyAoSession(ORB orb, File atfxFile, String baseModelVersion) throws AoException {
         try {
+            // create file
+            atfxFile.createNewFile();
+
             // read base structure
             BaseStructure baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
 
@@ -131,6 +135,9 @@ public class AoServiceFactory {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } catch (ServantAlreadyActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }

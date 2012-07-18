@@ -1,5 +1,6 @@
 package de.rechner.openatfx;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.BaseRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
@@ -65,6 +67,9 @@ class AtfxCache {
     /** The counters for ids */
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
+
+    /** The binary component file used to write all values to for this session */
+    private File extCompFile;
 
     /**
      * Constructor.
@@ -134,6 +139,14 @@ class AtfxCache {
     /***********************************************************************************
      * application elements
      ***********************************************************************************/
+
+    public File getExtCompFile() {
+        return extCompFile;
+    }
+
+    public void setExtCompFile(File extCompFile) {
+        this.extCompFile = extCompFile;
+    }
 
     /**
      * Adds an application element to the cache.
@@ -373,6 +386,16 @@ class AtfxCache {
     public ApplicationRelation getApplicationRelationByName(long aid, String relName) throws AoException {
         for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
             if (ar.getRelationName().equals(relName)) {
+                return ar;
+            }
+        }
+        return null;
+    }
+
+    public ApplicationRelation getApplicationRelationByBaseName(long aid, String bRelName) throws AoException {
+        for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
+            BaseRelation br = ar.getBaseRelation();
+            if (br != null && br.getRelationName().equals(bRelName)) {
                 return ar;
             }
         }

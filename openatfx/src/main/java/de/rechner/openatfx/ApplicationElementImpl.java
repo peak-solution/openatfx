@@ -515,8 +515,8 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         // check if instance exists
         long iid = ODSHelper.asJLong(ieId);
         if (this.atfxCache.getInstanceById(this.instancePOA, aid, iid) == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aid=" + aid + ",iid="
-                    + ODSHelper.asJLong(ieId) + " not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceElement aeName=" + getName()
+                    + ",iid=" + ODSHelper.asJLong(ieId) + " not found");
         }
         // remove recursively
         InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);

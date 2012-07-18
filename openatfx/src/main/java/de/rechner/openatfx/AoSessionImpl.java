@@ -125,11 +125,11 @@ class AoSessionImpl extends AoSessionPOA {
         String fileStr = atfxFile.getAbsolutePath().replaceAll("\\\\", "/");
         String directoryStr = atfxFile.getParentFile().getAbsolutePath().replaceAll("\\\\", "/");
         this.context.putAll(STATIC_CONTEXT);
-        this.context.put("write_mode", ODSHelper.createStringNV("write_mode", "database"));
+        this.context.put("write_mode", ODSHelper.createStringNV("write_mode", "file"));
         this.context.put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
         this.context.put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
         this.context.put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
-        this.context.put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "FALSE"));
+        this.context.put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
     }
 
     /**
