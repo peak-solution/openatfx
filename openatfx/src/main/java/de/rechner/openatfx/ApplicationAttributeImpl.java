@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttributePOA;
@@ -64,6 +66,8 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes.put("parameter_datatype", Arrays.asList(new String[] { "AoParameter" }));
         obligatoryAttributes.put("pvalue", Arrays.asList(new String[] { "AoParameter" }));
     }
+
+    private static final Log LOG = LogFactory.getLog(ApplicationAttributeImpl.class);
 
     private final AtfxCache atfxCache;
     private final long aid;
@@ -272,6 +276,15 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#setIsUnique(boolean)
      */
     public void setIsUnique(boolean aaIsUnique) throws AoException {
+        // it is not allowed to set the unique flag on base attributes
+        if (this.baseAttribute != null) {
+            LOG.warn("Setting the 'unique' flag on attributes derived from base attributes is not allowed [aid=" + aid
+                    + ",aaName=" + aaName + "]");
+            // throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
+            // "Setting the 'unique' flag on attributes derived from base attributes is not allowed!");
+            return;
+        }
+
         this.unique = aaIsUnique;
     }
 
@@ -412,7 +425,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#setUnit(org.asam.ods.T_LONGLONG)
      */
     public void setUnit(T_LONGLONG aaUnit) throws AoException {
-        // TODO: check if unit instance exists
         this.unitId = ODSHelper.asJLong(aaUnit);
     }
 
