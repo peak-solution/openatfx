@@ -167,7 +167,7 @@ public class ExtCompReader {
             // open source channel
             raf = new RandomAccessFile(extCompFile, "r");
             sourceChannel = raf.getChannel();
-            sourceMbb = sourceChannel.map(MapMode.READ_ONLY, 0, extCompFile.length());
+            sourceMbb = sourceChannel.map(MapMode.READ_ONLY, valueOffset, extCompFile.length());
 
             // set byte order
             ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;

@@ -653,7 +653,7 @@ class AtfxInstanceReader {
             String txt = reader.getElementText().trim();
             if (txt.length() > 0) {
                 String enumName = modelCache.getEnumName(aid, aaName);
-                int enumItem = modelCache.getEnumItem(enumName, txt);
+                int enumItem = modelCache.getEnumIndex(enumName, txt);
                 tsValue.u.enumVal(enumItem);
                 tsValue.flag = 15;
             }
@@ -774,7 +774,7 @@ class AtfxInstanceReader {
                 String enumName = modelCache.getEnumName(aid, aaName);
                 int[] enumItems = new int[seq.length];
                 for (int i = 0; i < enumItems.length; i++) {
-                    enumItems[i] = modelCache.getEnumItem(enumName, seq[i]);
+                    enumItems[i] = modelCache.getEnumIndex(enumName, seq[i]);
                 }
                 tsValue.u.enumSeq(enumItems);
                 tsValue.flag = 15;

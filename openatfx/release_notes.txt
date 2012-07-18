@@ -25,9 +25,10 @@
 
 	0.4.0 (Christian Rechner)
 	
-		- Multiple performance tunings (up to 50% faster :-))
+		- Multiple performance tunings in reading/writing (up to 50% faster :-))
 		- Fixes in memory consumption
 		- Fixed bug in DAT2ATFX converter template application model
+		- Changed default context variable INDENT_XML to FALSE
 		- Update to JUnit 4.10
 		- Update to woodstox 4.1.3
 

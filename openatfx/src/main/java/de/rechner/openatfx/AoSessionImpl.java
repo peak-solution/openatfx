@@ -124,7 +124,7 @@ class AoSessionImpl extends AoSessionPOA {
         this.context.put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
         this.context.put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
         this.context.put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
-        this.context.put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
+        this.context.put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "FALSE"));
     }
 
     /**

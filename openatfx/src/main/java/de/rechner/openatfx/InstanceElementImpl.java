@@ -129,7 +129,15 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getName()
      */
     public String getName() throws AoException {
-        return ODSHelper.getStringVal(getValueByBaseName("name"));
+        Integer attrNo = this.atfxCache.getAttrNoByBaName(this.aid, "name");
+        if (attrNo == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Not application attribute of base attribute 'name' found for aid=" + aid);
+        }
+
+        // set value
+        java.lang.Object obj = this.atfxCache.getInstanceValue(aid, attrNo, iid);
+        return (obj == null) ? "" : (String) obj;
     }
 
     /**

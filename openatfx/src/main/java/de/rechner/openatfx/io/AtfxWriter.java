@@ -8,10 +8,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -28,17 +27,13 @@ import org.asam.ods.ApplElemAccess;
 import org.asam.ods.ApplRel;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
-import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
-import org.asam.ods.ApplicationStructureValue;
 import org.asam.ods.AttrType;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
 import org.asam.ods.Blob;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
-import org.asam.ods.EnumerationAttributeStructure;
-import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
 import org.asam.ods.ErrorCode;
@@ -53,6 +48,7 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 
+import de.rechner.openatfx.util.ModelCache;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -68,11 +64,6 @@ public class AtfxWriter {
     /** singleton instance */
     private static volatile AtfxWriter instance;
 
-    /** model information for writing local column values */
-    private Long aidLocalColumn;
-    private String aaNameLocalColumnValues;
-    private String aaNameLocalColumnSequenceRepresentation;
-
     /**
      * Non visible constructor.
      */
@@ -86,10 +77,10 @@ public class AtfxWriter {
      * @throws AoException Error writing XML file.
      */
     public synchronized void writeXML(File xmlFile, AoSession aoSession) throws AoException {
-        this.aidLocalColumn = null;
-        this.aaNameLocalColumnValues = null;
-        this.aaNameLocalColumnSequenceRepresentation = null;
         long start = System.currentTimeMillis();
+        ModelCache modelCache = new ModelCache(aoSession.getApplicationStructureValue(),
+                                               aoSession.getEnumerationAttributes(),
+                                               aoSession.getEnumerationStructure());
 
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
         OutputStream fos = null;
@@ -111,10 +102,10 @@ public class AtfxWriter {
             // base model version
             writeBaseModelVersion(streamWriter, aoSession);
             // application model
-            writeApplicationModel(streamWriter, aoSession);
+            writeApplicationModel(streamWriter, aoSession, modelCache);
             // instance data
             if (instancesExists(aoSession)) {
-                writeInstanceData(streamWriter, aoSession);
+                writeInstanceData(streamWriter, aoSession, modelCache);
             }
 
             streamWriter.writeEndElement();
@@ -220,14 +211,13 @@ public class AtfxWriter {
      * 
      * @param streamWriter The XML stream writer.
      * @param aoSession The session.
+     * @param modelCache The application model cache.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading application model.
      */
-    private void writeApplicationModel(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
-            AoException {
+    private void writeApplicationModel(XMLStreamWriter streamWriter, AoSession aoSession, ModelCache modelCache)
+            throws XMLStreamException, AoException {
         ApplicationStructure as = aoSession.getApplicationStructure();
-        ApplicationStructureValue av = aoSession.getApplicationStructureValue();
-        EnumerationAttributeStructure[] eas = aoSession.getEnumerationAttributes();
         streamWriter.writeStartElement(AtfxTagConstants.APPL_MODEL);
 
         // enumerations
@@ -239,32 +229,16 @@ public class AtfxWriter {
                 }
             }
         }
-        for (EnumerationStructure es : aoSession.getEnumerationStructure()) {
+        for (EnumerationStructure es : modelCache.getEnumerationStructure()) {
             if (!baseEnums.contains(es.enumName)) {
                 writeEnumerationStructure(streamWriter, es);
             }
         }
 
-        // build maps of application elements and application relations
-        Map<Long, ApplElem> applElemMap = new HashMap<Long, ApplElem>();
-        Map<Long, List<ApplRel>> applRelsMap = new HashMap<Long, List<ApplRel>>();
-        for (ApplElem applElem : av.applElems) {
-            applElemMap.put(ODSHelper.asJLong(applElem.aid), applElem);
-        }
-        for (ApplRel applRel : av.applRels) {
-            long aid = ODSHelper.asJLong(applRel.elem1);
-            List<ApplRel> applRelsList = applRelsMap.get(aid);
-            if (applRelsList == null) {
-                applRelsList = new ArrayList<ApplRel>();
-                applRelsMap.put(aid, applRelsList);
-            }
-            applRelsList.add(applRel);
-        }
-
         // application elements
-        for (ApplElem applElem : av.applElems) {
+        for (ApplElem applElem : modelCache.getApplElems()) {
             ApplicationElement applicationElement = as.getElementById(applElem.aid);
-            writeApplElem(streamWriter, applicationElement, applElem, applElemMap, applRelsMap, eas);
+            writeApplElem(streamWriter, applicationElement, applElem, modelCache);
         }
 
         streamWriter.writeEndElement();
@@ -303,8 +277,7 @@ public class AtfxWriter {
      * @throws AoException Error reading application model.
      */
     private void writeApplElem(XMLStreamWriter streamWriter, ApplicationElement applicationElement, ApplElem applElem,
-            Map<Long, ApplElem> applElemMap, Map<Long, List<ApplRel>> applRelsMap, EnumerationAttributeStructure[] eas)
-            throws XMLStreamException, AoException {
+            ModelCache modelCache) throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.APPL_ELEM);
         writeElement(streamWriter, AtfxTagConstants.APPL_ELEM_NAME, applElem.aeName);
         writeElement(streamWriter, AtfxTagConstants.APPL_ELEM_BASETYPE, applElem.beName);
@@ -313,24 +286,14 @@ public class AtfxWriter {
         // application attributes
         for (ApplAttr applAttr : applElem.attributes) {
             ApplicationAttribute applicationAttribute = applicationElement.getAttributeByName(applAttr.aaName);
-            writeApplAttr(streamWriter, aid, applicationAttribute, applAttr, eas);
-
-            // set global attributes
-            if (applElem.beName.equalsIgnoreCase("AoLocalColumn")) {
-                this.aidLocalColumn = ODSHelper.asJLong(applElem.aid);
-                if (applAttr.baName.equalsIgnoreCase("values")) {
-                    this.aaNameLocalColumnValues = applAttr.aaName;
-                } else if (applAttr.baName.equalsIgnoreCase("sequence_representation")) {
-                    this.aaNameLocalColumnSequenceRepresentation = applAttr.aaName;
-                }
-            }
+            writeApplAttr(streamWriter, aid, applicationAttribute, applAttr, modelCache);
         }
 
         // applicaton relations
-        List<ApplRel> applRels = applRelsMap.get(aid);
+        Collection<ApplRel> applRels = modelCache.getApplRels(aid);
         if (applRels != null) {
             for (ApplRel applRel : applRels) {
-                writeApplRel(streamWriter, applRel, applElemMap);
+                writeApplRel(streamWriter, applRel, modelCache);
             }
         }
 
@@ -344,12 +307,12 @@ public class AtfxWriter {
      * @param aid The application element id.
      * @param applicationAttribute The application attribute object.
      * @param applAttr The application attribute.
-     * @param eas All enumeration attributes to find out the enumeration name.
+     * @param modelCache The model cache.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading application structure values.
      */
     private void writeApplAttr(XMLStreamWriter streamWriter, long aid, ApplicationAttribute applicationAttribute,
-            ApplAttr applAttr, EnumerationAttributeStructure[] eas) throws XMLStreamException, AoException {
+            ApplAttr applAttr, ModelCache modelCache) throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.APPL_ATTR);
         // name
         writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_NAME, applAttr.aaName);
@@ -369,12 +332,8 @@ public class AtfxWriter {
         // enumeration
         if ((applAttr.baName.length() < 1)
                 && (applAttr.dType == DataType.DT_ENUM || applAttr.dType == DataType.DS_ENUM)) {
-            for (EnumerationAttributeStructure e : eas) {
-                if (aid == ODSHelper.asJLong(e.aid) && applAttr.aaName.equals(e.aaName)) {
-                    writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_ENUMTYPE, e.enumName);
-                    break;
-                }
-            }
+            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_ENUMTYPE,
+                         modelCache.getEnumName(aid, applAttr.aaName));
         }
         // autogenerated
         if (applicationAttribute.isAutogenerated()) {
@@ -407,15 +366,16 @@ public class AtfxWriter {
      * 
      * @param streamWriter The XML stream writer.
      * @param applRel The application relation.
-     * @param applElemMap Map containing all application elements by aid.
+     * @param modelCache The model cache.
      * @throws XMLStreamException Error writing XML file.
+     * @throws AoException
      */
-    private void writeApplRel(XMLStreamWriter streamWriter, ApplRel applRel, Map<Long, ApplElem> applElemMap)
-            throws XMLStreamException {
+    private void writeApplRel(XMLStreamWriter streamWriter, ApplRel applRel, ModelCache modelCache)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.APPL_REL);
         writeElement(streamWriter, AtfxTagConstants.APPL_REL_NAME, applRel.arName);
         writeElement(streamWriter, AtfxTagConstants.APPL_REL_REFTO,
-                     applElemMap.get(ODSHelper.asJLong(applRel.elem2)).aeName);
+                     modelCache.getApplElem(ODSHelper.asJLong(applRel.elem2)).aeName);
         if (applRel.brName.length() > 0) {
             writeElement(streamWriter, AtfxTagConstants.APPL_REL_BASEREL, applRel.brName);
         }
@@ -439,16 +399,17 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instances.
      */
-    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
-            AoException {
+    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession, ModelCache modelCache)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.INSTANCE_DATA);
 
         // iterate over all application elements/instance elements
-        ApplElemAccess aea = aoSession.getApplElemAccess();
         for (ApplicationElement ae : aoSession.getApplicationStructure().getElements("*")) {
+            long aid = ODSHelper.asJLong(ae.getId());
             InstanceElementIterator iter = ae.getInstances("*");
             for (InstanceElement ie : iter.nextN(iter.getCount())) {
-                writeInstanceElement(streamWriter, aea, ie);
+                writeInstanceElement(streamWriter, modelCache.getApplElem(aid), modelCache,
+                                     aoSession.getApplElemAccess(), ie);
             }
             iter.destroy();
         }
@@ -460,40 +421,41 @@ public class AtfxWriter {
      * Writes the data of an instance element to
      * 
      * @param streamWriter The XML stream writer.
+     * @param modelCache The model cache.
      * @param aea The ApplElemAccess interface.
      * @param ie The instance element.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instance data.
      */
-    private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElemAccess aea, InstanceElement ie)
-            throws XMLStreamException, AoException {
-        ApplicationElement applElem = ie.getApplicationElement();
-        long aid = ODSHelper.asJLong(applElem.getId());
-        streamWriter.writeStartElement(applElem.getName());
+    private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElem applElem, ModelCache modelCache,
+            ApplElemAccess aea, InstanceElement ie) throws XMLStreamException, AoException {
+        streamWriter.writeStartElement(applElem.aeName);
 
         // write application attribute data
-        String[] attrNames = ie.listAttributes("*", AttrType.APPLATTR_ONLY);
-        List<String> attrNameList = new ArrayList<String>(Arrays.asList(attrNames));
+        List<String> attrNames = new ArrayList<String>(
+                                                       Arrays.asList(modelCache.getApplAttrNames(ODSHelper.asJLong(applElem.aid))));
 
         // special handling: LocalColumn 'values'; do not write external component values
-        if ((this.aidLocalColumn != null) && (this.aidLocalColumn == aid) && (this.aaNameLocalColumnValues != null)
-                && (this.aaNameLocalColumnSequenceRepresentation != null)) {
+        if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))
+                && (modelCache.getLcValuesAaName() != null)) {
             // remove values from attribute list
-            attrNameList.remove(this.aaNameLocalColumnValues);
-            // query sequence representation
+            attrNames.remove(modelCache.getLcValuesAaName());
+            // attrNames sequence representation
             int seqRepEnum = ODSHelper.getEnumVal(ie.getValueByBaseName("sequence_representation"));
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
             // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
             if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+                // do not export values into XML file
             } else {
-                writeLocalColumnValues(streamWriter, ie.getValue(this.aaNameLocalColumnValues));
+                writeLocalColumnValues(streamWriter, ie.getValue(modelCache.getLcValuesAaName()));
             }
         }
 
         // write attributes if not null
-        for (NameValueUnit nvu : ie.getValueSeq(attrNameList.toArray(new String[0]))) {
+        long aid = ODSHelper.asJLong(applElem.aid);
+        for (NameValueUnit nvu : ie.getValueSeq(attrNames.toArray(new String[0]))) {
             if (nvu.value.flag == 15) {
-                writeApplAttrValue(streamWriter, applElem, nvu);
+                writeApplAttrValue(streamWriter, modelCache, aid, nvu);
             }
         }
 
@@ -508,12 +470,11 @@ public class AtfxWriter {
         }
 
         // write relations
-        ElemId elemId = new ElemId(ie.getApplicationElement().getId(), ie.getId());
-        for (ApplicationRelation rel : ie.getApplicationElement().getAllRelations()) {
-            String relName = rel.getRelationName();
-            T_LONGLONG[] relInsts = aea.getRelInst(elemId, rel.getRelationName());
+        ElemId elemId = new ElemId(applElem.aid, ie.getId());
+        for (ApplRel applRel : modelCache.getApplRels(aid)) {
+            T_LONGLONG[] relInsts = aea.getRelInst(elemId, applRel.arName);
             if (relInsts.length > 0) {
-                writeElement(streamWriter, relName, AtfxExportUtil.createLongLongSeqString(relInsts));
+                writeElement(streamWriter, applRel.arName, AtfxExportUtil.createLongLongSeqString(relInsts));
             }
         }
 
@@ -624,7 +585,7 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instance data.
      */
-    private void writeApplAttrValue(XMLStreamWriter streamWriter, ApplicationElement applElem, NameValueUnit nvu)
+    private void writeApplAttrValue(XMLStreamWriter streamWriter, ModelCache modelCache, long aid, NameValueUnit nvu)
             throws XMLStreamException, AoException {
         streamWriter.writeStartElement(nvu.valName);
 
@@ -665,9 +626,9 @@ public class AtfxWriter {
         }
         // DT_ENUM
         else if (dataType == DataType.DT_ENUM) {
-            ApplicationAttribute applAttr = applElem.getAttributeByName(nvu.valName);
-            EnumerationDefinition ed = applAttr.getEnumerationDefinition();
-            streamWriter.writeCharacters(ed.getItemName(u.enumVal()));
+            String enumName = modelCache.getEnumName(aid, nvu.valName);
+            String enumValue = modelCache.getEnumItem(enumName, u.enumVal());
+            streamWriter.writeCharacters(enumValue);
         }
         // DT_EXTERNALREFERENCE
         else if (dataType == DataType.DT_EXTERNALREFERENCE) {
@@ -729,11 +690,11 @@ public class AtfxWriter {
         }
         // DS_ENUM
         else if (dataType == DataType.DS_ENUM) {
-            ApplicationAttribute applAttr = applElem.getAttributeByName(nvu.valName);
-            EnumerationDefinition ed = applAttr.getEnumerationDefinition();
+            String enumName = modelCache.getEnumName(aid, nvu.valName);
             List<String> list = new ArrayList<String>();
             for (int i : u.enumSeq()) {
-                list.add(ed.getItemName(i));
+                String enumValue = modelCache.getEnumItem(enumName, i);
+                list.add(enumValue);
             }
             writeStringSeq(streamWriter, list.toArray(new String[0]));
         }
@@ -874,24 +835,6 @@ public class AtfxWriter {
 
         streamWriter.writeEndElement();
     }
-
-    // /**
-    // * Returns whether given attribute name if the attribute 'values' of the local column instance.
-    // *
-    // * @param aeName The application element name.
-    // * @param aaName The application attribute name.
-    // * @return True, if 'values' attribute.
-    // * @throws AoException Error checking attribute.
-    // */
-    // private boolean isLocalColumnValuesAttr(String aeName, String aaName) throws AoException {
-    // if (this.aeNameLocalColumn != null && this.aaNameLocalColumnValues != null) {
-    // if (this.aeNameLocalColumn.equalsIgnoreCase(aeName)
-    // && this.aaNameLocalColumnValues.equalsIgnoreCase(aaName)) {
-    // return true;
-    // }
-    // }
-    // return false;
-    // }
 
     /**
      * Writes the Blob value to the XML stream.

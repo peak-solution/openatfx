@@ -231,6 +231,8 @@ public class AtfxReader {
      */
     private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
             AoException {
+        long start = System.currentTimeMillis();
+
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL))) {
             // 'application_enumeration'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM)) {
@@ -276,6 +278,8 @@ public class AtfxReader {
                 }
             }
         }
+
+        LOG.info("Parsed application model in " + (System.currentTimeMillis() - start) + " ms");
     }
 
     private static BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
