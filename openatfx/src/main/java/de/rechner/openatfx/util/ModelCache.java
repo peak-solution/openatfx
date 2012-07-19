@@ -133,8 +133,17 @@ public class ModelCache {
         return this.asv;
     }
 
+    public EnumerationStructure getEnumerationStructure(String enumName) throws AoException {
+        for (EnumerationStructure es : this.esAr) {
+            if (es.enumName.equals(enumName)) {
+                return es;
+            }
+        }
+        return null;
+    }
+
     public EnumerationStructure[] getEnumerationStructure() throws AoException {
-        return esAr;
+        return this.esAr;
     }
 
     public Collection<ApplElem> getApplElems() throws AoException {

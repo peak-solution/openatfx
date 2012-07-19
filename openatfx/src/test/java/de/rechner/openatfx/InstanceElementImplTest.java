@@ -328,8 +328,6 @@ public class InstanceElementImplTest {
     @Test
     public void testSetValue() {
         try {
-            aoSession.startTransaction();
-            
             // application attribute
             ieDts.setValue(ODSHelper.createStringNVU("version", "aaa"));
             assertEquals("aaa", ieDts.getValue("version").value.u.stringVal());
@@ -346,10 +344,7 @@ public class InstanceElementImplTest {
             ieDts.setValue(ODSHelper.createStringNVU("instattr", "aaa"));
             assertEquals("aaa", ieDts.getValue("instattr").value.u.stringVal());
             ieDts.removeInstanceAttribute("instattr");
-            
-            aoSession.commitTransaction();
         } catch (AoException e) {
-            e.printStackTrace();
             fail(e.reason);
         }
         // non existing value

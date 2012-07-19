@@ -57,7 +57,7 @@ public class Dat2AtfxConverterTest {
         }
     }
 
-    // @Test
+    @Test
     public void testConvertBulk() {
         File sourceDir = new File("D:/PUBLIC/TestData/dat/hvb/20120207_pHev_Eingangsvermessung_2012028");
         File targetFile = new File("D:/PUBLIC/transfer.atfx");

@@ -256,8 +256,6 @@ class ExtCompWriter {
                 LOG.error(e.getMessage(), e);
             }
         }
-
-//        System.out.println("write to file! " + extCompFile);
     }
 
     /**
