@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.util.ODSHelper;
 
 
 public class ExporterImplTest {
@@ -42,7 +43,9 @@ public class ExporterImplTest {
                                                       .newSession("FILENAME=" + new File(url.getFile()));
             File targetFile = new File("D:/PUBLIC/export.atfx");
             IExporter exporter = new ExporterImpl();
-            exporter.export(sourceSession, new ElemId[0], targetFile, new Properties());
+            exporter.export(sourceSession,
+                            new ElemId[] { new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(58)) },
+                            targetFile, new Properties());
 
         } catch (AoException e) {
             fail(e.reason);

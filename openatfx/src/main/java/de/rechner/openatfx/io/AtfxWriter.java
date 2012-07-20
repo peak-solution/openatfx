@@ -351,7 +351,9 @@ public class AtfxWriter {
         if (applAttr.dType == DataType.DT_STRING || applAttr.dType == DataType.DS_STRING
                 || applAttr.dType == DataType.DT_EXTERNALREFERENCE || applAttr.dType == DataType.DS_EXTERNALREFERENCE
                 || applAttr.dType == DataType.DT_DATE || applAttr.dType == DataType.DS_DATE) {
-            writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_LENGTH, String.valueOf(applAttr.length));
+            if (applAttr.length > 1) { // length is not default
+                writeElement(streamWriter, AtfxTagConstants.APPL_ATTR_LENGTH, String.valueOf(applAttr.length));
+            }
         }
         // unit
         long unitId = ODSHelper.asJLong(applAttr.unitId);

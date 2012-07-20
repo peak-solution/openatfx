@@ -27,6 +27,7 @@ import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
+import org.asam.ods.InstanceElement;
 import org.asam.ods.RelationRange;
 import org.omg.CORBA.ORB;
 
@@ -88,11 +89,26 @@ public class ExporterImpl implements IExporter {
             Map<Long, Long> source2TargetAidMap = exportApplicationElements(smc, targetSession);
             exportApplicationRelations(smc, targetSession, source2TargetAidMap);
 
+            // export instances
+            ApplicationStructure sourceAs = sourceSession.getApplicationStructure();
+            ApplicationStructure targetAs = targetSession.getApplicationStructure();
+            for (ElemId elemId : sourceElemIds) {
+                exportInstance(sourceAs, smc, targetAs, elemId);
+            }
+
             targetSession.commitTransaction();
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             targetSession.abortTransaction();
         }
+    }
+
+    private void exportInstance(ApplicationStructure sourceAs, ModelCache smc, ApplicationStructure targetAs,
+            ElemId elemId) throws AoException {
+        InstanceElement sourceIe = sourceAs.getInstancesById(new ElemId[] { elemId })[0];
+
+        System.out.println(sourceIe.getAsamPath());
+        System.out.println(sourceIe);
     }
 
     /**
@@ -237,6 +253,17 @@ public class ExporterImpl implements IExporter {
             enumDef.addItem(eis.itemName);
         }
         return enumDef;
+    }
+
+    private boolean shouldExportApplRel(ModelCache smc, ApplRel applRel) throws AoException {
+        // is base element included?
+        ApplElem elem1 = smc.getApplElem(ODSHelper.asJLong(applRel.elem1));
+        ApplElem elem2 = smc.getApplElem(ODSHelper.asJLong(applRel.elem2));
+        if (!this.includeBeNames.contains(elem1.beName.toLowerCase())
+                || !this.includeBeNames.contains(elem2.beName.toLowerCase())) {
+            return false;
+        }
+        return true;
     }
 
 }
