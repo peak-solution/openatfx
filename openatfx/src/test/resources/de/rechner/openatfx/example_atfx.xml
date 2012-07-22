@@ -814,8 +814,7 @@
 		<dts>
 			<dts_iid>58</dts_iid>
 			<iname>1/3 Octave - Zusammenfassung</iname>
-			<mime_type>application/x-asam.aomeasurement.octavespectrum3d
-			</mime_type>
+			<mime_type>application/x-asam.aomeasurement.octavespectrum3d</mime_type>
 			<measbegin>20101221165739216378688</measbegin>
 			<measend>20101221165739216378688</measend>
 			<mea_iid>22</mea_iid>

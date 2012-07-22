@@ -18,6 +18,7 @@ import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 
@@ -35,45 +36,6 @@ class ExtCompWriter {
 
     /** The singleton instance */
     private static volatile ExtCompWriter instance;
-
-    /**
-     * Determines the file name for the external component.
-     * 
-     * @param ieLocalColumn The LocalColumn instance.
-     * @return
-     * @throws AoException
-     */
-    // private File getExtCompFile(InstanceElement ieLocalColumn) throws AoException {
-    // // retrieve AoMeasurement instance id
-    // InstanceElementIterator iter = ieLocalColumn.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
-    // if (iter.getCount() < 1) {
-    // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-    // "No parent SubMatrix found for LocalColumn instance '" + ieLocalColumn.getAsamPath()
-    // + "'");
-    // }
-    // InstanceElement ieSubMatrix = iter.nextOne();
-    // iter.destroy();
-    // iter = ieSubMatrix.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
-    // if (iter.getCount() < 1) {
-    // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-    // "No parent AoMeasurement found for SubMatrix instance '" + ieSubMatrix.getAsamPath()
-    // + "'");
-    // }
-    // InstanceElement ieMeasurement = iter.nextOne();
-    // iter.destroy();
-    //
-    // // retrieve root path from context parameter
-    // AoSession aoSession = ieLocalColumn.getApplicationElement().getApplicationStructure().getSession();
-    // String rootPath = aoSession.getContextByName("FILE_ROOT").value.u.stringVal();
-    //
-    // // file name is build with measurement id
-    // StringBuffer sb = new StringBuffer();
-    // sb.append("mea_");
-    // sb.append(ODSHelper.asJLong(ieMeasurement.getId()));
-    // sb.append(".bin");
-    //
-    // return new File(rootPath, sb.toString());
-    // }
 
     /**
      * @param atfxCache
@@ -228,17 +190,20 @@ class ExtCompWriter {
                                               + aeExtComp.getName() + "'");
             }
             atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) 0);
+
             // relation to LocalColumn
             atfxCache.createInstanceRelations(aidLc, ODSHelper.asJLong(ieLocalColumn.getId()), relLcExtComp,
                                               Arrays.asList(iidExtComp));
 
-            // OrdinalNumber (1111) 1
-            // Length (1111) 165
-            // StartOffset (1111) 0
-            // Blocksize (1111) 4
-            // ValuesPerBlock (1111) 1
-            // ValueOffset (1111) 0
-            // FilenameURL (1111) binary1.dat
+            // update sequence representation
+            NameValueUnit nvuSeqRep = ieLocalColumn.getValueByBaseName("sequence_representation");
+            int seqRep = ieLocalColumn.getValueByBaseName("sequence_representation").value.u.enumVal();
+            System.out.println(seqRep);
+            if (seqRep == 0) { // explicit -> external component
+                nvuSeqRep.value.u.enumVal(7);
+                ieLocalColumn.setValueSeq(new NameValueUnit[] { nvuSeqRep });
+            }
+
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());

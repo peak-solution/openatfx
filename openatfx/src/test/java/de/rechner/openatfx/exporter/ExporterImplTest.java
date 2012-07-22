@@ -44,7 +44,7 @@ public class ExporterImplTest {
             File targetFile = new File("D:/PUBLIC/export.atfx");
             IExporter exporter = new ExporterImpl();
             exporter.export(sourceSession,
-                            new ElemId[] { new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(58)) },
+                            new ElemId[] { new ElemId(ODSHelper.asODSLongLong(21), ODSHelper.asODSLongLong(60)) },
                             targetFile, new Properties());
 
         } catch (AoException e) {

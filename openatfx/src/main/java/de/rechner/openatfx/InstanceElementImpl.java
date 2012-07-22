@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -272,7 +273,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         InstanceElementIterator iter = getRelatedInstances(relLcMeaQua, "*");
         if (iter.getCount() != 1) {
             throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "None or multiple related instances found for base relation 'measurement_quantity'");
+                                  "None or multiple related instances found for base relation 'measurement_quantity' for instance '"
+                                          + getAsamPath() + "'");
         }
         InstanceElement ieMeaQua = iter.nextOne();
         iter.destroy();
@@ -465,7 +467,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             }
         }
 
-        // check if id has been updated
+        // check if id has been updated, not allowed!
         Integer baseAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
         if (baseAttrNo != null && baseAttrNo.equals(attrNo)) {
             throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
@@ -480,6 +482,20 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#setValueSeq(org.asam.ods.NameValueUnit[])
      */
     public void setValueSeq(NameValueUnit[] values) throws AoException {
+
+        // trick for 'AoLocalColumn': sort the attribute 'sequence_representation' BEFORE the attribute 'values'. This
+        // is needed for the write_mode 'file'.
+        if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(this.aid)) {
+            Arrays.sort(values, new Comparator<NameValueUnit>() {
+
+                public int compare(NameValueUnit o1, NameValueUnit o2) {
+                    boolean isSeqRepVal = (atfxCache.getAttrNoByName(aid, o2.valName) == atfxCache.getAttrNoByBaName(aid,
+                                                                                                                     "sequence_representation"));
+                    return isSeqRepVal ? 1 : 0;
+                }
+            });
+        }
+
         for (NameValueUnit nvu : values) {
             setValue(nvu);
         }
