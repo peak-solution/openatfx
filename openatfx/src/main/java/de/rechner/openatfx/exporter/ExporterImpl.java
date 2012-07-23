@@ -101,8 +101,10 @@ public class ExporterImpl implements IExporter {
             ApplicationStructure targetAs = targetSession.getApplicationStructure();
 
             Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap = new HashMap<ElemIdMap, ElemIdMap>();
-            exportInstances(sourceAs, smc, targetAs, new ElemIdMap[] { new ElemIdMap(sourceElemIds[0]) },
-                            source2TargetAidMap, source2TargetElemIdMap, true);
+            for (ElemId sourceElemId : sourceElemIds) {
+                exportInstances(sourceAs, smc, targetAs, sourceElemId.aid, new T_LONGLONG[] { sourceElemId.iid },
+                                source2TargetAidMap, source2TargetElemIdMap, true);
+            }
 
             targetSession.commitTransaction();
         } catch (AoException aoe) {
@@ -121,29 +123,29 @@ public class ExporterImpl implements IExporter {
      * @throws AoException
      */
     private void exportInstances(ApplicationStructure sourceAs, ModelCache smc, ApplicationStructure targetAs,
-            ElemIdMap[] elemIds, Map<Long, Long> source2TargetAidMap, Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap,
-            boolean exportChildren) throws AoException {
+            T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, Map<Long, Long> source2TargetAidMap,
+            Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap, boolean exportChildren) throws AoException {
         ApplElemAccess sourceAea = sourceAs.getSession().getApplElemAccess();
         ApplElemAccess targetAea = targetAs.getSession().getApplElemAccess();
+        T_LONGLONG targetAid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
+        ApplicationElement targetAe = targetAs.getElementById(targetAid);
 
         // export values
-        for (ElemIdMap sourceElemIdMap : elemIds) {
+        for (T_LONGLONG sourceIid : sourceIids) {
 
             // check if already exported
+            ElemIdMap sourceElemIdMap = new ElemIdMap(sourceAid, sourceIid);
             if (source2TargetElemIdMap.containsKey(sourceElemIdMap)) {
                 continue;
             }
 
             // create instance, copy values and remember mapping
-            long targetAid = source2TargetAidMap.get(sourceElemIdMap.getAid());
             InstanceElement sourceIe = sourceAs.getInstancesById(new ElemId[] { sourceElemIdMap.getElemId() })[0];
-            ApplicationElement targetAe = targetAs.getElementById(ODSHelper.asODSLongLong(targetAid));
             InstanceElement targetIe = targetAe.createInstance("");
             targetIe.setValueSeq(sourceIe.getValueSeq(getCopyableAttrNames(smc, sourceElemIdMap.getAid())));
-            ElemIdMap targetElemIdMap = new ElemIdMap(new ElemId(ODSHelper.asODSLongLong(targetAid), targetIe.getId()));
-
+            ElemIdMap targetElemIdMap = new ElemIdMap(new ElemId(targetAid, targetIe.getId()));
             source2TargetElemIdMap.put(sourceElemIdMap, targetElemIdMap);
-            LOG.info("Copy " + sourceElemIdMap + " to " + targetElemIdMap + ": " + sourceIe.getAsamPath());
+            LOG.info("Copy " + sourceElemIdMap + " to " + targetElemIdMap);
 
             // follow relations
             for (ApplRel sourceApplRel : smc.getApplRels(sourceElemIdMap.getAid())) {
@@ -177,11 +179,11 @@ public class ExporterImpl implements IExporter {
                     continue;
                 }
 
-                // is application relation excluded
+                // copy relations
                 T_LONGLONG[] relSourceIids = sourceAea.getRelInst(sourceElemIdMap.getElemId(), sourceApplRel.arName);
                 ElemIdMap[] relSourceElemIds = createElemIds(sourceApplRel.elem2, relSourceIids);
-                exportInstances(sourceAs, smc, targetAs, relSourceElemIds, source2TargetAidMap, source2TargetElemIdMap,
-                                !isFatherRelation);
+                exportInstances(sourceAs, smc, targetAs, sourceApplRel.elem2, relSourceIids, source2TargetAidMap,
+                                source2TargetElemIdMap, !isFatherRelation);
 
                 List<T_LONGLONG> list = new ArrayList<T_LONGLONG>();
                 for (ElemIdMap relSourceElemId : relSourceElemIds) {

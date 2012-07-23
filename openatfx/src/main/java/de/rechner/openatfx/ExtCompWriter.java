@@ -198,7 +198,6 @@ class ExtCompWriter {
             // update sequence representation
             NameValueUnit nvuSeqRep = ieLocalColumn.getValueByBaseName("sequence_representation");
             int seqRep = ieLocalColumn.getValueByBaseName("sequence_representation").value.u.enumVal();
-            System.out.println(seqRep);
             if (seqRep == 0) { // explicit -> external component
                 nvuSeqRep.value.u.enumVal(7);
                 ieLocalColumn.setValueSeq(new NameValueUnit[] { nvuSeqRep });
