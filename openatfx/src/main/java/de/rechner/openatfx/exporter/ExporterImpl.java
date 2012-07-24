@@ -12,6 +12,9 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.asam.ods.AIDName;
+import org.asam.ods.AIDNameUnitId;
+import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplAttr;
@@ -32,8 +35,12 @@ import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.QueryStructureExt;
 import org.asam.ods.RelationRange;
 import org.asam.ods.RelationType;
+import org.asam.ods.SelAIDNameUnitId;
+import org.asam.ods.SelItem;
+import org.asam.ods.SelValueExt;
 import org.asam.ods.SetType;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
@@ -129,7 +136,25 @@ public class ExporterImpl implements IExporter {
         ApplElemAccess targetAea = targetAs.getSession().getApplElemAccess();
         T_LONGLONG targetAid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
         ApplicationElement targetAe = targetAs.getElementById(targetAid);
+        String[] copyableAttrNames = getCopyableAttrNames(smc, ODSHelper.asJLong(sourceAid));
 
+        // TEST: BUILD query structure
+        QueryStructureExt qse = new QueryStructureExt();
+        qse.anuSeq = new SelAIDNameUnitId[copyableAttrNames.length];
+        for (int i = 0; i < copyableAttrNames.length; i++) {
+            qse.anuSeq[i] = new SelAIDNameUnitId();
+            qse.anuSeq[i].attr = new AIDName();
+            qse.anuSeq[i].attr.aid = sourceAid;
+            qse.anuSeq[i].attr.aaName = copyableAttrNames[i];
+            qse.anuSeq[i].unitId = new T_LONGLONG(0, 0);
+            qse.anuSeq[i].aggregate = AggrFunc.NONE;
+        }
+        qse.condSeq = new SelItem[1];
+        qse.condSeq[0] = new SelItem();
+        SelValueExt sve = new SelValueExt();
+        sve.attr = new AIDNameUnitId();
+        sve.attr.attr = new AIDName();
+        
         // export values
         for (T_LONGLONG sourceIid : sourceIids) {
 
@@ -142,7 +167,7 @@ public class ExporterImpl implements IExporter {
             // create instance, copy values and remember mapping
             InstanceElement sourceIe = sourceAs.getInstancesById(new ElemId[] { sourceElemIdMap.getElemId() })[0];
             InstanceElement targetIe = targetAe.createInstance("");
-            targetIe.setValueSeq(sourceIe.getValueSeq(getCopyableAttrNames(smc, sourceElemIdMap.getAid())));
+            targetIe.setValueSeq(sourceIe.getValueSeq(copyableAttrNames));
             ElemIdMap targetElemIdMap = new ElemIdMap(new ElemId(targetAid, targetIe.getId()));
             source2TargetElemIdMap.put(sourceElemIdMap, targetElemIdMap);
             LOG.info("Copy " + sourceElemIdMap + " to " + targetElemIdMap);

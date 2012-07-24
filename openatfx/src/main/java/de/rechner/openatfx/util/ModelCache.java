@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.asam.ods.AoException;
@@ -49,7 +50,7 @@ public class ModelCache {
         this.esAr = esAr;
         this.aid2applElemMap = new HashMap<Long, ApplElem>();
         this.aeName2ApplElemMap = new HashMap<String, ApplElem>();
-        this.applAttrs = new HashMap<Long, Map<String, ApplAttr>>();
+        this.applAttrs = new LinkedHashMap<Long, Map<String, ApplAttr>>();
         this.applAttrNames = new HashMap<Long, String[]>();
         this.applAttrsByBaseName = new HashMap<Long, Map<String, ApplAttr>>();
         this.applRels = new HashMap<Long, Map<String, ApplRel>>();
