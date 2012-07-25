@@ -20,25 +20,25 @@ import org.asam.ods.EnumerationStructure;
 
 public class ModelCache {
 
-    private final ApplicationStructureValue         asv;
-    private final EnumerationStructure[]            esAr;
+    private final ApplicationStructureValue asv;
+    private final EnumerationStructure[] esAr;
 
     /** application structure */
-    private final Map<Long, ApplElem>               aid2applElemMap;    // <aid, ApplElem>
-    private final Map<String, ApplElem>             aeName2ApplElemMap; // <aeName, ApplElem>
-    private final Map<Long, Map<String, ApplAttr>>  applAttrs;          // <aid, <aaName, aa>>
-    private final Map<Long, String[]>               applAttrNames;      // <aid, attrNames>
-    private final Map<Long, Map<String, ApplAttr>>  applAttrsByBaseName; // <aid, <baName, aa>>
-    private final Map<Long, Map<String, ApplRel>>   applRels;           // <aid, <relName, rel>>
+    private final Map<Long, ApplElem> aid2applElemMap; // <aid, ApplElem>
+    private final Map<String, ApplElem> aeName2ApplElemMap; // <aeName, ApplElem>
+    private final Map<Long, Map<String, ApplAttr>> applAttrs; // <aid, <aaName, aa>>
+    private final Map<Long, String[]> applAttrNames; // <aid, attrNames>
+    private final Map<Long, Map<String, ApplAttr>> applAttrsByBaseName; // <aid, <baName, aa>>
+    private final Map<Long, Map<String, ApplRel>> applRels; // <aid, <relName, rel>>
 
     /** enumerations */
-    private final Map<Long, Map<String, String>>    applAttrEnums;      // <aid, <aaName, aa>>
-    private final Map<String, Map<String, Integer>> enumIndices;        // <enumName, <enumItem, enumIndex>>
-    private final Map<String, Map<Integer, String>> enumItems;          // <enumName, <enumIndex, enumItem>>
+    private final Map<Long, Map<String, String>> applAttrEnums; // <aid, <aaName, aa>>
+    private final Map<String, Map<String, Integer>> enumIndices; // <enumName, <enumItem, enumIndex>>
+    private final Map<String, Map<Integer, String>> enumItems; // <enumName, <enumIndex, enumItem>>
 
     /** information where the mass data is stored in the model */
-    private String                                  lcAeName;
-    private String                                  lcValuesAaName;
+    private String lcAeName;
+    private String lcValuesAaName;
 
     /**
      * @param asv
@@ -157,6 +157,15 @@ public class ModelCache {
 
     public ApplElem getApplElem(String aeName) throws AoException {
         return this.aeName2ApplElemMap.get(aeName);
+    }
+
+    public ApplElem getApplElemByBaseName(String beName) throws AoException {
+        for (ApplElem applElem : getApplElems()) {
+            if (applElem.beName.equalsIgnoreCase(beName)) {
+                return applElem;
+            }
+        }
+        return null;
     }
 
     public Collection<ApplAttr> getApplAttrs(Long aid) throws AoException {

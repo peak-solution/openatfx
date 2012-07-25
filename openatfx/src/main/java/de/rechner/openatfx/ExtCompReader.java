@@ -139,26 +139,26 @@ class ExtCompReader {
 
     private List<Number> readNumberValues(AtfxCache atfxCache, long iidLc) throws AoException {
         List<Number> list = new ArrayList<Number>();
-        long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
+        long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
-        int attrNo = atfxCache.getAttrNoByBaName(aidLc, "filename_url");
-        String filenameUrl = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.stringVal();
+        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
+        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
         File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
         File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
 
         // get datatype
-        attrNo = atfxCache.getAttrNoByBaName(aidLc, "value_type");
-        int valueType = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.enumVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
+        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.enumVal();
 
         // read length
-        attrNo = atfxCache.getAttrNoByBaName(aidLc, "component_length");
-        int componentLength = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
 
         // read start offset, may be DT_LONG or DT_LONGLONG
         int startOffset = 0;
-        attrNo = atfxCache.getAttrNoByBaName(aidLc, "start_offset");
-        TS_Value vStartOffset = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
         if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
             startOffset = vStartOffset.u.longVal();
         } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
@@ -166,12 +166,12 @@ class ExtCompReader {
         }
 
         // value_offset
-        attrNo = atfxCache.getAttrNoByBaName(aidLc, "value_offset");
-        int valueOffset = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
+        int valueOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
 
         // block_size, valuesperblock
-        attrNo = atfxCache.getAttrNoByBaName(aidLc, "block_size");
-        int blockSize = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "block_size");
+        int blockSize = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
 
         // valuesperblock
         // int valuesperblock = ieExtComp.getValueByBaseName("valuesperblock").value.u.longVal();

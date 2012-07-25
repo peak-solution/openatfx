@@ -263,8 +263,6 @@ public class InstanceElementImplTest {
             assertEquals("Pa", nvu.unit);
 
         } catch (AoException e) {
-            System.err.println(e.reason);
-            e.printStackTrace();
             fail(e.reason);
         }
         // non existing value

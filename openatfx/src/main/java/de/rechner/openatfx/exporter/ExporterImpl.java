@@ -1,7 +1,6 @@
 package de.rechner.openatfx.exporter;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,29 +65,22 @@ public class ExporterImpl implements IExporter {
 
     private static final Log LOG = LogFactory.getLog(ExporterImpl.class);
 
-    private Set<String>      includeBeNames;
+    private final Set<ExportRelConfig> includeBeRels;
 
     public ExporterImpl() {
-        this.includeBeNames = new HashSet<String>();
-        this.includeBeNames.add("aoenvironment");
-        this.includeBeNames.add("aotest");
-        this.includeBeNames.add("aosubtest");
-        this.includeBeNames.add("aomeasurement");
-        this.includeBeNames.add("aomeasurementquantity");
-        this.includeBeNames.add("aosubmatrix");
-        this.includeBeNames.add("aolocalcolumn");
-        this.includeBeNames.add("aoexternalcomponent");
-        this.includeBeNames.add("aophysicaldimension");
-        this.includeBeNames.add("aounit");
-        this.includeBeNames.add("aoquantity");
-        this.includeBeNames.add("aoparameterset");
-        this.includeBeNames.add("aoparameter");
-        this.includeBeNames.add("aounitundertest");
-        this.includeBeNames.add("aounitundertestpart");
-        this.includeBeNames.add("aotestsequence");
-        this.includeBeNames.add("aotestsequencepart");
-        this.includeBeNames.add("aotestequipment");
-        this.includeBeNames.add("aotestequipmentpart");
+        this.includeBeRels = new HashSet<ExportRelConfig>();
+        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aoparameterset"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aounitundertest"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aotestsequence"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aotestequipment"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aoany"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aounit"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aoquantity"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aotestequipmentpart"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aolocalcolumn"));
+        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aoparameterset"));
+        this.includeBeRels.add(new ExportRelConfig("aoparameter", "aounit"));
+        this.includeBeRels.add(new ExportRelConfig("aounit", "aophysicaldimension"));
     }
 
     /**
@@ -113,9 +105,9 @@ public class ExporterImpl implements IExporter {
         try {
             targetSession.startTransaction();
 
-            // export application model
-            Map<Long, Long> source2TargetAidMap = exportApplicationElements(smc, targetSession);
-            exportApplicationRelations(smc, targetSession, source2TargetAidMap);
+            // export application model starting with 'AoTest'
+            Map<Long, Long> source2TargetAidMap = new HashMap<Long, Long>();
+            exportApplicationElement(smc, smc.getApplElemByBaseName("aotest"), targetSession, source2TargetAidMap);
 
             // export instances
             ApplElemAccess sourceAea = sourceSession.getApplElemAccess();
@@ -130,7 +122,7 @@ public class ExporterImpl implements IExporter {
             targetSession.commitTransaction();
 
             LOG.info("Exported " + source2TargetElemIdMap.size() + " instances in "
-                    + (System.currentTimeMillis() - start) + " ms");
+ + (System.currentTimeMillis() - start) + " ms");
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             targetSession.abortTransaction();
@@ -176,8 +168,12 @@ public class ExporterImpl implements IExporter {
             // follow relations
             for (ApplRel sourceApplRel : smc.getApplRels(sourceElemIdMap.getAid())) {
 
-                // do not export excluded target application element
-                if (!shouldExportApplRel(smc, sourceApplRel)) {
+                boolean isChildRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD)
+                        && (sourceApplRel.arRelationRange.max == -1);
+                String elem1Be = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem1)).beName.toLowerCase();
+                String elem2Be = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem2)).beName.toLowerCase();
+                boolean includeRel = this.includeBeRels.contains(new ExportRelConfig(elem1Be, elem2Be));
+                if (!isChildRelation && !includeRel) {
                     continue;
                 }
 
@@ -194,8 +190,6 @@ public class ExporterImpl implements IExporter {
 
                 // do not export children, if not configured
                 boolean isFatherRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD && sourceApplRel.arRelationRange.max == 1);
-                boolean isChildRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD)
-                        && (sourceApplRel.arRelationRange.max == -1);
                 if (!exportChildren && isChildRelation) {
                     continue;
                 }
@@ -309,7 +303,7 @@ public class ExporterImpl implements IExporter {
         }
 
         ElemId[] targetElemIds = targetAea.insertInstances(anvsuiList.toArray(new AIDNameValueSeqUnitId[0]));
-        Map<ElemIdMap, ElemIdMap> map = new LinkedHashMap<ExporterImpl.ElemIdMap, ExporterImpl.ElemIdMap>();
+        Map<ElemIdMap, ElemIdMap> map = new LinkedHashMap<ElemIdMap, ElemIdMap>();
         for (int i = 0; i < targetElemIds.length; i++) {
             ElemIdMap sourceElemIdMap = new ElemIdMap(sourceAid, sourceIids[i]);
             ElemIdMap targetElemIdMap = new ElemIdMap(targetElemIds[i]);
@@ -323,123 +317,87 @@ public class ExporterImpl implements IExporter {
      * Methods for exporting the application model
      *********************************************************************************************************/
 
-    /**
-     * Writes the application elements to the target session.
-     * 
-     * @param smc
-     * @param targetSession
-     * @throws AoException
-     */
-    private Map<Long, Long> exportApplicationElements(ModelCache smc, AoSession targetSession) throws AoException {
+    private void exportApplicationElement(ModelCache smc, ApplElem applElem, AoSession targetSession,
+            Map<Long, Long> source2TargetAidMap) throws AoException {
         BaseStructure targetBs = targetSession.getBaseStructure();
         ApplicationStructure targetAs = targetSession.getApplicationStructure();
-        Map<Long, Long> source2TargetAidMap = new HashMap<Long, Long>();
 
+        // cache base attributes and base relations
+        BaseElement targetBe = targetBs.getElementByType(applElem.beName);
+        Map<String, BaseAttribute> baseAttrMap = new HashMap<String, BaseAttribute>();
+        for (BaseAttribute baseAttr : targetBe.getAttributes("*")) {
+            baseAttrMap.put(baseAttr.getName().toLowerCase(), baseAttr);
+        }
         // build map with base enums
         Map<String, EnumerationDefinition> exportedEnums = new HashMap<String, EnumerationDefinition>();
         for (String enumName : targetAs.listEnumerations()) {
             exportedEnums.put(enumName, targetAs.getEnumerationDefinition(enumName));
         }
 
-        // iterate over application model
-        for (ApplElem applElem : smc.getApplElems()) {
+        // create application element
+        ApplicationElement targetAe = targetAs.createElement(targetBe);
+        targetAe.setName(applElem.aeName);
+        Long targetElem1Aid = ODSHelper.asJLong(targetAe.getId());
+        source2TargetAidMap.put(ODSHelper.asJLong(applElem.aid), targetElem1Aid);
 
-            // is base element included?
-            if (!this.includeBeNames.contains(applElem.beName.toLowerCase())) {
-                continue;
+        // create application attributes
+        long sourceAid = ODSHelper.asJLong(applElem.aid);
+        for (ApplAttr applAttr : smc.getApplAttrs(sourceAid)) {
+            BaseAttribute targetBa = baseAttrMap.get(applAttr.baName);
+            ApplicationAttribute targetAa;
+            if (targetBa != null && targetBa.isObligatory()) { // base is obligatory, aa is existing
+                targetAa = targetAe.getAttributeByBaseName(applAttr.baName);
+            } else {// base not obligatory, aa not existing
+                targetAa = targetAe.createAttribute();
             }
 
-            // cache base attributes and base relations
-            BaseElement targetBe = targetBs.getElementByType(applElem.beName);
-            Map<String, BaseAttribute> baseAttrMap = new HashMap<String, BaseAttribute>();
-            Map<String, BaseRelation> baseRelMap = new HashMap<String, BaseRelation>();
-            for (BaseAttribute baseAttr : targetBe.getAttributes("*")) {
-                baseAttrMap.put(baseAttr.getName().toLowerCase(), baseAttr);
+            // name, base attribute, datatype
+            targetAa.setName(applAttr.aaName);
+            targetAa.setBaseAttribute(targetBa);
+            targetAa.setDataType(applAttr.dType);
+            targetAa.setIsObligatory(applAttr.isObligatory);
+            targetAa.setLength(applAttr.length);
+
+            // unique
+            if (targetBa == null) {
+                targetAa.setIsUnique(applAttr.isUnique);
             }
-            for (BaseRelation baseRel : targetBe.getAllRelations()) {
-                baseRelMap.put(baseRel.getRelationName().toLowerCase(), baseRel);
-            }
 
-            // create application element
-            ApplicationElement targetAe = targetAs.createElement(targetBe);
-            targetAe.setName(applElem.aeName);
-            source2TargetAidMap.put(ODSHelper.asJLong(applElem.aid), ODSHelper.asJLong(targetAe.getId()));
-
-            // create application attributes
-            long sourceAid = ODSHelper.asJLong(applElem.aid);
-            for (ApplAttr applAttr : smc.getApplAttrs(sourceAid)) {
-                BaseAttribute targetBa = baseAttrMap.get(applAttr.baName);
-                ApplicationAttribute targetAa;
-                if (targetBa != null && targetBa.isObligatory()) { // base is obligatory, aa is existing
-                    targetAa = targetAe.getAttributeByBaseName(applAttr.baName);
-                } else {// base not obligatory, aa not existing
-                    targetAa = targetAe.createAttribute();
+            // enumeration
+            if (((applAttr.dType == DataType.DT_ENUM) || (applAttr.dType == DataType.DS_ENUM)) && (targetBa == null)) {
+                String enumName = smc.getEnumName(sourceAid, applAttr.aaName);
+                EnumerationDefinition targetEnumDef = exportedEnums.get(enumName);
+                if (targetEnumDef == null) {
+                    targetEnumDef = exportEnumerationDefinition(smc.getEnumerationStructure(enumName), targetAs);
+                    exportedEnums.put(enumName, targetEnumDef);
                 }
-
-                // name, base attribute, datatype
-                targetAa.setName(applAttr.aaName);
-                targetAa.setBaseAttribute(targetBa);
-                targetAa.setDataType(applAttr.dType);
-                targetAa.setIsObligatory(applAttr.isObligatory);
-                targetAa.setLength(applAttr.length);
-
-                // unique
-                if (targetBa == null) {
-                    targetAa.setIsUnique(applAttr.isUnique);
-                }
-
-                // enumeration
-                if (((applAttr.dType == DataType.DT_ENUM) || (applAttr.dType == DataType.DS_ENUM))
-                        && (targetBa == null)) {
-                    String enumName = smc.getEnumName(sourceAid, applAttr.aaName);
-                    EnumerationDefinition targetEnumDef = exportedEnums.get(enumName);
-                    if (targetEnumDef == null) {
-                        targetEnumDef = exportEnumerationDefinition(smc.getEnumerationStructure(enumName), targetAs);
-                        exportedEnums.put(enumName, targetEnumDef);
-                    }
-                    targetAa.setEnumerationDefinition(targetEnumDef);
-                }
+                targetAa.setEnumerationDefinition(targetEnumDef);
             }
         }
 
-        return source2TargetAidMap;
-    }
-
-    /**
-     * Exports all application relations
-     * 
-     * @param smc
-     * @param targetSession
-     * @param source2TargetAidMap
-     * @throws AoException
-     */
-    private void exportApplicationRelations(ModelCache smc, AoSession targetSession, Map<Long, Long> source2TargetAidMap)
-            throws AoException {
-        ApplicationStructure targetAs = targetSession.getApplicationStructure();
-
-        // remember already exported relations because inverse relations are implicit created
-        Set<String> exportedRels = new HashSet<String>();
-        for (ApplRel applRel : smc.getApplicationStructureValue().applRels) {
-
-            // is base element included?
-            ApplElem elem1 = smc.getApplElem(ODSHelper.asJLong(applRel.elem1));
-            ApplElem elem2 = smc.getApplElem(ODSHelper.asJLong(applRel.elem2));
-            if (!this.includeBeNames.contains(elem1.beName.toLowerCase())
-                    || !this.includeBeNames.contains(elem2.beName.toLowerCase())) {
+        // export relations
+        for (ApplRel applRel : smc.getApplRels(sourceAid)) {
+            // only follow child relations or be elements in global configuration
+            boolean isChildRelation = (applRel.arRelationType == RelationType.FATHER_CHILD)
+                    && (applRel.arRelationRange.max == -1);
+            boolean isFatherRelation = (applRel.arRelationType == RelationType.FATHER_CHILD && applRel.arRelationRange.max == 1);
+            String elem1Be = smc.getApplElem(ODSHelper.asJLong(applRel.elem1)).beName.toLowerCase();
+            String elem2Be = smc.getApplElem(ODSHelper.asJLong(applRel.elem2)).beName.toLowerCase();
+            boolean includeRel = this.includeBeRels.contains(new ExportRelConfig(elem1Be, elem2Be));
+            if (!isChildRelation && !isFatherRelation && !includeRel) {
                 continue;
             }
 
-            // is inverse relation?
-            String relKey = elem1.aeName + "_" + elem2.aeName + "_" + applRel.arName;
-            String invRelKey = elem2.aeName + "_" + elem1.aeName + "_" + applRel.invName;
-            if (exportedRels.contains(invRelKey)) {
-                continue;
+            if (!source2TargetAidMap.containsKey(ODSHelper.asJLong(applRel.elem2))) {
+                exportApplicationElement(smc, smc.getApplElem(ODSHelper.asJLong(applRel.elem2)), targetSession,
+                                         source2TargetAidMap);
             }
 
-            Long targetElem1Aid = source2TargetAidMap.get(ODSHelper.asJLong(applRel.elem1));
             Long targetElem2Aid = source2TargetAidMap.get(ODSHelper.asJLong(applRel.elem2));
             ApplicationElement targetElem1 = targetAs.getElementById(ODSHelper.asODSLongLong(targetElem1Aid));
             ApplicationElement targetElem2 = targetAs.getElementById(ODSHelper.asODSLongLong(targetElem2Aid));
+
+            // is inverse relation?
             BaseRelation targetBr = null;
             if (applRel.brName.length() > 0) {
                 targetBr = lookupBaseRelation(targetElem1, targetElem1, applRel.brName, targetElem2.getBaseElement()
@@ -457,7 +415,6 @@ public class ExporterImpl implements IExporter {
             targetRel.setInverseRelationRange(new RelationRange(applRel.invRelationRange.min,
                                                                 applRel.invRelationRange.max));
 
-            exportedRels.add(relKey);
         }
     }
 
@@ -501,78 +458,6 @@ public class ExporterImpl implements IExporter {
             }
         }
         return attrs.toArray(new String[0]);
-    }
-
-    private boolean shouldExportApplRel(ModelCache smc, ApplRel applRel) throws AoException {
-        // is base element included?
-        ApplElem elem1 = smc.getApplElem(ODSHelper.asJLong(applRel.elem1));
-        ApplElem elem2 = smc.getApplElem(ODSHelper.asJLong(applRel.elem2));
-        if (!this.includeBeNames.contains(elem1.beName.toLowerCase())
-                || !this.includeBeNames.contains(elem2.beName.toLowerCase())) {
-            return false;
-        }
-        return true;
-    }
-
-    private static class ElemIdMap implements Serializable {
-
-        private static final long serialVersionUID = 7737552775800892476L;
-
-        private final long        aid;
-        private final long        iid;
-
-        public ElemIdMap(T_LONGLONG aid, T_LONGLONG iid) {
-            this.aid = ODSHelper.asJLong(aid);
-            this.iid = ODSHelper.asJLong(iid);
-        }
-
-        public ElemIdMap(ElemId elemId) {
-            this.aid = ODSHelper.asJLong(elemId.aid);
-            this.iid = ODSHelper.asJLong(elemId.iid);
-        }
-
-        public long getAid() {
-            return aid;
-        }
-
-        public long getIid() {
-            return iid;
-        }
-
-        public ElemId getElemId() {
-            return new ElemId(ODSHelper.asODSLongLong(this.aid), ODSHelper.asODSLongLong(this.iid));
-        }
-
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + (int) (aid ^ (aid >>> 32));
-            result = prime * result + (int) (iid ^ (iid >>> 32));
-            return result;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ElemIdMap other = (ElemIdMap) obj;
-            if (aid != other.aid)
-                return false;
-            if (iid != other.iid)
-                return false;
-            return true;
-        }
-
-        @Override
-        public String toString() {
-            return "ElemIdMap [aid=" + aid + ", iid=" + iid + "]";
-        }
-
     }
 
 }

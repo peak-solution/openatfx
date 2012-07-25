@@ -364,16 +364,15 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // only allow string conditions
         if (condition != null && condition.value.u.discriminator() != DataType.DT_STRING) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Condition DataType '"
-                    + condition.value.u.discriminator() + "' not supported. Only '" + DataType.DT_STRING
-                    + "' is implemented");
+                    + ODSHelper.dataType2String(condition.value.u.discriminator()) + "' not supported.");
         }
 
         // only allow SelOpcode.CI_EQ and SelOpcode.CI_LIKE
-        if (condition != null && condition.oper != SelOpcode.CI_EQ && condition.oper != SelOpcode.CI_LIKE) {
+        if (condition != null && (condition.oper != SelOpcode.CI_EQ) && (condition.oper != SelOpcode.CI_LIKE)
+                && (condition.oper != SelOpcode.INSET)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt not supported: Condition '" + condition.oper
-                                          + "' not supported. Only '" + SelOpcode.CI_EQ + "' and '" + SelOpcode.CI_LIKE
-                                          + "' are implemented");
+                                          + "' not yet supported.");
         }
 
         // get the application element

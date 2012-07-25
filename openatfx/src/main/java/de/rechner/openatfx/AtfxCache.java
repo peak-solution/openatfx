@@ -680,14 +680,12 @@ class AtfxCache {
      */
     public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
         // check if attribute is 'values' of 'AoLocalColumn', then write to file
-        if (getAidsByBaseType("aolocalcolumn").contains(aid)) {
-            if ((attrNo == getAttrNoByBaName(aid, "values"))) {
-                // write mode 'file', then write to external component
-                NameValue nv = this.context.get("write_mode");
-                if (nv.value.u.stringVal().equals("file")) {
-                    ExtCompWriter.getInstance().writeValues(this, iid, value);
-                    return;
-                }
+        if (isLocalColumnValuesAttribute(aid, attrNo)) {
+            // write mode 'file', then write to external component
+            NameValue nv = this.context.get("write_mode");
+            if (nv.value.u.stringVal().equals("file")) {
+                ExtCompWriter.getInstance().writeValues(this, iid, value);
+                return;
             }
         }
 
@@ -713,7 +711,7 @@ class AtfxCache {
         DataType dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
 
         // read values from external component file
-        if (isExternalComponentValue(aid, attrNo, iid)) {
+        if (lcValuesAttr && isValuesInExternalComponent(iid)) {
             return ExtCompReader.getInstance().readValues(this, iid, dt);
         }
 
@@ -742,15 +740,18 @@ class AtfxCache {
     /**
      * Checks whether the value queried is an external component value of a local column.
      * 
-     * @param aaName The application attribute name.
+     * @param aid The application element id.
+     * @param attrNo The attribute number.
+     * @param iid The instance id.
      * @throws AoException Error checking application attribute.
      */
-    private boolean isExternalComponentValue(long lcAid, int attrNo, long lcIid) throws AoException {
+    private boolean isValuesInExternalComponent(long lcIid) throws AoException {
         Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
-        if (localColumnAids != null && localColumnAids.contains(lcAid)) {
-            Integer valuesAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
-            if ((valuesAttrNo != null) && (attrNo == valuesAttrNo)) {
-                int seqRepEnum = (Integer) this.instanceValueMap.get(lcAid).get(lcIid).get(attrNo);
+        long lcAid = localColumnAids.iterator().next();
+        if (localColumnAids != null) {
+            Integer seqRepAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
+            if (seqRepAttrNo != null) {
+                int seqRepEnum = (Integer) this.instanceValueMap.get(lcAid).get(lcIid).get(seqRepAttrNo);
                 // check if the sequence representation is 7(external_component), 8(raw_linear_external),
                 // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
                 if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
