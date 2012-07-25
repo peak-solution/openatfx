@@ -1,6 +1,5 @@
 package de.rechner.openatfx;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +21,7 @@ import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementHelper;
+import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
@@ -36,6 +36,9 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
+
+    /** session context variables */
+    private final Map<String, NameValue> context;
 
     /** application elements */
     private final Map<String, ApplicationElement> nameToAeMap; // <aeName,
@@ -69,13 +72,14 @@ class AtfxCache {
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
 
-    /** The binary component file used to write all values to for this session */
-    private File extCompFile;
-
     /**
      * Constructor.
      */
     public AtfxCache() {
+        /** session context */
+        this.context = new LinkedHashMap<String, NameValue>();
+
+        /** application element */
         this.nameToAeMap = new HashMap<String, ApplicationElement>();
         this.beToAidMap = new HashMap<String, Set<Long>>();
         this.aidToAeMap = new TreeMap<Long, ApplicationElement>();
@@ -138,16 +142,16 @@ class AtfxCache {
     }
 
     /***********************************************************************************
-     * application elements
+     * session context
      ***********************************************************************************/
 
-    public File getExtCompFile() {
-        return extCompFile;
+    public Map<String, NameValue> getContext() {
+        return context;
     }
 
-    public void setExtCompFile(File extCompFile) {
-        this.extCompFile = extCompFile;
-    }
+    /***********************************************************************************
+     * application elements
+     ***********************************************************************************/
 
     /**
      * Adds an application element to the cache.
@@ -678,15 +682,12 @@ class AtfxCache {
         // check if attribute is 'values' of 'AoLocalColumn', then write to file
         if (getAidsByBaseType("aolocalcolumn").contains(aid)) {
             if ((attrNo == getAttrNoByBaName(aid, "values"))) {
-                
-                System.out.println("WRITE: " + value);
-                
                 // write mode 'file', then write to external component
-                // AoSession session = getApplicationElement().getApplicationStructure().getSession();
-                // NameValue nv = session.getContextByName("write_mode");
-                // if (nv.value.u.stringVal().equals("file")) {
-                ExtCompWriter.getInstance().writeValues(this, iid, value);
-                return;
+                NameValue nv = this.context.get("write_mode");
+                if (nv.value.u.stringVal().equals("file")) {
+                    ExtCompWriter.getInstance().writeValues(this, iid, value);
+                    return;
+                }
             }
         }
 
@@ -705,9 +706,126 @@ class AtfxCache {
      * @throws AoException
      */
     public TS_Value getInstanceValue(long aid, int attrNo, long iid) throws AoException {
-        DataType dt = getApplicationAttribute(aid, attrNo).getDataType();
+        ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
+
+        // datatype
+        boolean lcValuesAttr = isLocalColumnValuesAttribute(aid, attrNo);
+        DataType dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
+
+        // read values from external component file
+        if (isExternalComponentValue(aid, attrNo, iid)) {
+            return ExtCompReader.getInstance().readValues(this, iid, dt);
+        }
+
+        // read values from memory
         java.lang.Object jValue = this.instanceValueMap.get(aid).get(iid).get(attrNo);
-        return ODSHelper.jObject2tsValue(dt, jValue);
+        return (jValue == null) ? ODSHelper.createEmptyTS_Value(dt) : ODSHelper.jObject2tsValue(dt, jValue);
+    }
+
+    /**
+     * Checks whether given attribute name is from base attribute 'values' of and this instance is from base element
+     * 'AoLocalColumn'.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The application attribute number.
+     * @return True, if attribute is 'values.
+     */
+    private boolean isLocalColumnValuesAttribute(long aid, long attrNo) {
+        Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(aid)) {
+            Integer valuesAttrNo = getAttrNoByBaName(aid, "values");
+            return (valuesAttrNo != null) && (attrNo == valuesAttrNo);
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether the value queried is an external component value of a local column.
+     * 
+     * @param aaName The application attribute name.
+     * @throws AoException Error checking application attribute.
+     */
+    private boolean isExternalComponentValue(long lcAid, int attrNo, long lcIid) throws AoException {
+        Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(lcAid)) {
+            Integer valuesAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
+            if ((valuesAttrNo != null) && (attrNo == valuesAttrNo)) {
+                int seqRepEnum = (Integer) this.instanceValueMap.get(lcAid).get(lcIid).get(attrNo);
+                // check if the sequence representation is 7(external_component), 8(raw_linear_external),
+                // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
+                if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    /**
+     * Returns the instance of the related measurement quantity for a local column instance.
+     * 
+     * @param lcIid The local column instance id.
+     * @return The measurement quantity instance id.
+     * @throws AoException Error getting instance.
+     */
+    private long getMeaQuantityInstance(long lcIid) throws AoException {
+        long lcAid = getAidsByBaseType("aolocalcolumn").iterator().next();
+        ApplicationRelation relMeaQua = getApplicationRelationByBaseName(lcAid, "measurement_quantity");
+        Collection<Long> set = getRelatedInstanceIds(lcAid, lcIid, relMeaQua);
+        if (set.size() != 1) {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
+                                  "None or multiple related instances found for base relation 'measurement_quantity' for iid="
+                                          + lcIid);
+        }
+        return set.iterator().next();
+    }
+
+    /**
+     * In case this InstanceElement is from the ApplicationElement derived from "AoLocalColumn", the datatype of the
+     * related "AoMeasurementQuantity" instance is returned.
+     * 
+     * @throws AoException Error getting datatype.
+     */
+    private DataType getDataTypeForLocalColumnValues(long lcIid) throws AoException {
+        long meaQuaAid = getAidsByBaseType("aomeasurementquantity").iterator().next();
+        long meaQuaIid = getMeaQuantityInstance(lcIid);
+        int attrNo = getAttrNoByBaName(meaQuaAid, "datatype");
+        TS_Value dtValue = getInstanceValue(meaQuaAid, attrNo, meaQuaIid);
+        if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
+            int val = dtValue.u.enumVal();
+            if (val == 1) { // DT_STRING
+                return DataType.DS_STRING;
+            } else if (val == 2) { // DT_SHORT
+                return DataType.DS_SHORT;
+            } else if (val == 3) { // DT_FLOAT
+                return DataType.DS_FLOAT;
+            } else if (val == 4) { // DT_BOOLEAN
+                return DataType.DS_BOOLEAN;
+            } else if (val == 5) { // DT_BYTE
+                return DataType.DS_BYTE;
+            } else if (val == 6) { // DT_LONG
+                return DataType.DS_LONG;
+            } else if (val == 7) { // DT_DOUBLE
+                return DataType.DS_DOUBLE;
+            } else if (val == 8) { // DT_LONGLONG
+                return DataType.DS_LONGLONG;
+            } else if (val == 10) { // DT_DATE
+                return DataType.DS_DATE;
+            } else if (val == 11) { // DT_BYTESTR
+                return DataType.DS_BYTESTR;
+            } else if (val == 13) { // DT_COMPLEX
+                return DataType.DS_COMPLEX;
+            } else if (val == 14) { // DT_DCOMPLEX
+                return DataType.DS_DCOMPLEX;
+            } else if (val == 28) { // DT_EXTERNALREFERENCE
+                return DataType.DS_EXTERNALREFERENCE;
+            } else if (val == 30) { // DT_ENUM
+                return DataType.DS_ENUM;
+            }
+        }
+        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                              "Implementation problem at method 'getDataTypeForLocalColumnValues()' for iid=" + lcIid);
     }
 
     /***********************************************************************************

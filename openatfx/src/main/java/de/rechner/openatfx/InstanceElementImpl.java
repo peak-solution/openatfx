@@ -7,13 +7,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
-import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationRelationInstanceElementSeq;
@@ -55,11 +53,11 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private static final Log LOG = LogFactory.getLog(InstanceElementImpl.class);
 
-    private final POA        modelPOA;
-    private final POA        instancePOA;
-    private final AtfxCache  atfxCache;
-    private final long       aid;
-    private final long       iid;
+    private final POA modelPOA;
+    private final POA instancePOA;
+    private final AtfxCache atfxCache;
+    private final long aid;
+    private final long iid;
 
     /**
      * Constructor.
@@ -201,204 +199,17 @@ class InstanceElementImpl extends InstanceElementPOA {
             return new NameValueUnit(aaName, iaValue, "");
         }
 
-        // check if attribute 'values' of 'AoLocalColumn'
-        boolean lcValuesAttr = isLocalColumnValuesAttribute(aaName);
+        // get attr number
         Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
         if (attrNo == null) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
                     + "' not found");
         }
-        ApplicationAttribute aa = this.atfxCache.getApplicationAttribute(aid, attrNo);
-        if (aa == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
-                    + "' not found");
-        }
 
-        // datatype
-        DataType dt = null;
-        if (isLocalColumnValuesAttribute(aaName)) {
-            dt = getDataTypeForLocalColumnValues();
-        } else {
-            dt = aa.getDataType();
-        }
+        // no instance attribute, read application attribute
+        TS_Value value = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
 
-        // unit
-        String unitName = "";
-        if (lcValuesAttr) {
-            unitName = getUnitNameForLocalColumnValues(); // read from relation to measurement quantity
-        } else {
-            long unitIid = ODSHelper.asJLong(aa.getUnit()); // read from application attribute
-            if (unitIid > 0) {
-                long unitAid = this.atfxCache.getAidsByBaseType("aounit").iterator().next();
-                InstanceElement ieUnit = this.atfxCache.getInstanceById(instancePOA, unitAid, unitIid);
-                unitName = ieUnit.getName();
-            }
-        }
-
-        // check if attribute "value" is in external component
-        TS_Value value = null;
-        if (isExternalComponentValue(aaName)) {
-            InstanceElementIterator iter = getRelatedInstancesByRelationship(Relationship.CHILD, "*");
-            InstanceElement[] ieExtComps = iter.nextN(iter.getCount());
-            iter.destroy();
-            value = ExtCompReader.getInstance().readValues(ieExtComps, dt);
-        }
-
-        // no instance attribute, check application attribute
-        if (value == null) {
-            value = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
-
-            // value not found, return empty
-            if (value == null) {
-                // special case: attribute "values" of "AoLocalColumn" is not set!
-                if (dt == DataType.DT_UNKNOWN && isLocalColumnValuesAttribute(aaName)) {
-                    dt = getDataTypeForLocalColumnValues();
-                }
-                value = ODSHelper.createEmptyTS_Value(dt);
-            }
-        }
-
-        return new NameValueUnit(aaName, value, unitName);
-    }
-
-    /**
-     * Returns the instance of the related measurement quantity.
-     * 
-     * @return The measurement quantity instance.
-     * @throws AoException Error getting instance.
-     */
-    private InstanceElement getMeaQuantityInstance() throws AoException {
-        ApplicationRelation[] rels = getApplicationElement().getRelationsByBaseName("measurement_quantity");
-        if (rels.length != 1) {
-            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "None or multiple application relations with base name 'measurement_quantity' found");
-        }
-        ApplicationRelation relLcMeaQua = rels[0]; // AoLocalColumn->AoMeasurementQuantity
-        InstanceElementIterator iter = getRelatedInstances(relLcMeaQua, "*");
-        if (iter.getCount() != 1) {
-            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "None or multiple related instances found for base relation 'measurement_quantity' for instance '"
-                                          + getAsamPath() + "'");
-        }
-        InstanceElement ieMeaQua = iter.nextOne();
-        iter.destroy();
-        return ieMeaQua;
-    }
-
-    /**
-     * In case this InstanceElement is from the ApplicationElement derived from "AoLocalColumn", the datatype of the
-     * related "AoMeasurementQuantity" instance is returned.
-     * 
-     * @throws AoException Error getting datatype.
-     */
-    private DataType getDataTypeForLocalColumnValues() throws AoException {
-        InstanceElement ieMeaQua = getMeaQuantityInstance();
-        TS_Value dtValue = ieMeaQua.getValueByBaseName("datatype").value;
-        
-        System.out.println(dtValue);
-        System.out.println(dtValue.u.enumVal());
-        
-        if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
-            int val = dtValue.u.enumVal();
-            if (val == 1) { // DT_STRING
-                return DataType.DS_STRING;
-            } else if (val == 2) { // DT_SHORT
-                return DataType.DS_SHORT;
-            } else if (val == 3) { // DT_FLOAT
-                return DataType.DS_FLOAT;
-            } else if (val == 4) { // DT_BOOLEAN
-                return DataType.DS_BOOLEAN;
-            } else if (val == 5) { // DT_BYTE
-                return DataType.DS_BYTE;
-            } else if (val == 6) { // DT_LONG
-                return DataType.DS_LONG;
-            } else if (val == 7) { // DT_DOUBLE
-                return DataType.DS_DOUBLE;
-            } else if (val == 8) { // DT_LONGLONG
-                return DataType.DS_LONGLONG;
-            } else if (val == 10) { // DT_DATE
-                return DataType.DS_DATE;
-            } else if (val == 11) { // DT_BYTESTR
-                return DataType.DS_BYTESTR;
-            } else if (val == 13) { // DT_COMPLEX
-                return DataType.DS_COMPLEX;
-            } else if (val == 14) { // DT_DCOMPLEX
-                return DataType.DS_DCOMPLEX;
-            } else if (val == 28) { // DT_EXTERNALREFERENCE
-                return DataType.DS_EXTERNALREFERENCE;
-            } else if (val == 30) { // DT_ENUM
-                return DataType.DS_ENUM;
-            }
-        }
-        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                              "Implementation problem at method 'getDataTypeForLocalColumnValues()' for instance '"
-                                      + getAsamPath() + "'");
-    }
-
-    /**
-     * Returns the unit name by following the relation to the measurement quantity and then to AoUnit.
-     * 
-     * @return
-     * @throws AoException
-     */
-    private String getUnitNameForLocalColumnValues() throws AoException {
-        InstanceElement ieMeaQuantity = getMeaQuantityInstance();
-        ApplicationRelation[] rels = ieMeaQuantity.getApplicationElement().getRelationsByBaseName("unit");
-        if (rels.length != 1) {
-            return "";
-        }
-        ApplicationRelation relMeaQuaUnit = rels[0]; // AoMeasurementQuantity->AoUnit
-        InstanceElementIterator iter = ieMeaQuantity.getRelatedInstances(relMeaQuaUnit, "*");
-        if (iter.getCount() != 1) {
-            return "";
-        }
-        InstanceElement ieMeaQua = iter.nextOne();
-        iter.destroy();
-        return ieMeaQua.getName();
-    }
-
-    /**
-     * Checks whether given attribute name is from base attribute 'values' of and this instance is from base element
-     * 'AoLocalColumn'.
-     * 
-     * @param aaName The application attribute name.
-     * @return True, if attribute is 'values.
-     */
-    private boolean isLocalColumnValuesAttribute(String aaName) {
-        Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
-        if (localColumnAids != null && localColumnAids.contains(aid)) {
-            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
-            Integer valuesAttrNo = this.atfxCache.getAttrNoByBaName(aid, "values");
-            return (attrNo != null) && (valuesAttrNo != null) && (attrNo.equals(valuesAttrNo));
-        }
-        return false;
-    }
-
-    /**
-     * Checks whether the value queried is an external component value of a local column.
-     * 
-     * @param aaName The application attribute name.
-     * @throws AoException Error checking application attribute.
-     */
-    private boolean isExternalComponentValue(String aaName) throws AoException {
-        Set<Long> localColumnAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
-        if (localColumnAids != null && localColumnAids.contains(this.aid)) {
-
-            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
-            Integer valuesAttrNo = this.atfxCache.getAttrNoByBaName(aid, "values");
-
-            if (attrNo != null && valuesAttrNo != null && attrNo.equals(valuesAttrNo)) {
-                NameValueUnit seqRep = this.getValueByBaseName("sequence_representation");
-                int seqRepEnum = ODSHelper.getEnumVal(seqRep);
-                // check if the sequence representation is 7(external_component), 8(raw_linear_external),
-                // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
-                if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                    return true;
-                }
-            }
-
-        }
-        return false;
+        return new NameValueUnit(aaName, value, "");
     }
 
     /**

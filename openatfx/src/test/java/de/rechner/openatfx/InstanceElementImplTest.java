@@ -263,6 +263,8 @@ public class InstanceElementImplTest {
             assertEquals("Pa", nvu.unit);
 
         } catch (AoException e) {
+            System.err.println(e.reason);
+            e.printStackTrace();
             fail(e.reason);
         }
         // non existing value
@@ -333,10 +335,10 @@ public class InstanceElementImplTest {
             assertEquals("aaa", ieDts.getValue("version").value.u.stringVal());
 
             // 'values' of 'AoLocalColumn
-            aoSession.setContext(ODSHelper.createStringNV("write_mode", "file"));
-            ApplicationElement aeLc = aoSession.getApplicationStructure().getElementByName("lc");
-            InstanceElement ieLc = aeLc.getInstanceById(ODSHelper.asODSLongLong(47));
-            ieLc.setValue(ODSHelper.createFloatSeqNVU("values", new float[] { -1, 0, 1, 9999999 }));
+            // aoSession.setContext(ODSHelper.createStringNV("write_mode", "file"));
+            // ApplicationElement aeLc = aoSession.getApplicationStructure().getElementByName("lc");
+            // InstanceElement ieLc = aeLc.getInstanceById(ODSHelper.asODSLongLong(47));
+            // ieLc.setValue(ODSHelper.createFloatSeqNVU("values", new float[] { -1, 0, 1, 9999999 }));
 
             // instance attribute
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));

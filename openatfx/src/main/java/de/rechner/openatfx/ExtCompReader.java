@@ -8,16 +8,15 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
-import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
-import org.asam.ods.InstanceElement;
-import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
@@ -39,8 +38,12 @@ class ExtCompReader {
     /** The singleton instance */
     private static volatile ExtCompReader instance;
 
-    public TS_Value readValues(InstanceElement[] ieExtComps, DataType targetDataType) throws AoException {
-        if (ieExtComps.length != 1) {
+    public TS_Value readValues(AtfxCache atfxCache, long iidLc, DataType targetDataType) throws AoException {
+        // read external component instances
+        long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
+        ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
+        Collection<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
+        if (iidExtComps.size() != 1) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "The implementation currently only may read exactly one external component file");
         }
@@ -52,8 +55,8 @@ class ExtCompReader {
         // DS_LONG
         if (targetDataType == DataType.DS_LONG) {
             List<Integer> list = new ArrayList<Integer>();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                for (Number value : readNumberValues(ieExtComp)) {
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
                     list.add(value.intValue());
                 }
             }
@@ -66,8 +69,8 @@ class ExtCompReader {
         // DS_FLOAT
         else if (targetDataType == DataType.DS_FLOAT) {
             List<Float> list = new ArrayList<Float>();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                for (Number value : readNumberValues(ieExtComp)) {
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
                     list.add(value.floatValue());
                 }
             }
@@ -80,8 +83,8 @@ class ExtCompReader {
         // DS_DOUBLE
         else if (targetDataType == DataType.DS_DOUBLE) {
             List<Double> list = new ArrayList<Double>();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                for (Number value : readNumberValues(ieExtComp)) {
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
                     list.add(value.doubleValue());
                 }
             }
@@ -94,8 +97,8 @@ class ExtCompReader {
         // DS_COMPLEX
         else if (targetDataType == DataType.DS_COMPLEX) {
             List<Float> list = new ArrayList<Float>();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                for (Number value : readNumberValues(ieExtComp)) {
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
                     list.add(value.floatValue());
                 }
             }
@@ -111,8 +114,8 @@ class ExtCompReader {
         // DS_DCOMPLEX
         else if (targetDataType == DataType.DS_DCOMPLEX) {
             List<Double> list = new ArrayList<Double>();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                for (Number value : readNumberValues(ieExtComp)) {
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
                     list.add(value.doubleValue());
                 }
             }
@@ -131,39 +134,46 @@ class ExtCompReader {
                                   "Reading values from external component not yet supported for datatype: "
                                           + ODSHelper.dataType2String(targetDataType));
         }
-
-        System.out.println(tsValue.u.doubleSeq().length);
-        
         return tsValue;
     }
 
-    private List<Number> readNumberValues(InstanceElement ieExtComp) throws AoException {
+    private List<Number> readNumberValues(AtfxCache atfxCache, long iidLc) throws AoException {
         List<Number> list = new ArrayList<Number>();
+        long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
 
-        // open file
-        AoSession session = ieExtComp.getApplicationElement().getApplicationStructure().getSession();
-        File atfxFile = new File(session.getContextByName("FILENAME").value.u.stringVal());
-        File extCompFile = new File(atfxFile.getParentFile(),
-                                    ieExtComp.getValueByBaseName("filename_url").value.u.stringVal());
+        // get filename
+        int attrNo = atfxCache.getAttrNoByBaName(aidLc, "filename_url");
+        String filenameUrl = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.stringVal();
+        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
+        File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
 
         // get datatype
-        int valueType = ieExtComp.getValueByBaseName("value_type").value.u.enumVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidLc, "value_type");
+        int valueType = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.enumVal();
 
         // read length
-        int componentLength = ieExtComp.getValueByBaseName("component_length").value.u.longVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidLc, "component_length");
+        int componentLength = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
 
         // read start offset, may be DT_LONG or DT_LONGLONG
         int startOffset = 0;
-        NameValueUnit nvuStartOffset = ieExtComp.getValueByBaseName("start_offset");
-        if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONG) {
-            startOffset = nvuStartOffset.value.u.longVal();
-        } else if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONGLONG) {
-            startOffset = (int) ODSHelper.asJLong(nvuStartOffset.value.u.longlongVal());
+        attrNo = atfxCache.getAttrNoByBaName(aidLc, "start_offset");
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
+        if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
+            startOffset = vStartOffset.u.longVal();
+        } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
+            startOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
         }
 
-        // value_offset, block_size, valuesperblock
-        int valueOffset = ieExtComp.getValueByBaseName("value_offset").value.u.longVal();
-        int blockSize = ieExtComp.getValueByBaseName("block_size").value.u.longVal();
+        // value_offset
+        attrNo = atfxCache.getAttrNoByBaName(aidLc, "value_offset");
+        int valueOffset = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
+
+        // block_size, valuesperblock
+        attrNo = atfxCache.getAttrNoByBaName(aidLc, "block_size");
+        int blockSize = atfxCache.getInstanceValue(aidLc, attrNo, iidLc).u.longVal();
+
+        // valuesperblock
         // int valuesperblock = ieExtComp.getValueByBaseName("valuesperblock").value.u.longVal();
 
         // read values
@@ -189,9 +199,9 @@ class ExtCompReader {
                 // calculate index
                 int idx = (startOffset + valueOffset) + (i * blockSize);
 
-//                if (idx > sourceMbb.capacity()) {
-//                    continue;
-//                }
+                // if (idx > sourceMbb.capacity()) {
+                // continue;
+                // }
 
                 // 3=dt_long, 8=dt_long_beo
                 if ((valueType == 3) || (valueType == 8)) {

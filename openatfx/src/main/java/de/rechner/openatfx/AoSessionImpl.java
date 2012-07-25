@@ -96,7 +96,6 @@ class AoSessionImpl extends AoSessionPOA {
     private final POA modelPOA;
     private final File atfxFile;
     private final BaseStructure baseStructure;
-    private final Map<String, NameValue> context;
     private final AtfxCache atfxCache;
 
     /** lazy loaded objects */
@@ -118,18 +117,17 @@ class AoSessionImpl extends AoSessionPOA {
         this.modelPOA = modelPOA;
         this.atfxFile = atfxFile;
         this.baseStructure = baseStructure;
-        this.context = new LinkedHashMap<String, NameValue>();
         this.atfxCache = new AtfxCache();
 
         // fill initial context
         String fileStr = atfxFile.getAbsolutePath().replaceAll("\\\\", "/");
         String directoryStr = atfxFile.getParentFile().getAbsolutePath().replaceAll("\\\\", "/");
-        this.context.putAll(STATIC_CONTEXT);
-        this.context.put("write_mode", ODSHelper.createStringNV("write_mode", "file"));
-        this.context.put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
-        this.context.put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
-        this.context.put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
-        this.context.put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
+        this.atfxCache.getContext().putAll(STATIC_CONTEXT);
+        this.atfxCache.getContext().put("write_mode", ODSHelper.createStringNV("write_mode", "database"));
+        this.atfxCache.getContext().put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
+        this.atfxCache.getContext().put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
+        this.atfxCache.getContext().put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
+        this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
     }
 
     /**
@@ -264,7 +262,7 @@ class AoSessionImpl extends AoSessionPOA {
     public NameIterator listContext(String varPattern) throws AoException {
         try {
             List<String> list = new ArrayList<String>();
-            for (String str : this.context.keySet()) {
+            for (String str : this.atfxCache.getContext().keySet()) {
                 if (PatternUtil.nameFilterMatch(str, varPattern)) {
                     list.add(str);
                 }
@@ -288,7 +286,7 @@ class AoSessionImpl extends AoSessionPOA {
     public NameValueIterator getContext(String varPattern) throws AoException {
         try {
             List<NameValue> list = new ArrayList<NameValue>();
-            for (NameValue nv : this.context.values()) {
+            for (NameValue nv : this.atfxCache.getContext().values()) {
                 if (PatternUtil.nameFilterMatch(nv.valName, varPattern)) {
                     list.add(ODSHelper.cloneNV(nv));
                 }
@@ -311,7 +309,7 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#getContextByName(java.lang.String)
      */
     public NameValue getContextByName(String varName) throws AoException {
-        NameValue nv = this.context.get(varName);
+        NameValue nv = this.atfxCache.getContext().get(varName);
         if (nv != null) {
             return nv;
         }
@@ -329,7 +327,7 @@ class AoSessionImpl extends AoSessionPOA {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Context '"
                     + contextVariable.valName + "' is readonly");
         }
-        this.context.put(contextVariable.valName, ODSHelper.cloneNV(contextVariable));
+        this.atfxCache.getContext().put(contextVariable.valName, ODSHelper.cloneNV(contextVariable));
     }
 
     /**
@@ -348,7 +346,7 @@ class AoSessionImpl extends AoSessionPOA {
      */
     public void removeContext(String varPattern) throws AoException {
         // check if readonly context should be removed
-        for (NameValue nv : this.context.values()) {
+        for (NameValue nv : this.atfxCache.getContext().values()) {
             if (PatternUtil.nameFilterMatch(nv.valName, varPattern) && STATIC_CONTEXT.containsKey(nv.valName)) {
                 throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                       "Unable to remove readonly context '" + nv.valName + "'");
@@ -356,13 +354,13 @@ class AoSessionImpl extends AoSessionPOA {
         }
         // remove matching context
         List<String> toRemove = new ArrayList<String>();
-        for (NameValue nv : this.context.values()) {
+        for (NameValue nv : this.atfxCache.getContext().values()) {
             if (PatternUtil.nameFilterMatch(nv.valName, varPattern)) {
                 toRemove.add(nv.valName);
             }
         }
         for (String valName : toRemove) {
-            this.context.remove(valName);
+            this.atfxCache.getContext().remove(valName);
         }
     }
 
