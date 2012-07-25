@@ -13,7 +13,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
-import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
@@ -30,13 +29,13 @@ import org.asam.ods.Measurement;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameIteratorHelper;
 import org.asam.ods.NameUnit;
-import org.asam.ods.NameValue;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.SubMatrix;
+import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
@@ -56,11 +55,11 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private static final Log LOG = LogFactory.getLog(InstanceElementImpl.class);
 
-    private final POA modelPOA;
-    private final POA instancePOA;
-    private final AtfxCache atfxCache;
-    private final long aid;
-    private final long iid;
+    private final POA        modelPOA;
+    private final POA        instancePOA;
+    private final AtfxCache  atfxCache;
+    private final long       aid;
+    private final long       iid;
 
     /**
      * Constructor.
@@ -138,8 +137,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
 
         // set value
-        java.lang.Object obj = this.atfxCache.getInstanceValue(aid, attrNo, iid);
-        return (obj == null) ? "" : (String) obj;
+        TS_Value value = this.atfxCache.getInstanceValue(aid, attrNo, iid);
+        return (value == null) ? "" : value.u.stringVal();
     }
 
     /**
@@ -154,8 +153,14 @@ class InstanceElementImpl extends InstanceElementPOA {
                                   "Not application attribute of base attribute 'name' found for aid=" + aid);
         }
 
+        // create value
+        TS_Value value = new TS_Value();
+        value.flag = (short) 15;
+        value.u = new TS_Union();
+        value.u.stringVal(iaName);
+
         // set value
-        this.atfxCache.setInstanceValue(this.aid, this.iid, attrNo, iaName);
+        this.atfxCache.setInstanceValue(this.aid, this.iid, attrNo, value);
     }
 
     /**
@@ -241,8 +246,7 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // no instance attribute, check application attribute
         if (value == null) {
-            java.lang.Object obj = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
-            value = ODSHelper.jObject2tsValue(dt, obj);
+            value = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
 
             // value not found, return empty
             if (value == null) {
@@ -290,6 +294,10 @@ class InstanceElementImpl extends InstanceElementPOA {
     private DataType getDataTypeForLocalColumnValues() throws AoException {
         InstanceElement ieMeaQua = getMeaQuantityInstance();
         TS_Value dtValue = ieMeaQua.getValueByBaseName("datatype").value;
+        
+        System.out.println(dtValue);
+        System.out.println(dtValue.u.enumVal());
+        
         if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
             int val = dtValue.u.enumVal();
             if (val == 1) { // DT_STRING
@@ -454,26 +462,13 @@ class InstanceElementImpl extends InstanceElementPOA {
                     + "' not found");
         }
 
-        // check if attribute is 'values' of 'AoLocalColumn'
-        if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(this.aid)) {
-            if ((attrNo == this.atfxCache.getAttrNoByBaName(aid, "values"))) {
-                // write mode 'file', then write to external component
-                AoSession session = this.getApplicationElement().getApplicationStructure().getSession();
-                NameValue nv = session.getContextByName("write_mode");
-                if (nv.value.u.stringVal().equals("file")) {
-                    ExtCompWriter.getInstance().writeValues(atfxCache, _this(), nvu.value);
-                    return;
-                }
-            }
-        }
-
         // check if id has been updated, not allowed!
         Integer baseAttrNo = this.atfxCache.getAttrNoByBaName(this.aid, "id");
         if (baseAttrNo != null && baseAttrNo.equals(attrNo)) {
             throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
                                   "Updating the id of an instance element is not allowed!");
         }
-        this.atfxCache.setInstanceValue(aid, this.iid, attrNo, ODSHelper.tsValue2jObject(nvu.value));
+        this.atfxCache.setInstanceValue(aid, this.iid, attrNo, nvu.value);
     }
 
     /**

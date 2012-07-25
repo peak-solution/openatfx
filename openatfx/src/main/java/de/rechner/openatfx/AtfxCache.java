@@ -38,7 +38,8 @@ import de.rechner.openatfx.util.ODSHelper;
 class AtfxCache {
 
     /** application elements */
-    private final Map<String, ApplicationElement> nameToAeMap; // <aeName, ApplicationElement>
+    private final Map<String, ApplicationElement> nameToAeMap; // <aeName,
+                                                               // ApplicationElement>
     private final Map<String, Set<Long>> beToAidMap; // <beName, aid>
     private final Map<Long, String> aidToAeNameMap;
     private final Map<Long, ApplicationElement> aidToAeMap;
@@ -673,8 +674,25 @@ class AtfxCache {
      * @param attrNo The application attribute number.
      * @param value The value.
      */
-    public void setInstanceValue(long aid, long iid, int attrNo, java.lang.Object value) throws AoException {
-        this.instanceValueMap.get(aid).get(iid).put(attrNo, value);
+    public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
+        // check if attribute is 'values' of 'AoLocalColumn', then write to file
+        if (getAidsByBaseType("aolocalcolumn").contains(aid)) {
+            if ((attrNo == getAttrNoByBaName(aid, "values"))) {
+                
+                System.out.println("WRITE: " + value);
+                
+                // write mode 'file', then write to external component
+                // AoSession session = getApplicationElement().getApplicationStructure().getSession();
+                // NameValue nv = session.getContextByName("write_mode");
+                // if (nv.value.u.stringVal().equals("file")) {
+                ExtCompWriter.getInstance().writeValues(this, iid, value);
+                return;
+            }
+        }
+
+        // put value to memory
+        java.lang.Object jValue = ODSHelper.tsValue2jObject(value);
+        this.instanceValueMap.get(aid).get(iid).put(attrNo, jValue);
     }
 
     /**
@@ -686,8 +704,10 @@ class AtfxCache {
      * @return The value, null if not found.
      * @throws AoException
      */
-    public java.lang.Object getInstanceValue(long aid, int attrNo, long iid) throws AoException {
-        return this.instanceValueMap.get(aid).get(iid).get(attrNo);
+    public TS_Value getInstanceValue(long aid, int attrNo, long iid) throws AoException {
+        DataType dt = getApplicationAttribute(aid, attrNo).getDataType();
+        java.lang.Object jValue = this.instanceValueMap.get(aid).get(iid).get(attrNo);
+        return ODSHelper.jObject2tsValue(dt, jValue);
     }
 
     /***********************************************************************************
@@ -741,9 +761,8 @@ class AtfxCache {
      */
     public TS_ValueSeq listInstanceValues(long aid, int attrNo, long[] iids) throws AoException {
         TS_Value[] tsValues = new TS_Value[iids.length];
-        DataType dt = getApplicationAttribute(aid, attrNo).getDataType();
         for (int index = 0; index < iids.length; index++) {
-            TS_Value value = ODSHelper.jObject2tsValue(dt, getInstanceValue(aid, attrNo, iids[index]));
+            TS_Value value = getInstanceValue(aid, attrNo, iids[index]);
             if (value == null) {
                 return null;
             }

@@ -132,6 +132,8 @@ class ExtCompReader {
                                           + ODSHelper.dataType2String(targetDataType));
         }
 
+        System.out.println(tsValue.u.doubleSeq().length);
+        
         return tsValue;
     }
 
@@ -187,10 +189,10 @@ class ExtCompReader {
                 // calculate index
                 int idx = (startOffset + valueOffset) + (i * blockSize);
 
-                if (idx > sourceMbb.capacity()){
-                    continue;
-                }
-                
+//                if (idx > sourceMbb.capacity()) {
+//                    continue;
+//                }
+
                 // 3=dt_long, 8=dt_long_beo
                 if ((valueType == 3) || (valueType == 8)) {
                     list.add(sourceMbb.getInt(idx));

@@ -3,8 +3,10 @@ package de.rechner.openatfx.exporter;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -14,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AIDName;
 import org.asam.ods.AIDNameUnitId;
+import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
@@ -31,17 +34,26 @@ import org.asam.ods.BaseRelation;
 import org.asam.ods.BaseStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
+import org.asam.ods.ElemResultSetExt;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
-import org.asam.ods.InstanceElement;
+import org.asam.ods.ErrorCode;
+import org.asam.ods.JoinDef;
+import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.RelationRange;
 import org.asam.ods.RelationType;
+import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SelItem;
+import org.asam.ods.SelOpcode;
+import org.asam.ods.SelOrder;
 import org.asam.ods.SelValueExt;
 import org.asam.ods.SetType;
+import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
 
@@ -54,7 +66,7 @@ public class ExporterImpl implements IExporter {
 
     private static final Log LOG = LogFactory.getLog(ExporterImpl.class);
 
-    private Set<String> includeBeNames;
+    private Set<String>      includeBeNames;
 
     public ExporterImpl() {
         this.includeBeNames = new HashSet<String>();
@@ -84,6 +96,8 @@ public class ExporterImpl implements IExporter {
      */
     public void export(AoSession sourceSession, ElemId[] sourceElemIds, File targetFile, Properties props)
             throws AoException {
+        long start = System.currentTimeMillis();
+
         // configure ORB
         ORB orb = ORB.init(new String[0], System.getProperties());
 
@@ -104,16 +118,19 @@ public class ExporterImpl implements IExporter {
             exportApplicationRelations(smc, targetSession, source2TargetAidMap);
 
             // export instances
-            ApplicationStructure sourceAs = sourceSession.getApplicationStructure();
-            ApplicationStructure targetAs = targetSession.getApplicationStructure();
+            ApplElemAccess sourceAea = sourceSession.getApplElemAccess();
+            ApplElemAccess targetAea = targetSession.getApplElemAccess();
 
             Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap = new HashMap<ElemIdMap, ElemIdMap>();
             for (ElemId sourceElemId : sourceElemIds) {
-                exportInstances(sourceAs, smc, targetAs, sourceElemId.aid, new T_LONGLONG[] { sourceElemId.iid },
+                exportInstances(sourceAea, smc, targetAea, sourceElemId.aid, new T_LONGLONG[] { sourceElemId.iid },
                                 source2TargetAidMap, source2TargetElemIdMap, true);
             }
 
             targetSession.commitTransaction();
+
+            LOG.info("Exported " + source2TargetElemIdMap.size() + " instances in "
+                    + (System.currentTimeMillis() - start) + " ms");
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             targetSession.abortTransaction();
@@ -121,56 +138,40 @@ public class ExporterImpl implements IExporter {
     }
 
     /**
-     * @param sourceAs
+     * @param sourceAea
      * @param smc
-     * @param targetAs
-     * @param elemIds
+     * @param targetAea
+     * @param sourceAid
+     * @param sourceIids
      * @param source2TargetAidMap
      * @param source2TargetElemIdMap
+     * @param exportChildren
      * @throws AoException
      */
-    private void exportInstances(ApplicationStructure sourceAs, ModelCache smc, ApplicationStructure targetAs,
+    private void exportInstances(ApplElemAccess sourceAea, ModelCache smc, ApplElemAccess targetAea,
             T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, Map<Long, Long> source2TargetAidMap,
             Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap, boolean exportChildren) throws AoException {
-        ApplElemAccess sourceAea = sourceAs.getSession().getApplElemAccess();
-        ApplElemAccess targetAea = targetAs.getSession().getApplElemAccess();
-        T_LONGLONG targetAid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
-        ApplicationElement targetAe = targetAs.getElementById(targetAid);
-        String[] copyableAttrNames = getCopyableAttrNames(smc, ODSHelper.asJLong(sourceAid));
-
-        // TEST: BUILD query structure
-        QueryStructureExt qse = new QueryStructureExt();
-        qse.anuSeq = new SelAIDNameUnitId[copyableAttrNames.length];
-        for (int i = 0; i < copyableAttrNames.length; i++) {
-            qse.anuSeq[i] = new SelAIDNameUnitId();
-            qse.anuSeq[i].attr = new AIDName();
-            qse.anuSeq[i].attr.aid = sourceAid;
-            qse.anuSeq[i].attr.aaName = copyableAttrNames[i];
-            qse.anuSeq[i].unitId = new T_LONGLONG(0, 0);
-            qse.anuSeq[i].aggregate = AggrFunc.NONE;
-        }
-        qse.condSeq = new SelItem[1];
-        qse.condSeq[0] = new SelItem();
-        SelValueExt sve = new SelValueExt();
-        sve.attr = new AIDNameUnitId();
-        sve.attr.attr = new AIDName();
-        
-        // export values
+        // filter already exported instances
+        List<T_LONGLONG> sourceIidList = new ArrayList<T_LONGLONG>();
         for (T_LONGLONG sourceIid : sourceIids) {
-
-            // check if already exported
-            ElemIdMap sourceElemIdMap = new ElemIdMap(sourceAid, sourceIid);
-            if (source2TargetElemIdMap.containsKey(sourceElemIdMap)) {
-                continue;
+            if (!source2TargetElemIdMap.containsKey(new ElemIdMap(sourceAid, sourceIid))) {
+                sourceIidList.add(sourceIid);
             }
+        }
+        sourceIids = sourceIidList.toArray(new T_LONGLONG[0]);
 
-            // create instance, copy values and remember mapping
-            InstanceElement sourceIe = sourceAs.getInstancesById(new ElemId[] { sourceElemIdMap.getElemId() })[0];
-            InstanceElement targetIe = targetAe.createInstance("");
-            targetIe.setValueSeq(sourceIe.getValueSeq(copyableAttrNames));
-            ElemIdMap targetElemIdMap = new ElemIdMap(new ElemId(targetAid, targetIe.getId()));
-            source2TargetElemIdMap.put(sourceElemIdMap, targetElemIdMap);
-            LOG.info("Copy " + sourceElemIdMap + " to " + targetElemIdMap);
+        // nothing to do?
+        if (sourceIids.length < 1) {
+            return;
+        }
+
+        // export instance value
+        Map<ElemIdMap, ElemIdMap> exportedElemIds = exportInstanceValues(smc, sourceAea, sourceAid, sourceIids,
+                                                                         targetAea, source2TargetAidMap);
+        source2TargetElemIdMap.putAll(exportedElemIds);
+
+        // export relations
+        for (ElemIdMap sourceElemIdMap : exportedElemIds.keySet()) {
 
             // follow relations
             for (ApplRel sourceApplRel : smc.getApplRels(sourceElemIdMap.getAid())) {
@@ -206,28 +207,116 @@ public class ExporterImpl implements IExporter {
 
                 // copy relations
                 T_LONGLONG[] relSourceIids = sourceAea.getRelInst(sourceElemIdMap.getElemId(), sourceApplRel.arName);
-                ElemIdMap[] relSourceElemIds = createElemIds(sourceApplRel.elem2, relSourceIids);
-                exportInstances(sourceAs, smc, targetAs, sourceApplRel.elem2, relSourceIids, source2TargetAidMap,
+                if (relSourceIids.length < 1) { // no related instances found
+                    continue;
+                }
+
+                exportInstances(sourceAea, smc, targetAea, sourceApplRel.elem2, relSourceIids, source2TargetAidMap,
                                 source2TargetElemIdMap, !isFatherRelation);
 
-                List<T_LONGLONG> list = new ArrayList<T_LONGLONG>();
-                for (ElemIdMap relSourceElemId : relSourceElemIds) {
-                    list.add(source2TargetElemIdMap.get(relSourceElemId).getElemId().iid);
+                // T_LONGLONG relTargetAid =
+                // ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceApplRel.elem2)));
+                T_LONGLONG[] relTargetIids = new T_LONGLONG[relSourceIids.length];
+                for (int i = 0; i < relTargetIids.length; i++) {
+                    ElemIdMap targetElemIdMap = source2TargetElemIdMap.get(new ElemIdMap(sourceApplRel.elem2,
+                                                                                         relSourceIids[i]));
+                    relTargetIids[i] = ODSHelper.asODSLongLong(targetElemIdMap.getIid());
                 }
-                T_LONGLONG[] instIds = list.toArray(new T_LONGLONG[0]);
 
-                targetAea.setRelInst(targetElemIdMap.getElemId(), sourceApplRel.arName, instIds, SetType.INSERT);
+                ElemIdMap targetElemIdMap = source2TargetElemIdMap.get(sourceElemIdMap);
+                targetAea.setRelInst(targetElemIdMap.getElemId(), sourceApplRel.arName, relTargetIids, SetType.INSERT);
             }
 
         }
     }
 
-    private ElemIdMap[] createElemIds(T_LONGLONG aid, T_LONGLONG[] iids) {
-        List<ElemIdMap> list = new ArrayList<ElemIdMap>();
-        for (T_LONGLONG iid : iids) {
-            list.add(new ElemIdMap(aid, iid));
+    /**
+     * Exports all instance values from the source to the target.
+     * 
+     * @param smc The source model cache.
+     * @param sourceAea The source ApplElemAccess.
+     * @param sourceAid The source application element id.
+     * @param sourceIids The source instance id´s.
+     * @param targetAea The target ApplElemAccess.
+     * @param source2TargetAidMap The map from source to target.
+     * @return Map of exported instances (key=source,value=target).
+     * @throws AoException Error exporting instances.
+     */
+    private Map<ElemIdMap, ElemIdMap> exportInstanceValues(ModelCache smc, ApplElemAccess sourceAea,
+            T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, ApplElemAccess targetAea, Map<Long, Long> source2TargetAidMap)
+            throws AoException {
+        if (sourceIids.length < 1) {
+            return Collections.emptyMap();
         }
-        return list.toArray(new ElemIdMap[0]);
+
+        String[] copyableAttrNames = getCopyableAttrNames(smc, ODSHelper.asJLong(sourceAid));
+
+        // ********************************************************************
+        // query source
+        // ********************************************************************
+
+        QueryStructureExt qse = new QueryStructureExt();
+
+        // anuSeq (select all attributes)
+        qse.anuSeq = new SelAIDNameUnitId[copyableAttrNames.length];
+        for (int i = 0; i < copyableAttrNames.length; i++) {
+            qse.anuSeq[i] = new SelAIDNameUnitId();
+            qse.anuSeq[i].attr = new AIDName();
+            qse.anuSeq[i].attr.aid = sourceAid;
+            qse.anuSeq[i].attr.aaName = copyableAttrNames[i];
+            qse.anuSeq[i].unitId = new T_LONGLONG(0, 0);
+            qse.anuSeq[i].aggregate = AggrFunc.NONE;
+        }
+
+        // condSeqs (filter by instance iids)
+        SelValueExt sve = new SelValueExt();
+        sve.attr = new AIDNameUnitId();
+        sve.attr.attr = new AIDName();
+        sve.attr.attr.aid = sourceAid;
+        sve.attr.attr.aaName = smc.getApplAttrByBaseName(ODSHelper.asJLong(sourceAid), "id").aaName;
+        sve.attr.unitId = new T_LONGLONG(0, 0);
+        sve.oper = SelOpcode.INSET;
+        sve.value = new TS_Value();
+        sve.value.flag = (short) 15;
+        sve.value.u = new TS_Union();
+        sve.value.u.longlongSeq(sourceIids);
+        qse.condSeq = new SelItem[1];
+        qse.condSeq[0] = new SelItem();
+        qse.condSeq[0].value(sve);
+
+        qse.joinSeq = new JoinDef[0];
+        qse.groupBy = new AIDName[0];
+        qse.orderBy = new SelOrder[0];
+
+        // execute query in source
+        ResultSetExt[] rse = sourceAea.getInstancesExt(qse, 0);
+
+        // ********************************************************************
+        // insert to target
+        // ********************************************************************
+
+        List<AIDNameValueSeqUnitId> anvsuiList = new ArrayList<AIDNameValueSeqUnitId>();
+        for (ElemResultSetExt erse : rse[0].firstElems) {
+            for (NameValueSeqUnitId nvsu : erse.values) {
+                AIDNameValueSeqUnitId anvsui = new AIDNameValueSeqUnitId();
+                anvsui.attr = new AIDName();
+                anvsui.attr.aid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
+                anvsui.attr.aaName = nvsu.valName;
+                anvsui.unitId = new T_LONGLONG(0, 0);
+                anvsui.values = nvsu.value;
+                anvsuiList.add(anvsui);
+            }
+        }
+
+        ElemId[] targetElemIds = targetAea.insertInstances(anvsuiList.toArray(new AIDNameValueSeqUnitId[0]));
+        Map<ElemIdMap, ElemIdMap> map = new LinkedHashMap<ExporterImpl.ElemIdMap, ExporterImpl.ElemIdMap>();
+        for (int i = 0; i < targetElemIds.length; i++) {
+            ElemIdMap sourceElemIdMap = new ElemIdMap(sourceAid, sourceIids[i]);
+            ElemIdMap targetElemIdMap = new ElemIdMap(targetElemIds[i]);
+            map.put(sourceElemIdMap, targetElemIdMap);
+        }
+
+        return map;
     }
 
     /*********************************************************************************************************
@@ -326,7 +415,6 @@ public class ExporterImpl implements IExporter {
      */
     private void exportApplicationRelations(ModelCache smc, AoSession targetSession, Map<Long, Long> source2TargetAidMap)
             throws AoException {
-        BaseStructure targetBs = targetSession.getBaseStructure();
         ApplicationStructure targetAs = targetSession.getApplicationStructure();
 
         // remember already exported relations because inverse relations are implicit created
@@ -342,7 +430,9 @@ public class ExporterImpl implements IExporter {
             }
 
             // is inverse relation?
-            if (exportedRels.contains(elem2.aeName + "_" + elem1.aeName + "_" + applRel.invName)) {
+            String relKey = elem1.aeName + "_" + elem2.aeName + "_" + applRel.arName;
+            String invRelKey = elem2.aeName + "_" + elem1.aeName + "_" + applRel.invName;
+            if (exportedRels.contains(invRelKey)) {
                 continue;
             }
 
@@ -352,7 +442,8 @@ public class ExporterImpl implements IExporter {
             ApplicationElement targetElem2 = targetAs.getElementById(ODSHelper.asODSLongLong(targetElem2Aid));
             BaseRelation targetBr = null;
             if (applRel.brName.length() > 0) {
-                targetBr = targetBs.getRelation(targetElem1.getBaseElement(), targetElem2.getBaseElement());
+                targetBr = lookupBaseRelation(targetElem1, targetElem1, applRel.brName, targetElem2.getBaseElement()
+                                                                                                   .getType());
             }
 
             // create relation
@@ -363,10 +454,22 @@ public class ExporterImpl implements IExporter {
             targetRel.setRelationName(applRel.arName);
             targetRel.setInverseRelationName(applRel.invName);
             targetRel.setRelationRange(new RelationRange(applRel.arRelationRange.min, applRel.arRelationRange.max));
-            targetRel.setInverseRelationRange(applRel.invRelationRange);
+            targetRel.setInverseRelationRange(new RelationRange(applRel.invRelationRange.min,
+                                                                applRel.invRelationRange.max));
 
-            exportedRels.add(elem1.aeName + "_" + elem2.aeName + "_" + applRel.arName);
+            exportedRels.add(relKey);
         }
+    }
+
+    private static BaseRelation lookupBaseRelation(ApplicationElement elem1, ApplicationElement elem2, String bRelName,
+            String elem2BaseType) throws AoException {
+        for (BaseRelation baseRel : elem1.getBaseElement().getAllRelations()) {
+            if (baseRel.getRelationName().equals(bRelName) && baseRel.getElem2().getType().equals(elem2BaseType)) {
+                return baseRel;
+            }
+        }
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
+                + bRelName + "',targetBaseType='" + elem2BaseType + "'");
     }
 
     /**
@@ -377,7 +480,7 @@ public class ExporterImpl implements IExporter {
      * @return The created target enumeration definition.
      * @throws AoException Error creating enumeration definition.
      */
-    private EnumerationDefinition exportEnumerationDefinition(EnumerationStructure sourceEs,
+    private static EnumerationDefinition exportEnumerationDefinition(EnumerationStructure sourceEs,
             ApplicationStructure targetAs) throws AoException {
         EnumerationDefinition enumDef = targetAs.createEnumerationDefinition(sourceEs.enumName);
         for (EnumerationItemStructure eis : sourceEs.items) {
@@ -390,7 +493,7 @@ public class ExporterImpl implements IExporter {
      * utility methods
      ************************************************************************************/
 
-    private String[] getCopyableAttrNames(ModelCache smc, long aid) throws AoException {
+    private static String[] getCopyableAttrNames(ModelCache smc, long aid) throws AoException {
         List<String> attrs = new ArrayList<String>();
         for (ApplAttr applAttr : smc.getApplAttrs(aid)) {
             if (!applAttr.baName.equals("id")) {
@@ -415,8 +518,8 @@ public class ExporterImpl implements IExporter {
 
         private static final long serialVersionUID = 7737552775800892476L;
 
-        private final long aid;
-        private final long iid;
+        private final long        aid;
+        private final long        iid;
 
         public ElemIdMap(T_LONGLONG aid, T_LONGLONG iid) {
             this.aid = ODSHelper.asJLong(aid);
@@ -430,6 +533,10 @@ public class ExporterImpl implements IExporter {
 
         public long getAid() {
             return aid;
+        }
+
+        public long getIid() {
+            return iid;
         }
 
         public ElemId getElemId() {

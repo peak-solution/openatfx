@@ -5,31 +5,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
-import org.asam.ods.AoSession;
-import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
-import org.asam.ods.InstanceElement;
-import org.asam.ods.InstanceElementIterator;
-import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 
 import de.rechner.openatfx.util.ODSHelper;
 
 
-/**
- * Utility class for writing values to external component files.
- * 
- * @author Christian Rechner
- */
 class ExtCompWriter {
 
     private static final Log LOG = LogFactory.getLog(ExtCompWriter.class);
@@ -39,14 +30,15 @@ class ExtCompWriter {
 
     /**
      * @param atfxCache
-     * @param ieLocalColumn
-     * @param values
+     * @param lcIid
+     * @param value
      * @throws AoException
      */
-    public void writeValues(AtfxCache atfxCache, InstanceElement ieLocalColumn, TS_Value values) throws AoException {
+    public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
         // open file
-        AoSession aoSession = ieLocalColumn.getApplicationElement().getApplicationStructure().getSession();
-        String rootPath = aoSession.getContextByName("FILE_ROOT").value.u.stringVal();
+        // AoSession aoSession = ieLocalColumn.getApplicationElement().getApplicationStructure().getSession();
+        // String rootPath = aoSession.getContextByName("FILE_ROOT").value.u.stringVal();
+        String rootPath = "D:/PUBLIC";
         File extCompFile = new File(rootPath, "binary.bin");
 
         // read values
@@ -58,18 +50,45 @@ class ExtCompWriter {
             long startOffset = channel.size();
 
             // write values
-            DataType dt = values.u.discriminator();
+            DataType dt = value.u.discriminator();
             int valueType = 0;
             int length = 0;
-            int blockSize = 0;
-            // DS_FLOAT
-            if (dt == DataType.DS_FLOAT) {
-                valueType = 5;
-                blockSize = 4;
-                length = values.u.floatSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * 4);
+            int typeSize = 0;
+            // DS_SHORT
+            if (dt == DataType.DS_SHORT) {
+                valueType = 2;
+                typeSize = 2;
+                length = value.u.shortSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
-                    bb.putFloat(values.u.floatSeq()[i]);
+                    bb.putShort(value.u.shortSeq()[i]);
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
+            // DS_LONG
+            else if (dt == DataType.DS_LONG) {
+                valueType = 3;
+                typeSize = 4;
+                length = value.u.longSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putInt(value.u.longSeq()[i]);
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
+            // DS_FLOAT
+            else if (dt == DataType.DS_FLOAT) {
+                valueType = 5;
+                typeSize = 4;
+                length = value.u.floatSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putFloat(value.u.floatSeq()[i]);
                 }
                 bb.rewind();
                 channel.write(bb);
@@ -77,11 +96,12 @@ class ExtCompWriter {
             // DS_DOUBLE
             else if (dt == DataType.DS_DOUBLE) {
                 valueType = 6;
-                blockSize = 8;
-                length = values.u.doubleSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * 8);
+                typeSize = 8;
+                length = value.u.doubleSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
-                    bb.putDouble(values.u.doubleSeq()[i]);
+                    bb.putDouble(value.u.doubleSeq()[i]);
                 }
                 bb.rewind();
                 channel.write(bb);
@@ -93,8 +113,8 @@ class ExtCompWriter {
             }
 
             // create 'AoExternalComponent' instance
-            ApplicationElement aeLocalColumn = ieLocalColumn.getApplicationElement();
-            long aidLc = ODSHelper.asJLong(aeLocalColumn.getId());
+            long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
+            long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
             // delete existing 'AoExternalComponent' instances
             ApplicationRelation relLcExtComp = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
@@ -102,13 +122,8 @@ class ExtCompWriter {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                       "No application relation of type 'external_component' found!");
             }
-            ApplicationElement aeExtComp = relLcExtComp.getElem2();
-            long aidExtComp = ODSHelper.asJLong(aeExtComp.getId());
-            InstanceElementIterator iter = ieLocalColumn.getRelatedInstances(relLcExtComp, "*");
-            InstanceElement[] ieExtComps = iter.nextN(iter.getCount());
-            iter.destroy();
-            for (InstanceElement ieExtComp : ieExtComps) {
-                aeExtComp.removeInstance(ieExtComp.getId(), false);
+            for (long relExtCompIid : atfxCache.getRelatedInstanceIds(aidLc, iidLc, relLcExtComp)) {
+                atfxCache.removeInstance(aidExtComp, relExtCompIid);
             }
 
             // create 'AoExternalComponent' instance
@@ -118,89 +133,90 @@ class ExtCompWriter {
             Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "id");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'id' found for '" + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'id' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.asODSLongLong(iidExtComp));
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongLongNV("", iidExtComp).value);
             // name
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "name");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'name' found for '" + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'name' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, "ExtComp");
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createStringNV("", "ExtComp").value);
             // filename_url
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'filename_url' found for '"
-                                              + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'filename_url' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, extCompFile.getName());
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                       ODSHelper.createStringNV("", extCompFile.getName()).value);
             // value_type
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'value_type' found for '" + aeExtComp.getName()
-                                              + "'");
+                                      "No application attribute of type 'value_type' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) valueType);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createEnumNV("", valueType).value);
 
             // component_length
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'component_length' found for '"
-                                              + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'component_length' found for '" + aidExtComp
+                                              + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) length);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", length).value);
             // start_offset
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'start_offset' found for '"
-                                              + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'start_offset' found for '" + aidExtComp + "'");
             }
             DataType attrDt = atfxCache.getApplicationAttribute(aidExtComp, attrNo).getDataType();
             if (attrDt == DataType.DT_LONG) {
-                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) startOffset);
+                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                           ODSHelper.createLongNV("", (int) startOffset).value);
             } else {
-                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.asODSLongLong(startOffset));
+                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                           ODSHelper.createLongLongNV("", startOffset).value);
             }
             // block_size
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "block_size");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'block_size' found for '" + aeExtComp.getName()
-                                              + "'");
+                                      "No application attribute of type 'block_size' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) blockSize);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                       ODSHelper.createLongNV("", (int) (typeSize * length)).value);
             // valuesperblock
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "valuesperblock");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'valuesperblock' found for '"
-                                              + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'valuesperblock' found for '" + aidExtComp
+                                              + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) 1);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", length).value);
             // value_offset
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
             if (attrNo == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "No application attribute of type 'valuesperblock' found for '"
-                                              + aeExtComp.getName() + "'");
+                                      "No application attribute of type 'valuesperblock' found for '" + aidExtComp
+                                              + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, (int) 0);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", 0).value);
 
             // relation to LocalColumn
-            atfxCache.createInstanceRelations(aidLc, ODSHelper.asJLong(ieLocalColumn.getId()), relLcExtComp,
-                                              Arrays.asList(iidExtComp));
+            atfxCache.createInstanceRelations(aidLc, iidLc, relLcExtComp, Arrays.asList(iidExtComp));
 
             // update sequence representation
-            NameValueUnit nvuSeqRep = ieLocalColumn.getValueByBaseName("sequence_representation");
-            int seqRep = ieLocalColumn.getValueByBaseName("sequence_representation").value.u.enumVal();
+            int seqRepAttrNo = atfxCache.getAttrNoByBaName(aidLc, "sequence_representation");
+            TS_Value seqRepValue = atfxCache.getInstanceValue(aidLc, seqRepAttrNo, iidLc);
+
+            int seqRep = seqRepValue.u.enumVal();
             if (seqRep == 0) { // explicit -> external component
-                nvuSeqRep.value.u.enumVal(7);
-                ieLocalColumn.setValueSeq(new NameValueUnit[] { nvuSeqRep });
+                seqRepValue.u.enumVal(7);
+                atfxCache.setInstanceValue(aidLc, iidLc, seqRepAttrNo, seqRepValue);
             }
 
         } catch (IOException e) {

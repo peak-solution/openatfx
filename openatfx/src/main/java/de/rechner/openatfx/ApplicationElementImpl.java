@@ -29,6 +29,8 @@ import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
@@ -47,14 +49,14 @@ import de.rechner.openatfx.util.PatternUtil;
  */
 class ApplicationElementImpl extends ApplicationElementPOA {
 
-    private static final Log LOG = LogFactory.getLog(ApplicationElementImpl.class);
+    private static final Log           LOG = LogFactory.getLog(ApplicationElementImpl.class);
 
-    private final POA modelPOA;
-    private final POA instancePOA;
-    private final AtfxCache atfxCache;
+    private final POA                  modelPOA;
+    private final POA                  instancePOA;
+    private final AtfxCache            atfxCache;
     private final ApplicationStructure applicationStructure;
-    private final BaseElement baseElement;
-    private final long aid;
+    private final BaseElement          baseElement;
+    private final long                 aid;
 
     /**
      * Constructor.
@@ -395,7 +397,11 @@ class ApplicationElementImpl extends ApplicationElementPOA {
         this.atfxCache.addInstance(this.aid, iid);
 
         // set id value
-        this.atfxCache.setInstanceValue(this.aid, iid, idAttrNo, ODSHelper.asODSLongLong(iid));
+        TS_Value value = new TS_Value();
+        value.flag = (short) 15;
+        value.u = new TS_Union();
+        value.u.longlongVal(ODSHelper.asODSLongLong(iid));
+        this.atfxCache.setInstanceValue(this.aid, iid, idAttrNo, value);
 
         // set instance name and return reference
         InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
