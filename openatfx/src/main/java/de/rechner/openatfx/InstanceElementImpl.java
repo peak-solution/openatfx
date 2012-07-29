@@ -208,8 +208,9 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // no instance attribute, read application attribute
         TS_Value value = this.atfxCache.getInstanceValue(this.aid, attrNo, this.iid);
+        String unitName = this.atfxCache.getUnitNameForAttr(this.aid, attrNo);
 
-        return new NameValueUnit(aaName, value, "");
+        return new NameValueUnit(aaName, value, unitName);
     }
 
     /**

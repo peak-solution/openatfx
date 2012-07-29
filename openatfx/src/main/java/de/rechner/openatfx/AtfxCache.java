@@ -60,7 +60,7 @@ class AtfxCache {
     private final Map<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>> instanceRelMap; // <aid,<iid,<applRel,relInstIds>>>
 
     /** instance values */
-    private final Map<Long, Map<Long, Map<Integer, Object>>> instanceValueMap; // <aid,<iid,<aaName,value>>>
+    private final Map<Long, Map<Long, Map<Integer, Object>>> instanceValueMap; // <aid,<iid,<attrNo,value>>>
 
     /** instance attribute values */
     private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
@@ -291,6 +291,13 @@ class AtfxCache {
         return this.aaNameToAttrNoMap.get(aid).get(aaName);
     }
 
+    /**
+     * Returns the attribute index number for given base attribute name.
+     * 
+     * @param aid The application element id.
+     * @param baName The base attribute name.
+     * @return The attribute index number, null if no application attribute found for base attribute.
+     */
     public Integer getAttrNoByBaName(long aid, String baName) {
         return this.baNameToAttrNoMap.get(aid).get(baName);
     }
@@ -701,7 +708,7 @@ class AtfxCache {
      * @param iid The instance id.
      * @param valName The application attribute number.
      * @return The value, null if not found.
-     * @throws AoException
+     * @throws AoException Error getting value.
      */
     public TS_Value getInstanceValue(long aid, int attrNo, long iid) throws AoException {
         ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
@@ -718,6 +725,40 @@ class AtfxCache {
         // read values from memory
         java.lang.Object jValue = this.instanceValueMap.get(aid).get(iid).get(attrNo);
         return (jValue == null) ? ODSHelper.createEmptyTS_Value(dt) : ODSHelper.jObject2tsValue(dt, jValue);
+    }
+
+    /**
+     * Returns the unit name for an application attribute.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The attribute number
+     * @return The unit name.
+     * @throws AoException
+     */
+    public String getUnitNameForAttr(long aid, int attrNo) throws AoException {
+        ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
+
+        // unit instance id
+        long unitIid = ODSHelper.asJLong(aa.getUnit());
+        if (unitIid < 1) {
+            return "";
+        }
+
+        // unit aid
+        Set<Long> untAids = getAidsByBaseType("aounit");
+        if (untAids.isEmpty()) {
+            return "";
+        }
+        long unitAid = untAids.iterator().next();
+
+        // unit attribute index number
+        Integer unitNameAttrNo = getAttrNoByBaName(unitAid, "name");
+        if (unitNameAttrNo == null) {
+            return "";
+        }
+
+        String unitNameObj = (String) this.instanceValueMap.get(unitAid).get(unitIid).get(unitNameAttrNo);
+        return (unitNameObj == null) ? "" : unitNameObj;
     }
 
     /**
