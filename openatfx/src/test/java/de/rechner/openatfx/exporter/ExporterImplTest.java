@@ -3,6 +3,7 @@ package de.rechner.openatfx.exporter;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
@@ -41,7 +42,9 @@ public class ExporterImplTest {
         try {
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
                                                       .newSession("FILENAME=" + new File(url.getFile()));
-            File targetFile = new File("D:/PUBLIC/export.atfx");
+            // File targetFile = new File("D:/PUBLIC/export.atfx");
+            File targetFile = File.createTempFile("test", "atfx");
+            targetFile.deleteOnExit();
             IExporter exporter = new ExporterImpl();
             // meq
             ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
@@ -49,6 +52,8 @@ public class ExporterImplTest {
 
         } catch (AoException e) {
             fail(e.reason);
+        } catch (IOException e) {
+            fail(e.getMessage());
         }
     }
 

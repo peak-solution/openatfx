@@ -296,8 +296,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             Arrays.sort(values, new Comparator<NameValueUnit>() {
 
                 public int compare(NameValueUnit o1, NameValueUnit o2) {
-                    boolean isSeqRepVal = (atfxCache.getAttrNoByName(aid, o2.valName) == atfxCache.getAttrNoByBaName(aid,
-                                                                                                                     "sequence_representation"));
+                    Integer i1 = atfxCache.getAttrNoByName(aid, o2.valName);
+                    Integer i2 = atfxCache.getAttrNoByBaName(aid, "sequence_representation");
+                    boolean isSeqRepVal = i1.equals(i2);
                     return isSeqRepVal ? 1 : 0;
                 }
             });

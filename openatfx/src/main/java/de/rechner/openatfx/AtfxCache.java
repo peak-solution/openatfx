@@ -687,15 +687,78 @@ class AtfxCache {
      * @param value The value.
      */
     public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
-        // check if attribute is 'values' of 'AoLocalColumn', then write to file
+        // check if attribute is 'values' of 'AoLocalColumn', then special handlong
         if (isLocalColumnValuesAttribute(aid, attrNo)) {
+
+            // read sequence representation and write_mode
+            int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
+            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
+            String writeMode = this.context.get("write_mode").value.u.stringVal();
+
+            // ***************************************************
+            // seqRep implicit_constant=1,implicit_linear=2,implicit_saw=3,formula=6
+            if ((seqRep == 1) || (seqRep == 2) || (seqRep == 3) || (seqRep == 6)) {
+                return;
+            }
+
+            // ***************************************************
             // write mode 'file', then write to external component
-            NameValue nv = this.context.get("write_mode");
-            if (nv.value.u.stringVal().equals("file")) {
+            else if (writeMode.equals("file")) {
+
+                // explicit => external_component
+                if (seqRep == 0) {
+                    seqRep = 7;
+                }
+                // raw_linear => raw_linear_external
+                else if (seqRep == 4) {
+                    seqRep = 8;
+                }
+                // raw_polynomial => raw_polynomial_external
+                else if (seqRep == 5) {
+                    seqRep = 9;
+                }
+                // raw_linear_calibrated => raw_linear_calibrated_external
+                else if (seqRep == 10) {
+                    seqRep = 11;
+                }
+
                 ExtCompWriter.getInstance().writeValues(this, iid, value);
                 return;
             }
+
+            // ***************************************************
+            // write mode 'database', then write to XML (memory)
+            else if (writeMode.equals("database")) {
+                // external_component => explicit
+                if (seqRep == 7) {
+                    seqRep = 0;
+                }
+                // raw_linear_external => raw_linear
+                else if (seqRep == 8) {
+                    seqRep = 4;
+                }
+                // raw_polynomial_external => raw_polynomial
+                else if (seqRep == 9) {
+                    seqRep = 5;
+                }
+                // raw_linear_calibrated_external => raw_linear_calibrated
+                else if (seqRep == 11) {
+                    seqRep = 10;
+                }
+
+                setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
+            }
+
         }
+
+        // explicit 0
+        // raw_linear 4
+        // raw_polynomial 5
+        // external_component 7
+        // raw_linear_external 8
+        // raw_polynomial_external 9
+        // raw_linear_calibrated 10
+        // raw_linear_calibrated_external 11
 
         // put value to memory
         java.lang.Object jValue = ODSHelper.tsValue2jObject(value);
@@ -815,8 +878,8 @@ class AtfxCache {
      */
     private boolean isValuesInExternalComponent(long lcIid) throws AoException {
         Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
-        long lcAid = localColumnAids.iterator().next();
         if (localColumnAids != null) {
+            long lcAid = localColumnAids.iterator().next();
             Integer seqRepAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
             if (seqRepAttrNo != null) {
                 int seqRepEnum = (Integer) this.instanceValueMap.get(lcAid).get(lcIid).get(seqRepAttrNo);

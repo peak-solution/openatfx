@@ -79,13 +79,11 @@ class AoSessionImpl extends AoSessionPOA {
         STATIC_CONTEXT.put("WILDCARD_ESC", ODSHelper.createStringNV("WILDCARD_ESC", "\\"));
         STATIC_CONTEXT.put("WILDCARD_ONE", ODSHelper.createStringNV("WILDCARD_ONE", "."));
         STATIC_CONTEXT.put("USER", ODSHelper.createStringNV("USER", ""));
-        STATIC_CONTEXT.put("PASSWORD", ODSHelper.createStringNV("PASSWORD", ""));
+        STATIC_CONTEXT.put("PASSWORD", ODSHelper.createStringNV("PASSWORD", "***********"));
         STATIC_CONTEXT.put("ODSVERSION", ODSHelper.createStringNV("ODSVERSION", "5.2.0"));
-        STATIC_CONTEXT.put("EXT_COMP_SEGSIZE", ODSHelper.createStringNV("EXT_COMP_SEGSIZE", ""));
         STATIC_CONTEXT.put("CREATE_COSESSION_ALLOWED", ODSHelper.createStringNV("CREATE_COSESSION_ALLOWED", "FALSE"));
         STATIC_CONTEXT.put("FILE_NOTATION", ODSHelper.createStringNV("FILE_NOTATION", "UNC_UNIX"));
         STATIC_CONTEXT.put("FILE_MODE", ODSHelper.createStringNV("FILE_MODE", "SINGLE_VOLUME"));
-        STATIC_CONTEXT.put("FILE_SYMBOLS", ODSHelper.createStringNV("FILE_SYMBOLS", "FILE_ROOT,FILE_ROOT_EXTREF"));
         STATIC_CONTEXT.put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", ""));
         STATIC_CONTEXT.put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", ""));
         STATIC_CONTEXT.put("VALUEMATRIX_MODE", ODSHelper.createStringNV("VALUEMATRIX_MODE", "CALCULATED"));
@@ -127,6 +125,8 @@ class AoSessionImpl extends AoSessionPOA {
         this.atfxCache.getContext().put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
         this.atfxCache.getContext().put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
         this.atfxCache.getContext().put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
+        this.atfxCache.getContext().put("EXT_COMP_SEGSIZE",
+                                        ODSHelper.createLongNV("EXT_COMP_SEGSIZE", 1024 * 1024 * 50)); // 50 MB
         this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
     }
 

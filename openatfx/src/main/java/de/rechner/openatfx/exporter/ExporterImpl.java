@@ -80,7 +80,10 @@ public class ExporterImpl implements IExporter {
         this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aolocalcolumn"));
         this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aoparameterset"));
         this.includeBeRels.add(new ExportRelConfig("aoparameter", "aounit"));
+        this.includeBeRels.add(new ExportRelConfig("aoquantity", "aounit"));
+        this.includeBeRels.add(new ExportRelConfig("aoquantity", "aoquantitygroup"));
         this.includeBeRels.add(new ExportRelConfig("aounit", "aophysicaldimension"));
+        this.includeBeRels.add(new ExportRelConfig("aounit", "aounitgroup"));
     }
 
     /**
@@ -96,6 +99,7 @@ public class ExporterImpl implements IExporter {
         // create target session
         String bsVersion = sourceSession.getBaseStructure().getVersion();
         AoSession targetSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, targetFile, bsVersion);
+        targetSession.setContextString("write_mode", "file");
 
         // create source model cache
         ModelCache smc = new ModelCache(sourceSession.getApplicationStructureValue(),
@@ -122,7 +126,7 @@ public class ExporterImpl implements IExporter {
             targetSession.commitTransaction();
 
             LOG.info("Exported " + source2TargetElemIdMap.size() + " instances in "
- + (System.currentTimeMillis() - start) + " ms");
+                    + (System.currentTimeMillis() - start) + " ms");
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             targetSession.abortTransaction();
@@ -168,12 +172,19 @@ public class ExporterImpl implements IExporter {
             // follow relations
             for (ApplRel sourceApplRel : smc.getApplRels(sourceElemIdMap.getAid())) {
 
+                // only follow father/child relations or be elements in global configuration
                 boolean isChildRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD)
                         && (sourceApplRel.arRelationRange.max == -1);
+                boolean isFatherRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD && sourceApplRel.arRelationRange.max == 1);
                 String elem1Be = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem1)).beName.toLowerCase();
                 String elem2Be = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem2)).beName.toLowerCase();
                 boolean includeRel = this.includeBeRels.contains(new ExportRelConfig(elem1Be, elem2Be));
-                if (!isChildRelation && !includeRel) {
+                if (!isChildRelation && !isFatherRelation && !includeRel) {
+                    continue;
+                }
+
+                // do not export children, if not configured
+                if (!exportChildren && isChildRelation) {
                     continue;
                 }
 
@@ -185,17 +196,6 @@ public class ExporterImpl implements IExporter {
                 // do not follow the relation from 'AoSubMatrix' to 'AoLocalColumn' to avoid exporting ALL LocalColumns
                 if (sourceApplRel.brName.equals("local_columns")
                         && smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem2)).aeName.equalsIgnoreCase("AoLocalColumn")) {
-                    continue;
-                }
-
-                // do not export children, if not configured
-                boolean isFatherRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD && sourceApplRel.arRelationRange.max == 1);
-                if (!exportChildren && isChildRelation) {
-                    continue;
-                }
-                // do not follow 1..n relations, except 'children' and '
-                if ((sourceApplRel.arRelationRange.max == -1) && (!isChildRelation)
-                        && !sourceApplRel.brName.equalsIgnoreCase("local_columns")) {
                     continue;
                 }
 
@@ -377,14 +377,12 @@ public class ExporterImpl implements IExporter {
 
         // export relations
         for (ApplRel applRel : smc.getApplRels(sourceAid)) {
-            // only follow child relations or be elements in global configuration
-            boolean isChildRelation = (applRel.arRelationType == RelationType.FATHER_CHILD)
-                    && (applRel.arRelationRange.max == -1);
-            boolean isFatherRelation = (applRel.arRelationType == RelationType.FATHER_CHILD && applRel.arRelationRange.max == 1);
+            // only follow father/child relations or be elements in global configuration
+            boolean isFatherChild = (applRel.arRelationType == RelationType.FATHER_CHILD);
             String elem1Be = smc.getApplElem(ODSHelper.asJLong(applRel.elem1)).beName.toLowerCase();
             String elem2Be = smc.getApplElem(ODSHelper.asJLong(applRel.elem2)).beName.toLowerCase();
             boolean includeRel = this.includeBeRels.contains(new ExportRelConfig(elem1Be, elem2Be));
-            if (!isChildRelation && !isFatherRelation && !includeRel) {
+            if (!isFatherChild && !includeRel) {
                 continue;
             }
 

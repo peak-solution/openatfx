@@ -3087,6 +3087,14 @@ public abstract class ODSHelper {
             }
             seq.stringSeq(val);
         }
+        // DT_BLOB
+        else if (dt == DataType.DT_BLOB) {
+            Blob[] val = new Blob[tsValues.length];
+            for (int i = 0; i < val.length; i++) {
+                val[i] = tsValues[i].u.blobVal();
+            }
+            seq.blobVal(val);
+        }
         // DT_BOOLEAN
         else if (dt == DataType.DT_BOOLEAN) {
             boolean[] val = new boolean[tsValues.length];
@@ -3201,8 +3209,8 @@ public abstract class ODSHelper {
         }
         // Cannot process given DataType
         else {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported DataType '" + dt
-                    + "'");
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported DataType '"
+                    + ODSHelper.dataType2String(dt) + "'");
         }
 
         short[] flags = new short[ODSHelper.tsUnionSeqLength(seq)];
@@ -3212,5 +3220,4 @@ public abstract class ODSHelper {
 
         return new TS_ValueSeq(seq, flags);
     }
-
 }

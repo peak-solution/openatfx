@@ -3,6 +3,8 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,8 +112,25 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
         // create instances per application element
         List<ElemId> elemIdList = new ArrayList<ElemId>(numberOfRows);
-        for (long aid : aeGroupColumns.keySet()) { // iterate over application elements
+        for (final long aid : aeGroupColumns.keySet()) { // iterate over application elements
+
+            // find 'id' column
             AIDNameValueSeqUnitId idCol = idColumns.get(aid);
+
+            // trick for 'AoLocalColumn': sort the attribute 'sequence_representation' BEFORE the attribute 'values'.
+            // This is needed to write the values correctly
+            if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(aid)) {
+                Collections.sort(aeGroupColumns.get(aid), new Comparator<AIDNameValueSeqUnitId>() {
+
+                    public int compare(AIDNameValueSeqUnitId o1, AIDNameValueSeqUnitId o2) {
+                        Integer i1 = atfxCache.getAttrNoByName(aid, o2.attr.aaName);
+                        Integer i2 = atfxCache.getAttrNoByBaName(aid, "sequence_representation");
+                        boolean isSeqRepVal = i1.equals(i2);
+                        return isSeqRepVal ? 1 : 0;
+                    }
+                });
+            }
+
             // iterate over rows (instances)
             for (int row = 0; row < numberOfRows; row++) {
                 // fetch or create id
