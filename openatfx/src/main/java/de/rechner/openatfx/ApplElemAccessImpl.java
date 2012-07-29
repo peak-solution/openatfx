@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +13,6 @@ import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplElemAccessPOA;
-import org.asam.ods.ApplicationAttribute;
-import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
@@ -35,6 +34,7 @@ import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
+import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
@@ -282,15 +282,14 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      */
     public ResultSetExt[] getInstancesExt(QueryStructureExt aoq, int how_many) throws AoException {
         SelValueExt condition = null;
-        Long aid = null;
         // this method does only process a certain kind of query:
         // - selects from only one application element
         // - no joins
         // - no group by's;
         // - no aggregate functions
         // - no order by
-        // - only one or no string condition
-        // - allowed condition selOpCodes: SelOpcode.CI_EQ and SelOpcode.CI_LIKE
+        // - only one or no DT_STRING or DS_LONGLONG condition
+        // - allowed condition selOpCodes: SelOpCode.EQ, SelOpcode.CI_EQ, SelOpCode.LIKE, SelOpcode.CI_LIKE
 
         if (aoq == null) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
@@ -300,15 +299,15 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         if (aoq.anuSeq == null || aoq.anuSeq.length < 1) {
             return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[0], null) };
         }
-        // do not allow 'group by'
-        if (aoq.groupBy != null && aoq.groupBy.length > 0) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt not supported: Contains 'group by' statements");
-        }
         // do not allow joins
         if (aoq.joinSeq != null && aoq.joinSeq.length > 0) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt not supported: Contains joins");
+        }
+        // do not allow 'group by'
+        if (aoq.groupBy != null && aoq.groupBy.length > 0) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "QueryStructureExt not supported: Contains 'group by' statements");
         }
         // do not allow 'order by'
         if (aoq.orderBy != null && aoq.orderBy.length > 0) {
@@ -318,6 +317,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
         // do not allow null AIDNames, aggregate functions or null attribute names in any of the selects. Also do not
         // allow more than one application element.
+        Long aid = null;
         for (SelAIDNameUnitId anu : aoq.anuSeq) {
             if (anu.attr == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
@@ -342,6 +342,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 }
             }
         }
+        if (atfxCache.getApplicationElementNameById(aid) == null) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "QueryStructureExt invalid: Given AID '" + aid
+                                          + "' does not reference a existing application element");
+        }
 
         // only allow one condition
         if (aoq.condSeq != null && aoq.condSeq.length > 1) {
@@ -361,13 +366,14 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             condition = cond.value();
         }
 
-        // only allow string conditions
-        if (condition != null && condition.value.u.discriminator() != DataType.DT_STRING) {
+        // only allow conditions of type DT_STRING or DS_LONGLONG
+        if ((condition != null) && (condition.value.u.discriminator() != DataType.DT_STRING)
+                && (condition.value.u.discriminator() != DataType.DS_LONGLONG)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Condition DataType '"
                     + ODSHelper.dataType2String(condition.value.u.discriminator()) + "' not supported.");
         }
 
-        // only allow SelOpcode.CI_EQ and SelOpcode.CI_LIKE
+        // only allow CI_EQ, CI_LIKE or INSET
         if (condition != null && (condition.oper != SelOpcode.CI_EQ) && (condition.oper != SelOpcode.CI_LIKE)
                 && (condition.oper != SelOpcode.INSET)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
@@ -375,29 +381,18 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                                           + "' not yet supported.");
         }
 
-        // get the application element
-        ApplicationElement selectedAe = atfxCache.getApplicationElementById(aid);
-        if (selectedAe == null) {
-            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt invalid: Given AID '" + aid
-                                          + "' does not reference a existing application element");
-        }
-
-        // make sure the condition and selected attributes exist
-        List<String> applicationAttributeNameList = new ArrayList<String>();
-        for (ApplicationAttribute attr : selectedAe.getAttributes("*")) {
-            applicationAttributeNameList.add(attr.getName());
-        }
+        // make sure the selected attributes exists
         for (SelAIDNameUnitId selectedAttribute : aoq.anuSeq) {
-            if (!applicationAttributeNameList.contains(selectedAttribute.attr.aaName)) {
+            if (atfxCache.getAttrNoByName(aid, selectedAttribute.attr.aaName) == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "QueryStructureExt invalid: Selected attribute '" + selectedAttribute
                                               + "' does not exist in selected application element");
             }
         }
+        // make sure the condition attributes exist
         if (condition != null) {
             String conditionAttributeName = condition.attr.attr.aaName;
-            if (!applicationAttributeNameList.contains(conditionAttributeName)) {
+            if (atfxCache.getAttrNoByName(aid, conditionAttributeName) == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "QueryStructureExt invalid: Condition attribute '" + conditionAttributeName
                                               + "' does not exist in selected application element");
@@ -407,44 +402,44 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // get all queries instances -> get all instances, then filter manually, because the 'getInstances()' method
         // uses case sensitivity
         Set<Long> ieIds = atfxCache.getInstanceIds(aid);
-        List<Long> resultList = new ArrayList<Long>();
+        List<Long> filteredIids = new ArrayList<Long>();
         for (Long iid : ieIds) {
             if (condition == null) {
-                resultList.add(iid);
-            } else {
-                String conditionString = condition.value.u.stringVal();
+                filteredIids.add(iid);
+            } else if (condition.value.u.discriminator() == DataType.DT_STRING) {
                 Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
-                TS_Value instanceAttributeValue = atfxCache.getInstanceValue(aid, attrNo, iid);
-                if (instanceAttributeValue != null && instanceAttributeValue.u != null
-                        && instanceAttributeValue.u.stringVal() != null) {
-                    String instanceAttributeStringValue = instanceAttributeValue.u.stringVal();
-                    if (PatternUtil.nameFilterMatchCI(instanceAttributeStringValue, conditionString)) {
-                        resultList.add(iid);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                if ((value != null) && (value.u != null) && (value.u.stringVal() != null)) {
+                    if (PatternUtil.nameFilterMatchCI(value.u.stringVal(), condition.value.u.stringVal())) {
+                        filteredIids.add(iid);
                     }
                 }
+            } else if ((condition.value.u.discriminator() == DataType.DS_LONGLONG)
+                    && (condition.oper == SelOpcode.INSET)) {
+                Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                long[] cond = ODSHelper.asJLong(condition.value.u.longlongSeq());
+                Arrays.sort(cond); // sort so find method works
+                if (Arrays.binarySearch(cond, ODSHelper.asJLong(value.u.longlongVal())) > -1) {
+                    filteredIids.add(iid);
+                }
+
             }
         }
 
         // build the result set
-        List<NameValueSeqUnitId> resultValues = new ArrayList<NameValueSeqUnitId>();
-        long[] iids = new long[resultList.size()];
-        for (int i = 0; i < resultList.size(); i++) {
-            iids[i] = resultList.get(i);
-        }
-        for (SelAIDNameUnitId selectedAttribute : aoq.anuSeq) {
-            NameValueSeqUnitId nvsui = new NameValueSeqUnitId();
-            nvsui.valName = selectedAttribute.attr.aaName;
-            Integer attrNo = this.atfxCache.getAttrNoByName(aid, nvsui.valName);
-            nvsui.value = atfxCache.listInstanceValues(aid, attrNo, iids);
-            nvsui.unitId = selectedAttribute.unitId;
-            resultValues.add(nvsui);
+        ElemResultSetExt erse = new ElemResultSetExt();
+        erse.aid = ODSHelper.asODSLongLong(aid);
+        erse.values = new NameValueSeqUnitId[aoq.anuSeq.length];
+        for (int col = 0; col < erse.values.length; col++) {
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, aoq.anuSeq[col].attr.aaName);
+            erse.values[col] = new NameValueSeqUnitId();
+            erse.values[col].valName = aoq.anuSeq[col].attr.aaName;
+            erse.values[col].value = new TS_ValueSeq();
+            erse.values[col].value = atfxCache.getInstanceValues(aid, attrNo, filteredIids);
         }
 
-        ElemResultSetExt elem = new ElemResultSetExt(ODSHelper.asODSLongLong(aid),
-                                                     resultValues.toArray(new NameValueSeqUnitId[0]));
-        ResultSetExt res = new ResultSetExt();
-        res.firstElems = new ElemResultSetExt[] { elem };
-        return new ResultSetExt[] { res };
+        return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[] { erse }, null) };
     }
 
     /**

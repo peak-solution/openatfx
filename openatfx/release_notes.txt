@@ -31,6 +31,7 @@
 		- Changed default context variable INDENT_XML to FALSE
 		- Update to JUnit 4.10
 		- Update to woodstox 4.1.3
+		- Fixed bug report: http://community.openmdm.org/issue/1848
 
 	0.3.1 (Christian Rechner)
 	

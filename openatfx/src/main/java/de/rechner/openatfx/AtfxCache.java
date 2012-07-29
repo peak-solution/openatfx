@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -728,6 +729,32 @@ class AtfxCache {
     }
 
     /**
+     * Returns all values of an instance attribute of a given list of instances.
+     * 
+     * @param aid the application element id
+     * @param attrNo the attribute number
+     * @param iids the array of instance ids
+     * @return TS_ValueSeq containing all values, or null, if one or more of the instances do not possess the instance
+     *         attribute.
+     * @throws AoException if the conversion from tsValue array to tsValueSeq fails
+     */
+    public TS_ValueSeq getInstanceValues(long aid, int attrNo, Collection<Long> iids) throws AoException {
+        ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
+
+        // datatype
+        boolean lcValuesAttr = isLocalColumnValuesAttribute(aid, attrNo);
+        DataType dt = aa.getDataType();
+
+        List<TS_Value> list = new ArrayList<TS_Value>();
+        for (long iid : iids) {
+            dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
+            list.add(getInstanceValue(aid, attrNo, iid));
+        }
+
+        return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), dt);
+    }
+
+    /**
      * Returns the unit name for an application attribute.
      * 
      * @param aid The application element id.
@@ -907,28 +934,6 @@ class AtfxCache {
      */
     public TS_Value getInstanceAttributeValue(long aid, long iid, String attrName) {
         return instanceAttrValueMap.get(aid).get(iid).get(attrName);
-    }
-
-    /**
-     * Returns all values of an instance attribute of a given list of instances.
-     * 
-     * @param aid the application element id
-     * @param attrNo the attribute number
-     * @param iids the array of instance ids
-     * @return TS_ValueSeq containing all values, or null, if one or more of the instances do not possess the instance
-     *         attribute.
-     * @throws AoException if the conversion from tsValue array to tsValueSeq fails
-     */
-    public TS_ValueSeq listInstanceValues(long aid, int attrNo, long[] iids) throws AoException {
-        TS_Value[] tsValues = new TS_Value[iids.length];
-        for (int index = 0; index < iids.length; index++) {
-            TS_Value value = getInstanceValue(aid, attrNo, iids[index]);
-            if (value == null) {
-                return null;
-            }
-            tsValues[index] = value;
-        }
-        return ODSHelper.tsValue2ts_valueSeq(tsValues);
     }
 
     public void removeInstanceAttribute(long aid, long iid, String attrName) {

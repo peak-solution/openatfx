@@ -28,7 +28,9 @@ import org.asam.ods.SelItem;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelOrder;
 import org.asam.ods.SelValueExt;
+import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
+import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 import org.junit.AfterClass;
@@ -230,26 +232,102 @@ public class ApplElemAccessImplTest {
             // the value of the aodt attribute
             assertEquals(DataType.DT_FLOAT.value(), resSetExt[0].firstElems[0].values[1].value.u.enumVal()[0]);
 
-            // 3. add a join to parent and to children with default join
-            // qse.joinSeq = new JoinDef[3];
-            // qse.joinSeq[0] = new JoinDef();
-            // qse.joinSeq[0].fromAID = aidDts; // dts
-            // qse.joinSeq[0].toAID = aidMeq; // meq
-            // qse.joinSeq[0].refName = "dts_iid";
-            // qse.joinSeq[0].joiningType = JoinType.JTDEFAULT;
-            // qse.joinSeq[1] = new JoinDef();
-            // qse.joinSeq[1].fromAID = aidMeq; // meq
-            // qse.joinSeq[1].toAID = aidUnt; // unt
-            // qse.joinSeq[1].refName = "unt_iid";
-            // qse.joinSeq[1].joiningType = JoinType.JTDEFAULT;
-            // qse.joinSeq[2] = new JoinDef();
-            // qse.joinSeq[2].fromAID = aidMeq; // meq
-            // qse.joinSeq[2].toAID = aidDevice; // device
-            // qse.joinSeq[2].refName = "device_iid";
-            // qse.joinSeq[2].joiningType = JoinType.JTDEFAULT;
-            // resSetExt = applElemAccess.getInstancesExt(qse, 0);
-            // assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
 
+    @Test
+    public void testGetInstancesExtDT_STRING() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "iname";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.CI_EQ;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.stringVal("LS.LEFT SIDE");
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length);
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Left Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetInstancesExtDS_LONGLONG() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "meq_iid";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.INSET;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.longlongSeq(new T_LONGLONG[] { new T_LONGLONG(0, 94), new T_LONGLONG(0, 60) });
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
         } catch (AoException e) {
             fail(e.reason);
         }

@@ -2962,22 +2962,15 @@ public abstract class ODSHelper {
      * @throws AoException if one or more of the array elements are null or one or more of the elements have a different
      *             DataType than the rest.
      */
-    public static TS_ValueSeq tsValue2ts_valueSeq(TS_Value[] tsValues) throws AoException {
-        DataType dt = null;
-
+    public static TS_ValueSeq tsValue2tsValueSeq(TS_Value[] tsValues, DataType dt) throws AoException {
         for (int row = 0; row < tsValues.length; row++) {
             if (tsValues[row] == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Null reference found on index '" + row + "'");
-            } else {
-                if (dt == null) {
-                    dt = tsValues[row].u.discriminator();
-                } else {
-                    if (!dt.equals(tsValues[row].u.discriminator())) {
-                        throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                              "Found more than one DataType for result column '" + tsValues[row] + "'");
-                    }
-                }
+            }
+            if (!dt.equals(tsValues[row].u.discriminator())) {
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                      "Found more than one DataType for result column '" + tsValues[row] + "'");
             }
         }
 
@@ -3217,8 +3210,7 @@ public abstract class ODSHelper {
             flags[i] = tsValues[i].flag;
         }
 
-        TS_ValueSeq result = new TS_ValueSeq(seq, flags);
-        return result;
+        return new TS_ValueSeq(seq, flags);
     }
 
 }

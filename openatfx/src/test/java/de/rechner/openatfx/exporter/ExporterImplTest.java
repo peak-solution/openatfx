@@ -43,9 +43,9 @@ public class ExporterImplTest {
                                                       .newSession("FILENAME=" + new File(url.getFile()));
             File targetFile = new File("D:/PUBLIC/export.atfx");
             IExporter exporter = new ExporterImpl();
-            exporter.export(sourceSession,
-                            new ElemId[] { new ElemId(ODSHelper.asODSLongLong(21), ODSHelper.asODSLongLong(60)) },
-                            targetFile, new Properties());
+            // meq
+            ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
+            exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
 
         } catch (AoException e) {
             fail(e.reason);
