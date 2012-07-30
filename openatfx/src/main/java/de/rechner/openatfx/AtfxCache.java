@@ -751,15 +751,6 @@ class AtfxCache {
 
         }
 
-        // explicit 0
-        // raw_linear 4
-        // raw_polynomial 5
-        // external_component 7
-        // raw_linear_external 8
-        // raw_polynomial_external 9
-        // raw_linear_calibrated 10
-        // raw_linear_calibrated_external 11
-
         // put value to memory
         java.lang.Object jValue = ODSHelper.tsValue2jObject(value);
         this.instanceValueMap.get(aid).get(iid).put(attrNo, jValue);
@@ -782,8 +773,18 @@ class AtfxCache {
         DataType dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
 
         // read values from external component file
-        if (lcValuesAttr && isValuesInExternalComponent(iid)) {
-            return ExtCompReader.getInstance().readValues(this, iid, dt);
+        if (lcValuesAttr) {
+            int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
+            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
+            // implicit_constant=1,implicit_linear=2,implicit_saw=3,formula=6
+            if (seqRep == 1 || seqRep == 2 || seqRep == 3 || seqRep == 6) {
+                int genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
+                return getInstanceValue(aid, genParamsAttrNo, iid);
+            }
+            // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
+            else if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
+                return ExtCompReader.getInstance().readValues(this, iid, dt);
+            }
         }
 
         // read values from memory
@@ -864,32 +865,6 @@ class AtfxCache {
         if (localColumnAids != null && localColumnAids.contains(aid)) {
             Integer valuesAttrNo = getAttrNoByBaName(aid, "values");
             return (valuesAttrNo != null) && (attrNo == valuesAttrNo);
-        }
-        return false;
-    }
-
-    /**
-     * Checks whether the value queried is an external component value of a local column.
-     * 
-     * @param aid The application element id.
-     * @param attrNo The attribute number.
-     * @param iid The instance id.
-     * @throws AoException Error checking application attribute.
-     */
-    private boolean isValuesInExternalComponent(long lcIid) throws AoException {
-        Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
-        if (localColumnAids != null) {
-            long lcAid = localColumnAids.iterator().next();
-            Integer seqRepAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
-            if (seqRepAttrNo != null) {
-                int seqRepEnum = (Integer) this.instanceValueMap.get(lcAid).get(lcIid).get(seqRepAttrNo);
-                // check if the sequence representation is 7(external_component), 8(raw_linear_external),
-                // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
-                if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                    return true;
-                }
-            }
-
         }
         return false;
     }

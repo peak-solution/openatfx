@@ -2970,7 +2970,8 @@ public abstract class ODSHelper {
             }
             if (!dt.equals(tsValues[row].u.discriminator())) {
                 throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                      "Found more than one DataType for result column '" + tsValues[row] + "'");
+                                      "Found more than one DataType for result column '"
+                                              + ODSHelper.tsValue2string(tsValues[row]) + "'");
             }
         }
 

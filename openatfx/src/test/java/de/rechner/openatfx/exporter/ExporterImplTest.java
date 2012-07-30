@@ -40,8 +40,11 @@ public class ExporterImplTest {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ExporterImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         try {
+            File sourceFile = new File(url.getFile());
+            // File sourceFile = new File(
+            // "D:/PUBLIC/TestData/atfx/pak/201111111027_IN-PJ 967_ohne/SB_2.Gang_2011.11.11_10.52.53/transfer.atfx");
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
-                                                      .newSession("FILENAME=" + new File(url.getFile()));
+                                                      .newSession("FILENAME=" + sourceFile);
             // File targetFile = new File("D:/PUBLIC/export.atfx");
             File targetFile = File.createTempFile("test", "atfx");
             targetFile.deleteOnExit();
@@ -49,6 +52,12 @@ public class ExporterImplTest {
             // meq
             ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
             exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
+
+            // T_LONGLONG aid = sourceSession.getApplicationStructure().getElementsByBaseType("AoTest")[0].getId();
+            // T_LONGLONG iid = sourceSession.getApplicationStructure().getElementById(aid).getInstances("*").nextOne()
+            // .getId();
+            // ElemId elemId = new ElemId(aid, iid);
+            // exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
 
         } catch (AoException e) {
             fail(e.reason);

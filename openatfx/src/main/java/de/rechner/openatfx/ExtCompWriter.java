@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -15,6 +16,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 
@@ -28,6 +30,17 @@ class ExtCompWriter {
     /** The singleton instance */
     private static volatile ExtCompWriter instance;
 
+    private File getExtCompFile(AtfxCache atfxCache, int cnt) {
+        Map<String, NameValue> context = atfxCache.getContext();
+        String rootPath = context.get("FILE_ROOT").value.u.stringVal();
+        long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
+        File binFile = new File(rootPath, "data_" + cnt + ".bin");
+        if (binFile.length() > extCompSize) {
+            binFile = getExtCompFile(atfxCache, cnt + 1);
+        }
+        return binFile;
+    }
+
     /**
      * @param atfxCache
      * @param lcIid
@@ -36,10 +49,7 @@ class ExtCompWriter {
      */
     public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
         // open file
-        // AoSession aoSession = ieLocalColumn.getApplicationElement().getApplicationStructure().getSession();
-        // String rootPath = aoSession.getContextByName("FILE_ROOT").value.u.stringVal();
-        String rootPath = "D:/PUBLIC";
-        File extCompFile = new File(rootPath, "binary.bin");
+        File extCompFile = getExtCompFile(atfxCache, 1);
 
         // read values
         RandomAccessFile raf = null;
@@ -93,6 +103,20 @@ class ExtCompWriter {
                 bb.rewind();
                 channel.write(bb);
             }
+            // DS_COMPLEX
+            else if (dt == DataType.DS_COMPLEX) {
+                valueType = 5;
+                typeSize = 4;
+                length = value.u.complexSeq().length * 2;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length / 2; i++) {
+                    bb.putFloat(value.u.complexSeq()[i].r);
+                    bb.putFloat(value.u.complexSeq()[i].i);
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
             // DS_DOUBLE
             else if (dt == DataType.DS_DOUBLE) {
                 valueType = 6;
@@ -102,6 +126,20 @@ class ExtCompWriter {
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putDouble(value.u.doubleSeq()[i]);
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
+            // DS_DCOMPLEX
+            else if (dt == DataType.DS_DCOMPLEX) {
+                valueType = 6;
+                typeSize = 8;
+                length = value.u.dcomplexSeq().length * 2;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length / 2; i++) {
+                    bb.putDouble(value.u.dcomplexSeq()[i].r);
+                    bb.putDouble(value.u.dcomplexSeq()[i].i);
                 }
                 bb.rewind();
                 channel.write(bb);
@@ -187,8 +225,7 @@ class ExtCompWriter {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                       "No application attribute of type 'block_size' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
-                                       ODSHelper.createLongNV("", (int) (typeSize * length)).value);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", (int) typeSize).value);
             // valuesperblock
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "valuesperblock");
             if (attrNo == null) {
@@ -196,7 +233,7 @@ class ExtCompWriter {
                                       "No application attribute of type 'valuesperblock' found for '" + aidExtComp
                                               + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", length).value);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", 1).value);
             // value_offset
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
             if (attrNo == null) {
@@ -208,16 +245,6 @@ class ExtCompWriter {
 
             // relation to LocalColumn
             atfxCache.createInstanceRelations(aidLc, iidLc, relLcExtComp, Arrays.asList(iidExtComp));
-
-            // update sequence representation
-            int seqRepAttrNo = atfxCache.getAttrNoByBaName(aidLc, "sequence_representation");
-            TS_Value seqRepValue = atfxCache.getInstanceValue(aidLc, seqRepAttrNo, iidLc);
-
-            int seqRep = seqRepValue.u.enumVal();
-            if (seqRep == 0) { // explicit -> external component
-                seqRepValue.u.enumVal(7);
-                atfxCache.setInstanceValue(aidLc, iidLc, seqRepAttrNo, seqRepValue);
-            }
 
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

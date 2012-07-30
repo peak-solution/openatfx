@@ -126,7 +126,7 @@ class AoSessionImpl extends AoSessionPOA {
         this.atfxCache.getContext().put("FILE_ROOT_EXTREF", ODSHelper.createStringNV("FILE_ROOT_EXTREF", directoryStr));
         this.atfxCache.getContext().put("FILENAME", ODSHelper.createStringNV("FILENAME", fileStr));
         this.atfxCache.getContext().put("EXT_COMP_SEGSIZE",
-                                        ODSHelper.createLongNV("EXT_COMP_SEGSIZE", 1024 * 1024 * 50)); // 50 MB
+                                        ODSHelper.createLongLongNV("EXT_COMP_SEGSIZE", 1024 * 1024 * 50)); // 50 MB
         this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
     }
 

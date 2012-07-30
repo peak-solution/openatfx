@@ -52,8 +52,23 @@ class ExtCompReader {
         tsValue.flag = (short) 15;
         tsValue.u = new TS_Union();
 
+        // DS_SHORT
+        if (targetDataType == DataType.DS_SHORT) {
+            List<Short> list = new ArrayList<Short>();
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
+                    list.add(value.shortValue());
+                }
+            }
+            short[] ar = new short[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                ar[i] = list.get(i);
+            }
+            tsValue.u.shortSeq(ar);
+        }
+
         // DS_LONG
-        if (targetDataType == DataType.DS_LONG) {
+        else if (targetDataType == DataType.DS_LONG) {
             List<Integer> list = new ArrayList<Integer>();
             for (long iidExtComp : iidExtComps) {
                 for (Number value : readNumberValues(atfxCache, iidExtComp)) {
@@ -174,7 +189,8 @@ class ExtCompReader {
         int blockSize = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
 
         // valuesperblock
-        // int valuesperblock = ieExtComp.getValueByBaseName("valuesperblock").value.u.longVal();
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "valuesperblock");
+        int valuesperblock = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
 
         // read values
         RandomAccessFile raf = null;
@@ -194,17 +210,35 @@ class ExtCompReader {
             }
             sourceMbb.order(byteOrder);
 
+            // int typeSize = 0;
+            // // 2=dt_short
+            // if (valueType == 2) {
+            // typeSize = 2;
+            // }
+            // // 3=dt_long, 8=dt_long_beo, 5=ieeefloat4, 10=ieeefloat4_beo
+            // else if ((valueType == 3) || (valueType == 8) || (valueType == 5) || (valueType == 10)) {
+            // typeSize = 4;
+            // }
+            // // 6=ieeefloat8, 10=ieeefloat8_beo
+            // else if ((valueType == 6) || (valueType == 10)) {
+            // typeSize = 8;
+            // }
+
             // read values
             for (int i = 0; i < componentLength; i++) {
                 // calculate index
-                int idx = (startOffset + valueOffset) + (i * blockSize);
+                // int idx = (startOffset + valueOffset) + (i * typeSize);
+                int idx = (startOffset + valueOffset) + (i * (blockSize / valuesperblock));
 
-                // if (idx > sourceMbb.capacity()) {
-                // continue;
-                // }
+                // find out which block to read
+                // int block = i / valuesperblock;
 
+                // 2=dt_short
+                if (valueType == 2) {
+                    list.add(sourceMbb.getShort(idx));
+                }
                 // 3=dt_long, 8=dt_long_beo
-                if ((valueType == 3) || (valueType == 8)) {
+                else if ((valueType == 3) || (valueType == 8)) {
                     list.add(sourceMbb.getInt(idx));
                 }
                 // 5=ieeefloat4, 10=ieeefloat4_beo
