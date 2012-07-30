@@ -6,6 +6,11 @@ import org.asam.ods.T_LONGLONG;
 import de.rechner.openatfx.util.ODSHelper;
 
 
+/**
+ * Model class representing an ASAM ODS <code>org.asam.ods.ElemId</code>.
+ * 
+ * @author Christian Rechner
+ */
 class ElemIdMap {
 
     private final long aid;

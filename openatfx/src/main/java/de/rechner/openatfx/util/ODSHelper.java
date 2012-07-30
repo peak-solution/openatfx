@@ -2963,6 +2963,7 @@ public abstract class ODSHelper {
      *             DataType than the rest.
      */
     public static TS_ValueSeq tsValue2tsValueSeq(TS_Value[] tsValues, DataType dt) throws AoException {
+
         for (int row = 0; row < tsValues.length; row++) {
             if (tsValues[row] == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,

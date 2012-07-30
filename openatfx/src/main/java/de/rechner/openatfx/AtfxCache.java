@@ -723,6 +723,7 @@ class AtfxCache {
                 }
 
                 ExtCompWriter.getInstance().writeValues(this, iid, value);
+                setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
                 return;
             }
 
@@ -776,13 +777,8 @@ class AtfxCache {
         if (lcValuesAttr) {
             int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
             int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
-            // implicit_constant=1,implicit_linear=2,implicit_saw=3,formula=6
-            if (seqRep == 1 || seqRep == 2 || seqRep == 3 || seqRep == 6) {
-                int genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
-                return getInstanceValue(aid, genParamsAttrNo, iid);
-            }
             // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
-            else if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
+            if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
                 return ExtCompReader.getInstance().readValues(this, iid, dt);
             }
         }
