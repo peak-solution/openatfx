@@ -2,7 +2,9 @@ package de.rechner.openatfx.exporter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -71,6 +73,8 @@ public class ExporterImpl implements IExporter {
     /** The set of relations between application elements to follow */
     private final Set<ExportRelConfig> includeAeRels;
 
+    private final Comparator<T_LONGLONG> t_longlong_comparator;
+
     /**
      * Constructor.
      */
@@ -98,6 +102,8 @@ public class ExporterImpl implements IExporter {
         this.includeAeRels.add(new ExportRelConfig("geometry", "coordinate_system"));
         this.includeAeRels.add(new ExportRelConfig("measurement_location", "coordinate_system"));
         this.includeAeRels.add(new ExportRelConfig("measurement_location", "Quantity"));
+
+        this.t_longlong_comparator = new T_LONGLONG_Comparator();
     }
 
     /**
@@ -346,10 +352,12 @@ public class ExporterImpl implements IExporter {
             return;
         }
 
-        // export instance value
+        // export instance values
         Map<ElemIdMap, ElemIdMap> exportedElemIds = exportInstanceValues(smc, sourceAea, sourceAid, sourceIids,
                                                                          targetAea, source2TargetAidMap);
         source2TargetElemIdMap.putAll(exportedElemIds);
+
+        // if application element is of type 'AoSubMatrix', export all x-axis channels to ensure data consistency
 
         // export relations
         for (ElemIdMap sourceElemIdMap : exportedElemIds.keySet()) {
@@ -429,6 +437,10 @@ public class ExporterImpl implements IExporter {
             return Collections.emptyMap();
         }
 
+        // sort source ids, to be able to match the query result to the
+        Arrays.sort(sourceIids, this.t_longlong_comparator);
+
+        // get attribute names without 'id','values','flags','sequence_representation'
         String[] copyableAttrNames = getCopyableAttrNames(smc, ODSHelper.asJLong(sourceAid));
 
         // ********************************************************************
@@ -464,9 +476,17 @@ public class ExporterImpl implements IExporter {
         qse.condSeq[0] = new SelItem();
         qse.condSeq[0].value(sve);
 
+        // orderBy (order by instance id)
+        qse.orderBy = new SelOrder[1];
+        qse.orderBy[0] = new SelOrder();
+        qse.orderBy[0].attr = new AIDName();
+        qse.orderBy[0].attr.aid = sourceAid;
+        qse.orderBy[0].attr.aaName = smc.getApplAttrByBaseName(ODSHelper.asJLong(sourceAid), "id").aaName;
+        qse.orderBy[0].ascending = true;
+
+        // no joins and groups
         qse.joinSeq = new JoinDef[0];
         qse.groupBy = new AIDName[0];
-        qse.orderBy = new SelOrder[0];
 
         // execute query in source
         ResultSetExt[] rse = sourceAea.getInstancesExt(qse, 0);

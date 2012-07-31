@@ -3,13 +3,13 @@ package de.rechner.openatfx.exporter;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
 
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ElemId;
-import org.asam.ods.T_LONGLONG;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.util.ODSHelper;
 
 
 public class ExporterImplTest {
@@ -39,30 +40,20 @@ public class ExporterImplTest {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ExporterImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         try {
-            // File sourceFile = new File(url.getFile());
-            File sourceFile = new File(
-                                       "D:/PUBLIC/TestData/atfx/pak/201111171018_4GCN001029_PBN/RUN_GA4_01/transfer.atfx");
+            File sourceFile = new File(url.getFile());
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
                                                       .newSession("FILENAME=" + sourceFile);
-            File targetFile = new File("D:/PUBLIC/export.atfx");
-            // File targetFile = File.createTempFile("test", "atfx");
-            // targetFile.deleteOnExit();
+            File targetFile = File.createTempFile("test", "atfx");
+            targetFile.deleteOnExit();
             IExporter exporter = new ExporterImpl();
             // meq
-            // ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
-            // exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
-
-            T_LONGLONG aid = sourceSession.getApplicationStructure().getElementsByBaseType("AoTest")[0].getId();
-            T_LONGLONG iid = sourceSession.getApplicationStructure().getElementById(aid).getInstances("*").nextOne()
-                                          .getId();
-            ElemId elemId = new ElemId(aid, iid);
+            ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
             exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
-
         } catch (AoException e) {
             fail(e.reason);
+        } catch (IOException e) {
+            fail(e.getMessage());
         }
-        // catch (IOException e) {
-        // fail(e.getMessage());
-        // }
     }
+
 }

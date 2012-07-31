@@ -328,11 +328,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt not supported: Contains 'group by' statements");
         }
-        // do not allow 'order by'
-        if (aoq.orderBy != null && aoq.orderBy.length > 0) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt not supported: Contains 'order by' statements");
-        }
+        // ignore 'order_by'
+        // if (aoq.orderBy != null && aoq.orderBy.length > 0) {
+        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+        // "QueryStructureExt not supported: Contains 'order by' statements");
+        // }
 
         // do not allow null AIDNames, aggregate functions or null attribute names in any of the selects. Also do not
         // allow more than one application element.
