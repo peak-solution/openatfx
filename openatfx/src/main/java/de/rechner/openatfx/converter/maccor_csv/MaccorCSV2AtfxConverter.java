@@ -1,4 +1,4 @@
-package de.rechner.openatfx.converter.diadem_dat;
+package de.rechner.openatfx.converter.maccor_csv;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -22,29 +22,27 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.InstanceElement;
-import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.converter.ConvertException;
 import de.rechner.openatfx.converter.IConverter;
-import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
  * @author Christian Rechner
  */
-public class Dat2AtfxConverter implements IConverter {
+public class MaccorCSV2AtfxConverter implements IConverter {
 
-    private static final Log LOG = LogFactory.getLog(Dat2AtfxConverter.class);
-    private static final String ATFX_TEMPLATE_FILE = "/de/rechner/openatfx/converter/model.atfx";
+    private static final Log LOG = LogFactory.getLog(MaccorCSV2AtfxConverter.class);
+    private static final String ATFX_TEMPLATE_FILE = "model.atfx";
     private static final String DAT_FILE_PATTERN = "*.dat";
 
     /**
      * Constructor.
      */
-    public Dat2AtfxConverter() {}
+    public MaccorCSV2AtfxConverter() {}
 
     /**
      * @see IConverter
@@ -87,9 +85,9 @@ public class Dat2AtfxConverter implements IConverter {
 
         // open ATFX session on target file
         AoSession aoSession = createSessionFromTemplateAtfx(orb, atfxFile);
-
-        DatHeaderReader datHeaderReader = DatHeaderReader.getInstance();
-        AoSessionWriter writer = new AoSessionWriter();
+        //
+        // DatHeaderReader datHeaderReader = DatHeaderReader.getInstance();
+        // AoSessionWriter writer = new AoSessionWriter();
         try {
             aoSession.startTransaction();
             aoSession.setContextString("INDENT_XML", "FALSE");
@@ -103,23 +101,6 @@ public class Dat2AtfxConverter implements IConverter {
             InstanceElement iePrj = aePrj.createInstance("prj");
             ieEnv.createRelation(relEnvPrj, iePrj);
 
-            // add attachments
-            if (attachments != null && attachments.length > 0) {
-                Collection<T_ExternalReference> extRefs = new ArrayList<T_ExternalReference>();
-                for (File attachment : attachments) {
-                    File targetFile = new File(atfxFile.getParentFile(), attachment.getName());
-                    copyFile(attachment, targetFile);
-                    extRefs.add(new T_ExternalReference("DAT attachment", "", targetFile.getName()));
-                }
-                iePrj.setValue(ODSHelper.createExtRefSeqNVU("attachments", extRefs.toArray(new T_ExternalReference[0])));
-            }
-
-            // create an 'AoSubTest' instance for each DAT file
-            for (File datFile : sourceFiles) {
-                DatHeader datHeader = datHeaderReader.readFile(datFile);
-                writer.writeDataToAoTest(iePrj, atfxFile, datHeader);
-            }
-
             aoSession.commitTransaction();
 
             LOG.info("Performed conversion from DIAdem DAT files to ATFX in " + (System.currentTimeMillis() - start)
@@ -132,22 +113,6 @@ public class Dat2AtfxConverter implements IConverter {
                 LOG.error(ex.reason, ex);
             }
             throw new ConvertException(e.reason, e);
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            try {
-                aoSession.abortTransaction();
-            } catch (AoException ex) {
-                LOG.error(ex.reason, ex);
-            }
-            throw new ConvertException(e.getMessage(), e);
-        } catch (ConvertException e) {
-            LOG.error(e.getMessage(), e);
-            try {
-                aoSession.abortTransaction();
-            } catch (AoException ex) {
-                LOG.error(ex.reason, ex);
-            }
-            throw e;
         } finally {
             if (aoSession != null) {
                 try {

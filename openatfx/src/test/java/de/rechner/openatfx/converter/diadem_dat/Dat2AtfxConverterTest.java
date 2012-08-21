@@ -16,17 +16,17 @@ import de.rechner.openatfx.converter.IConverter;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.basestructure.BaseAttributeImpl</code>.
+ * Test case for <code>de.rechner.openatfx.converter.diadem_dat.Dat2AtfxConverter</code>.
  * 
  * @author Christian Rechner
  */
 public class Dat2AtfxConverterTest {
 
-    private static IConverter dat2AtfxConverter;
+    private static IConverter converter;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        dat2AtfxConverter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
+        converter = ConverterFactory.getInstance().createConverter("diadem_dat2atfx");
     }
 
     @Test
@@ -35,7 +35,7 @@ public class Dat2AtfxConverterTest {
         File sourceFile = new File(url.getFile());
         try {
             File targetFile = File.createTempFile("transfer", "atfx");
-            dat2AtfxConverter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
+            converter.convertFiles(new File[] { sourceFile }, targetFile, new Properties());
         } catch (ConvertException e) {
             fail(e.getMessage());
         } catch (IOException e) {
@@ -51,7 +51,7 @@ public class Dat2AtfxConverterTest {
         Properties props = new Properties();
         props.put("attachmentFilenamePattern", "*.erg");
         try {
-            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
+            converter.convertDirectory(sourceDir, targetFile, props);
         } catch (ConvertException e) {
             fail(e.getMessage());
         }
@@ -65,7 +65,7 @@ public class Dat2AtfxConverterTest {
         Properties props = new Properties();
         props.put("attachmentFilenamePattern", "*.erg");
         try {
-            dat2AtfxConverter.convertDirectory(sourceDir, targetFile, props);
+            converter.convertDirectory(sourceDir, targetFile, props);
         } catch (ConvertException e) {
             fail(e.getMessage());
         }
