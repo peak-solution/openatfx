@@ -31,7 +31,7 @@ public class MaccorCSV2AtfxConverterTest {
 
     @Test
     public void testConvertFiles() {
-        URL url = MaccorCSV2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/diadem_dat/testdata.DAT");
+        URL url = MaccorCSV2AtfxConverterTest.class.getResource("/de/rechner/openatfx/converter/maccor_csv/maccor_testdata.csv");
         File sourceFile = new File(url.getFile());
         try {
             File targetFile = File.createTempFile("transfer", "atfx");

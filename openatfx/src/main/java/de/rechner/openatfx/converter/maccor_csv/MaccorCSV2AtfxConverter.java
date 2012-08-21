@@ -36,8 +36,8 @@ import de.rechner.openatfx.converter.IConverter;
 public class MaccorCSV2AtfxConverter implements IConverter {
 
     private static final Log LOG = LogFactory.getLog(MaccorCSV2AtfxConverter.class);
-    private static final String ATFX_TEMPLATE_FILE = "model.atfx";
-    private static final String DAT_FILE_PATTERN = "*.dat";
+    private static final String ATFX_TEMPLATE_FILE = "/de/rechner/openatfx/converter/model.atfx";
+    private static final String CSV_FILE_PATTERN = "*.csv";
 
     /**
      * Constructor.
@@ -48,36 +48,24 @@ public class MaccorCSV2AtfxConverter implements IConverter {
      * @see IConverter
      */
     public void convertFiles(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException {
-        convert(sourceFiles, atfxFile, new File[0], props);
+        convert(sourceFiles, atfxFile, props);
     }
 
     /**
      * @see IConverter
      */
     public void convertDirectory(File directory, File atfxFile, Properties props) throws ConvertException {
-        // collect attachments
-        String attachmentFilePattern = props.getProperty("attachmentFilenamePattern");
-
-        Collection<File> attachments = new ArrayList<File>();
-        if (attachmentFilePattern != null && attachmentFilePattern.length() > 0) {
-            FileFilter attachmentfileFilter = new PatternFileFilter(attachmentFilePattern);
-            for (File file : directory.listFiles(attachmentfileFilter)) {
-                attachments.add(file);
-            }
+        // collect CSV files
+        Collection<File> csvFiles = new ArrayList<File>();
+        FileFilter csvFileFilter = new PatternFileFilter(CSV_FILE_PATTERN);
+        for (File file : directory.listFiles(csvFileFilter)) {
+            csvFiles.add(file);
         }
 
-        // collect DAT files
-        Collection<File> datFiles = new ArrayList<File>();
-        FileFilter datFileFilter = new PatternFileFilter(DAT_FILE_PATTERN);
-        for (File file : directory.listFiles(datFileFilter)) {
-            datFiles.add(file);
-        }
-
-        convert(datFiles.toArray(new File[0]), atfxFile, attachments.toArray(new File[0]), props);
+        convert(csvFiles.toArray(new File[0]), atfxFile, props);
     }
 
-    public void convert(File[] sourceFiles, File atfxFile, File[] attachments, Properties props)
-            throws ConvertException {
+    public void convert(File[] sourceFiles, File atfxFile, Properties props) throws ConvertException {
         long start = System.currentTimeMillis();
 
         // configure ORB
@@ -85,8 +73,8 @@ public class MaccorCSV2AtfxConverter implements IConverter {
 
         // open ATFX session on target file
         AoSession aoSession = createSessionFromTemplateAtfx(orb, atfxFile);
-        //
-        // DatHeaderReader datHeaderReader = DatHeaderReader.getInstance();
+
+        MaccorCSVReader csvReader = new MaccorCSVReader();
         // AoSessionWriter writer = new AoSessionWriter();
         try {
             aoSession.startTransaction();
@@ -101,9 +89,13 @@ public class MaccorCSV2AtfxConverter implements IConverter {
             InstanceElement iePrj = aePrj.createInstance("prj");
             ieEnv.createRelation(relEnvPrj, iePrj);
 
+            for (File sourceFile : sourceFiles) {
+                System.out.println("Channels: " + csvReader.readChannelHeader(sourceFile));
+            }
+
             aoSession.commitTransaction();
 
-            LOG.info("Performed conversion from DIAdem DAT files to ATFX in " + (System.currentTimeMillis() - start)
+            LOG.info("Performed conversion from Maccor CSV files to ATFX in " + (System.currentTimeMillis() - start)
                     + "ms");
         } catch (AoException e) {
             LOG.error(e.reason, e);
@@ -113,6 +105,13 @@ public class MaccorCSV2AtfxConverter implements IConverter {
                 LOG.error(ex.reason, ex);
             }
             throw new ConvertException(e.reason, e);
+        } catch (IOException e) {
+            try {
+                aoSession.abortTransaction();
+            } catch (AoException ex) {
+                LOG.error(ex.reason, ex);
+            }
+            throw new ConvertException(e.getMessage(), e);
         } finally {
             if (aoSession != null) {
                 try {
