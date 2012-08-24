@@ -1,6 +1,7 @@
 package de.rechner.openatfx.converter;
 
 import de.rechner.openatfx.converter.diadem_dat.Dat2AtfxConverter;
+import de.rechner.openatfx.converter.digatron_csv.DigatronCSV2AtfxConverter;
 import de.rechner.openatfx.converter.maccor_csv.MaccorCSV2AtfxConverter;
 
 
@@ -26,6 +27,8 @@ public class ConverterFactory {
             return new Dat2AtfxConverter();
         } else if (name.equals("maccor_csv2atfx")) {
             return new MaccorCSV2AtfxConverter();
+        } else if (name.equals("digatron_csv2atfx")) {
+            return new DigatronCSV2AtfxConverter();
         }
         throw new ConvertException("Converter not found: " + name);
     }
@@ -37,7 +40,7 @@ public class ConverterFactory {
      * @throws ConvertException Error listing converters.
      */
     public String[] listConverter() throws ConvertException {
-        return new String[] { "diadem_dat2atfx", "maccor_csv2atfx" };
+        return new String[] { "diadem_dat2atfx", "maccor_csv2atfx", "digatron_csv2atfx" };
     }
 
     /**

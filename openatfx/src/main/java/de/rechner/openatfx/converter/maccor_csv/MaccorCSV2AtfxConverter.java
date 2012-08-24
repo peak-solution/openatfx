@@ -74,7 +74,6 @@ public class MaccorCSV2AtfxConverter implements IConverter {
         // open ATFX session on target file
         AoSession aoSession = createSessionFromTemplateAtfx(orb, atfxFile);
 
-        MaccorCSVReader csvReader = new MaccorCSVReader();
         // AoSessionWriter writer = new AoSessionWriter();
         try {
             aoSession.startTransaction();
@@ -90,7 +89,9 @@ public class MaccorCSV2AtfxConverter implements IConverter {
             ieEnv.createRelation(relEnvPrj, iePrj);
 
             for (File sourceFile : sourceFiles) {
-                System.out.println("Channels: " + csvReader.readChannelHeader(sourceFile));
+                MaccorCSVReader csvReader = new MaccorCSVReader(sourceFile);
+                System.out.println("Channels: " + csvReader.getChannelHeader());
+                csvReader.readNextStepDataBlock();
             }
 
             aoSession.commitTransaction();
@@ -105,13 +106,13 @@ public class MaccorCSV2AtfxConverter implements IConverter {
                 LOG.error(ex.reason, ex);
             }
             throw new ConvertException(e.reason, e);
-        } catch (IOException e) {
+        } catch (ConvertException ce) {
             try {
                 aoSession.abortTransaction();
             } catch (AoException ex) {
                 LOG.error(ex.reason, ex);
             }
-            throw new ConvertException(e.getMessage(), e);
+            throw ce;
         } finally {
             if (aoSession != null) {
                 try {
