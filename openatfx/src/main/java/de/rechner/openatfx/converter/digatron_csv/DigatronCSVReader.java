@@ -33,6 +33,8 @@ class DigatronCSVReader {
     private static final int UNIT_NAME_LINE = 13;
 
     private static final String DEFAULT_UNIT = "-";
+    private static final DataType DEFAULT_DATATYPE = DataType.DT_FLOAT;
+
     private static final String UNIT_NAME_PATTERN = ".*\\[(.*)\\].*";
     private static final String TIME_PATTERN = "(\\d\\d):(\\d\\d):(\\d\\d)"; // hh:mm:ss
     private static final String MILLIS_PATTERN = "(\\d\\d):(\\d\\d),(\\d)"; // mm:ss:s
@@ -307,7 +309,7 @@ class DigatronCSVReader {
                 String unitName = unitNames.get(i);
                 DataType dataType = STATIC_DATA_TYPES.get(channelName);
                 if (dataType == null) {
-                    dataType = DataType.DT_FLOAT;
+                    dataType = DEFAULT_DATATYPE;
                 }
                 channels.add(new DigatronChannelHeader(channelName, unitName, dataType));
             }

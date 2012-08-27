@@ -3,9 +3,9 @@ package de.rechner.openatfx.converter.maccor_csv;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DecimalFormat;
+import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,16 +30,40 @@ class MaccorCSVReader {
 
     private static final Log LOG = LogFactory.getLog(MaccorCSVReader.class);
 
-    private static final char CSV_SEPARATOR = ';';
+    private static final char CSV_SEPARATOR = '\t';
     private static final int CHANNEL_NAME_LINE = 15;
     private static final String DEFAULT_UNIT = "-";
-    private static final String REL_TIME_UNIT = "s";
+    private static final DataType DEFAULT_DATATYPE = DataType.DT_FLOAT;
 
-    private final Pattern channelNamePattern = Pattern.compile("(.*)\\s\\[(.*)\\]");
-    private final Pattern relativeTimePattern = Pattern.compile("\\d*d \\d\\d:\\d\\d:\\d\\d.\\d\\d\\d\\d\\d");
-    private final Pattern absoluteTimePattern = Pattern.compile("\\d*/\\d*/\\d* \\d*:\\d*");
+    private static final String CHANNEL_NAME_PATTERN = "(.*)\\s\\[(.*)\\]";
+    private static final String RELATIVE_TIME_PATTERN = "(\\d*)d (\\d\\d):(\\d\\d):(\\d\\d).(\\d\\d\\d\\d\\d)";
+    private static final String ABSOLUTE_DATE_FORMAT = "dd/MM/yyyy HH:mm:ss a"; // 7/23/2012 2:08:31 PM
+
+    private static final Map<String, DataType> STATIC_DATA_TYPES = new HashMap<String, DataType>();
+    static {
+        STATIC_DATA_TYPES.put("Rec", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("Cycle P", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("Cycle C", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("Step", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("TestTime", DataType.DT_FLOAT);
+        STATIC_DATA_TYPES.put("StepTime", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("Md", DataType.DT_STRING);
+        STATIC_DATA_TYPES.put("ES", DataType.DT_LONG);
+        STATIC_DATA_TYPES.put("DPT Time", DataType.DT_DATE);
+    }
+
+    private static final Map<String, String> STATIC_UNITS = new HashMap<String, String>();
+    static {
+        STATIC_UNITS.put("TestTime", "s");
+        STATIC_UNITS.put("StepTime", "s");
+        STATIC_UNITS.put("EV Temp", "deg C");
+    }
+
+    private final Pattern channelNamePattern;
+    private final Pattern relativeTimePattern;
+    private final DateFormat absoluteDateFormat;
     private final NumberFormat intFormat;
-    private final NumberFormat floatFormat = NumberFormat.getNumberInstance(Locale.ENGLISH);
+    private final NumberFormat floatFormat;
 
     private final List<MaccorChannelHeader> channelHeader;
 
@@ -47,8 +71,18 @@ class MaccorCSVReader {
     private String[] lastReadLine = null;
     private int lastReadStep = 1;
 
+    /**
+     * Constructor.
+     * 
+     * @param csvFile The CSV file.
+     * @throws ConvertException Error creating reader.
+     */
     public MaccorCSVReader(File csvFile) throws ConvertException {
-        this.intFormat = NumberFormat.getIntegerInstance(Locale.ENGLISH);
+        this.channelNamePattern = Pattern.compile(CHANNEL_NAME_PATTERN);
+        this.relativeTimePattern = Pattern.compile(RELATIVE_TIME_PATTERN);
+        this.absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_FORMAT);
+        this.intFormat = NumberFormat.getIntegerInstance(Locale.GERMAN);
+        this.floatFormat = NumberFormat.getNumberInstance(Locale.GERMAN);
 
         // read channel header
         this.channelHeader = readChannelHeader(csvFile);
@@ -137,24 +171,22 @@ class MaccorCSVReader {
                     ch.setUnitName(matcher.group(2));
                 }
 
+                // static unit?
+                if (STATIC_UNITS.containsKey(ch.getChannelName())) {
+                    ch.setUnitName(STATIC_UNITS.get(ch.getChannelName()));
+                }
+
                 channels.add(ch);
             }
 
-            // guess data types
+            // set data types
             line = csvReader.readNext();
-            while (line != null) {
-                for (int i = 0; i < channels.size(); i++) {
-                    MaccorChannelHeader channel = channels.get(i);
-                    if (channel.getDataType() == DataType.DT_UNKNOWN) {
-                        channel.setDataType(guessDataType(line[i]));
-                    }
-                    // set unit 's' for relative time
-                    if (relativeTimePattern.matcher(line[i]).matches()) {
-                        channel.setUnitName(REL_TIME_UNIT);
-                    }
-
+            for (MaccorChannelHeader ch : channels) {
+                if (STATIC_DATA_TYPES.containsKey(ch.getChannelName())) {
+                    ch.setDataType(STATIC_DATA_TYPES.get(ch.getChannelName()));
+                } else {
+                    ch.setDataType(DEFAULT_DATATYPE);
                 }
-                line = csvReader.readNext();
             }
 
             return Collections.unmodifiableList(channels);
@@ -172,18 +204,14 @@ class MaccorCSVReader {
         }
     }
 
-    public static void main(String[] args) throws ParseException {
-        NumberFormat nf = new DecimalFormat("#,##0.00");
-        System.out.println(nf.parse("50.000,12458334"));
-    }
-    
     private TS_Value parseValue(String str, DataType dataType) throws ConvertException {
         try {
             TS_Value value = ODSHelper.createEmptyTS_Value(dataType);
             if (str != null && str.length() > 0) {
                 // DT_FLOAT (relative time)
                 if ((dataType == DataType.DT_FLOAT) && (relativeTimePattern.matcher(str).matches())) {
-                    System.out.println(str);
+                    // TODO:
+                
                 }
                 // DT_FLOAT
                 else if (dataType == DataType.DT_FLOAT) {
@@ -199,39 +227,6 @@ class MaccorCSVReader {
             LOG.error(message, nfe);
             throw new ConvertException(message, nfe);
         }
-    }
-
-    /**
-     * Guesses the ODS data type from given input string.
-     * 
-     * @param str
-     * @return
-     */
-    private DataType guessDataType(String str) {
-        // DT_DATE (absolute time) ???
-        Matcher matcher = absoluteTimePattern.matcher(str);
-        if (matcher.matches()) {
-            return DataType.DT_DATE;
-        }
-        // DT_FLOAT (relative time) ???
-        matcher = relativeTimePattern.matcher(str);
-        if (matcher.matches()) {
-            return DataType.DT_FLOAT;
-        }
-        // DT_FLOAT ???
-        try {
-            floatFormat.parse(str);
-            return DataType.DT_FLOAT;
-        } catch (ParseException e) {
-        }
-        // DT_LONG ???
-        try {
-            intFormat.parse(str);
-            return DataType.DT_LONG;
-        } catch (ParseException e) {
-        }
-        // DT_STRING as fallback
-        return DataType.DT_STRING;
     }
 
 }
