@@ -993,7 +993,7 @@ class AtfxCache {
             return;
         }
 
-        // add relation, if none multiple cardinality, overwrite
+        // add relation, if none or multiple cardinality, overwrite
         Set<Long> relInstIds = this.instanceRelMap.get(aid).get(iid).get(applRel);
         if ((relInstIds.size() > 0) && (applRel.getRelationRange().max != -1)) {
             relInstIds.clear();

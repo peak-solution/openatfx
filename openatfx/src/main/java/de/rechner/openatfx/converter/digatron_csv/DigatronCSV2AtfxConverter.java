@@ -96,10 +96,9 @@ public class DigatronCSV2AtfxConverter implements IConverter {
 
                 Map<String, List<TS_Value>> dataBlock = csvReader.readNextStepDataBlock();
                 while (dataBlock != null) {
-                    System.out.println(csvReader.getLastReadTestStepName() + " - " + dataBlock);
                     dataBlock = csvReader.readNextStepDataBlock();
                 }
-                
+
             }
 
             aoSession.commitTransaction();

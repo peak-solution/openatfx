@@ -90,7 +90,6 @@ public class MaccorCSV2AtfxConverter implements IConverter {
 
             for (File sourceFile : sourceFiles) {
                 MaccorCSVReader csvReader = new MaccorCSVReader(sourceFile);
-                System.out.println("Channels: " + csvReader.getChannelHeader());
                 csvReader.readNextStepDataBlock();
             }
 

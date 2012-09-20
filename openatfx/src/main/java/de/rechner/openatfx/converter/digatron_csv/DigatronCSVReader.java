@@ -128,7 +128,6 @@ class DigatronCSVReader {
 
                 // step to next line
                 this.lastReadLine = this.csvReader.readNext();
-                System.out.println(this.lastReadLine);
             }
 
             return map;

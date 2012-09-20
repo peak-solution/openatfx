@@ -223,8 +223,10 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
                     + aid + ",relName=" + relName);
         }
+
         // return related instance ids
         Collection<Long> relInstIidSet = this.atfxCache.getRelatedInstanceIds(aid, iid, applRel);
+
         T_LONGLONG[] relInstIids = new T_LONGLONG[relInstIidSet.size()];
         int idx = 0;
         for (Long relInstIid : relInstIidSet) {

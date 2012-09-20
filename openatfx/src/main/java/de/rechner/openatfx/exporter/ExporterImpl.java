@@ -91,13 +91,14 @@ public class ExporterImpl implements IExporter {
         this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoTestSequence"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoTestEquipment"));
         this.includeBeRels.add(new ExportRelConfig("AoSubmatrix", "AoSubmatrix"));
-        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoMeasurementQantity"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoMeasurement"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoMeasurementQuantity"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoUnit"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoQuantity"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoTestEquipmentPart"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoLocalcolumn"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoParameterSet"));
-        this.includeBeRels.add(new ExportRelConfig("Aoparameter", "AoUnit"));
+        this.includeBeRels.add(new ExportRelConfig("AoParameter", "AoUnit"));
         this.includeBeRels.add(new ExportRelConfig("AoQuantity", "AoUnit"));
         this.includeBeRels.add(new ExportRelConfig("AoQuantity", "AoQuantityGroup"));
         this.includeBeRels.add(new ExportRelConfig("AoUnit", "AoPhysicalDimension"));
@@ -171,7 +172,7 @@ public class ExporterImpl implements IExporter {
      *********************************************************************************************************/
 
     /**
-     * Exports an application element including
+     * Exports an application element including:
      * <ul>
      * <li>all application attributes</li>
      * <li>all child application relations</li>
@@ -247,7 +248,8 @@ public class ExporterImpl implements IExporter {
         for (ApplRel applRel : smc.getApplRels(sourceAid)) {
 
             // check if relation has already been exported (inverse relations are created automatically)
-            if (exportedRelationKeys.contains(ODSHelper.asJLong(applRel.elem2) + "_" + applRel.invName)) {
+            if (exportedRelationKeys.contains(ODSHelper.asJLong(applRel.elem2) + "_" + ODSHelper.asJLong(applRel.elem1)
+                    + "_" + applRel.invName)) {
                 continue;
             }
 
@@ -255,8 +257,7 @@ public class ExporterImpl implements IExporter {
             ApplElem elem1 = smc.getApplElem(ODSHelper.asJLong(applRel.elem1));
             ApplElem elem2 = smc.getApplElem(ODSHelper.asJLong(applRel.elem2));
             boolean isFatherChild = (applRel.arRelationType == RelationType.FATHER_CHILD);
-            boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName.toLowerCase(),
-                                                                                   elem2.beName.toLowerCase()));
+            boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName, elem2.beName));
             boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
             boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
             boolean includeAe2BeRel = this.includeAe2BeRels.contains(new ExportRelConfig(elem1.aeName, elem2.beName));
@@ -264,7 +265,8 @@ public class ExporterImpl implements IExporter {
                 continue;
             }
 
-            exportedRelationKeys.add(ODSHelper.asJLong(applRel.elem1) + "_" + applRel.arName);
+            exportedRelationKeys.add(ODSHelper.asJLong(applRel.elem1) + "_" + ODSHelper.asJLong(applRel.elem2) + "_"
+                    + applRel.arName);
 
             if (!source2TargetAidMap.containsKey(ODSHelper.asJLong(applRel.elem2))) {
                 exportApplicationElement(smc, smc.getApplElem(ODSHelper.asJLong(applRel.elem2)), targetSession,
@@ -370,22 +372,19 @@ public class ExporterImpl implements IExporter {
                                                                          targetAea, source2TargetAidMap);
         source2TargetElemIdMap.putAll(exportedElemIds);
 
-        // if application element is of type 'AoSubMatrix', export all x-axis channels to ensure data consistency
-
         // export relations
         for (ElemIdMap sourceElemIdMap : exportedElemIds.keySet()) {
 
             // follow relations
             for (ApplRel sourceApplRel : smc.getApplRels(sourceElemIdMap.getAid())) {
 
-                // only follow father/child relations or be elements in global configuration
+                // only follow father/child relations or relations in global configuration
                 ApplElem elem1 = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem1));
                 ApplElem elem2 = smc.getApplElem(ODSHelper.asJLong(sourceApplRel.elem2));
                 boolean isChildRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD)
                         && (sourceApplRel.arRelationRange.max == -1);
                 boolean isFatherRelation = (sourceApplRel.arRelationType == RelationType.FATHER_CHILD && sourceApplRel.arRelationRange.max == 1);
-                boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName.toLowerCase(),
-                                                                                       elem2.beName.toLowerCase()));
+                boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName, elem2.beName));
                 boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
                 boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
                 boolean includeAe2BeRel = this.includeAe2BeRels.contains(new ExportRelConfig(elem1.aeName, elem2.beName));
