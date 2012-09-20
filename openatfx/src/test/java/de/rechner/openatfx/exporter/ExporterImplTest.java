@@ -62,9 +62,13 @@ public class ExporterImplTest {
     public void testExport1() {
         ORB orb = ORB.init(new String[0], System.getProperties());
         try {
-            File sourceFile = new File(
-                                       "D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/Crosstest_2012_ImpulsmessungAnalysis.atfx");
-            File targetFile = new File("D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/export.atfx");
+            // File sourceFile = new File(
+            // "D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/Crosstest_2012_ImpulsmessungAnalysis.atfx");
+            // File targetFile = new File("D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/export.atfx");
+            //
+            File sourceFile = new File("D:/PUBLIC/Crosstest 2012/Test_Data/Polytec/w211_stitched/w211_stitched.atfx");
+            File targetFile = new File("D:/PUBLIC/Crosstest 2012/Test_Data/Polytec/w211_stitched/export.atfx");
+
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
                                                       .newSession("FILENAME=" + sourceFile);
             IExporter exporter = new ExporterImpl();
@@ -74,9 +78,11 @@ public class ExporterImplTest {
 
             ElemId elemId = new ElemId(aeTest.getId(), ieTest.getId());
             exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
+
+            // TODO:
+            // - doppelter export
         } catch (AoException e) {
             fail(e.reason);
         }
     }
-
 }

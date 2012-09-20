@@ -703,7 +703,7 @@ class AtfxCache {
 
             // ***************************************************
             // write mode 'file', then write to external component
-            else if (writeMode.equals("file")) {
+            else if (writeMode.equals("file") && (value.u.discriminator() != DataType.DS_STRING)) {
 
                 // explicit => external_component
                 if (seqRep == 0) {

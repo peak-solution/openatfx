@@ -73,8 +73,11 @@ public class ExporterImpl implements IExporter {
     /** The set of relations between application elements to follow */
     private final Set<ExportRelConfig> includeAeRels;
 
-    /** The set of relation from an base element to an application element of a certain type */
+    /** The set of relation from an base element to an application element */
     private final Set<ExportRelConfig> includeBe2AeRels;
+
+    /** The set of relation from an application element to an base element */
+    private final Set<ExportRelConfig> includeAe2BeRels;
 
     private final Comparator<T_LONGLONG> t_longlong_comparator;
 
@@ -83,30 +86,33 @@ public class ExporterImpl implements IExporter {
      */
     public ExporterImpl() {
         this.includeBeRels = new HashSet<ExportRelConfig>();
-        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aoparameterset"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aounitundertest"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aotestsequence"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurement", "aotestequipment"));
-        this.includeBeRels.add(new ExportRelConfig("aosubmatrix", "aosubmatrix"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aomeasurementquantity"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aounit"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aoquantity"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aotestequipmentpart"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aolocalcolumn"));
-        this.includeBeRels.add(new ExportRelConfig("aomeasurementquantity", "aoparameterset"));
-        this.includeBeRels.add(new ExportRelConfig("aoparameter", "aounit"));
-        this.includeBeRels.add(new ExportRelConfig("aoquantity", "aounit"));
-        this.includeBeRels.add(new ExportRelConfig("aoquantity", "aoquantitygroup"));
-        this.includeBeRels.add(new ExportRelConfig("aounit", "aophysicaldimension"));
-        this.includeBeRels.add(new ExportRelConfig("aounit", "aounitgroup"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoParameterSet"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoUnitUnderTest"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoTestSequence"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoTestEquipment"));
+        this.includeBeRels.add(new ExportRelConfig("AoSubmatrix", "AoSubmatrix"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoMeasurementQantity"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoUnit"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoQuantity"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoTestEquipmentPart"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoLocalcolumn"));
+        this.includeBeRels.add(new ExportRelConfig("AoMeasurementQuantity", "AoParameterSet"));
+        this.includeBeRels.add(new ExportRelConfig("Aoparameter", "AoUnit"));
+        this.includeBeRels.add(new ExportRelConfig("AoQuantity", "AoUnit"));
+        this.includeBeRels.add(new ExportRelConfig("AoQuantity", "AoQuantityGroup"));
+        this.includeBeRels.add(new ExportRelConfig("AoUnit", "AoPhysicalDimension"));
+        this.includeBeRels.add(new ExportRelConfig("AoUnit", "AoUnitGroup"));
 
         this.includeAeRels = new HashSet<ExportRelConfig>();
         this.includeAeRels.add(new ExportRelConfig("geometry", "coordinate_system")); // geometry model
         this.includeAeRels.add(new ExportRelConfig("measurement_location", "coordinate_system")); // geometry model
 
         this.includeBe2AeRels = new HashSet<ExportRelConfig>();
-        this.includeBe2AeRels.add(new ExportRelConfig("aomeasurement", "geometry"));
-        this.includeBe2AeRels.add(new ExportRelConfig("aosubmatrix", "geometry"));
+        this.includeBe2AeRels.add(new ExportRelConfig("AoMeasurement", "geometry")); // geometry model
+        this.includeBe2AeRels.add(new ExportRelConfig("AoSubmatrix", "geometry")); // geometry model
+
+        this.includeAe2BeRels = new HashSet<ExportRelConfig>();
+        this.includeAe2BeRels.add(new ExportRelConfig("measurement_location", "AoQuantity")); // geometry model
 
         this.t_longlong_comparator = new T_LONGLONG_Comparator();
     }
@@ -253,7 +259,8 @@ public class ExporterImpl implements IExporter {
                                                                                    elem2.beName.toLowerCase()));
             boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
             boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
-            if (!isFatherChild && !includeBeRel && !includeAeRel && !includeBe2AeRel) {
+            boolean includeAe2BeRel = this.includeAe2BeRels.contains(new ExportRelConfig(elem1.aeName, elem2.beName));
+            if (!isFatherChild && !includeBeRel && !includeAeRel && !includeBe2AeRel && !includeAe2BeRel) {
                 continue;
             }
 
@@ -381,7 +388,9 @@ public class ExporterImpl implements IExporter {
                                                                                        elem2.beName.toLowerCase()));
                 boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
                 boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
-                if (!isChildRelation && !isFatherRelation && !includeBeRel && !includeAeRel && !includeBe2AeRel) {
+                boolean includeAe2BeRel = this.includeAe2BeRels.contains(new ExportRelConfig(elem1.aeName, elem2.beName));
+                if (!isChildRelation && !isFatherRelation && !includeBeRel && !includeAeRel && !includeBe2AeRel
+                        && !includeAe2BeRel) {
                     continue;
                 }
 
