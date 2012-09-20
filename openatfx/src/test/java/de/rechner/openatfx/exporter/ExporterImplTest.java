@@ -9,7 +9,9 @@ import java.util.Properties;
 
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
 import org.asam.ods.ElemId;
+import org.asam.ods.InstanceElement;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -35,7 +37,7 @@ public class ExporterImplTest {
     @After
     public void tearDown() throws Exception {}
 
-    @Test
+    // @Test
     public void testExport() {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ExporterImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
@@ -53,6 +55,27 @@ public class ExporterImplTest {
             fail(e.reason);
         } catch (IOException e) {
             fail(e.getMessage());
+        }
+    }
+
+    @Test
+    public void testExport1() {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        try {
+            File sourceFile = new File(
+                                       "D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/Crosstest_2012_ImpulsmessungAnalysis.atfx");
+            File targetFile = new File("D:/PUBLIC/Crosstest 2012/Test_Data/BMW/Impulsmessung/export.atfx");
+            AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
+                                                      .newSession("FILENAME=" + sourceFile);
+            IExporter exporter = new ExporterImpl();
+            // AoTest
+            ApplicationElement aeTest = sourceSession.getApplicationStructure().getElementsByBaseType("AoTest")[0];
+            InstanceElement ieTest = aeTest.getInstances("*").nextOne();
+
+            ElemId elemId = new ElemId(aeTest.getId(), ieTest.getId());
+            exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
+        } catch (AoException e) {
+            fail(e.reason);
         }
     }
 

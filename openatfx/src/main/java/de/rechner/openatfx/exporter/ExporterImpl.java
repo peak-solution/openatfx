@@ -73,6 +73,9 @@ public class ExporterImpl implements IExporter {
     /** The set of relations between application elements to follow */
     private final Set<ExportRelConfig> includeAeRels;
 
+    /** The set of relation from an base element to an application element of a certain type */
+    private final Set<ExportRelConfig> includeBe2AeRels;
+
     private final Comparator<T_LONGLONG> t_longlong_comparator;
 
     /**
@@ -98,10 +101,12 @@ public class ExporterImpl implements IExporter {
         this.includeBeRels.add(new ExportRelConfig("aounit", "aounitgroup"));
 
         this.includeAeRels = new HashSet<ExportRelConfig>();
-        this.includeAeRels.add(new ExportRelConfig("Measurement", "geometry")); // geometry model
-        this.includeAeRels.add(new ExportRelConfig("geometry", "coordinate_system"));
-        this.includeAeRels.add(new ExportRelConfig("measurement_location", "coordinate_system"));
-        this.includeAeRels.add(new ExportRelConfig("measurement_location", "Quantity"));
+        this.includeAeRels.add(new ExportRelConfig("geometry", "coordinate_system")); // geometry model
+        this.includeAeRels.add(new ExportRelConfig("measurement_location", "coordinate_system")); // geometry model
+
+        this.includeBe2AeRels = new HashSet<ExportRelConfig>();
+        this.includeBe2AeRels.add(new ExportRelConfig("aomeasurement", "geometry"));
+        this.includeBe2AeRels.add(new ExportRelConfig("aosubmatrix", "geometry"));
 
         this.t_longlong_comparator = new T_LONGLONG_Comparator();
     }
@@ -247,7 +252,8 @@ public class ExporterImpl implements IExporter {
             boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName.toLowerCase(),
                                                                                    elem2.beName.toLowerCase()));
             boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
-            if (!isFatherChild && !includeBeRel && !includeAeRel) {
+            boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
+            if (!isFatherChild && !includeBeRel && !includeAeRel && !includeBe2AeRel) {
                 continue;
             }
 
@@ -374,7 +380,8 @@ public class ExporterImpl implements IExporter {
                 boolean includeBeRel = this.includeBeRels.contains(new ExportRelConfig(elem1.beName.toLowerCase(),
                                                                                        elem2.beName.toLowerCase()));
                 boolean includeAeRel = this.includeAeRels.contains(new ExportRelConfig(elem1.aeName, elem2.aeName));
-                if (!isChildRelation && !isFatherRelation && !includeBeRel && !includeAeRel) {
+                boolean includeBe2AeRel = this.includeBe2AeRels.contains(new ExportRelConfig(elem1.beName, elem2.aeName));
+                if (!isChildRelation && !isFatherRelation && !includeBeRel && !includeAeRel && !includeBe2AeRel) {
                     continue;
                 }
 

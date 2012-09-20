@@ -144,6 +144,11 @@ class ExtCompWriter {
                 bb.rewind();
                 channel.write(bb);
             }
+            
+            else if (dt == DataType.DS_STRING) {
+                
+            }
+            
             // not supported
             else {
                 throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType '"

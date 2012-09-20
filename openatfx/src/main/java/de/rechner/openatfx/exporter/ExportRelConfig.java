@@ -2,20 +2,20 @@ package de.rechner.openatfx.exporter;
 
 class ExportRelConfig {
 
-    private final String elem1BeName;
-    private final String elem2BeName;
+    private final String from;
+    private final String to;
 
-    public ExportRelConfig(String elem1BeName, String elem2BeName) {
-        this.elem1BeName = elem1BeName.toLowerCase();
-        this.elem2BeName = elem2BeName.toLowerCase();
+    public ExportRelConfig(String from, String to) {
+        this.from = from.toLowerCase();
+        this.to = to.toLowerCase();
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((elem1BeName == null) ? 0 : elem1BeName.hashCode());
-        result = prime * result + ((elem2BeName == null) ? 0 : elem2BeName.hashCode());
+        result = prime * result + ((from == null) ? 0 : from.hashCode());
+        result = prime * result + ((to == null) ? 0 : to.hashCode());
         return result;
     }
 
@@ -28,15 +28,15 @@ class ExportRelConfig {
         if (getClass() != obj.getClass())
             return false;
         ExportRelConfig other = (ExportRelConfig) obj;
-        if (elem1BeName == null) {
-            if (other.elem1BeName != null)
+        if (from == null) {
+            if (other.from != null)
                 return false;
-        } else if (!elem1BeName.equals(other.elem1BeName))
+        } else if (!from.equals(other.from))
             return false;
-        if (elem2BeName == null) {
-            if (other.elem2BeName != null)
+        if (to == null) {
+            if (other.to != null)
                 return false;
-        } else if (!elem2BeName.equals(other.elem2BeName))
+        } else if (!to.equals(other.to))
             return false;
         return true;
     }
