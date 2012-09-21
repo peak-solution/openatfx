@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.4.1 (Christian Rechner)
+	
+		- Added reading generation params from 'values'.
+
 	0.4.0 (Christian Rechner)
 	
 		- Multiple performance tunings in reading/writing (up to 50% faster :-))

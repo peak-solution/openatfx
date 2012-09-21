@@ -616,6 +616,12 @@ public abstract class ODSHelper {
         return createNVU(attrName, union);
     }
 
+    public static boolean isNullVal(TS_Value value) {
+        if (value.flag != 15)
+            return true;
+        return false;
+    }
+    
     public static boolean isNullVal(NameValueUnit nvu) {
         if (nvu.value.flag != 15)
             return true;

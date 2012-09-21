@@ -698,12 +698,18 @@ class AtfxCache {
             // ***************************************************
             // seqRep implicit_constant=1,implicit_linear=2,implicit_saw=3,formula=6
             if ((seqRep == 1) || (seqRep == 2) || (seqRep == 3) || (seqRep == 6)) {
-                return;
+                // return;
+            }
+
+            // ***************************************************
+            // datatype DS_STRING, always write to XML (memory)
+            else if (value.u.discriminator() != DataType.DS_STRING) {
+                seqRep = 0;
             }
 
             // ***************************************************
             // write mode 'file', then write to external component
-            else if (writeMode.equals("file") && (value.u.discriminator() != DataType.DS_STRING)) {
+            else if (writeMode.equals("file")) {
 
                 // explicit => external_component
                 if (seqRep == 0) {
@@ -772,6 +778,20 @@ class AtfxCache {
         // datatype
         boolean lcValuesAttr = isLocalColumnValuesAttribute(aid, attrNo);
         DataType dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
+
+        // read generation parameters from values if null
+        if (isLocalColumnGenParamsAttribute(aid, attrNo)) {
+            int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
+            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
+            // implicit_constant=1,implicit_linear=2,implicit_saw=3,formula=4
+            if (seqRep == 1 || seqRep == 2 || seqRep == 3 || seqRep == 4) {
+                int genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
+                if (this.instanceValueMap.get(aid).get(iid).get(genParamsAttrNo) == null) {
+                    int valuesAttrNo = getAttrNoByBaName(aid, "values");
+                    return getInstanceValue(aid, valuesAttrNo, iid);
+                }
+            }
+        }
 
         // read values from external component file
         if (lcValuesAttr) {
@@ -854,13 +874,30 @@ class AtfxCache {
      * 
      * @param aid The application element id.
      * @param attrNo The application attribute number.
-     * @return True, if attribute is 'values.
+     * @return True, if attribute is 'values'.
      */
     private boolean isLocalColumnValuesAttribute(long aid, long attrNo) {
         Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
         if (localColumnAids != null && localColumnAids.contains(aid)) {
             Integer valuesAttrNo = getAttrNoByBaName(aid, "values");
             return (valuesAttrNo != null) && (attrNo == valuesAttrNo);
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether given attribute name is from base attribute 'sequence_representation' of and this instance is from
+     * base element 'AoLocalColumn'.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The application attribute number.
+     * @return True, if attribute is 'sequence_representation'.
+     */
+    private boolean isLocalColumnGenParamsAttribute(long aid, long attrNo) {
+        Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(aid)) {
+            Integer genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
+            return (genParamsAttrNo != null) && (attrNo == genParamsAttrNo);
         }
         return false;
     }
