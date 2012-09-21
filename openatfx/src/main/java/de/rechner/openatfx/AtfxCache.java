@@ -703,7 +703,7 @@ class AtfxCache {
 
             // ***************************************************
             // datatype DS_STRING, always write to XML (memory)
-            else if (value.u.discriminator() != DataType.DS_STRING) {
+            else if (value.u.discriminator() == DataType.DS_STRING) {
                 seqRep = 0;
             }
 
