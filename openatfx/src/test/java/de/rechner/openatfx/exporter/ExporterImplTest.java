@@ -78,9 +78,6 @@ public class ExporterImplTest {
 
             ElemId elemId = new ElemId(aeTest.getId(), ieTest.getId());
             exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
-
-            // TODO:
-            // - doppelter export
         } catch (AoException e) {
             fail(e.reason);
         }

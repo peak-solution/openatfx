@@ -621,7 +621,7 @@ public abstract class ODSHelper {
             return true;
         return false;
     }
-    
+
     public static boolean isNullVal(NameValueUnit nvu) {
         if (nvu.value.flag != 15)
             return true;
@@ -2969,13 +2969,12 @@ public abstract class ODSHelper {
      *             DataType than the rest.
      */
     public static TS_ValueSeq tsValue2tsValueSeq(TS_Value[] tsValues, DataType dt) throws AoException {
-
         for (int row = 0; row < tsValues.length; row++) {
             if (tsValues[row] == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Null reference found on index '" + row + "'");
             }
-            if (!dt.equals(tsValues[row].u.discriminator())) {
+            if (dt != tsValues[row].u.discriminator()) {
                 throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                       "Found more than one DataType for result column '"
                                               + ODSHelper.tsValue2string(tsValues[row]) + "'");
@@ -3227,5 +3226,29 @@ public abstract class ODSHelper {
         }
 
         return new TS_ValueSeq(seq, flags);
+    }
+
+    public static TS_Value convertTsValue(TS_Value source, DataType targetDt) throws AoException {
+        DataType sourceDt = source.u.discriminator();
+        if (sourceDt == targetDt) {
+            return source;
+        }
+
+        TS_Value value = new TS_Value();
+        value.flag = source.flag;
+        value.u = new TS_Union();
+        if ((sourceDt == DataType.DS_LONG) && (targetDt == DataType.DS_DOUBLE)) {
+            double[] ar = new double[source.u.longSeq().length];
+            for (int i = 0; i < ar.length; i++) {
+                ar[i] = source.u.longSeq()[i];
+            }
+            value.u.doubleSeq(ar);
+        } else {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Unable to convert value from datatype '" + ODSHelper.dataType2String(sourceDt)
+                                          + "' to datatype '" + ODSHelper.dataType2String(targetDt) + "'");
+        }
+
+        return value;
     }
 }

@@ -788,7 +788,7 @@ class AtfxCache {
                 int genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
                 if (this.instanceValueMap.get(aid).get(iid).get(genParamsAttrNo) == null) {
                     int valuesAttrNo = getAttrNoByBaName(aid, "values");
-                    return getInstanceValue(aid, valuesAttrNo, iid);
+                    return ODSHelper.convertTsValue(getInstanceValue(aid, valuesAttrNo, iid), DataType.DS_DOUBLE);
                 }
             }
         }
