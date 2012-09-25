@@ -40,11 +40,15 @@ import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.JoinDef;
 import org.asam.ods.NameValueSeqUnitId;
+import org.asam.ods.NameValueUnit;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.RelationRange;
 import org.asam.ods.RelationType;
+import org.asam.ods.Relationship;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SelItem;
@@ -153,8 +157,9 @@ public class ExporterImpl implements IExporter {
 
             Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap = new HashMap<ElemIdMap, ElemIdMap>();
             for (ElemId sourceElemId : sourceElemIds) {
-                exportInstances(sourceAea, smc, targetAea, sourceElemId.aid, new T_LONGLONG[] { sourceElemId.iid },
-                                source2TargetAidMap, source2TargetElemIdMap, true);
+                exportInstances(sourceSession, sourceAea, smc, targetAea, sourceElemId.aid,
+                                new T_LONGLONG[] { sourceElemId.iid }, targetSession, source2TargetAidMap,
+                                source2TargetElemIdMap, true);
             }
 
             targetSession.commitTransaction();
@@ -350,9 +355,10 @@ public class ExporterImpl implements IExporter {
      * @param exportChildren
      * @throws AoException
      */
-    private void exportInstances(ApplElemAccess sourceAea, ModelCache smc, ApplElemAccess targetAea,
-            T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, Map<Long, Long> source2TargetAidMap,
-            Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap, boolean exportChildren) throws AoException {
+    private void exportInstances(AoSession sourceSession, ApplElemAccess sourceAea, ModelCache smc,
+            ApplElemAccess targetAea, T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, AoSession targetSession,
+            Map<Long, Long> source2TargetAidMap, Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap,
+            boolean exportChildren) throws AoException {
         // filter already exported instances
         List<T_LONGLONG> sourceIidList = new ArrayList<T_LONGLONG>();
         for (T_LONGLONG sourceIid : sourceIids) {
@@ -368,8 +374,9 @@ public class ExporterImpl implements IExporter {
         }
 
         // export instance values
-        Map<ElemIdMap, ElemIdMap> exportedElemIds = exportInstanceValues(smc, sourceAea, sourceAid, sourceIids,
-                                                                         targetAea, source2TargetAidMap);
+        Map<ElemIdMap, ElemIdMap> exportedElemIds = exportInstanceValues(sourceSession, smc, sourceAea, sourceAid,
+                                                                         sourceIids, targetSession, targetAea,
+                                                                         source2TargetAidMap);
         source2TargetElemIdMap.putAll(exportedElemIds);
 
         // export relations
@@ -416,8 +423,8 @@ public class ExporterImpl implements IExporter {
                 }
 
                 // export related instances recursively
-                exportInstances(sourceAea, smc, targetAea, sourceApplRel.elem2, relSourceIids, source2TargetAidMap,
-                                source2TargetElemIdMap, !isFatherRelation);
+                exportInstances(sourceSession, sourceAea, smc, targetAea, sourceApplRel.elem2, relSourceIids,
+                                targetSession, source2TargetAidMap, source2TargetElemIdMap, !isFatherRelation);
 
                 T_LONGLONG[] relTargetIids = new T_LONGLONG[relSourceIids.length];
                 for (int i = 0; i < relTargetIids.length; i++) {
@@ -445,9 +452,9 @@ public class ExporterImpl implements IExporter {
      * @return Map of exported instances (key=source,value=target).
      * @throws AoException Error exporting instances.
      */
-    private Map<ElemIdMap, ElemIdMap> exportInstanceValues(ModelCache smc, ApplElemAccess sourceAea,
-            T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, ApplElemAccess targetAea, Map<Long, Long> source2TargetAidMap)
-            throws AoException {
+    private Map<ElemIdMap, ElemIdMap> exportInstanceValues(AoSession sourceSession, ModelCache smc,
+            ApplElemAccess sourceAea, T_LONGLONG sourceAid, T_LONGLONG[] sourceIids, AoSession targetSession,
+            ApplElemAccess targetAea, Map<Long, Long> source2TargetAidMap) throws AoException {
         if (sourceIids.length < 1) {
             return Collections.emptyMap();
         }
@@ -525,19 +532,21 @@ public class ExporterImpl implements IExporter {
             }
         }
 
-        // if application element is of type 'AoLocalColumn', then the attributes 'values', 'flags' and
-        // 'generation_parameters' have to be copied separately
-        if (smc.getApplElem(ODSHelper.asJLong(sourceAid)).beName.equalsIgnoreCase("AoLocalColumn")) {
-            for (NameValueSeqUnitId nvsu : queryLocalColumnValuesAttrs(smc, sourceAea, sourceAid, sourceIids)) {
-                AIDNameValueSeqUnitId anvsui = new AIDNameValueSeqUnitId();
-                anvsui.attr = new AIDName();
-                anvsui.attr.aid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
-                anvsui.attr.aaName = nvsu.valName;
-                anvsui.unitId = new T_LONGLONG(0, 0);
-                anvsui.values = nvsu.value;
-                anvsuiList.add(anvsui);
-            }
-        }
+        // // if application element is of type 'AoLocalColumn', then the attributes 'values', 'flags' and
+        // // 'generation_parameters' have to be copied separately
+        // if (smc.getApplElem(ODSHelper.asJLong(sourceAid)).beName.equalsIgnoreCase("AoLocalColumn")) {
+        // // for (NameValueSeqUnitId nvsu : queryLocalColumnValuesAttrs(smc, sourceAea, sourceAid, sourceIids)) {
+        // for (NameValueSeqUnitId nvsu : getLocalColumnValuesAttrs(sourceSession, smc, sourceAea, sourceAid,
+        // sourceIids)) {
+        // AIDNameValueSeqUnitId anvsui = new AIDNameValueSeqUnitId();
+        // anvsui.attr = new AIDName();
+        // anvsui.attr.aid = ODSHelper.asODSLongLong(source2TargetAidMap.get(ODSHelper.asJLong(sourceAid)));
+        // anvsui.attr.aaName = nvsu.valName;
+        // anvsui.unitId = new T_LONGLONG(0, 0);
+        // anvsui.values = nvsu.value;
+        // anvsuiList.add(anvsui);
+        // }
+        // }
 
         // insert and put to global map of copies instances
         ElemId[] targetElemIds = targetAea.insertInstances(anvsuiList.toArray(new AIDNameValueSeqUnitId[0]));
@@ -546,9 +555,55 @@ public class ExporterImpl implements IExporter {
             ElemIdMap sourceElemIdMap = new ElemIdMap(sourceAid, sourceIids[i]);
             ElemIdMap targetElemIdMap = new ElemIdMap(targetElemIds[i]);
             map.put(sourceElemIdMap, targetElemIdMap);
+
+            // if application element is of type 'AoLocalColumn', then the attributes 'values', 'flags' and
+            // // 'generation_parameters' have to be copied separately
+            if (smc.getApplElem(ODSHelper.asJLong(sourceAid)).beName.equalsIgnoreCase("AoLocalColumn")) {
+                copyLocalColumnValuesAttr(sourceSession, sourceElemIdMap.getElemId(), targetSession,
+                                          targetElemIdMap.getElemId());
+            }
         }
 
         return map;
+    }
+
+    /**
+     * by method 'getValueByBaseName'
+     */
+    private void copyLocalColumnValuesAttr(AoSession sourceSession, ElemId sourceElemId, AoSession targetSession,
+            ElemId targetElemId) throws AoException {
+        InstanceElement sourceIeLc = sourceSession.getApplicationStructure()
+                                                  .getInstancesById(new ElemId[] { sourceElemId })[0];
+        InstanceElement targetIeLc = targetSession.getApplicationStructure()
+                                                  .getInstancesById(new ElemId[] { targetElemId })[0];
+
+        NameValueUnit[] nvus = new NameValueUnit[4];
+        nvus[0] = sourceIeLc.getValueByBaseName("sequence_representation");
+        nvus[1] = sourceIeLc.getValueByBaseName("generation_parameters");
+        if (hasLocalColumnValues(sourceIeLc)) {
+            nvus[2] = sourceIeLc.getValueByBaseName("values");
+            nvus[3] = sourceIeLc.getValueByBaseName("flags");
+        } else {
+            nvus[2] = ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("values")
+                                                         .getName(), DataType.DS_FLOAT);
+            nvus[3] = ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("flags")
+                                                         .getName(), DataType.DS_SHORT);
+        }
+        targetIeLc.setValueSeq(nvus);
+    }
+
+    private boolean hasLocalColumnValues(InstanceElement ieLc) throws AoException {
+        boolean hasLocalColumnValues = false;
+        InstanceElementIterator iter = ieLc.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
+        if (iter.getCount() > 0) {
+            InstanceElement ieSm = iter.nextOne();
+            int noOfRows = ODSHelper.getLongVal(ieSm.getValueByBaseName("number_of_rows"));
+            if (noOfRows > 0) {
+                hasLocalColumnValues = true;
+            }
+        }
+        iter.destroy();
+        return hasLocalColumnValues;
     }
 
     /**
@@ -559,6 +614,7 @@ public class ExporterImpl implements IExporter {
      * @return
      * @throws AoException
      */
+    @SuppressWarnings("unused")
     private NameValueSeqUnitId[] queryLocalColumnValuesAttrs(ModelCache smc, ApplElemAccess sourceAea,
             T_LONGLONG sourceLcAid, T_LONGLONG[] sourceLcIids) throws AoException {
         List<String> attrNames = new ArrayList<String>();

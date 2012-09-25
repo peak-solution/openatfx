@@ -22,7 +22,7 @@ import org.omg.CORBA.ORB;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.InstanceElementIteratorImpl</code>.
+ * Test case for <code>de.rechner.openatfx.InstanceElementIteratorImpl</code>.
  * 
  * @author Christian Rechner
  */

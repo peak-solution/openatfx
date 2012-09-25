@@ -18,7 +18,7 @@ import org.omg.PortableServer.POAHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.NameIteratorImpl</code>.
+ * Test case for <code>de.rechner.openatfx.NameIteratorImpl</code>.
  * 
  * @author Christian Rechner
  */

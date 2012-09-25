@@ -21,7 +21,7 @@ import org.omg.CORBA.SystemException;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.BlobImpl</code>.
+ * Test case for <code>de.rechner.openatfx.BlobImpl</code>.
  * 
  * @author Christian Rechner
  */

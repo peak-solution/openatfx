@@ -26,7 +26,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.AoSessionImpl</code>.
+ * Test case for <code>de.rechner.openatfx.AoSessionImpl</code>.
  * 
  * @author Christian Rechner
  */

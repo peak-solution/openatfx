@@ -20,7 +20,7 @@ import org.omg.CORBA.ORB;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.EnumerationDefinitionImpl</code>.
+ * Test case for <code>de.rechner.openatfx.EnumerationDefinitionImpl</code>.
  * 
  * @author Christian Rechner
  */

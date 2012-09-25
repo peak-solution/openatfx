@@ -527,9 +527,9 @@ class AtfxCache {
         if (this.instanceExists(aid, iid)) {
             InstanceElement ie = this.instanceElementCache.get(aid).get(iid);
             if (ie == null) {
-                byte[] oid = toByta(new long[] { aid, iid });
+                byte[] oid = toByta(new long[] { 0, aid, iid }); // 0=InstanceElement
                 org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
-                ie = InstanceElementHelper.narrow(obj);
+                ie = InstanceElementHelper.unchecked_narrow(obj);
                 this.instanceElementCache.get(aid).put(iid, ie);
             }
             return ie;
@@ -704,7 +704,7 @@ class AtfxCache {
             // ***************************************************
             // datatype DS_STRING, always write to XML (memory)
             else if (value.u.discriminator() == DataType.DS_STRING) {
-                seqRep = 0;
+                setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", 0).value);
             }
 
             // ***************************************************

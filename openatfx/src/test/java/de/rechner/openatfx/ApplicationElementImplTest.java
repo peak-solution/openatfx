@@ -28,7 +28,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.ApplicationElementImpl</code>.
+ * Test case for <code>de.rechner.openatfx.ApplicationElementImpl</code>.
  * 
  * @author Christian Rechner
  */

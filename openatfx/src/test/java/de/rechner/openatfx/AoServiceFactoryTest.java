@@ -18,7 +18,7 @@ import org.omg.CORBA.ORB;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.AoServiceFactory</code>.
+ * Test case for <code>de.rechner.openatfx.AoServiceFactory</code>.
  * 
  * @author Christian Rechner
  */

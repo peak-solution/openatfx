@@ -18,9 +18,11 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.AttrType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.Measurement;
 import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.Relationship;
+import org.asam.ods.SubMatrix;
 import org.asam.ods.T_ExternalReference;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,7 +33,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.InstanceElement</code>.
+ * Test case for <code>de.rechner.openatfx.InstanceElement</code>.
  * 
  * @author Christian Rechner
  */
@@ -39,6 +41,7 @@ public class InstanceElementImplTest {
 
     private static AoSession aoSession;
     private static InstanceElement ieDts;
+    private static InstanceElement ieSm;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -46,8 +49,10 @@ public class InstanceElementImplTest {
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
         ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
-        ApplicationElement applicationElement = applicationStructure.getElementByName("dts");
-        ieDts = applicationElement.getInstanceById(ODSHelper.asODSLongLong(32));
+        ApplicationElement aeDts = applicationStructure.getElementByName("dts");
+        ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
+        ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+        ieSm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33));
     }
 
     @AfterClass
@@ -657,20 +662,32 @@ public class InstanceElementImplTest {
     @Test
     public void testUpcastMeasurement() {
         try {
-            ieDts.upcastMeasurement();
-            fail("AoException expected");
+            Measurement mea = ieDts.upcastMeasurement();
+            assertEquals("Detector;rms A fast - Zusammenfassung", mea.getName());
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            fail(e.reason);
+        }
+
+        try {
+            ieSm.upcastMeasurement();
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_INVALID_BASETYPE.value(), e.errCode.value());
         }
     }
 
     @Test
     public void testUpcastSubMatrix() {
         try {
-            ieDts.upcastSubMatrix();
-            fail("AoException expected");
+            SubMatrix sm = ieSm.upcastSubMatrix();
+            assertEquals("Detector;rms A fast(Zusammenfassung)", sm.getName());
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            fail(e.reason);
+        }
+
+        try {
+            ieDts.upcastSubMatrix();
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_INVALID_BASETYPE.value(), e.errCode.value());
         }
     }
 

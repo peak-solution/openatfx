@@ -110,7 +110,7 @@ class ExtCompWriter {
                 length = value.u.complexSeq().length * 2;
                 ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
-                for (int i = 0; i < length / 2; i++) {
+                for (int i = 0; i < (length / 2); i++) {
                     bb.putFloat(value.u.complexSeq()[i].r);
                     bb.putFloat(value.u.complexSeq()[i].i);
                 }

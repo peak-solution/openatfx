@@ -21,7 +21,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.NameValueIteratorImpl</code>.
+ * Test case for <code>de.rechner.openatfx.NameValueIteratorImpl</code>.
  * 
  * @author Christian Rechner
  */

@@ -231,7 +231,7 @@ class AoSessionImpl extends AoSessionPOA {
     public ApplElemAccess getApplElemAccess() throws AoException {
         try {
             if (this.applElemAccess == null) {
-                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(this.modelPOA, this.atfxCache);
+                ApplElemAccessImpl aeaImpl = new ApplElemAccessImpl(this.instancePOA, this.atfxCache);
                 this.applElemAccess = ApplElemAccessHelper.narrow(this.modelPOA.servant_to_reference(aeaImpl));
             }
             return this.applElemAccess;

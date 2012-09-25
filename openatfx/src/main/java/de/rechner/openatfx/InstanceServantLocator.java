@@ -1,5 +1,7 @@
 package de.rechner.openatfx;
 
+import org.asam.ods.MeasurementPOATie;
+import org.asam.ods.SubMatrixPOATie;
 import org.omg.CORBA.LocalObject;
 import org.omg.PortableServer.ForwardRequest;
 import org.omg.PortableServer.POA;
@@ -41,9 +43,23 @@ class InstanceServantLocator extends LocalObject implements ServantLocator {
      */
     public Servant preinvoke(byte[] oid, POA adapter, String operation, CookieHolder the_cookie) throws ForwardRequest {
         long[] ls = AtfxCache.toLongA(oid);
-        long aid = ls[0];
-        long iid = ls[1];
-        return new InstanceElementImpl(modelPOA, adapter, atfxCache, aid, iid);
+        long type = ls[0];
+        long aid = ls[1];
+        long iid = ls[2];
+
+        // type=0, object is a <code>org.asam.ods.InstanceElement</code>
+        if (type == 0) {
+            return new InstanceElementImpl(modelPOA, adapter, atfxCache, aid, iid);
+        }
+        // type=1, object is a <code>org.asam.ods.Measurement</code>
+        else if (type == 1) {
+            return new MeasurementPOATie(new MeasurementImpl(modelPOA, adapter, atfxCache, aid, iid));
+        }
+        // type=2, object is a <code>org.asam.ods.SubMatrix</code>
+        else if (type == 2) {
+            return new SubMatrixPOATie(new SubMatrixImpl(modelPOA, adapter, atfxCache, aid, iid));
+        }
+        throw new ForwardRequest();
     }
 
     /**

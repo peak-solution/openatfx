@@ -29,7 +29,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.ApplicationStructureImpl</code>.
+ * Test case for <code>de.rechner.openatfx.ApplicationStructureImpl</code>.
  * 
  * @author Christian Rechner
  */

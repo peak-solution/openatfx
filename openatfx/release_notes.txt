@@ -26,8 +26,11 @@
 	0.4.1 (Christian Rechner)
 	
 		- Added reading generation params from 'values', if attribute value is null
+		- Implemented exporting of local column values of type 'DS_STRING' (always to XML!)
 		- Added 'dirty hack' to skip reading relations
 		  with name 'in_reference_location' or 'in_non_reference_location'
+		- Implemented 'upcastMeasurement' and 'upcastSubMatrix'
+		  
 		  
 	0.4.0 (Christian Rechner)
 	

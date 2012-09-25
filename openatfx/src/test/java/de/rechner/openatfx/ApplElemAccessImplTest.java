@@ -20,6 +20,7 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.InstanceElement;
 import org.asam.ods.JoinDef;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
@@ -33,6 +34,8 @@ import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
+import org.asam.ods.ValueMatrix;
+import org.asam.ods.ValueMatrixMode;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,7 +45,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.util.atfx.ApplElemAccessImpl</code>.
+ * Test case for <code>de.rechner.openatfx.ApplElemAccessImpl</code>.
  * 
  * @author Christian Rechner
  */
@@ -334,20 +337,49 @@ public class ApplElemAccessImplTest {
     }
 
     @Test
-    public void testGetValueMatrixInMode() {
+    public void testGetValueMatrix() {
         try {
-            applElemAccess.getValueMatrixInMode(null, null);
-            fail("AoException expected");
+            // ValueMatrix in AoSubMatrix
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("sm");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(33));
+            ValueMatrix vm = applElemAccess.getValueMatrix(new ElemId(aeDts.getId(), ieDts.getId()));
+            assertEquals(ValueMatrixMode.CALCULATED, vm.getMode());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            // ValueMatrix in AoMeasurement
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("dts");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
+            applElemAccess.getValueMatrix(new ElemId(aeDts.getId(), ieDts.getId()));
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
         }
     }
 
     @Test
-    public void testGetValueMatrix() {
+    public void testGetValueMatrixInMode() {
         try {
-            applElemAccess.getValueMatrix(null);
-            fail("AoException expected");
+            // ValueMatrix in AoSubMatrix
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("sm");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(33));
+            ValueMatrix vm = applElemAccess.getValueMatrixInMode(new ElemId(aeDts.getId(), ieDts.getId()),
+                                                                 ValueMatrixMode.STORAGE);
+            assertEquals(ValueMatrixMode.STORAGE, vm.getMode());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            // ValueMatrix in AoMeasurement
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("dts");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
+            applElemAccess.getValueMatrixInMode(new ElemId(aeDts.getId(), ieDts.getId()), ValueMatrixMode.STORAGE);
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
         }

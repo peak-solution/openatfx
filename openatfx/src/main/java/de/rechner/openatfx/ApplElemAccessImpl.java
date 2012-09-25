@@ -22,6 +22,7 @@ import org.asam.ods.ElemResultSet;
 import org.asam.ods.ElemResultSetExt;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
+import org.asam.ods.InstanceElement;
 import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
@@ -53,15 +54,17 @@ import de.rechner.openatfx.util.PatternUtil;
  */
 class ApplElemAccessImpl extends ApplElemAccessPOA {
 
+    private final POA instancePOA;
     private final AtfxCache atfxCache;
 
     /**
      * Constructor.
      * 
-     * @param poa The POA.
+     * @param instancePOA The instance POA.
      * @param atfxCache The ATFX cache.
      */
-    public ApplElemAccessImpl(POA poa, AtfxCache atfxCache) {
+    public ApplElemAccessImpl(POA instancePOA, AtfxCache atfxCache) {
+        this.instancePOA = instancePOA;
         this.atfxCache = atfxCache;
     }
 
@@ -466,22 +469,40 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ApplElemAccessOperations#getValueMatrixInMode(org.asam.ods.ElemId,
-     *      org.asam.ods.ValueMatrixMode)
+     * @see org.asam.ods.ApplElemAccessOperations#getValueMatrix(org.asam.ods.ElemId)
      */
-    public ValueMatrix getValueMatrixInMode(ElemId elem, ValueMatrixMode vmMode) throws AoException {
+    public ValueMatrix getValueMatrix(ElemId elem) throws AoException {
+        long aid = ODSHelper.asJLong(elem.aid);
+        long iid = ODSHelper.asJLong(elem.iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
+        String beName = ie.getApplicationElement().getBaseElement().getType();
+        if (beName.equalsIgnoreCase("AoMeasurement")) {
+            return ie.upcastMeasurement().getValueMatrix();
+        } else if (beName.equalsIgnoreCase("AoSubMatrix")) {
+            return ie.upcastSubMatrix().getValueMatrix();
+        }
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getValueMatrixInMode' not implemented");
+                              "Unable to build ValueMatrix on object: " + ie.getAsamPath());
     }
 
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ApplElemAccessOperations#getValueMatrix(org.asam.ods.ElemId)
+     * @see org.asam.ods.ApplElemAccessOperations#getValueMatrixInMode(org.asam.ods.ElemId,
+     *      org.asam.ods.ValueMatrixMode)
      */
-    public ValueMatrix getValueMatrix(ElemId elem) throws AoException {
+    public ValueMatrix getValueMatrixInMode(ElemId elem, ValueMatrixMode vmMode) throws AoException {
+        long aid = ODSHelper.asJLong(elem.aid);
+        long iid = ODSHelper.asJLong(elem.iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
+        String beName = ie.getApplicationElement().getBaseElement().getType();
+        if (beName.equalsIgnoreCase("AoMeasurement")) {
+            return ie.upcastMeasurement().getValueMatrixInMode(vmMode);
+        } else if (beName.equalsIgnoreCase("AoSubMatrix")) {
+            return ie.upcastSubMatrix().getValueMatrixInMode(vmMode);
+        }
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getValueMatrixInMode' not implemented");
+                              "Unable to build ValueMatrix on object: " + ie.getAsamPath());
     }
 
     /***********************************************************************************

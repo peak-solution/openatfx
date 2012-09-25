@@ -24,6 +24,7 @@ import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.InstanceElementPOA;
 import org.asam.ods.Measurement;
+import org.asam.ods.MeasurementHelper;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameIteratorHelper;
 import org.asam.ods.NameUnit;
@@ -33,6 +34,7 @@ import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.SubMatrix;
+import org.asam.ods.SubMatrixHelper;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
@@ -53,11 +55,11 @@ class InstanceElementImpl extends InstanceElementPOA {
 
     private static final Log LOG = LogFactory.getLog(InstanceElementImpl.class);
 
-    private final POA modelPOA;
-    private final POA instancePOA;
-    private final AtfxCache atfxCache;
-    private final long aid;
-    private final long iid;
+    protected final POA modelPOA;
+    protected final POA instancePOA;
+    protected final AtfxCache atfxCache;
+    protected final long aid;
+    protected final long iid;
 
     /**
      * Constructor.
@@ -66,6 +68,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @param instancePOA The instance POA.
      * @param atfxCache The ATFX cache.
      * @param aid The application element id.
+     * @param iid The instance id.
      */
     public InstanceElementImpl(POA modelPOA, POA instancePOA, AtfxCache atfxCache, long aid, long iid) {
         this.modelPOA = modelPOA;
@@ -717,8 +720,16 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#upcastMeasurement()
      */
     public Measurement upcastMeasurement() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'upcastMeasurement' not implemented");
+        // check if application element is of type 'AoMeasurement'
+        String beName = getApplicationElement().getBaseElement().getType();
+        if (!beName.equalsIgnoreCase("AoMeasurement")) {
+            throw new AoException(ErrorCode.AO_INVALID_BASETYPE, SeverityFlag.ERROR, 0,
+                                  "InstanceElement is not of base type 'AoMeasurement'");
+        }
+
+        byte[] oid = AtfxCache.toByta(new long[] { 1, aid, iid }); // 1=Measurement
+        org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, MeasurementHelper.id());
+        return MeasurementHelper.unchecked_narrow(obj);
     }
 
     /**
@@ -727,8 +738,16 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#upcastSubMatrix()
      */
     public SubMatrix upcastSubMatrix() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'upcastSubMatrix' not implemented");
+        // check if application element is of type 'AoSubMatrix'
+        String beName = getApplicationElement().getBaseElement().getType();
+        if (!beName.equalsIgnoreCase("AoSubMatrix")) {
+            throw new AoException(ErrorCode.AO_INVALID_BASETYPE, SeverityFlag.ERROR, 0,
+                                  "InstanceElement is not of base type 'AoSubMatrix'!");
+        }
+
+        byte[] oid = AtfxCache.toByta(new long[] { 2, aid, iid }); // 2=SubMatrix
+        org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, SubMatrixHelper.id());
+        return SubMatrixHelper.unchecked_narrow(obj);
     }
 
     /**
