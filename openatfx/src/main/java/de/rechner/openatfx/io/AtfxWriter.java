@@ -9,8 +9,12 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.xml.stream.XMLOutputFactory;
@@ -42,6 +46,7 @@ import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.NameValue;
 import org.asam.ods.NameValueIterator;
 import org.asam.ods.NameValueUnit;
+import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
@@ -62,7 +67,7 @@ public class AtfxWriter {
     private static final Log LOG = LogFactory.getLog(AtfxWriter.class);
 
     /** singleton instance */
-    private static volatile AtfxWriter instance;
+    private static AtfxWriter instance;
 
     /**
      * Non visible constructor.
@@ -76,7 +81,7 @@ public class AtfxWriter {
      * @param aoSession The session.
      * @throws AoException Error writing XML file.
      */
-    public synchronized void writeXML(File xmlFile, AoSession aoSession) throws AoException {
+    public void writeXML(File xmlFile, AoSession aoSession) throws AoException {
         long start = System.currentTimeMillis();
         ModelCache modelCache = new ModelCache(aoSession.getApplicationStructureValue(),
                                                aoSession.getEnumerationAttributes(),
@@ -99,13 +104,23 @@ public class AtfxWriter {
 
             // documentation
             writeDocumentation(streamWriter);
+
             // base model version
             writeBaseModelVersion(streamWriter, aoSession);
+
+            // files
+            boolean writeExtComps = shouldWriteExtComps(aoSession);
+            Map<String, String> componentFiles = new HashMap<String, String>();
+            if (!writeExtComps) {
+                componentFiles.putAll(writeFiles(streamWriter, aoSession));
+            }
+
             // application model
             writeApplicationModel(streamWriter, aoSession, modelCache);
+
             // instance data
             if (instancesExists(aoSession)) {
-                writeInstanceData(streamWriter, aoSession, modelCache);
+                writeInstanceData(streamWriter, aoSession, modelCache, writeExtComps, componentFiles);
             }
 
             streamWriter.writeEndElement();
@@ -156,6 +171,25 @@ public class AtfxWriter {
     }
 
     /**
+     * Returns whether external component instances instead of component files should be written (if possible).
+     * 
+     * @param aoSession The session.
+     * @return Whether to write external component instances.
+     * @throws AoException Error reading context parameter.
+     */
+    private boolean shouldWriteExtComps(AoSession aoSession) throws AoException {
+        NameValueIterator ni = aoSession.getContext("WRITE_EXTERNALCOMPONENTS");
+        boolean writeExtComps = false;
+        for (NameValue nv : ni.nextN(ni.getCount())) {
+            if (nv.value.u.stringVal().equalsIgnoreCase("TRUE")) {
+                writeExtComps = true;
+            }
+        }
+        ni.destroy();
+        return writeExtComps;
+    }
+
+    /**
      * Returns whether a single instance exists in given session.
      * 
      * @param aoSession The session.
@@ -185,7 +219,7 @@ public class AtfxWriter {
         writeElement(streamWriter, AtfxTagConstants.EXPORTED_BY, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORTER, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORT_DATETIME, ODSHelper.getCurrentODSDate());
-        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.4.0");
+        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.4.1");
         streamWriter.writeEndElement();
     }
 
@@ -200,6 +234,55 @@ public class AtfxWriter {
     private void writeBaseModelVersion(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
             AoException {
         writeElement(streamWriter, AtfxTagConstants.BASE_MODEL_VERSION, aoSession.getBaseStructure().getVersion());
+    }
+
+    /**
+     * Writes the component files section to the XML stream.
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param aoSession The session.
+     * @return
+     * @throws XMLStreamException Error writing XML file.
+     * @throws AoException Error reading base model version.
+     */
+    private Map<String, String> writeFiles(XMLStreamWriter streamWriter, AoSession aoSession)
+            throws XMLStreamException, AoException {
+        ApplicationElement[] aes = aoSession.getApplicationStructure().getElementsByBaseType("AoExternalComponent");
+        if (aes.length < 1) {
+            return Collections.emptyMap();
+        }
+        ApplicationElement aeExtComp = aes[0];
+
+        // collect value of 'filename_url'
+        Map<String, String> map = new HashMap<String, String>();
+        InstanceElementIterator iter = aeExtComp.getInstances("*");
+        int componentCount = 1;
+        for (int i = 0; i < iter.getCount(); i++) {
+            InstanceElement ieExtComp = iter.nextOne();
+            String filenameUrl = ieExtComp.getValueByBaseName("filename_url").value.u.stringVal();
+            if (!map.containsKey(filenameUrl)) {
+                map.put(filenameUrl, "component_" + componentCount);
+                componentCount++;
+            }
+            ieExtComp.destroy();
+        }
+        iter.destroy();
+
+        if (map.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // write to XML
+        streamWriter.writeStartElement(AtfxTagConstants.FILES);
+        for (Entry<String, String> entry : map.entrySet()) {
+            streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
+            writeElement(streamWriter, AtfxTagConstants.COMPONENT_IDENTIFIER, entry.getValue());
+            writeElement(streamWriter, AtfxTagConstants.COMPONENT_FILENAME, entry.getKey());
+            streamWriter.writeEndElement();
+        }
+        streamWriter.writeEndElement();
+
+        return map;
     }
 
     /***************************************************************************************
@@ -398,11 +481,14 @@ public class AtfxWriter {
      * 
      * @param streamWriter The XML stream writer.
      * @param aoSession The session.
+     * @param modelCache The model cache.
+     * @param writeExtComps Whether to write external component instances.
+     * @param componentFiles The component files.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instances.
      */
-    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession, ModelCache modelCache)
-            throws XMLStreamException, AoException {
+    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession, ModelCache modelCache,
+            boolean writeExtComps, Map<String, String> componentFiles) throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.INSTANCE_DATA);
 
         // iterate over all application elements/instance elements
@@ -411,7 +497,12 @@ public class AtfxWriter {
             long aid = ODSHelper.asJLong(ae.getId());
             InstanceElementIterator iter = ae.getInstances("*");
             for (InstanceElement ie : iter.nextN(iter.getCount())) {
-                writeInstanceElement(streamWriter, modelCache.getApplElem(aid), modelCache, aea, ie);
+                ApplElem applElem = modelCache.getApplElem(aid);
+                if (!writeExtComps && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
+                    continue;
+                }
+
+                writeInstanceElement(streamWriter, applElem, modelCache, aea, ie, writeExtComps, componentFiles);
             }
             iter.destroy();
         }
@@ -426,11 +517,14 @@ public class AtfxWriter {
      * @param modelCache The model cache.
      * @param aea The ApplElemAccess interface.
      * @param ie The instance element.
+     * @param writeExtComps Whether to write external component instances.
+     * @param componentFiles Map of component files.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instance data.
      */
     private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElem applElem, ModelCache modelCache,
-            ApplElemAccess aea, InstanceElement ie) throws XMLStreamException, AoException {
+            ApplElemAccess aea, InstanceElement ie, boolean writeExtComps, Map<String, String> componentFiles)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(applElem.aeName);
 
         // write application attribute data
@@ -447,7 +541,9 @@ public class AtfxWriter {
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
             // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
             if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                // do not export values into XML file
+                if (!writeExtComps) {
+                    writeComponent(streamWriter, modelCache, ie, componentFiles);
+                }
             } else {
                 writeLocalColumnValues(streamWriter, ie.getValue(modelCache.getLcValuesAaName()));
             }
@@ -474,6 +570,11 @@ public class AtfxWriter {
         // write relations
         ElemId elemId = new ElemId(applElem.aid, ie.getId());
         for (ApplRel applRel : modelCache.getApplRels(aid)) {
+            // skip reference to 'AoExternalComponent'
+            if (!writeExtComps && applRel.brName.equalsIgnoreCase("external_component")) {
+                continue;
+            }
+
             T_LONGLONG[] relInsts = aea.getRelInst(elemId, applRel.arName);
             if (relInsts.length > 0) {
                 writeElement(streamWriter, applRel.arName, AtfxExportUtil.createLongLongSeqString(relInsts));
@@ -481,6 +582,61 @@ public class AtfxWriter {
         }
 
         streamWriter.writeEndElement();
+    }
+
+    private void writeComponent(XMLStreamWriter streamWriter, ModelCache modelCache, InstanceElement ieLocalColumn,
+            Map<String, String> componentFiles) throws XMLStreamException, AoException {
+        InstanceElementIterator iter = ieLocalColumn.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+        if (iter.getCount() > 1) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Converting multiple instances of 'AoExternalComponent' to a component file reference is not supported!");
+        } else if (iter.getCount() < 1) {
+            return;
+        }
+        InstanceElement ieExtComp = iter.nextOne();
+
+        streamWriter.writeStartElement(modelCache.getLcValuesAaName());
+        streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
+
+        // identifier
+        String filenameUrl = ODSHelper.getStringVal(ieExtComp.getValueByBaseName("filename_url"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_IDENTIFIER, componentFiles.get(filenameUrl));
+
+        // datatype
+        int dt = ODSHelper.getEnumVal(ieExtComp.getValueByBaseName("value_type"));
+        String dtEnum = modelCache.getEnumItem("typespec_enum", dt);
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_DATATYPE, dtEnum);
+
+        // length
+        int componentLength = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("component_length"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_LENGTH, String.valueOf(componentLength));
+
+        // inioffset, may be DT_LONG or DT_LONGLONG
+        long startOffset = 0;
+        NameValueUnit nvuStartOffset = ieExtComp.getValueByBaseName("start_offset");
+        if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONG) {
+            startOffset = nvuStartOffset.value.u.longVal();
+        } else if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONGLONG) {
+            startOffset = ODSHelper.asJLong(nvuStartOffset.value.u.longlongVal());
+        }
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_INIOFFSET, String.valueOf(startOffset));
+
+        // length
+        int blockSize = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("block_size"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_BLOCKSIZE, String.valueOf(blockSize));
+
+        // valuesperblock
+        int valuesperblock = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("valuesperblock"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(valuesperblock));
+
+        // valuesperblock
+        int valueOffset = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("value_offset"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALOFFSETS, String.valueOf(valueOffset));
+
+        streamWriter.writeEndElement();
+        streamWriter.writeEndElement();
+
+        iter.destroy();
     }
 
     /**

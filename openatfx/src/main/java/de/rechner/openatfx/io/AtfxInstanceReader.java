@@ -184,15 +184,6 @@ class AtfxInstanceReader {
 
             // application relation
             else if (reader.isStartElement() && (modelCache.getApplRel(aid, currentTagName) != null)) {
-                // DIRTY HACK: skip invalid inverse relations of geometry model to make
-                // driver working for crosstest!
-                boolean xTest2012Hack = currentTagName.equals("in_reference_location")
-                        || currentTagName.equals("in_non_reference_location");
-                if (xTest2012Hack) {
-                    LOG.warn("Skipping relation '" + currentTagName + "' because of ASAM crosstest 2012!");
-                    continue;
-                }
-
                 // only read the INVERSE relations for performance reasons!
                 ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
                 short relMax = applRel.arRelationRange.max;

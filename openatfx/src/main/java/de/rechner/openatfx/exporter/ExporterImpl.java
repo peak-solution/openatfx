@@ -559,7 +559,7 @@ public class ExporterImpl implements IExporter {
             // if application element is of type 'AoLocalColumn', then the attributes 'values', 'flags' and
             // // 'generation_parameters' have to be copied separately
             if (smc.getApplElem(ODSHelper.asJLong(sourceAid)).beName.equalsIgnoreCase("AoLocalColumn")) {
-                copyLocalColumnValuesAttr(sourceSession, sourceElemIdMap.getElemId(), targetSession,
+                copyLocalColumnValuesAttr(sourceSession, smc, sourceElemIdMap.getElemId(), targetSession,
                                           targetElemIdMap.getElemId());
             }
         }
@@ -570,26 +570,28 @@ public class ExporterImpl implements IExporter {
     /**
      * by method 'getValueByBaseName'
      */
-    private void copyLocalColumnValuesAttr(AoSession sourceSession, ElemId sourceElemId, AoSession targetSession,
-            ElemId targetElemId) throws AoException {
+    private void copyLocalColumnValuesAttr(AoSession sourceSession, ModelCache smc, ElemId sourceElemId,
+            AoSession targetSession, ElemId targetElemId) throws AoException {
         InstanceElement sourceIeLc = sourceSession.getApplicationStructure()
                                                   .getInstancesById(new ElemId[] { sourceElemId })[0];
         InstanceElement targetIeLc = targetSession.getApplicationStructure()
                                                   .getInstancesById(new ElemId[] { targetElemId })[0];
 
-        NameValueUnit[] nvus = new NameValueUnit[4];
-        nvus[0] = sourceIeLc.getValueByBaseName("sequence_representation");
-        nvus[1] = sourceIeLc.getValueByBaseName("generation_parameters");
+        List<NameValueUnit> list = new ArrayList<NameValueUnit>();
+        list.add(sourceIeLc.getValueByBaseName("sequence_representation"));
+        list.add(sourceIeLc.getValueByBaseName("generation_parameters"));
         if (hasLocalColumnValues(sourceIeLc)) {
-            nvus[2] = sourceIeLc.getValueByBaseName("values");
-            nvus[3] = sourceIeLc.getValueByBaseName("flags");
+            list.add(sourceIeLc.getValueByBaseName("values"));
+            if (smc.getApplAttrByBaseName(ODSHelper.asJLong(sourceElemId.aid), "flags") != null) {
+                list.add(sourceIeLc.getValueByBaseName("flags"));
+            }
         } else {
-            nvus[2] = ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("values")
-                                                         .getName(), DataType.DS_FLOAT);
-            nvus[3] = ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("flags")
-                                                         .getName(), DataType.DS_SHORT);
+            list.add(ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("values")
+                                                        .getName(), DataType.DS_FLOAT));
+            list.add(ODSHelper.createEmptyNVU(sourceIeLc.getApplicationElement().getAttributeByBaseName("flags")
+                                                        .getName(), DataType.DS_SHORT));
         }
-        targetIeLc.setValueSeq(nvus);
+        targetIeLc.setValueSeq(list.toArray(new NameValueUnit[0]));
     }
 
     private boolean hasLocalColumnValues(InstanceElement ieLc) throws AoException {

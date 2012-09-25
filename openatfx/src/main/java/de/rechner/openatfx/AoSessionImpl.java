@@ -128,6 +128,8 @@ class AoSessionImpl extends AoSessionPOA {
         this.atfxCache.getContext().put("EXT_COMP_SEGSIZE",
                                         ODSHelper.createLongLongNV("EXT_COMP_SEGSIZE", 1024 * 1024 * 50)); // 50 MB
         this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
+        this.atfxCache.getContext().put("WRITE_EXTERNALCOMPONENTS",
+                                        ODSHelper.createStringNV("WRITE_EXTERNALCOMPONENTS", "FALSE"));
     }
 
     /**
@@ -500,7 +502,7 @@ class AoSessionImpl extends AoSessionPOA {
             this.transactionFile.delete();
             this.transactionFile = null;
 
-            LOG.info("Commited transaction");
+            LOG.info("Commited transaction to '" + this.atfxFile.getAbsolutePath() + "'");
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
