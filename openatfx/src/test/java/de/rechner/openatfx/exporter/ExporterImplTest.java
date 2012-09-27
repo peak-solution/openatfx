@@ -37,7 +37,7 @@ public class ExporterImplTest {
     @After
     public void tearDown() throws Exception {}
 
-    // @Test
+//    @Test
     public void testExport() {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ExporterImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
@@ -51,6 +51,9 @@ public class ExporterImplTest {
             // meq
             ElemId elemId = new ElemId(ODSHelper.asODSLongLong(19), ODSHelper.asODSLongLong(32));
             exporter.export(sourceSession, new ElemId[] { elemId }, targetFile, new Properties());
+
+            // try to open target session
+            AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + targetFile);
         } catch (AoException e) {
             fail(e.reason);
         } catch (IOException e) {
@@ -61,8 +64,8 @@ public class ExporterImplTest {
     @Test
     public void testExport1() {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        File source = new File("D:/PUBLIC/Crosstest_2012/Test_Data/Polytec/Getriebeglocke_b/Getriebeglocke_b.atfx");
-        File target = new File("D:/PUBLIC/Crosstest_2012/Test_Data/Polytec/Getriebeglocke_b/export.atfx");
+        File source = new File("D:/PUBLIC/Crosstest_2012/Test_Data/MBBM-VAS/nvh-geometry/x-test_2012_nvh_geometry.atfx");
+        File target = new File("D:/PUBLIC/Crosstest_2012/Test_Data/MBBM-VAS/nvh-geometry/export.atfx");
         try {
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + source);
             IExporter exporter = new ExporterImpl();

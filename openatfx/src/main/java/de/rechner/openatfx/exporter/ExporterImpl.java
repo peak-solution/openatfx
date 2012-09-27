@@ -90,6 +90,8 @@ public class ExporterImpl implements IExporter {
      */
     public ExporterImpl() {
         this.includeBeRels = new HashSet<ExportRelConfig>();
+        this.includeBeRels.add(new ExportRelConfig("AoEnvironment", "AoNameMap"));
+        this.includeBeRels.add(new ExportRelConfig("AoNameMap", "AoAttributeMap"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoParameterSet"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoUnitUnderTest"));
         this.includeBeRels.add(new ExportRelConfig("AoMeasurement", "AoTestSequence"));
@@ -145,17 +147,34 @@ public class ExporterImpl implements IExporter {
         try {
             targetSession.startTransaction();
 
-            // export application model starting with 'AoTest'
-            Set<String> exportedRelationKeys = new HashSet<String>();
-            Map<Long, Long> source2TargetAidMap = new HashMap<Long, Long>();
-            exportApplicationElement(smc, smc.getApplElemByBaseName("aotest"), targetSession, source2TargetAidMap,
-                                     exportedRelationKeys);
-
-            // export instances
             ApplElemAccess sourceAea = sourceSession.getApplElemAccess();
             ApplElemAccess targetAea = targetSession.getApplElemAccess();
 
+            Set<String> exportedRelationKeys = new HashSet<String>();
+            Map<Long, Long> source2TargetAidMap = new HashMap<Long, Long>();
             Map<ElemIdMap, ElemIdMap> source2TargetElemIdMap = new HashMap<ElemIdMap, ElemIdMap>();
+
+            // export application model starting with 'AoTest'
+            ApplElem aeEnv = smc.getApplElemByBaseName("AoEnvironment");
+            if (aeEnv != null) {
+                exportApplicationElement(smc, aeEnv, targetSession, source2TargetAidMap, exportedRelationKeys);
+            }
+            exportApplicationElement(smc, smc.getApplElemByBaseName("AoTest"), targetSession, source2TargetAidMap,
+                                     exportedRelationKeys);
+
+            // export environment instance
+            if (aeEnv != null) {
+                // ApplicationElement ae = sourceSession.getApplicationStructure().getElementById(aeEnv.aid);
+                // InstanceElementIterator iter = ae.getInstances("*");
+                // if (iter.getCount() > 0) {
+                // exportInstances(sourceSession, sourceAea, smc, targetAea, aeEnv.aid,
+                // new T_LONGLONG[] { iter.nextOne().getId() }, targetSession, source2TargetAidMap,
+                // source2TargetElemIdMap, false);
+                // }
+                // iter.destroy();
+            }
+
+            // export configured instances
             for (ElemId sourceElemId : sourceElemIds) {
                 exportInstances(sourceSession, sourceAea, smc, targetAea, sourceElemId.aid,
                                 new T_LONGLONG[] { sourceElemId.iid }, targetSession, source2TargetAidMap,
@@ -195,6 +214,10 @@ public class ExporterImpl implements IExporter {
             Map<Long, Long> source2TargetAidMap, Set<String> exportedRelationKeys) throws AoException {
         BaseStructure targetBs = targetSession.getBaseStructure();
         ApplicationStructure targetAs = targetSession.getApplicationStructure();
+
+        if (source2TargetAidMap.containsKey(ODSHelper.asJLong(sourceApplElem.aid))) {
+            return;
+        }
 
         // cache base attributes and base relations
         BaseElement targetBe = targetBs.getElementByType(sourceApplElem.beName);

@@ -28,7 +28,9 @@
 		- Added reading generation params from 'values', if attribute value is null
 		- Implemented exporting of local column values of type 'DS_STRING' (always to XML!)
 		- Implemented 'upcastMeasurement' and 'upcastSubMatrix'
-		  
+		- Implemented writing to 'components' instead of AoExternal compontent instances
+		  depending of session context property 'WRITE_EXTERNALCOMPONENTS'
+		- Implemented exporting the 'AoEnvironment', 'AoNameMap' and 'AoAttributeMap' instances.
 		  
 	0.4.0 (Christian Rechner)
 	
