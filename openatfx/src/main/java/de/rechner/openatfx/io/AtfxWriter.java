@@ -511,7 +511,7 @@ public class AtfxWriter {
     }
 
     /**
-     * Writes the data of an instance element to
+     * Writes the data of an instance element to XML.
      * 
      * @param streamWriter The XML stream writer.
      * @param modelCache The model cache.
@@ -836,7 +836,7 @@ public class AtfxWriter {
         }
         // DS_DATE
         else if (dataType == DataType.DS_DATE) {
-            writeStringSeq(streamWriter, u.dateSeq());
+            streamWriter.writeCharacters(AtfxExportUtil.createDateSeqString(u.dateSeq()));
         }
         // DS_DCOMPLEX
         else if (dataType == DataType.DS_DCOMPLEX) {

@@ -63,6 +63,21 @@ abstract class AtfxParseUtil {
     }
 
     /**
+     * Parse given string from an ATFX content and return the date array value.
+     * 
+     * @param str The string to parse.
+     * @return The date value array.
+     * @throws AoException Error parsing date array.
+     */
+    public static String[] parseDateSeq(String str) throws AoException {
+        String input = str.trim();
+        if (input.length() > 0) {
+            return input.split("\\s+");
+        }
+        return new String[0];
+    }
+
+    /**
      * Parse given string from an ATFX content and return the long value.
      * 
      * @param str The string to parse.

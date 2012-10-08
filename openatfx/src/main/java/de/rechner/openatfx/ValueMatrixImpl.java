@@ -21,11 +21,11 @@ import org.asam.ods.ValueMatrixPOA;
  */
 class ValueMatrixImpl extends ValueMatrixPOA {
 
-    private final SubMatrixImpl sourceSubMatrix;
+    // private final SubMatrixImpl sourceSubMatrix;
     private final ValueMatrixMode mode;
 
     public ValueMatrixImpl(SubMatrixImpl sourceSubMatrix, ValueMatrixMode mode) {
-        this.sourceSubMatrix = sourceSubMatrix;
+        // this.sourceSubMatrix = sourceSubMatrix;
         this.mode = mode;
     }
 
