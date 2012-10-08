@@ -710,24 +710,7 @@ class AtfxCache {
             // ***************************************************
             // write mode 'file', then write to external component
             else if (writeMode.equals("file")) {
-
-                // explicit => external_component
-                if (seqRep == 0) {
-                    seqRep = 7;
-                }
-                // raw_linear => raw_linear_external
-                else if (seqRep == 4) {
-                    seqRep = 8;
-                }
-                // raw_polynomial => raw_polynomial_external
-                else if (seqRep == 5) {
-                    seqRep = 9;
-                }
-                // raw_linear_calibrated => raw_linear_calibrated_external
-                else if (seqRep == 10) {
-                    seqRep = 11;
-                }
-
+                seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRep);
                 ExtCompWriter.getInstance().writeValues(this, iid, value);
                 setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
                 return;
@@ -736,23 +719,7 @@ class AtfxCache {
             // ***************************************************
             // write mode 'database', then write to XML (memory)
             else if (writeMode.equals("database")) {
-                // external_component => explicit
-                if (seqRep == 7) {
-                    seqRep = 0;
-                }
-                // raw_linear_external => raw_linear
-                else if (seqRep == 8) {
-                    seqRep = 4;
-                }
-                // raw_polynomial_external => raw_polynomial
-                else if (seqRep == 9) {
-                    seqRep = 5;
-                }
-                // raw_linear_calibrated_external => raw_linear_calibrated
-                else if (seqRep == 11) {
-                    seqRep = 10;
-                }
-
+                seqRep = ODSHelper.seqRepExtComp2seqRepComp(seqRep);
                 setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
             }
 

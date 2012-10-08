@@ -241,16 +241,8 @@ class AtfxInstanceReader {
             ieLocalColumn.createRelation(rel, ieExternalComponent);
             // alter sequence representation
             String attrSeqRep = aeLocalColumn.getAttributeByBaseName("sequence_representation").getName();
-            int seqRep = ODSHelper.getEnumVal(ieLocalColumn.getValue(attrSeqRep));
-            if (seqRep == 0) { // explicit
-                seqRep = 7; // external_component
-            } else if (seqRep == 4) { // raw_linear
-                seqRep = 8; // raw_linear_external
-            } else if (seqRep == 5) { // raw_polynomial
-                seqRep = 9; // raw_polynomial_external
-            } else if (seqRep == 10) { // raw_linear_calibrated
-                seqRep = 11; // raw_linear_calibrated_external
-            }
+            int seqRepOrig = ODSHelper.getEnumVal(ieLocalColumn.getValue(attrSeqRep));
+            int seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRepOrig);
             ieLocalColumn.setValue(ODSHelper.createEnumNVU(attrSeqRep, seqRep));
         }
 

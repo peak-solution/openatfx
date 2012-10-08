@@ -525,32 +525,44 @@ public class AtfxWriter {
     private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElem applElem, ModelCache modelCache,
             ApplElemAccess aea, InstanceElement ie, boolean writeExtComps, Map<String, String> componentFiles)
             throws XMLStreamException, AoException {
+        long aid = ODSHelper.asJLong(applElem.aid);
         streamWriter.writeStartElement(applElem.aeName);
 
         // write application attribute data
         List<String> attrNames = new ArrayList<String>(
                                                        Arrays.asList(modelCache.getApplAttrNames(ODSHelper.asJLong(applElem.aid))));
 
-        // special handling: LocalColumn 'values'; do not write external component values
-        if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))
-                && (modelCache.getLcValuesAaName() != null)) {
-            // remove values from attribute list
-            attrNames.remove(modelCache.getLcValuesAaName());
+        // special handling: LocalColumn; do not write external component values
+        if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))) {
+            String applAttrValues = modelCache.getApplAttrByBaseName(aid, "values").aaName;
+            String applAttrSeqRep = modelCache.getApplAttrByBaseName(aid, "sequence_representation").aaName;
+
+            // remove attribute of base type 'values' and 'sequece_representation' from attribute list
+            attrNames.remove(applAttrValues);
+            attrNames.remove(applAttrSeqRep);
             // attrNames sequence representation
-            int seqRepEnum = ODSHelper.getEnumVal(ie.getValueByBaseName("sequence_representation"));
+            int seqRepEnum = ODSHelper.getEnumVal(ie.getValue(applAttrSeqRep));
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
             // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
             if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                if (!writeExtComps) {
+                
+                
+                
+                if (!writeExtComps) { // write 'components'
                     writeComponent(streamWriter, modelCache, ie, componentFiles);
+                    seqRepEnum = ODSHelper.seqRepExtComp2seqRepComp(seqRepEnum);
+                    writeApplAttrValue(streamWriter, modelCache, aid,
+                                       ODSHelper.createEnumNVU(applAttrSeqRep, seqRepEnum));
+                } else { // write 'AoExternalComponent' instances
+                    writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 }
-            } else {
+            } else { // write to XML
+                writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 writeLocalColumnValues(streamWriter, ie.getValue(modelCache.getLcValuesAaName()));
             }
         }
 
         // write attributes if not null
-        long aid = ODSHelper.asJLong(applElem.aid);
         for (NameValueUnit nvu : ie.getValueSeq(attrNames.toArray(new String[0]))) {
             if (nvu.value.flag == 15) {
                 writeApplAttrValue(streamWriter, modelCache, aid, nvu);

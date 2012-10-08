@@ -3251,4 +3251,46 @@ public abstract class ODSHelper {
 
         return value;
     }
+
+    public static int seqRepComp2seqRepExtComp(int seqRep) {
+        // explicit => external_component
+        if (seqRep == 0) {
+            return 7;
+        }
+        // raw_linear => raw_linear_external
+        else if (seqRep == 4) {
+            return 8;
+        }
+        // raw_polynomial => raw_polynomial_external
+        else if (seqRep == 5) {
+            return 9;
+        }
+        // raw_linear_calibrated => raw_linear_calibrated_external
+        else if (seqRep == 10) {
+            return 11;
+        }
+        return seqRep;
+    }
+
+    public static int seqRepExtComp2seqRepComp(int seqRep) {
+        // external_component => explicit
+        if (seqRep == 7) {
+            seqRep = 0;
+        }
+        // raw_linear_external => raw_linear
+        else if (seqRep == 8) {
+            seqRep = 4;
+        }
+        // raw_polynomial_external => raw_polynomial
+        else if (seqRep == 9) {
+            seqRep = 5;
+        }
+        // raw_linear_calibrated_external => raw_linear_calibrated
+        else if (seqRep == 11) {
+            seqRep = 10;
+        }
+
+        return seqRep;
+    }
+
 }

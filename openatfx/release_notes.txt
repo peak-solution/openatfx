@@ -30,13 +30,11 @@
 		- Implemented 'upcastMeasurement' and 'upcastSubMatrix'
 		- Implemented writing to 'components' instead of AoExternal component instances
 		  depending of session context property 'WRITE_EXTERNALCOMPONENTS'
-		- Implemented exporting the 'AoEnvironment', 'AoNameMap' and 'AoAttributeMap' instances.
+		- Implemented exporting the 'AoEnvironment', 'AoNameMap' and 'AoAttributeMap' instances
 		- Fixed reading / writing of application attribute values of type 'DS_DATE'
-		  
-		TODO: 
-		- fix writing external components with multiple instances
-		- fix writing external components sequence_representation
-		- fix writing 'flags'
+		- Fixed correct writing of 'sequence_representation' when exporting to
+		  component files
+
 		  
 	0.4.0 (Christian Rechner)
 	
@@ -161,9 +159,10 @@
 
 2. Known Bugs
 
-	- None
+    - fix writing external components with multiple instances
 
 3. Future changes
 
-	- Reading mass data from external files.
-	- Writing mass data to external files.
+	- implement writing of flag files
+	- implement query/extended query
+	- implement all methods of 'ValueMatrix'

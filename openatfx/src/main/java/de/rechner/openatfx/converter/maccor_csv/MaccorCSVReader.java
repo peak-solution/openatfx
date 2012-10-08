@@ -3,15 +3,11 @@ package de.rechner.openatfx.converter.maccor_csv;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +33,7 @@ class MaccorCSVReader {
 
     private static final String CHANNEL_NAME_PATTERN = "(.*)\\s\\[(.*)\\]";
     private static final String RELATIVE_TIME_PATTERN = "(\\d*)d (\\d\\d):(\\d\\d):(\\d\\d).(\\d\\d\\d\\d\\d)";
-    private static final String ABSOLUTE_DATE_FORMAT = "dd/MM/yyyy HH:mm:ss a"; // 7/23/2012 2:08:31 PM
+    // private static final String ABSOLUTE_DATE_FORMAT = "dd/MM/yyyy HH:mm:ss a"; // 7/23/2012 2:08:31 PM
 
     private static final Map<String, DataType> STATIC_DATA_TYPES = new HashMap<String, DataType>();
     static {
@@ -61,15 +57,16 @@ class MaccorCSVReader {
 
     private final Pattern channelNamePattern;
     private final Pattern relativeTimePattern;
-    private final DateFormat absoluteDateFormat;
-    private final NumberFormat intFormat;
-    private final NumberFormat floatFormat;
+    // private final DateFormat absoluteDateFormat;
+    // private final NumberFormat intFormat;
+    // private final NumberFormat floatFormat;
 
     private final List<MaccorChannelHeader> channelHeader;
 
     private final CSVReader csvReader;
     private String[] lastReadLine = null;
-    private int lastReadStep = 1;
+
+    // private int lastReadStep = 1;
 
     /**
      * Constructor.
@@ -80,9 +77,9 @@ class MaccorCSVReader {
     public MaccorCSVReader(File csvFile) throws ConvertException {
         this.channelNamePattern = Pattern.compile(CHANNEL_NAME_PATTERN);
         this.relativeTimePattern = Pattern.compile(RELATIVE_TIME_PATTERN);
-        this.absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_FORMAT);
-        this.intFormat = NumberFormat.getIntegerInstance(Locale.GERMAN);
-        this.floatFormat = NumberFormat.getNumberInstance(Locale.GERMAN);
+        // this.absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_FORMAT);
+        // this.intFormat = NumberFormat.getIntegerInstance(Locale.GERMAN);
+        // this.floatFormat = NumberFormat.getNumberInstance(Locale.GERMAN);
 
         // read channel header
         this.channelHeader = readChannelHeader(csvFile);
@@ -211,7 +208,7 @@ class MaccorCSVReader {
                 // DT_FLOAT (relative time)
                 if ((dataType == DataType.DT_FLOAT) && (relativeTimePattern.matcher(str).matches())) {
                     // TODO:
-                
+
                 }
                 // DT_FLOAT
                 else if (dataType == DataType.DT_FLOAT) {

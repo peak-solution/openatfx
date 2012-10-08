@@ -67,6 +67,11 @@ import de.rechner.openatfx.util.ModelCache;
 import de.rechner.openatfx.util.ODSHelper;
 
 
+/**
+ * ATFX exporter implementation.
+ * 
+ * @author Christian Rechner
+ */
 public class ExporterImpl implements IExporter {
 
     private static final Log LOG = LogFactory.getLog(ExporterImpl.class);
@@ -138,7 +143,8 @@ public class ExporterImpl implements IExporter {
         String bsVersion = sourceSession.getBaseStructure().getVersion();
         AoSession targetSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, targetFile, bsVersion);
         targetSession.setContextString("write_mode", "file");
-
+        targetSession.setContextString("WRITE_EXTERNALCOMPONENTS", "false");
+        
         // create source model cache
         ModelCache smc = new ModelCache(sourceSession.getApplicationStructureValue(),
                                         sourceSession.getEnumerationAttributes(),
@@ -164,14 +170,14 @@ public class ExporterImpl implements IExporter {
 
             // export environment instance
             if (aeEnv != null) {
-                // ApplicationElement ae = sourceSession.getApplicationStructure().getElementById(aeEnv.aid);
-                // InstanceElementIterator iter = ae.getInstances("*");
-                // if (iter.getCount() > 0) {
-                // exportInstances(sourceSession, sourceAea, smc, targetAea, aeEnv.aid,
-                // new T_LONGLONG[] { iter.nextOne().getId() }, targetSession, source2TargetAidMap,
-                // source2TargetElemIdMap, false);
-                // }
-                // iter.destroy();
+                ApplicationElement ae = sourceSession.getApplicationStructure().getElementById(aeEnv.aid);
+                InstanceElementIterator iter = ae.getInstances("*");
+                if (iter.getCount() > 0) {
+                    exportInstances(sourceSession, sourceAea, smc, targetAea, aeEnv.aid,
+                                    new T_LONGLONG[] { iter.nextOne().getId() }, targetSession, source2TargetAidMap,
+                                    source2TargetElemIdMap, false);
+                }
+                iter.destroy();
             }
 
             // export configured instances
