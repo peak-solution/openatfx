@@ -129,7 +129,7 @@ class AoSessionImpl extends AoSessionPOA {
                                         ODSHelper.createLongLongNV("EXT_COMP_SEGSIZE", 1024 * 1024 * 50)); // 50 MB
         this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
         this.atfxCache.getContext().put("WRITE_EXTERNALCOMPONENTS",
-                                        ODSHelper.createStringNV("WRITE_EXTERNALCOMPONENTS", "TRUE"));
+                                        ODSHelper.createStringNV("WRITE_EXTERNALCOMPONENTS", "FALSE"));
     }
 
     /**

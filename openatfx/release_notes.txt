@@ -159,7 +159,7 @@
 
 2. Known Bugs
 
-    - fix writing external components with multiple instances
+    - none
 
 3. Future changes
 

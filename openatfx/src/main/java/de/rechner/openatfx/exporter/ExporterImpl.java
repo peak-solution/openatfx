@@ -143,7 +143,6 @@ public class ExporterImpl implements IExporter {
         String bsVersion = sourceSession.getBaseStructure().getVersion();
         AoSession targetSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, targetFile, bsVersion);
         targetSession.setContextString("write_mode", "file");
-        targetSession.setContextString("WRITE_EXTERNALCOMPONENTS", "false");
         
         // create source model cache
         ModelCache smc = new ModelCache(sourceSession.getApplicationStructureValue(),

@@ -545,10 +545,11 @@ public class AtfxWriter {
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
             // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
             if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                
-                
-                
-                if (!writeExtComps) { // write 'components'
+                InstanceElementIterator ieExtComps = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+                boolean multipleExtComps = ieExtComps.getCount() > 1;
+                ieExtComps.destroy();
+
+                if (!writeExtComps && !multipleExtComps) { // write 'components'
                     writeComponent(streamWriter, modelCache, ie, componentFiles);
                     seqRepEnum = ODSHelper.seqRepExtComp2seqRepComp(seqRepEnum);
                     writeApplAttrValue(streamWriter, modelCache, aid,
