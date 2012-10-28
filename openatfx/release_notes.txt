@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.4.2 (Christian Rechner)
+	
+		- Added property to switch writing external component instances.
+
 	0.4.1 (Christian Rechner)
 	
 		- Added reading generation params from 'values', if attribute value is null
