@@ -32,13 +32,18 @@
 	    - Implemented writing external component files for data types
 	      * DS_BYTE
 		  * DS_LONGLONG
+          * DS_STRING
+          * DS_DATE
 		- Implemented reading external component files for data types
 		  * DS_BYTE
 		  * DS_LONGLONG
+		  * DS_STRING
+		  * DS_DATE
 		  and type specs
 		  * dt_byte
 		  * dt_longlong
 		  * dt_longlong_beo
+		  * dt_string
 		  
 	0.4.1 (Christian Rechner)
 	

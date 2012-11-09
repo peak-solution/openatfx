@@ -75,16 +75,33 @@ public class WriteExtCompValuesTest {
             InstanceElement ieMea = aeMea.getInstanceByName("Detector;rms A fast - Zusammenfassung");
             InstanceElement ieSm = aeSm.getInstanceByName("Detector;rms A fast(Zusammenfassung)");
 
+            // DT_STRING
+            InstanceElement ieMeq = aeMeq.createInstance("meq_DT_STRING");
+            ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 1));
+            ieMeq.createRelation(relMeqMea, ieMea);
+            InstanceElement ieLc = aeLc.createInstance("lc_DT_STRING");
+            String[] stringValues = new String[167];
+            Arrays.fill(stringValues, "abcABCüäö?()");
+            stringValues[0] = "a";
+            stringValues[166] = "z";
+            ieLc.setValue(ODSHelper.createStringSeqNVU("values", stringValues));
+            ieLc.createRelation(relLcSm, ieSm);
+            ieLc.createRelation(relLcMeq, ieMeq);
+            assertEquals(true, Arrays.equals(stringValues, ieLc.getValue("values").value.u.stringSeq()));
+
             // DT_SHORT
-            InstanceElement ieMeq = aeMeq.createInstance("meq_DT_SHORT");
+            ieMeq = aeMeq.createInstance("meq_DT_SHORT");
             ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 2));
             ieMeq.createRelation(relMeqMea, ieMea);
-            InstanceElement ieLc = aeLc.createInstance("lc_DT_SHORT");
+            ieLc = aeLc.createInstance("lc_DT_SHORT");
             short[] shortValues = new short[167];
             Arrays.fill(shortValues, (short) 42);
+            shortValues[0] = Short.MIN_VALUE;
+            shortValues[166] = Short.MAX_VALUE;
             ieLc.setValue(ODSHelper.createShortSeqNVU("values", shortValues));
             ieLc.createRelation(relLcSm, ieSm);
             ieLc.createRelation(relLcMeq, ieMeq);
+            assertEquals(true, Arrays.equals(shortValues, ieLc.getValue("values").value.u.shortSeq()));
 
             // DT_FLOAT
             ieMeq = aeMeq.createInstance("meq_DT_FLOAT");
@@ -93,9 +110,12 @@ public class WriteExtCompValuesTest {
             ieLc = aeLc.createInstance("lc_DT_FLOAT");
             float[] floatValues = new float[167];
             Arrays.fill(floatValues, 42.42f);
+            floatValues[0] = Float.MIN_VALUE;
+            floatValues[166] = Float.MAX_VALUE;
             ieLc.setValue(ODSHelper.createFloatSeqNVU("values", floatValues));
             ieLc.createRelation(relLcSm, ieSm);
             ieLc.createRelation(relLcMeq, ieMeq);
+            assertEquals(true, Arrays.equals(floatValues, ieLc.getValue("values").value.u.floatSeq()));
 
             // DT_BOOLEAN
             // ieMeq = aeMeq.createInstance("meq_DT_BOOLEAN");
@@ -166,16 +186,18 @@ public class WriteExtCompValuesTest {
                                              ODSHelper.asJLong(ieLc.getValue("values").value.u.longlongSeq())));
 
             // DT_DATE
-            // ieMeq = aeMeq.createInstance("meq_DT_DATE");
-            // ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 10));
-            // ieMeq.createRelation(relMeqMea, ieMea);
-            // ieLc = aeLc.createInstance("lc_DT_DATE");
-            // String[] dateValues = new String[167];
-            // Arrays.fill(dateValues, "19790520035657");
-            // ieLc.setValue(ODSHelper.createDateSeqNVU("values", dateValues));
-            // ieLc.createRelation(relLcSm, ieSm);
-            // ieLc.createRelation(relLcMeq, ieMeq);
-            // assertEquals(true, Arrays.equals(dateValues, ieLc.getValue("values").value.u.dateSeq()));
+            ieMeq = aeMeq.createInstance("meq_DT_DATE");
+            ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 10));
+            ieMeq.createRelation(relMeqMea, ieMea);
+            ieLc = aeLc.createInstance("lc_DT_DATE");
+            String[] dateValues = new String[167];
+            Arrays.fill(dateValues, "19790520035657");
+            dateValues[0] = "2012";
+            dateValues[166] = "2012110922001011123";
+            ieLc.setValue(ODSHelper.createDateSeqNVU("values", dateValues));
+            ieLc.createRelation(relLcSm, ieSm);
+            ieLc.createRelation(relLcMeq, ieMeq);
+            assertEquals(true, Arrays.equals(dateValues, ieLc.getValue("values").value.u.dateSeq()));
 
             targetSession.commitTransaction();
         } catch (AoException e) {

@@ -41,6 +41,17 @@ class ExtCompWriter {
         return binFile;
     }
 
+    private File getExtCompFileString(AtfxCache atfxCache, int cnt) {
+        Map<String, NameValue> context = atfxCache.getContext();
+        String rootPath = context.get("FILE_ROOT").value.u.stringVal();
+        long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
+        File binFile = new File(rootPath, "data_" + cnt + "_string.bin");
+        if (binFile.length() > extCompSize) {
+            binFile = getExtCompFile(atfxCache, cnt + 1);
+        }
+        return binFile;
+    }
+
     /**
      * @param atfxCache
      * @param lcIid
@@ -48,10 +59,16 @@ class ExtCompWriter {
      * @throws AoException
      */
     public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
-        // open file
-        File extCompFile = getExtCompFile(atfxCache, 1);
+        DataType dt = value.u.discriminator();
 
-        // read values
+        // open file, strings have to be in the same file
+        File extCompFile = null;
+        if (dt == DataType.DS_STRING || dt == DataType.DS_DATE) {
+            extCompFile = getExtCompFileString(atfxCache, 1);
+        } else {
+            extCompFile = getExtCompFile(atfxCache, 1);
+        }
+
         RandomAccessFile raf = null;
         FileChannel channel = null;
         try {
@@ -60,13 +77,27 @@ class ExtCompWriter {
             long startOffset = channel.size();
 
             // write values
-            DataType dt = value.u.discriminator();
             int valueType = 0;
             int length = 0;
             int typeSize = 0;
 
+            // DS_STRING
+            if (dt == DataType.DS_STRING) {
+                valueType = 12;
+                typeSize = 0;
+                length = 0;
+                for (String str : value.u.stringSeq()) {
+                    byte[] b = str.getBytes("ISO-8859-1");
+                    length += b.length;
+                    ByteBuffer bb = ByteBuffer.wrap(b);
+                    channel.write(bb);
+                    bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
+                    length += 1;
+                    channel.write(bb);
+                }
+            }
             // DS_BYTE
-            if (dt == DataType.DS_BYTE) {
+            else if (dt == DataType.DS_BYTE) {
                 valueType = 1;
                 typeSize = 1;
                 length = value.u.byteSeq().length;
@@ -77,7 +108,6 @@ class ExtCompWriter {
                 bb.rewind();
                 channel.write(bb);
             }
-
             // DS_SHORT
             else if (dt == DataType.DS_SHORT) {
                 valueType = 2;
@@ -116,6 +146,21 @@ class ExtCompWriter {
                 }
                 bb.rewind();
                 channel.write(bb);
+            }
+            // DS_DATE
+            else if (dt == DataType.DS_DATE) {
+                valueType = 12;
+                typeSize = 0;
+                length = 0;
+                for (String str : value.u.dateSeq()) {
+                    byte[] b = str.getBytes("ISO-8859-1");
+                    length += b.length;
+                    ByteBuffer bb = ByteBuffer.wrap(b);
+                    channel.write(bb);
+                    bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
+                    length += 1;
+                    channel.write(bb);
+                }
             }
             // DS_FLOAT
             else if (dt == DataType.DS_FLOAT) {

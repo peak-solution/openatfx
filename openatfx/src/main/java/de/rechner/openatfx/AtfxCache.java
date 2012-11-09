@@ -702,12 +702,6 @@ class AtfxCache {
             }
 
             // ***************************************************
-            // datatype DS_STRING, always write to XML (memory)
-            else if (value.u.discriminator() == DataType.DS_STRING) {
-                setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", 0).value);
-            }
-
-            // ***************************************************
             // write mode 'file', then write to external component
             else if (writeMode.equals("file")) {
                 seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRep);

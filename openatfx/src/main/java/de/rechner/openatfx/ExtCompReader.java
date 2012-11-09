@@ -53,8 +53,16 @@ class ExtCompReader {
         tsValue.flag = (short) 15;
         tsValue.u = new TS_Union();
 
+        // DS_STRING
+        if (targetDataType == DataType.DS_STRING) {
+            List<String> list = new ArrayList<String>();
+            for (long iidExtComp : iidExtComps) {
+                list.addAll(readStringValues(atfxCache, iidExtComp));
+            }
+            tsValue.u.stringSeq(list.toArray(new String[0]));
+        }
         // DS_BYTE
-        if (targetDataType == DataType.DS_BYTE) {
+        else if (targetDataType == DataType.DS_BYTE) {
             List<Byte> list = new ArrayList<Byte>();
             for (long iidExtComp : iidExtComps) {
                 list.addAll(readByteValues(atfxCache, iidExtComp));
@@ -65,7 +73,6 @@ class ExtCompReader {
             }
             tsValue.u.byteSeq(ar);
         }
-
         // DS_SHORT
         else if (targetDataType == DataType.DS_SHORT) {
             List<Short> list = new ArrayList<Short>();
@@ -121,6 +128,14 @@ class ExtCompReader {
                 ar[i] = ODSHelper.asODSLongLong(list.get(i));
             }
             tsValue.u.longlongSeq(ar);
+        }
+        // DS_DATE
+        else if (targetDataType == DataType.DS_DATE) {
+            List<String> list = new ArrayList<String>();
+            for (long iidExtComp : iidExtComps) {
+                list.addAll(readStringValues(atfxCache, iidExtComp));
+            }
+            tsValue.u.dateSeq(list.toArray(new String[0]));
         }
         // DS_FLOAT
         else if (targetDataType == DataType.DS_FLOAT) {
@@ -392,6 +407,95 @@ class ExtCompReader {
                 LOG.error(e.getMessage(), e);
             }
         }
+    }
+
+    private Collection<String> readStringValues(AtfxCache atfxCache, long iidLc) throws AoException {
+        long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
+
+        // get filename
+        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
+        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
+        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
+        File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
+
+        // get datatype
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
+        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.enumVal();
+        if (valueType != 12) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported 'value_type' for data type DT_STRING or DT_DATE: " + valueType);
+        }
+
+        // read length
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+
+        // read start offset, may be DT_LONG or DT_LONGLONG
+        int startOffset = 0;
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
+        if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
+            startOffset = vStartOffset.u.longVal();
+        } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
+            startOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
+        }
+
+        // value_offset
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
+        int valueOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+
+        // read values
+        RandomAccessFile raf = null;
+        FileChannel sourceChannel = null;
+        MappedByteBuffer sourceMbb = null;
+        try {
+            // open source channel
+            raf = new RandomAccessFile(extCompFile, "r");
+            sourceChannel = raf.getChannel();
+            sourceMbb = sourceChannel.map(MapMode.READ_ONLY, valueOffset, extCompFile.length());
+
+            // read values
+            List<String> list = new ArrayList<String>();
+            List<Byte> current = new ArrayList<Byte>();
+            for (int i = 0; i < componentLength; i++) {
+                // calculate index
+                int idx = (startOffset + valueOffset) + i;
+                byte b = sourceMbb.get(idx);
+                if (b == 0) {
+                    list.add(new String(toByteArray(current), "ISO-8859-1"));
+                    current.clear();
+                } else {
+                    current.add(b);
+                }
+            }
+            return list;
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
+        } finally {
+            try {
+                // unmap(sourceChannel, sourceMbb)
+                if (sourceChannel != null) {
+                    sourceChannel.close();
+                }
+                if (raf != null) {
+                    raf.close();
+                }
+                sourceMbb = null;
+                raf = null;
+                sourceChannel = null;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private static byte[] toByteArray(List<Byte> col) {
+        byte[] ar = new byte[col.size()];
+        for (int i = 0; i < ar.length; i++) {
+            ar[i] = col.get(i);
+        }
+        return ar;
     }
 
     /**
