@@ -26,7 +26,17 @@
 	0.4.2 (Christian Rechner)
 	
 		- Added property to switch writing external component instances.
-
+		- Added check if application element of type 'AoLocalColumn' exists
+		  to avoid null pointer exception.
+		- Added tests for writing external component files
+	    - Implemented writing external component files for data types
+		  * DS_LONGLONG
+		- Implemented reading external component files for data types
+		  * DS_LONGLONG
+		  and type specs
+		  * dt_longlong
+		  * dt_longlong_beo
+		  
 	0.4.1 (Christian Rechner)
 	
 		- Added reading generation params from 'values', if attribute value is null

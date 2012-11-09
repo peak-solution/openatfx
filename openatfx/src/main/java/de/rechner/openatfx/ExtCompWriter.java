@@ -90,6 +90,19 @@ class ExtCompWriter {
                 bb.rewind();
                 channel.write(bb);
             }
+            // DS_LONGLONG
+            else if (dt == DataType.DS_LONGLONG) {
+                valueType = 4;
+                typeSize = 8;
+                length = value.u.longlongSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putLong(ODSHelper.asJLong(value.u.longlongSeq()[i]));
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
             // DS_FLOAT
             else if (dt == DataType.DS_FLOAT) {
                 valueType = 5;

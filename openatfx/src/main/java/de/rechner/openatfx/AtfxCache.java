@@ -820,7 +820,7 @@ class AtfxCache {
 
         // unit aid
         Set<Long> untAids = getAidsByBaseType("aounit");
-        if (untAids.isEmpty()) {
+        if (untAids == null || untAids.isEmpty()) {
             return "";
         }
         long unitAid = untAids.iterator().next();

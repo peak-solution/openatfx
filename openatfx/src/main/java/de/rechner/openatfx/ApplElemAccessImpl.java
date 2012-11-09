@@ -122,7 +122,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
             // trick for 'AoLocalColumn': sort the attribute 'sequence_representation' BEFORE the attribute 'values'.
             // This is needed to write the values correctly
-            if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(aid)) {
+            Set<Long> lcAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
+            if (lcAids != null && lcAids.contains(aid)) {
                 Collections.sort(aeGroupColumns.get(aid), new Comparator<AIDNameValueSeqUnitId>() {
 
                     public int compare(AIDNameValueSeqUnitId o1, AIDNameValueSeqUnitId o2) {

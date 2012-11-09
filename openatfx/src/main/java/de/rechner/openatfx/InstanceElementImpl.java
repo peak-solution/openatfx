@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -295,7 +296,8 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // trick for 'AoLocalColumn': sort the attribute 'sequence_representation' BEFORE the attribute 'values'. This
         // is needed for the write_mode 'file'.
-        if (this.atfxCache.getAidsByBaseType("aolocalcolumn").contains(this.aid)) {
+        Set<Long> lcAids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
+        if (lcAids != null && lcAids.contains(this.aid)) {
             Arrays.sort(values, new Comparator<NameValueUnit>() {
 
                 public int compare(NameValueUnit o1, NameValueUnit o2) {
