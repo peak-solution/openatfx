@@ -109,15 +109,18 @@ public class WriteExtCompValuesTest {
             // ieLc.createRelation(relLcMeq, ieMeq);
 
             // DT_BYTE
-            // ieMeq = aeMeq.createInstance("meq_DT_BYTE");
-            // ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 5));
-            // ieMeq.createRelation(relMeqMea, ieMea);
-            // ieLc = aeLc.createInstance("lc_DT_BYTE");
-            // byte[] byteValues = new byte[167];
-            // Arrays.fill(byteValues, (byte) 42);
-            // ieLc.setValue(ODSHelper.createByteSeqNVU("values", byteValues));
-            // ieLc.createRelation(relLcSm, ieSm);
-            // ieLc.createRelation(relLcMeq, ieMeq);
+            ieMeq = aeMeq.createInstance("meq_DT_BYTE");
+            ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 5));
+            ieMeq.createRelation(relMeqMea, ieMea);
+            ieLc = aeLc.createInstance("lc_DT_BYTE");
+            byte[] byteValues = new byte[167];
+            Arrays.fill(byteValues, (byte) 42);
+            byteValues[0] = Byte.MIN_VALUE;
+            byteValues[166] = Byte.MAX_VALUE;
+            ieLc.setValue(ODSHelper.createByteSeqNVU("values", byteValues));
+            ieLc.createRelation(relLcSm, ieSm);
+            ieLc.createRelation(relLcMeq, ieMeq);
+            assertEquals(true, Arrays.equals(byteValues, ieLc.getValue("values").value.u.byteSeq()));
 
             // DT_LONG
             ieMeq = aeMeq.createInstance("meq_DT_LONG");

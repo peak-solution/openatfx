@@ -30,10 +30,13 @@
 		  to avoid null pointer exception.
 		- Added tests for writing external component files
 	    - Implemented writing external component files for data types
+	      * DS_BYTE
 		  * DS_LONGLONG
 		- Implemented reading external component files for data types
+		  * DS_BYTE
 		  * DS_LONGLONG
 		  and type specs
+		  * dt_byte
 		  * dt_longlong
 		  * dt_longlong_beo
 		  

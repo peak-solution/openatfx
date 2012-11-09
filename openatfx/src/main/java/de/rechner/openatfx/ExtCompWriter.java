@@ -64,8 +64,22 @@ class ExtCompWriter {
             int valueType = 0;
             int length = 0;
             int typeSize = 0;
+
+            // DS_BYTE
+            if (dt == DataType.DS_BYTE) {
+                valueType = 1;
+                typeSize = 1;
+                length = value.u.byteSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                for (int i = 0; i < length; i++) {
+                    bb.put(value.u.byteSeq()[i]);
+                }
+                bb.rewind();
+                channel.write(bb);
+            }
+
             // DS_SHORT
-            if (dt == DataType.DS_SHORT) {
+            else if (dt == DataType.DS_SHORT) {
                 valueType = 2;
                 typeSize = 2;
                 length = value.u.shortSeq().length;
