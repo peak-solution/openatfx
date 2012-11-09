@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
@@ -50,8 +51,8 @@ public class WriteExtCompValuesTest {
             File sourceFile = new File(url.getFile());
             AoSession sourceSession = AoServiceFactory.getInstance().newAoFactory(orb)
                                                       .newSession("FILENAME=" + sourceFile);
-            // File targetFile = File.createTempFile("test", ".atfx");
-            File targetFile = new File("D:/PUBLIC/test.atfx");
+            File targetFile = File.createTempFile("test", ".atfx");
+            // File targetFile = new File("D:/PUBLIC/test.atfx");
             // targetFile.deleteOnExit();
             IExporter exporter = new ExporterImpl();
             // meq
@@ -202,6 +203,8 @@ public class WriteExtCompValuesTest {
             targetSession.commitTransaction();
         } catch (AoException e) {
             fail(e.reason);
+        } catch (IOException e) {
+            fail(e.getMessage());
         }
     }
 }
