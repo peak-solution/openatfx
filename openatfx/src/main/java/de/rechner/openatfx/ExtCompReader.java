@@ -22,6 +22,7 @@ import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
+import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -66,7 +67,6 @@ class ExtCompReader {
             }
             tsValue.u.shortSeq(ar);
         }
-
         // DS_LONG
         else if (targetDataType == DataType.DS_LONG) {
             List<Integer> list = new ArrayList<Integer>();
@@ -81,20 +81,6 @@ class ExtCompReader {
             }
             tsValue.u.longSeq(ar);
         }
-        // DS_FLOAT
-        else if (targetDataType == DataType.DS_FLOAT) {
-            List<Float> list = new ArrayList<Float>();
-            for (long iidExtComp : iidExtComps) {
-                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
-                    list.add(value.floatValue());
-                }
-            }
-            float[] ar = new float[list.size()];
-            for (int i = 0; i < list.size(); i++) {
-                ar[i] = list.get(i);
-            }
-            tsValue.u.floatSeq(ar);
-        }
         // DS_DOUBLE
         else if (targetDataType == DataType.DS_DOUBLE) {
             List<Double> list = new ArrayList<Double>();
@@ -108,6 +94,34 @@ class ExtCompReader {
                 ar[i] = list.get(i);
             }
             tsValue.u.doubleSeq(ar);
+        }
+        // DS_LONGLONG
+        else if (targetDataType == DataType.DS_LONGLONG) {
+            List<Long> list = new ArrayList<Long>();
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
+                    list.add(value.longValue());
+                }
+            }
+            T_LONGLONG[] ar = new T_LONGLONG[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                ar[i] = ODSHelper.asODSLongLong(list.get(i));
+            }
+            tsValue.u.longlongSeq(ar);
+        }
+        // DS_FLOAT
+        else if (targetDataType == DataType.DS_FLOAT) {
+            List<Float> list = new ArrayList<Float>();
+            for (long iidExtComp : iidExtComps) {
+                for (Number value : readNumberValues(atfxCache, iidExtComp)) {
+                    list.add(value.floatValue());
+                }
+            }
+            float[] ar = new float[list.size()];
+            for (int i = 0; i < list.size(); i++) {
+                ar[i] = list.get(i);
+            }
+            tsValue.u.floatSeq(ar);
         }
         // DS_COMPLEX
         else if (targetDataType == DataType.DS_COMPLEX) {
@@ -240,6 +254,10 @@ class ExtCompReader {
                 // 3=dt_long, 8=dt_long_beo
                 else if ((valueType == 3) || (valueType == 8)) {
                     list.add(sourceMbb.getInt(idx));
+                }
+                // 4=dt_longlong, 8=dt_long_beo
+                else if ((valueType == 4) || (valueType == 9)) {
+                    list.add(sourceMbb.getLong(idx));
                 }
                 // 5=ieeefloat4, 10=ieeefloat4_beo
                 else if ((valueType == 5) || (valueType == 10)) {

@@ -162,6 +162,18 @@ public class WriteExtCompValuesTest {
             assertEquals(true, Arrays.equals(longlongValues,
                                              ODSHelper.asJLong(ieLc.getValue("values").value.u.longlongSeq())));
 
+            // DT_DATE
+            // ieMeq = aeMeq.createInstance("meq_DT_DATE");
+            // ieMeq.setValue(ODSHelper.createEnumNVU("aodt", 10));
+            // ieMeq.createRelation(relMeqMea, ieMea);
+            // ieLc = aeLc.createInstance("lc_DT_DATE");
+            // String[] dateValues = new String[167];
+            // Arrays.fill(dateValues, "19790520035657");
+            // ieLc.setValue(ODSHelper.createDateSeqNVU("values", dateValues));
+            // ieLc.createRelation(relLcSm, ieSm);
+            // ieLc.createRelation(relLcMeq, ieMeq);
+            // assertEquals(true, Arrays.equals(dateValues, ieLc.getValue("values").value.u.dateSeq()));
+
             targetSession.commitTransaction();
         } catch (AoException e) {
             fail(e.reason);
