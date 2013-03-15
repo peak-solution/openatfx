@@ -199,18 +199,28 @@ public class ApplicationAttributeImplTest {
 
     @Test
     public void testSetIsUnique() {
+        // check setting unique on 'normal' attribute
         try {
             aaDB.setIsUnique(true);
             assertEquals(true, aaDB.isUnique());
+            aaDB.setIsUnique(false);
+            assertEquals(false, aaDB.isUnique());
         } catch (AoException e) {
             fail(e.reason);
         }
-        // set unique on base attributes not allowed
-        // try {
-        // aaId.setIsUnique(true);
-        // fail("AoException expected");
-        // } catch (AoException e) {
-        // }
+        // check setting unique on unique 'base' attribute
+        try {
+            aaId.setIsUnique(true);
+            assertEquals(true, aaId.isUnique());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+        // reduce uniqueness on base attributes not allowed
+        try {
+            aaId.setIsUnique(false);
+            fail("AoException expected");
+        } catch (AoException e) {
+        }
     }
 
     @Test

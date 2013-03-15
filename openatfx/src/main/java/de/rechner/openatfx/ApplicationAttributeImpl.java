@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttributePOA;
@@ -66,8 +64,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes.put("parameter_datatype", Arrays.asList(new String[] { "AoParameter" }));
         obligatoryAttributes.put("pvalue", Arrays.asList(new String[] { "AoParameter" }));
     }
-
-    private static final Log LOG = LogFactory.getLog(ApplicationAttributeImpl.class);
 
     private final AtfxCache atfxCache;
     private final long aid;
@@ -276,13 +272,13 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
      * @see org.asam.ods.ApplicationAttributeOperations#setIsUnique(boolean)
      */
     public void setIsUnique(boolean aaIsUnique) throws AoException {
-        // it is not allowed to set the unique flag on base attributes
+        // it is not allowed to reduce the unique flag from base attribute
         if (this.baseAttribute != null) {
-            LOG.warn("Setting the 'unique' flag on attributes derived from base attributes is not allowed [aid=" + aid
-                    + ",aaName=" + aaName + "]");
-            // throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
-            // "Setting the 'unique' flag on attributes derived from base attributes is not allowed!");
-            return;
+            if (!aaIsUnique && this.baseAttribute.isUnique()) {
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Reducing the uniqueness of attributes derived from unique base attributes is not allowed [aid="
+                                              + aid + ",aaName=" + aaName + "]");
+            }
         }
 
         this.unique = aaIsUnique;

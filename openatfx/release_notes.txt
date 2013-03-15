@@ -23,6 +23,14 @@
 
 1. Changes
 
+	0.4.3 (Christian Rechner + Olaf Flebbe)
+	
+		- Changed method of reading external component files from mapped memory to
+		  'normal' buffered reader
+		- Fixed wrong warning and added exception on method 'setIsUnique' of interface
+		  'ApplicationAttribute' when trying to reduce uniquness of application attribute
+		  derived from unique base attribute.
+
 	0.4.2 (Christian Rechner)
 	
 		- Added property to switch writing external component instances.
