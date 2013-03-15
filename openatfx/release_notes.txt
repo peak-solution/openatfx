@@ -30,6 +30,8 @@
 		- Fixed wrong warning and added exception on method 'setIsUnique' of interface
 		  'ApplicationAttribute' when trying to reduce uniquness of application attribute
 		  derived from unique base attribute.
+		- Upgrade of woodstox to version 4.1.5.
+
 
 	0.4.2 (Christian Rechner)
 	
