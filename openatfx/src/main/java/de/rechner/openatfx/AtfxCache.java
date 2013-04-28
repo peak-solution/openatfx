@@ -738,6 +738,7 @@ class AtfxCache {
 
         // datatype
         boolean lcValuesAttr = isLocalColumnValuesAttribute(aid, attrNo);
+        boolean lcFlagsAttr = isLocalColumnFlagsAttribute(aid, attrNo);
         DataType dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
 
         // read generation parameters from values if null
@@ -761,6 +762,15 @@ class AtfxCache {
             // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
             if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
                 return ExtCompReader.getInstance().readValues(this, iid, dt);
+            }
+        }
+        // read flags from external component file
+        if (lcFlagsAttr) {
+            int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
+            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
+            // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
+            if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
+                return ExtCompReader.getInstance().readFlags(this, iid);
             }
         }
 
@@ -841,6 +851,23 @@ class AtfxCache {
         Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
         if (localColumnAids != null && localColumnAids.contains(aid)) {
             Integer valuesAttrNo = getAttrNoByBaName(aid, "values");
+            return (valuesAttrNo != null) && (attrNo == valuesAttrNo);
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether given attribute name is from base attribute 'flags' of and this instance is from base element
+     * 'AoLocalColumn'.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The application attribute number.
+     * @return True, if attribute is 'flags'.
+     */
+    private boolean isLocalColumnFlagsAttribute(long aid, long attrNo) {
+        Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
+        if (localColumnAids != null && localColumnAids.contains(aid)) {
+            Integer valuesAttrNo = getAttrNoByBaName(aid, "flags");
             return (valuesAttrNo != null) && (attrNo == valuesAttrNo);
         }
         return false;

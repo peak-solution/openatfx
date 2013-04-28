@@ -6,7 +6,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLInputFactory;
@@ -247,11 +249,18 @@ public class AtfxReader {
 
         // implicit create application element of "AoExternalComponent" if missing
         ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
-        if (aes.length < 1) {
-            implicitCreateAoExternalComponent(as);
+        ApplicationElement aeExtComp = null;
+        if (aes.length == 1) {
+            aeExtComp = aes[0];
+        } else if (aes.length < 1) {
+            aeExtComp = implicitCreateAoExternalComponent(as);
         } else if (aes.length > 1) {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "Multiple application elements of type 'AoExternalComponent' found");
+        }
+        // implicit create flag file attributes if missing
+        if (aeExtComp != null) {
+            implicitCreateAoExternalComponentFlagsAttrs(aeExtComp);
         }
 
         // fill map with application relations and sets the default relation range
@@ -297,19 +306,19 @@ public class AtfxReader {
      * Creates implicitly an application element of type "AoExternalComponent" including all relations.
      * 
      * @param as The application structure.
-     * @return The map containing the application relation as key, the elem2 name as value.
+     * @return The created application element.
      * @throws AoException Error creating application element.
      */
-    private void implicitCreateAoExternalComponent(ApplicationStructure as) throws AoException {
+    private ApplicationElement implicitCreateAoExternalComponent(ApplicationStructure as) throws AoException {
         ApplicationElement[] aeLCs = as.getElementsByBaseType("AoLocalColumn");
         if (aeLCs.length < 1) {
-            return;
+            return null;
         }
         ApplicationElement aeLC = aeLCs[0];
 
         LOG.warn("No application element of type 'AoExternalComponent' found, creating dummy");
 
-        // create application element
+        // create application element, this includes all mandatory attributes
         BaseStructure bs = as.getSession().getBaseStructure();
         BaseElement beExtComp = bs.getElementByType("AoExternalComponent");
         ApplicationElement aeExtComp = as.createElement(beExtComp);
@@ -324,6 +333,36 @@ public class AtfxReader {
         rel.setInverseRelationName("rel_ec");
 
         this.applRels.put("ec", new HashMap<String, ApplicationRelation>());
+        return aeExtComp;
+    }
+
+    /**
+     * Creates implicitly an application element of type "AoExternalComponent" including all relations.
+     * 
+     * @param as The application structure.
+     * @return The created application element.
+     * @throws AoException Error creating application element.
+     */
+    private void implicitCreateAoExternalComponentFlagsAttrs(ApplicationElement aeExtComp) throws AoException {
+        Set<String> existingBaNames = new HashSet<String>();
+        for (ApplicationAttribute aa : aeExtComp.getAttributes("*")) {
+            BaseAttribute ba = aa.getBaseAttribute();
+            if (ba != null) {
+                existingBaNames.add(ba.getName());
+            }
+        }
+        // flags_filename_url
+        if (!existingBaNames.contains("flags_filename_url")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("flags_filename_url");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("flags_filename_url")[0]);
+        }
+        // flags_start_offset
+        if (!existingBaNames.contains("flags_start_offset")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("flags_start_offset");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("flags_start_offset")[0]);
+        }
     }
 
     /**

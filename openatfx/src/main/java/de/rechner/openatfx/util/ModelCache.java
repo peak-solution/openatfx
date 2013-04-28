@@ -39,6 +39,7 @@ public class ModelCache {
     /** information where the mass data is stored in the model */
     private String lcAeName;
     private String lcValuesAaName;
+    private String lcFlagsAaName;
 
     /**
      * @param asv
@@ -80,8 +81,12 @@ public class ModelCache {
                 attrNames.add(applAttr.aaName);
 
                 // lcAeName
-                if (applElem.beName.equalsIgnoreCase("AoLocalColumn") && applAttr.baName.equals("values")) {
-                    this.lcValuesAaName = applAttr.aaName;
+                if (applElem.beName.equalsIgnoreCase("AoLocalColumn")) {
+                    if (applAttr.baName.equals("values")) {
+                        this.lcValuesAaName = applAttr.aaName;
+                    } else if (applAttr.baName.equals("flags")) {
+                        this.lcFlagsAaName = applAttr.aaName;
+                    }
                 }
 
             }
@@ -216,6 +221,10 @@ public class ModelCache {
         return this.lcValuesAaName;
     }
 
+    public String getLcFlagsAaName() throws AoException {
+        return this.lcFlagsAaName;
+    }
+
     /**
      * Returns whether given attribute name if the attribute 'values' of the local column instance.
      * 
@@ -227,6 +236,22 @@ public class ModelCache {
     public boolean isLocalColumnValuesAttr(String aeName, String aaName) throws AoException {
         if (this.lcAeName != null && this.lcValuesAaName != null && this.lcAeName.equals(aeName)
                 && this.lcValuesAaName.equals(aaName)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns whether given attribute name if the attribute 'flags' of the local column instance.
+     * 
+     * @param aeName The application element name.
+     * @param aaName The application attribute name.
+     * @return True, if 'flags' attribute.
+     * @throws AoException Error checking attribute.
+     */
+    public boolean isLocalColumnFlagsAttr(String aeName, String aaName) throws AoException {
+        if (this.lcAeName != null && this.lcFlagsAaName != null && this.lcAeName.equals(aeName)
+                && this.lcFlagsAaName.equals(aaName)) {
             return true;
         }
         return false;

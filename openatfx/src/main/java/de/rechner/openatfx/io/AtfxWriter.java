@@ -535,10 +535,12 @@ public class AtfxWriter {
         // special handling: LocalColumn; do not write external component values
         if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))) {
             String applAttrValues = modelCache.getApplAttrByBaseName(aid, "values").aaName;
+            String applAttrFlags = modelCache.getApplAttrByBaseName(aid, "flags").aaName;
             String applAttrSeqRep = modelCache.getApplAttrByBaseName(aid, "sequence_representation").aaName;
 
-            // remove attribute of base type 'values' and 'sequece_representation' from attribute list
+            // remove attribute of base type 'values', 'flags' and 'sequece_representation' from attribute list
             attrNames.remove(applAttrValues);
+            attrNames.remove(applAttrFlags);
             attrNames.remove(applAttrSeqRep);
             // attrNames sequence representation
             int seqRepEnum = ODSHelper.getEnumVal(ie.getValue(applAttrSeqRep));
@@ -550,15 +552,17 @@ public class AtfxWriter {
                 ieExtComps.destroy();
 
                 if (!writeExtComps && !multipleExtComps) { // write 'components'
-                    writeComponent(streamWriter, modelCache, ie, componentFiles);
+                    writeLCValuesComponent(streamWriter, modelCache, ie, componentFiles);
+                    writeLCFlagsComponent(streamWriter, modelCache, ie, componentFiles);
                     seqRepEnum = ODSHelper.seqRepExtComp2seqRepComp(seqRepEnum);
                     writeApplAttrValue(streamWriter, modelCache, aid,
                                        ODSHelper.createEnumNVU(applAttrSeqRep, seqRepEnum));
                 } else { // write 'AoExternalComponent' instances
                     writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 }
-            } else { // write to XML
+            } else { // write values to to XML (inline)
                 writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
+                writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrFlags));
                 writeLocalColumnValues(streamWriter, ie.getValue(modelCache.getLcValuesAaName()));
             }
         }
@@ -597,8 +601,8 @@ public class AtfxWriter {
         streamWriter.writeEndElement();
     }
 
-    private void writeComponent(XMLStreamWriter streamWriter, ModelCache modelCache, InstanceElement ieLocalColumn,
-            Map<String, String> componentFiles) throws XMLStreamException, AoException {
+    private void writeLCValuesComponent(XMLStreamWriter streamWriter, ModelCache modelCache,
+            InstanceElement ieLocalColumn, Map<String, String> componentFiles) throws XMLStreamException, AoException {
         InstanceElementIterator iter = ieLocalColumn.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
         if (iter.getCount() > 1) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
@@ -609,6 +613,61 @@ public class AtfxWriter {
         InstanceElement ieExtComp = iter.nextOne();
 
         streamWriter.writeStartElement(modelCache.getLcValuesAaName());
+        streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
+
+        // identifier
+        String filenameUrl = ODSHelper.getStringVal(ieExtComp.getValueByBaseName("filename_url"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_IDENTIFIER, componentFiles.get(filenameUrl));
+
+        // datatype
+        int dt = ODSHelper.getEnumVal(ieExtComp.getValueByBaseName("value_type"));
+        String dtEnum = modelCache.getEnumItem("typespec_enum", dt);
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_DATATYPE, dtEnum);
+
+        // length
+        int componentLength = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("component_length"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_LENGTH, String.valueOf(componentLength));
+
+        // inioffset, may be DT_LONG or DT_LONGLONG
+        long startOffset = 0;
+        NameValueUnit nvuStartOffset = ieExtComp.getValueByBaseName("start_offset");
+        if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONG) {
+            startOffset = nvuStartOffset.value.u.longVal();
+        } else if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONGLONG) {
+            startOffset = ODSHelper.asJLong(nvuStartOffset.value.u.longlongVal());
+        }
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_INIOFFSET, String.valueOf(startOffset));
+
+        // length
+        int blockSize = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("block_size"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_BLOCKSIZE, String.valueOf(blockSize));
+
+        // valuesperblock
+        int valuesperblock = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("valuesperblock"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(valuesperblock));
+
+        // valuesperblock
+        int valueOffset = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("value_offset"));
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALOFFSETS, String.valueOf(valueOffset));
+
+        streamWriter.writeEndElement();
+        streamWriter.writeEndElement();
+
+        iter.destroy();
+    }
+
+    private void writeLCFlagsComponent(XMLStreamWriter streamWriter, ModelCache modelCache,
+            InstanceElement ieLocalColumn, Map<String, String> componentFiles) throws XMLStreamException, AoException {
+        InstanceElementIterator iter = ieLocalColumn.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+        if (iter.getCount() > 1) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Converting multiple instances of 'AoExternalComponent' to a component file reference is not supported!");
+        } else if (iter.getCount() < 1) {
+            return;
+        }
+        InstanceElement ieExtComp = iter.nextOne();
+
+        streamWriter.writeStartElement(modelCache.getLcFlagsAaName());
         streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
 
         // identifier

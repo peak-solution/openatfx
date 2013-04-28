@@ -329,6 +329,76 @@ class ExtCompReader {
         }
     }
 
+    public TS_Value readFlags(AtfxCache atfxCache, long iidLc) throws AoException {
+        // read external component instances
+        long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
+        ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
+        Collection<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
+        if (iidExtComps.size() != 1) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "The implementation currently only may read exactly one external component file");
+        }
+
+        long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
+
+        // get filename
+        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
+        String flagsFilenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
+        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
+        File flagsFile = new File(atfxFile.getParentFile(), flagsFilenameUrl);
+
+        // read start offset, may be DT_LONG or DT_LONGLONG
+        int flagsStartOffset = 0;
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
+        if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
+            flagsStartOffset = vStartOffset.u.longVal();
+        } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
+            flagsStartOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
+        }
+
+        // read length
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+
+        // read values
+        TS_Value tsValue = new TS_Value();
+        tsValue.flag = (short) 15;
+        tsValue.u = new TS_Union();
+        tsValue.u.shortSeq(new short[componentLength]);
+
+        RandomAccessFile raf = null;
+        byte[] backingBuffer = new byte[2];
+        ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
+        ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+        sourceMbb.order(byteOrder);
+        try {
+            // open source channel
+            raf = new RandomAccessFile(flagsFile, "r");
+            raf.seek(flagsStartOffset);
+
+            for (int i = 0; i < componentLength; i++) {
+                raf.read(backingBuffer);
+                tsValue.u.shortSeq()[i] = sourceMbb.getShort();
+            }
+
+            return tsValue;
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
+        } finally {
+            backingBuffer = null;
+            try {
+                if (raf != null) {
+                    raf.close();
+                }
+                raf = null;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+    }
+
     /**
      * Returns the singleton instance.
      * 

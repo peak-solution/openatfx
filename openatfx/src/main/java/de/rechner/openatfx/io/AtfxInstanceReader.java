@@ -152,7 +152,33 @@ class AtfxInstanceReader {
                 reader.nextTag();
                 // external component
                 if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-                    ieExternalComponent = parseLocalColumnComponent(aoSession, files, modelCache, reader);
+                    if (ieExternalComponent == null) {
+                        ieExternalComponent = createExtCompIe(aoSession);
+                    }
+                    parseLocalColumnValuesComponent(ieExternalComponent, files, modelCache, reader);
+                }
+                // explicit values inline XML
+                else if (reader.isStartElement()) {
+                    TS_Value value = parseLocalColumnValues(modelCache, reader);
+                    AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
+                    valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    valuesAttrValue.attr = new AIDName();
+                    valuesAttrValue.attr.aid = applElem.aid;
+                    valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
+                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
+                    applAttrValues.add(valuesAttrValue);
+                }
+            }
+
+            // base attribute 'flags' of 'LocalColumn'
+            else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
+                reader.nextTag();
+                // external component
+                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
+                    if (ieExternalComponent == null) {
+                        ieExternalComponent = createExtCompIe(aoSession);
+                    }
+                    parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
                 }
                 // explicit values inline XML
                 else if (reader.isStartElement()) {
@@ -254,20 +280,40 @@ class AtfxInstanceReader {
     }
 
     /**
-     * Parse the 'component' XML element and create an external component instance.
+     * Creates an instance of external component.
      * 
      * @param aoSession The session.
+     * @return The created instance.
+     * @throws AoException Error creating instance.
+     */
+    private InstanceElement createExtCompIe(AoSession aoSession) throws AoException {
+        ApplicationStructure as = aoSession.getApplicationStructure();
+        ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
+        if (aes.length != 1) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "None or multiple application elements of type 'AoExternalComponent' found");
+        }
+        ApplicationElement aeExtComp = aes[0];
+        return aeExtComp.createInstance("ExtComp");
+    }
+
+    /**
+     * Parse the 'component' XML element and fill an external component instance.
+     * 
+     * @param ieExtComp The external component file instance.
      * @param files Map with component files.
      * @param modelCache The application model cache.
      * @param reader The XML stream reader.
-     * @return The created instance element of base type 'external_component'
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error creating instance element.
      */
-    private InstanceElement parseLocalColumnComponent(AoSession aoSession, Map<String, String> files,
+    private void parseLocalColumnValuesComponent(InstanceElement ieExtComp, Map<String, String> files,
             ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
-        ApplicationStructure as = aoSession.getApplicationStructure();
+        ApplicationElement aeExtComp = ieExtComp.getApplicationElement();
+        ApplicationStructure as = aeExtComp.getApplicationStructure();
         EnumerationDefinition typeSpectEnum = as.getEnumerationDefinition("typespec_enum");
+        long aidExtComp = ODSHelper.asJLong(aeExtComp.getId());
+
         String description = "";
         String fileName = "";
         int dataType = 0;
@@ -317,17 +363,7 @@ class AtfxInstanceReader {
             reader.next();
         }
 
-        // create attribute values of external component
-        ApplicationElement[] aes = as.getElementsByBaseType("AoExternalComponent");
-        if (aes.length != 1) {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                  "None or multiple application elements of type 'AoExternalComponent' found");
-        }
-        ApplicationElement aeExtComp = aes[0];
-        long aidExtComp = ODSHelper.asJLong(aeExtComp.getId());
-
         // create external component instance
-        InstanceElement ieExtComp = aeExtComp.createInstance("ExtComp");
         List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
 
         // mandatory base attribute 'filename_url'
@@ -374,8 +410,52 @@ class AtfxInstanceReader {
             attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, 1));
         }
         ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
+    }
 
-        return ieExtComp;
+    /**
+     * Parse the 'component' XML element and fill an external component instance with the flags information.
+     * 
+     * @param ieExtComp The external component instance.
+     * @param files Map with component files.
+     * @param reader The XML stream reader.
+     * @throws XMLStreamException Error reading XML.
+     * @throws AoException Error creating instance element.
+     */
+    private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
+            ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
+        String flagsFileName = "";
+        long flagsStartOffset = 0;
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+            // 'identifier'
+            if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
+                String identifier = reader.getElementText();
+                flagsFileName = files.get(identifier);
+                if (flagsFileName == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                          "External component file not found for identifier '" + identifier + "'");
+                }
+            }
+            // 'inioffset'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
+                flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            reader.next();
+        }
+
+        List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
+        long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
+        // mandatory base attribute 'flags_filename_url'
+        ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
+        attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
+        // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
+        if (applAttr.dType == DataType.DT_LONG) {
+            attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
+        } else {
+            attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
+        }
+
+        ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
     }
 
     /**
