@@ -58,6 +58,7 @@ class ExtCompWriter {
      * @param value
      * @throws AoException
      */
+    @SuppressWarnings("resource")
     public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
         DataType dt = value.u.discriminator();
 

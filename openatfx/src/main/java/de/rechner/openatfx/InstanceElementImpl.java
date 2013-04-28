@@ -31,6 +31,7 @@ import org.asam.ods.NameIteratorHelper;
 import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
+import org.asam.ods.ODSFile;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
@@ -806,6 +807,16 @@ class InstanceElementImpl extends InstanceElementPOA {
             throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'setInitialRights' not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.InstanceElementOperations#upcastODSFile()
+     */
+    public ODSFile upcastODSFile() throws AoException {
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                              "Method 'upcastODSFile' not implemented");
     }
 
 }

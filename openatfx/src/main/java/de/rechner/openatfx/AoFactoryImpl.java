@@ -8,6 +8,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.AoFactoryPOA;
 import org.asam.ods.AoSession;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
 
@@ -40,7 +41,7 @@ class AoFactoryImpl extends AoFactoryPOA {
      * @see org.asam.ods.AoFactoryOperations#getInterfaceVersion()
      */
     public String getInterfaceVersion() throws AoException {
-        return "V5.2.0";
+        return "V5.3.0";
     }
 
     /**
@@ -93,6 +94,16 @@ class AoFactoryImpl extends AoFactoryPOA {
             LOG.error(aoe.reason, aoe);
             throw aoe;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.AoFactoryOperations#newSessionNameValue(org.asam.ods.NameValue[])
+     */
+    public AoSession newSessionNameValue(NameValue[] auth) throws AoException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

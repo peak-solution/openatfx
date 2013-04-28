@@ -172,6 +172,7 @@ public class EnumerationDefinitionImplTest {
             enumerationDefinition.renameItem("Cylindric", "testNew");
             assertEquals(2, enumerationDefinition.getItem("testNew"));
             assertEquals("testNew", enumerationDefinition.getItemName(2));
+            enumerationDefinition.renameItem("testNew", "Cylindric");
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -181,7 +182,7 @@ public class EnumerationDefinitionImplTest {
         } catch (AoException e) {
         }
         try {
-            enumerationDefinition.getItem("Cylindric");
+            enumerationDefinition.getItem("testNew");
             fail("AoException expected");
         } catch (AoException e) {
         }

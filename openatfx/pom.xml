@@ -4,7 +4,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.4.3</version>
+	<version>0.5.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://openatfx.sourceforge.net</url>
 
@@ -53,12 +53,12 @@
 		<dependency>
 			<groupId>org.asam</groupId>
 			<artifactId>ods</artifactId>
-			<version>5.2.0</version>
+			<version>5.3.0</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
-			<version>1.1.1</version>
+			<version>1.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
@@ -68,7 +68,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.10</version>
+			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

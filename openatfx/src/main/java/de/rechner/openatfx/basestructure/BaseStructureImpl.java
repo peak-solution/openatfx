@@ -33,6 +33,11 @@ class BaseStructureImpl extends BaseStructurePOA {
         this.baseElements = new ArrayList<BaseElement>();
     }
 
+    /**
+     * Add a base element.
+     * 
+     * @param baseElement The base element to add.
+     */
     public void addBaseElement(BaseElement baseElement) {
         this.baseElements.add(baseElement);
     }
@@ -137,6 +142,21 @@ class BaseStructureImpl extends BaseStructurePOA {
         }
         throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "No base relation found between '"
                 + elem1.getType() + "' and '" + elem2.getType() + "'");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.BaseStructureOperations#getRelations(org.asam.ods.BaseElement, org.asam.ods.BaseElement)
+     */
+    public BaseRelation[] getRelations(BaseElement elem1, BaseElement elem2) throws AoException {
+        List<BaseRelation> list = new ArrayList<BaseRelation>();
+        for (BaseRelation br : elem1.getAllRelations()) {
+            if (br.getElem2().getType().equals(elem2.getType())) {
+                list.add(br);
+            }
+        }
+        return list.toArray(new BaseRelation[0]);
     }
 
 }

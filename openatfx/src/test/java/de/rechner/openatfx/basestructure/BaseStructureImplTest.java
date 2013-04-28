@@ -134,6 +134,23 @@ public class BaseStructureImplTest {
         }
     }
 
+    /**
+     * Test method for
+     * {@link de.rechner.openatfx.basestructure.BaseStructureImpl#getRelations(org.asam.ods.BaseElement, org.asam.ods.BaseElement)}
+     * .
+     */
+    @Test
+    public void testGetRelations() {
+        try {
+            BaseElement be1 = baseStructure.getElementByType("aoMeasurement");
+            BaseElement be2 = baseStructure.getElementByType("AOMeasurementQUANTITY");
+            assertEquals(1, baseStructure.getRelations(be1, be2).length);
+            assertEquals("measurement_quantities", baseStructure.getRelations(be1, be2)[0].getRelationName());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
     public static junit.framework.Test suite() {
         return new JUnit4TestAdapter(BaseStructureImplTest.class);
     }

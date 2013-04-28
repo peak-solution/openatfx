@@ -372,6 +372,7 @@ public class InstanceElementImplTest {
             assertEquals("aaa", ieDts.getValue("instattr").value.u.stringVal());
 
             ieDts.setValue(ODSHelper.createStringNVU("version", ""));
+            ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -403,6 +404,20 @@ public class InstanceElementImplTest {
             ieDts.addInstanceAttribute(ODSHelper.createExtRefNVU("xxx", new T_ExternalReference()));
             fail("AoException expected");
         } catch (AoException e) {
+        }
+
+        // remove
+        try {
+            ieDts.removeInstanceAttribute("inst_attr_dt_string");
+            ieDts.removeInstanceAttribute("inst_attr_dt_float");
+            ieDts.removeInstanceAttribute("inst_attr_dt_double");
+            ieDts.removeInstanceAttribute("inst_attr_dt_byte");
+            ieDts.removeInstanceAttribute("inst_attr_dt_short");
+            ieDts.removeInstanceAttribute("inst_attr_dt_long");
+            ieDts.removeInstanceAttribute("inst_attr_dt_longlong");
+            ieDts.removeInstanceAttribute("inst_attr_dt_date");
+        } catch (AoException e) {
+            fail(e.reason);
         }
     }
 

@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.5.0 (Christian Rechner)
+	
+	    - Upgrade to ODS IDL 5.3.0 (not all new methods implemented)
+
 	0.4.3 (Christian Rechner)
 	
 		- Removed converter and exporter code.

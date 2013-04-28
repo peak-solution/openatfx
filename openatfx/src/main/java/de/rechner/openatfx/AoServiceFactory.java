@@ -49,6 +49,9 @@ public class AoServiceFactory {
     /** The singleton instance */
     private static AoServiceFactory instance;
 
+    /** The number of sessions */
+    private int sessionNo = 0;
+
     /**
      * Non visible constructor.
      */
@@ -98,7 +101,7 @@ public class AoServiceFactory {
      * @return The created session.
      * @throws AoException Error creating session.
      */
-    public AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
+    public synchronized AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
         return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
     }
 
@@ -111,7 +114,7 @@ public class AoServiceFactory {
      * @return The created session.
      * @throws AoException Error creating session.
      */
-    public AoSession newEmptyAoSession(ORB orb, File atfxFile, String baseModelVersion) throws AoException {
+    public synchronized AoSession newEmptyAoSession(ORB orb, File atfxFile, String baseModelVersion) throws AoException {
         try {
             // create file
             atfxFile.createNewFile();
@@ -123,7 +126,8 @@ public class AoServiceFactory {
             POA modelPOA = createModelPOA(orb);
 
             // create AoSession object
-            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, atfxFile, baseStructure);
+            this.sessionNo++;
+            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, atfxFile, this.sessionNo, baseStructure);
             modelPOA.activate_object(aoSessionImpl);
             AoSession aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
 

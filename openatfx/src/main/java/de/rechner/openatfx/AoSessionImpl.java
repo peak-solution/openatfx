@@ -104,16 +104,20 @@ class AoSessionImpl extends AoSessionPOA {
     /** the temporary backup original file for transaction handling */
     private File transactionFile;
 
+    private final int id;
+
     /**
      * Constructor.
      * 
      * @param modelPOA The POA.
      * @param atfxFile The ATFX file.
+     * @param id The session id.
      * @param baseStructure The base structure.
      */
-    public AoSessionImpl(POA modelPOA, File atfxFile, BaseStructure baseStructure) {
+    public AoSessionImpl(POA modelPOA, File atfxFile, int id, BaseStructure baseStructure) {
         this.modelPOA = modelPOA;
         this.atfxFile = atfxFile;
+        this.id = id;
         this.baseStructure = baseStructure;
         this.atfxCache = new AtfxCache();
 
@@ -130,6 +134,15 @@ class AoSessionImpl extends AoSessionPOA {
         this.atfxCache.getContext().put("INDENT_XML", ODSHelper.createStringNV("INDENT_XML", "TRUE"));
         this.atfxCache.getContext().put("WRITE_EXTERNALCOMPONENTS",
                                         ODSHelper.createStringNV("WRITE_EXTERNALCOMPONENTS", "FALSE"));
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.AoSessionOperations#getId()
+     */
+    public int getId() throws AoException {
+        return this.id;
     }
 
     /**

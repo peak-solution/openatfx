@@ -37,7 +37,7 @@ public class AoFactoryImplTest {
     @Test
     public void testGetInterfaceVersion() {
         try {
-            assertEquals("V5.2.0", aoFactory.getInterfaceVersion());
+            assertEquals("V5.3.0", aoFactory.getInterfaceVersion());
         } catch (AoException e) {
             fail(e.reason);
         }

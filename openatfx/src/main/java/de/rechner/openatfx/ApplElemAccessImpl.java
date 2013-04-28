@@ -24,6 +24,7 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.NameValueSeqUnitId;
+import org.asam.ods.ODSFile;
 import org.asam.ods.QueryStructure;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
@@ -639,6 +640,16 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
     public InitialRight[] getInstanceInitialRights(T_LONGLONG aid, T_LONGLONG iid) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'getInstanceInitialRights' not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ApplElemAccessOperations#getODSFile(org.asam.ods.ElemId)
+     */
+    public ODSFile getODSFile(ElemId elem) throws AoException {
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                              "Method 'getODSFile' not implemented");
     }
 
 }
