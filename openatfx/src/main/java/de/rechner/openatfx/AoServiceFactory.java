@@ -191,7 +191,7 @@ public class AoServiceFactory {
      * 
      * @return The singleton instance.
      */
-    public static AoServiceFactory getInstance() {
+    public synchronized static AoServiceFactory getInstance() {
         if (instance == null) {
             instance = new AoServiceFactory();
         }

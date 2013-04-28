@@ -68,7 +68,7 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseLongLong(""));
+            AtfxParseUtil.parseLongLong("");
             fail("AoException expected");
         } catch (AoException e) {
         }
@@ -242,12 +242,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseComplex(""));
+            AtfxParseUtil.parseComplex("");
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseComplex("asd"));
+            AtfxParseUtil.parseComplex("asd");
         } catch (AoException e) {
         }
     }
@@ -285,12 +285,12 @@ public class AtfxParseUtilTest {
             fail(e.reason);
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseDComplex(""));
+            AtfxParseUtil.parseDComplex("");
             fail("AoException expected");
         } catch (AoException e) {
         }
         try {
-            assertEquals(false, AtfxParseUtil.parseDComplex("asd"));
+            AtfxParseUtil.parseDComplex("asd");
         } catch (AoException e) {
         }
     }

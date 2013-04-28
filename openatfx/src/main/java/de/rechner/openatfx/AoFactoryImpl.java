@@ -115,9 +115,13 @@ class AoFactoryImpl extends AoFactoryPOA {
                     atfxFile = new File(nv.value.u.stringVal());
                 }
             }
-            if (atfxFile == null || !atfxFile.exists()) {
+            if (atfxFile == null) {
+                throw new AoException(ErrorCode.AO_MISSING_VALUE, SeverityFlag.ERROR, 0,
+                                      "Parameter 'FILENAME' not found");
+            }
+            if (!atfxFile.exists()) {
                 throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
-                        + auth);
+                        + atfxFile.getAbsolutePath());
             }
             return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
         } catch (AoException aoe) {
