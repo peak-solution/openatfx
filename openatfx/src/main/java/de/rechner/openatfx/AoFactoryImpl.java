@@ -1,6 +1,8 @@
 package de.rechner.openatfx;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -10,6 +12,8 @@ import org.asam.ods.AoSession;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.io.AtfxReader;
@@ -78,18 +82,20 @@ class AoFactoryImpl extends AoFactoryPOA {
      */
     public AoSession newSession(String auth) throws AoException {
         try {
-            File atfxFile = null;
+            List<NameValue> list = new ArrayList<NameValue>();
             for (String str : auth.split(",")) {
                 String[] parts = str.split("=");
-                if (parts.length == 2 && parts[0].toUpperCase().equals("FILENAME")) {
-                    atfxFile = new File(parts[1]);
+                if (parts.length == 2) {
+                    NameValue nv = new NameValue();
+                    nv.valName = parts[0];
+                    nv.value = new TS_Value();
+                    nv.value.flag = (short) 15;
+                    nv.value.u = new TS_Union();
+                    nv.value.u.stringVal(parts[1]);
+                    list.add(nv);
                 }
             }
-            if (atfxFile == null || !atfxFile.exists()) {
-                throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
-                        + auth);
-            }
-            return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+            return newSessionNameValue(list.toArray(new NameValue[0]));
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;
@@ -102,8 +108,22 @@ class AoFactoryImpl extends AoFactoryPOA {
      * @see org.asam.ods.AoFactoryOperations#newSessionNameValue(org.asam.ods.NameValue[])
      */
     public AoSession newSessionNameValue(NameValue[] auth) throws AoException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            File atfxFile = null;
+            for (NameValue nv : auth) {
+                if (nv.valName.equalsIgnoreCase("FILENAME")) {
+                    atfxFile = new File(nv.value.u.stringVal());
+                }
+            }
+            if (atfxFile == null || !atfxFile.exists()) {
+                throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
+                        + auth);
+            }
+            return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+        } catch (AoException aoe) {
+            LOG.error(aoe.reason, aoe);
+            throw aoe;
+        }
     }
 
 }

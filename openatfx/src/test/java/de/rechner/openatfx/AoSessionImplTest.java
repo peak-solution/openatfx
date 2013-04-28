@@ -10,6 +10,7 @@ import java.net.URL;
 import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AoException;
+import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationStructureValue;
 import org.asam.ods.Blob;
@@ -32,18 +33,28 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 public class AoSessionImplTest {
 
+    private static AoFactory aoFactory;
     private static AoSession aoSession;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
+        aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
         URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+        aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
     }
 
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         aoSession.close();
+    }
+
+    /**
+     * Test method for {@link de.rechner.openatfx.util.atfx.AoSessionImpl#getId()}.
+     */
+    @Test
+    public void testGetId() {
+
     }
 
     /**

@@ -11,6 +11,9 @@ import junit.framework.JUnit4TestAdapter;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
+import org.asam.ods.NameValue;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_Value;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
@@ -87,6 +90,29 @@ public class AoFactoryImplTest {
         try {
             URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
             AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+            assertEquals("asam29", aoSession.getType());
+            aoSession.close();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    /**
+     * Test method for {@link de.rechner.openatfx.util.atfx.AoFactoryImpl#newSessionNameValue(org.asam.ods.NameValue[])}
+     * .
+     */
+    @Test
+    public void testNewSessionNameValue() {
+        try {
+            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            NameValue[] auth = new NameValue[1];
+            auth[0] = new NameValue();
+            auth[0].valName = "FILENAME";
+            auth[0].value = new TS_Value();
+            auth[0].value.flag = (short) 15;
+            auth[0].value.u = new TS_Union();
+            auth[0].value.u.stringVal(url.getPath());
+            AoSession aoSession = aoFactory.newSessionNameValue(auth);
             assertEquals("asam29", aoSession.getType());
         } catch (AoException e) {
             fail(e.reason);
