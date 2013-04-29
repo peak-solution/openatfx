@@ -219,7 +219,7 @@ public class AtfxWriter {
         writeElement(streamWriter, AtfxTagConstants.EXPORTED_BY, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORTER, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORT_DATETIME, ODSHelper.getCurrentODSDate());
-        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.4.3");
+        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, "0.5.0");
         streamWriter.writeEndElement();
     }
 
@@ -253,17 +253,26 @@ public class AtfxWriter {
         }
         ApplicationElement aeExtComp = aes[0];
 
-        // collect value of 'filename_url'
+        // collect value of 'filename_url' and 'flags_filename_url'
         Map<String, String> map = new HashMap<String, String>();
         InstanceElementIterator iter = aeExtComp.getInstances("*");
         int componentCount = 1;
         for (int i = 0; i < iter.getCount(); i++) {
             InstanceElement ieExtComp = iter.nextOne();
+
+            // filename_url
             String filenameUrl = ieExtComp.getValueByBaseName("filename_url").value.u.stringVal();
             if (!map.containsKey(filenameUrl)) {
                 map.put(filenameUrl, "component_" + componentCount);
                 componentCount++;
             }
+            // flags_filename_url
+            String flagsFilenameUrl = ODSHelper.getStringVal(ieExtComp.getValueByBaseName("flags_filename_url"));
+            if ((flagsFilenameUrl != null) && (flagsFilenameUrl.length() > 0) && !map.containsKey(flagsFilenameUrl)) {
+                map.put(flagsFilenameUrl, "component_" + componentCount);
+                componentCount++;
+            }
+
             ieExtComp.destroy();
         }
         iter.destroy();
@@ -498,6 +507,8 @@ public class AtfxWriter {
             InstanceElementIterator iter = ae.getInstances("*");
             for (InstanceElement ie : iter.nextN(iter.getCount())) {
                 ApplElem applElem = modelCache.getApplElem(aid);
+
+                // skip instances of 'AoExternalComponent' if components should be written
                 if (!writeExtComps && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
                     continue;
                 }
@@ -569,9 +580,7 @@ public class AtfxWriter {
 
         // write attributes if not null
         for (NameValueUnit nvu : ie.getValueSeq(attrNames.toArray(new String[0]))) {
-            if (nvu.value.flag == 15) {
-                writeApplAttrValue(streamWriter, modelCache, aid, nvu);
-            }
+            writeApplAttrValue(streamWriter, modelCache, aid, nvu);
         }
 
         // write instance attribute data
@@ -667,17 +676,20 @@ public class AtfxWriter {
         }
         InstanceElement ieExtComp = iter.nextOne();
 
+        // check if flagsFileNameUrl is set
+        String filenameUrl = ODSHelper.getStringVal(ieExtComp.getValueByBaseName("flags_filename_url"));
+        if (filenameUrl != null && filenameUrl.length() < 1) {
+            return;
+        }
+
         streamWriter.writeStartElement(modelCache.getLcFlagsAaName());
         streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
 
         // identifier
-        String filenameUrl = ODSHelper.getStringVal(ieExtComp.getValueByBaseName("filename_url"));
         writeElement(streamWriter, AtfxTagConstants.COMPONENT_IDENTIFIER, componentFiles.get(filenameUrl));
 
         // datatype
-        int dt = ODSHelper.getEnumVal(ieExtComp.getValueByBaseName("value_type"));
-        String dtEnum = modelCache.getEnumItem("typespec_enum", dt);
-        writeElement(streamWriter, AtfxTagConstants.COMPONENT_DATATYPE, dtEnum);
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_DATATYPE, "dt_short");
 
         // length
         int componentLength = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("component_length"));
@@ -685,25 +697,13 @@ public class AtfxWriter {
 
         // inioffset, may be DT_LONG or DT_LONGLONG
         long startOffset = 0;
-        NameValueUnit nvuStartOffset = ieExtComp.getValueByBaseName("start_offset");
+        NameValueUnit nvuStartOffset = ieExtComp.getValueByBaseName("flags_start_offset");
         if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONG) {
             startOffset = nvuStartOffset.value.u.longVal();
         } else if (nvuStartOffset.value.u.discriminator() == DataType.DT_LONGLONG) {
             startOffset = ODSHelper.asJLong(nvuStartOffset.value.u.longlongVal());
         }
         writeElement(streamWriter, AtfxTagConstants.COMPONENT_INIOFFSET, String.valueOf(startOffset));
-
-        // length
-        int blockSize = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("block_size"));
-        writeElement(streamWriter, AtfxTagConstants.COMPONENT_BLOCKSIZE, String.valueOf(blockSize));
-
-        // valuesperblock
-        int valuesperblock = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("valuesperblock"));
-        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(valuesperblock));
-
-        // valuesperblock
-        int valueOffset = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("value_offset"));
-        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALOFFSETS, String.valueOf(valueOffset));
 
         streamWriter.writeEndElement();
         streamWriter.writeEndElement();
@@ -817,6 +817,10 @@ public class AtfxWriter {
      */
     private void writeApplAttrValue(XMLStreamWriter streamWriter, ModelCache modelCache, long aid, NameValueUnit nvu)
             throws XMLStreamException, AoException {
+        if (nvu.value.flag != 15) {
+            return;
+        }
+
         streamWriter.writeStartElement(nvu.valName);
 
         TS_Union u = nvu.value.u;

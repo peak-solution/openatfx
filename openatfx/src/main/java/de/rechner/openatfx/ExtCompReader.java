@@ -263,18 +263,18 @@ class ExtCompReader {
         }
     }
 
-    private Collection<String> readStringValues(AtfxCache atfxCache, long iidLc) throws AoException {
+    private Collection<String> readStringValues(AtfxCache atfxCache, long iidExtComp) throws AoException {
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
         int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
-        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
+        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
         File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
         File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
 
         // get datatype
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
-        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.enumVal();
+        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
         if (valueType != 12) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "Unsupported 'value_type' for data type DT_STRING or DT_DATE: " + valueType);
@@ -282,12 +282,12 @@ class ExtCompReader {
 
         // read length
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
-        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // read start offset, may be DT_LONG or DT_LONGLONG
         long startOffset = 0;
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
-        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
         if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
             startOffset = vStartOffset.u.longVal();
         } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
@@ -334,16 +334,26 @@ class ExtCompReader {
         long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
         ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
         Collection<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
-        if (iidExtComps.size() != 1) {
+
+        if (iidExtComps.size() < 1) {
+            return null;
+        } else if (iidExtComps.size() != 1) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "The implementation currently only may read exactly one external component file");
         }
-
+        long iidExtComp = iidExtComps.iterator().next();
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
-        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
-        String flagsFilenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
+        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
+        if (attrNo == null) {
+            return null;
+        }
+        TS_Value v = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
+        if ((v == null) || (v.flag != 15) || (v.u.stringVal() == null) || (v.u.stringVal().length() < 1)) {
+            return null;
+        }
+        String flagsFilenameUrl = v.u.stringVal();
         File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
         File flagsFile = new File(atfxFile.getParentFile(), flagsFilenameUrl);
 

@@ -265,6 +265,9 @@ public class InstanceElementImplTest {
             assertEquals(Float.valueOf((float) 0.020362169), Float.valueOf((float) nvu.value.u.floatSeq()[0])); // first
             assertEquals(Float.valueOf((float) 0.01960019), Float.valueOf((float) nvu.value.u.floatSeq()[166])); // last
 
+            // flags 'external_component'
+            nvu = ieLc.getValue("flags");
+
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -335,11 +338,21 @@ public class InstanceElementImplTest {
             ieDts.setValue(ODSHelper.createStringNVU("version", "aaa"));
             assertEquals("aaa", ieDts.getValue("version").value.u.stringVal());
 
-            // 'values' of 'AoLocalColumn
-            // aoSession.setContext(ODSHelper.createStringNV("write_mode", "file"));
-            // ApplicationElement aeLc = aoSession.getApplicationStructure().getElementByName("lc");
-            // InstanceElement ieLc = aeLc.getInstanceById(ODSHelper.asODSLongLong(47));
-            // ieLc.setValue(ODSHelper.createFloatSeqNVU("values", new float[] { -1, 0, 1, 9999999 }));
+            // AoLocalColumn
+            aoSession.startTransaction();
+            aoSession.setContext(ODSHelper.createStringNV("write_mode", "file"));
+            // aoSession.setContext(ODSHelper.createStringNV("WRITE_EXTERNALCOMPONENTS", "TRUE"));
+
+            ApplicationElement aeLc = aoSession.getApplicationStructure().getElementByName("lc");
+            InstanceElement ieLc = aeLc.getInstanceById(ODSHelper.asODSLongLong(47));
+            // 'values' of 'AoLocalColumn'
+            ieLc.setValue(ODSHelper.createFloatSeqNVU("values", new float[] { -1, 0, 1, 9999999 }));
+            assertEquals(true,
+                         Arrays.equals(new float[] { -1, 0, 1, 9999999 }, ieLc.getValue("values").value.u.floatSeq()));
+            // 'flags' of 'AoLocalColumn
+            // ieLc.setValue(ODSHelper.createShortSeqNVU("flags", new short[] { 15, 0, 10, 0 }));
+            // ieLc.getValueByBaseName("flags");
+            aoSession.commitTransaction();
 
             // instance attribute
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
@@ -348,6 +361,8 @@ public class InstanceElementImplTest {
             assertEquals("aaa", ieDts.getValue("instattr").value.u.stringVal());
             ieDts.removeInstanceAttribute("instattr");
         } catch (AoException e) {
+            System.err.println(e.reason);
+            e.printStackTrace();
             fail(e.reason);
         }
         // non existing value

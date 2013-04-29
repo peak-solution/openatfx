@@ -170,28 +170,28 @@ class AtfxInstanceReader {
                 }
             }
 
-            // base attribute 'flags' of 'LocalColumn'
-            else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
-                reader.nextTag();
-                // external component
-                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-                    if (ieExternalComponent == null) {
-                        ieExternalComponent = createExtCompIe(aoSession);
-                    }
-                    parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
-                }
-                // explicit values inline XML
-                else if (reader.isStartElement()) {
-                    TS_Value value = parseLocalColumnValues(modelCache, reader);
-                    AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
-                    valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
-                    valuesAttrValue.attr = new AIDName();
-                    valuesAttrValue.attr.aid = applElem.aid;
-                    valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
-                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
-                    applAttrValues.add(valuesAttrValue);
-                }
-            }
+            // // base attribute 'flags' of 'LocalColumn'
+            // else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
+            // reader.nextTag();
+            // // external component
+            // if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
+            // if (ieExternalComponent == null) {
+            // ieExternalComponent = createExtCompIe(aoSession);
+            // }
+            // parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
+            // }
+            // // explicit values inline XML
+            // else if (reader.isStartElement()) {
+            // TS_Value value = parseLocalColumnValues(modelCache, reader);
+            // AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
+            // valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
+            // valuesAttrValue.attr = new AIDName();
+            // valuesAttrValue.attr.aid = applElem.aid;
+            // valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
+            // valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
+            // applAttrValues.add(valuesAttrValue);
+            // }
+            // }
 
             // application attribute value
             else if (reader.isStartElement() && (modelCache.getApplAttr(aid, currentTagName) != null)) {

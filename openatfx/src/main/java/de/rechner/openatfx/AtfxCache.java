@@ -716,7 +716,18 @@ class AtfxCache {
                 seqRep = ODSHelper.seqRepExtComp2seqRepComp(seqRep);
                 setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
             }
+        }
 
+        // check if attribute is 'flags' of 'AoLocalColumn', then special handling
+        else if (isLocalColumnFlagsAttribute(aid, attrNo)) {
+            // check if values are referenced from external component
+            ApplicationRelation relLcExtComp = getApplicationRelationByBaseName(aid, "external_component");
+            Collection<Long> extCompIids = getRelatedInstanceIds(aid, iid, relLcExtComp);
+            if (extCompIids.size() == 1) {
+                long extCompIid = extCompIids.iterator().next();
+                ExtCompWriter.getInstance().writeFlags(this, extCompIid, value.u.shortSeq());
+                return;
+            }
         }
 
         // put value to memory
@@ -766,11 +777,9 @@ class AtfxCache {
         }
         // read flags from external component file
         if (lcFlagsAttr) {
-            int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
-            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
-            // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
-            if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
-                return ExtCompReader.getInstance().readFlags(this, iid);
+            TS_Value flags = ExtCompReader.getInstance().readFlags(this, iid);
+            if (flags != null) {
+                return flags;
             }
         }
 

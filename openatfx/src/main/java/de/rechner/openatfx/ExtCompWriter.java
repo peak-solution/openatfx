@@ -3,7 +3,6 @@ package de.rechner.openatfx;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -52,13 +51,25 @@ class ExtCompWriter {
         return binFile;
     }
 
+    private File getExtCompFileFlags(AtfxCache atfxCache, int cnt) {
+        Map<String, NameValue> context = atfxCache.getContext();
+        String rootPath = context.get("FILE_ROOT").value.u.stringVal();
+        long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
+        File binFile = new File(rootPath, "data_" + cnt + "_flags.bin");
+        if (binFile.length() > extCompSize) {
+            binFile = getExtCompFile(atfxCache, cnt + 1);
+        }
+        return binFile;
+    }
+
     /**
-     * @param atfxCache
-     * @param lcIid
-     * @param value
-     * @throws AoException
+     * Writes measurement values to a external component file.
+     * 
+     * @param atfxCache The ATFX cache.
+     * @param lcIid The LocalColumn instance id.
+     * @param value The value to write.
+     * @throws AoException Error writing value.
      */
-    @SuppressWarnings("resource")
     public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
         DataType dt = value.u.discriminator();
 
@@ -70,11 +81,12 @@ class ExtCompWriter {
             extCompFile = getExtCompFile(atfxCache, 1);
         }
 
-        RandomAccessFile raf = null;
+        FileOutputStream fos = null;
         FileChannel channel = null;
         try {
             // open source channel
-            channel = new FileOutputStream(extCompFile, true).getChannel();
+            fos = new FileOutputStream(extCompFile, true);
+            channel = fos.getChannel();
             long startOffset = channel.size();
 
             // write values
@@ -327,10 +339,85 @@ class ExtCompWriter {
                 if (channel != null) {
                     channel.close();
                 }
-                if (raf != null) {
-                    raf.close();
+                if (fos != null) {
+                    fos.close();
                 }
-                raf = null;
+                fos = null;
+                channel = null;
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Writes flag values to an external component file.
+     * 
+     * @param atfxCache The ATFX cache.
+     * @param iidExtComp The ExternalComponent instance id.
+     * @param value The value to write.
+     * @throws AoException Error writing value.
+     */
+    public void writeFlags(AtfxCache atfxCache, long iidExtComp, short[] flags) throws AoException {
+        long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
+
+        // open file
+        File flagsFile = getExtCompFileFlags(atfxCache, 1);
+        FileOutputStream fos = null;
+        FileChannel channel = null;
+        try {
+            // open source channel
+            fos = new FileOutputStream(flagsFile, true);
+            channel = fos.getChannel();
+            long startOffset = channel.size();
+
+            // DS_SHORT
+            ByteBuffer bb = ByteBuffer.allocate(flags.length * 2);
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+            for (int i = 0; i < flags.length; i++) {
+                bb.putShort(flags[i]);
+            }
+            bb.rewind();
+            channel.write(bb);
+
+            // flags_filename_url
+            Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
+            if (attrNo == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "No application attribute of type 'flags_filename_url' found for '" + aidExtComp
+                                              + "'");
+            }
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                       ODSHelper.createStringNV("", flagsFile.getName()).value);
+
+            // flags_start_offset
+            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
+            if (attrNo == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "No application attribute of type 'flags_start_offset' found for '" + aidExtComp
+                                              + "'");
+            }
+            DataType attrDt = atfxCache.getApplicationAttribute(aidExtComp, attrNo).getDataType();
+            if (attrDt == DataType.DT_LONG) {
+                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                           ODSHelper.createLongNV("", (int) startOffset).value);
+            } else {
+                atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                           ODSHelper.createLongLongNV("", startOffset).value);
+            }
+
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } finally {
+            try {
+                if (channel != null) {
+                    channel.close();
+                }
+                if (fos != null) {
+                    fos.close();
+                }
+                fos = null;
                 channel = null;
             } catch (Exception e) {
                 LOG.error(e.getMessage(), e);
