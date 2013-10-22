@@ -421,42 +421,42 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error creating instance element.
      */
-    private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
-            ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
-        String flagsFileName = "";
-        long flagsStartOffset = 0;
-        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
-            // 'identifier'
-            if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
-                String identifier = reader.getElementText();
-                flagsFileName = files.get(identifier);
-                if (flagsFileName == null) {
-                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                          "External component file not found for identifier '" + identifier + "'");
-                }
-            }
-            // 'inioffset'
-            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-                flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
-            }
-            reader.next();
-        }
-
-        List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
-        long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
-        // mandatory base attribute 'flags_filename_url'
-        ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
-        attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
-        // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
-        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
-        if (applAttr.dType == DataType.DT_LONG) {
-            attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
-        } else {
-            attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
-        }
-
-        ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
-    }
+    // private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
+    // ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
+    // String flagsFileName = "";
+    // long flagsStartOffset = 0;
+    // while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+    // // 'identifier'
+    // if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
+    // String identifier = reader.getElementText();
+    // flagsFileName = files.get(identifier);
+    // if (flagsFileName == null) {
+    // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+    // "External component file not found for identifier '" + identifier + "'");
+    // }
+    // }
+    // // 'inioffset'
+    // else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
+    // flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
+    // }
+    // reader.next();
+    // }
+    //
+    // List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
+    // long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
+    // // mandatory base attribute 'flags_filename_url'
+    // ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
+    // attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
+    // // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
+    // applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
+    // if (applAttr.dType == DataType.DT_LONG) {
+    // attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
+    // } else {
+    // attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
+    // }
+    //
+    // ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
+    // }
 
     /**
      * Parse the explicit inline XML mass data from the local column 'values' attribute.

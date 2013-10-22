@@ -352,7 +352,7 @@ public class InstanceElementImplTest {
             // 'flags' of 'AoLocalColumn
             // ieLc.setValue(ODSHelper.createShortSeqNVU("flags", new short[] { 15, 0, 10, 0 }));
             // ieLc.getValueByBaseName("flags");
-            aoSession.commitTransaction();
+            // aoSession.commitTransaction();
 
             // instance attribute
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));

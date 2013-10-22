@@ -338,12 +338,12 @@
 		<BaseAttribute dataType="DT_STRING" name="filename_url" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="typespec_enum" name="value_type" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="component_length" obligatory="true" unique="false" />
-		<BaseAttribute dataType="DT_LONGLONG" name="start_offset" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="start_offset" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="block_size" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="valuesperblock" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="value_offset" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="flags_filename_url" obligatory="false" unique="false" />
-		<BaseAttribute dataType="DT_LONGLONG" name="flags_start_offset" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="flags_start_offset" obligatory="false" unique="false" />
 	</BaseElement>
 	<BaseElement topLevel="true" type="AoAny">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
