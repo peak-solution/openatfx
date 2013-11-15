@@ -74,7 +74,7 @@
 		<dependency>
 			<groupId>org.codehaus.woodstox</groupId>
 			<artifactId>woodstox-core-lgpl</artifactId>
-			<version>4.1.5</version>
+			<version>4.2.0</version>
 		</dependency>
 	</dependencies>
 

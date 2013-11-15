@@ -546,13 +546,16 @@ public class AtfxWriter {
         // special handling: LocalColumn; do not write external component values
         if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))) {
             String applAttrValues = modelCache.getApplAttrByBaseName(aid, "values").aaName;
-            String applAttrFlags = modelCache.getApplAttrByBaseName(aid, "flags").aaName;
+            // flags is optional
+            ApplAttr applAttrFlagsAttr = modelCache.getApplAttrByBaseName(aid, "flags");
             String applAttrSeqRep = modelCache.getApplAttrByBaseName(aid, "sequence_representation").aaName;
 
             // remove attribute of base type 'values', 'flags' and 'sequece_representation' from attribute list
             attrNames.remove(applAttrValues);
-            attrNames.remove(applAttrFlags);
             attrNames.remove(applAttrSeqRep);
+	    if (applAttrFlagsAttr != null) {
+                attrNames.remove(applAttrFlagsAttr.aaName);
+	    }
             // attrNames sequence representation
             int seqRepEnum = ODSHelper.getEnumVal(ie.getValue(applAttrSeqRep));
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
@@ -573,7 +576,9 @@ public class AtfxWriter {
                 }
             } else { // write values to to XML (inline)
                 writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
-                writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrFlags));
+                if (applAttrFlagsAttr != null) {
+                    writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrFlagsAttr.aaName));
+                }
                 writeLocalColumnValues(streamWriter, ie.getValue(modelCache.getLcValuesAaName()));
             }
         }

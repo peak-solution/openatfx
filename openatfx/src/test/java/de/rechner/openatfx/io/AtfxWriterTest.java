@@ -7,8 +7,8 @@ import java.net.URL;
 
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 
@@ -24,24 +24,39 @@ import de.rechner.openatfx.AoSessionImplTest;
 public class AtfxWriterTest {
 
     private static AoSession aoSession;
+    ORB orb;
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-        ORB orb = ORB.init(new String[0], System.getProperties());
-        URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
-        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+    @Before
+    public void setUpBefore() throws Exception {
+        orb = ORB.init(new String[0], System.getProperties());
     }
 
-    @AfterClass
-    public static void tearDownAfterClass() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         aoSession.close();
     }
 
     @Test
     public void testWriteXML() {
         try {
+            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
+                                        .newSession("FILENAME=" + new File(url.getFile()));
             aoSession.startTransaction();
-//            aoSession.commitTransaction();
+            // aoSession.commitTransaction();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testWriteXML2() {
+        try {
+            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/test.atfx");
+            aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
+                                        .newSession("FILENAME=" + new File(url.getFile()));
+
+            aoSession.startTransaction();
         } catch (AoException e) {
             fail(e.reason);
         }
