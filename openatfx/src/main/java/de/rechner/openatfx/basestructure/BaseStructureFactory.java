@@ -114,7 +114,7 @@ public class BaseStructureFactory {
             baseStructure = parseBaseStructure(poa, doc);
             this.baseStructureCache.put(baseModelVersion, baseStructure);
 
-            LOG.info("Read base model in " + (System.currentTimeMillis() - start) + "ms");
+            LOG.info("Read base model '" + baseModelVersion + "' in " + (System.currentTimeMillis() - start) + "ms");
             return baseStructure;
         } catch (ParserConfigurationException e) {
             LOG.error(e.getMessage(), e);
