@@ -356,7 +356,6 @@ public class AtfxReader {
 
         String baseModelVersion = aeExtComp.getApplicationStructure().getSession().getBaseStructure().getVersion();
         int baseModelVersioNo = Integer.parseInt(baseModelVersion.replace("asam", ""));
-        System.out.println(baseModelVersioNo);
 
         // flags_filename_url
         if (!existingBaNames.contains("flags_filename_url")) {

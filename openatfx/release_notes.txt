@@ -25,6 +25,7 @@
 
 	0.5.1 (Christian Rechner)
 
+	    - Upgrade to woodstox 4.3.0
 		- Increased default value of context parameter 'EXT_COMP_SEGSIZE' to 500 MB
 		- TODO: implement writing of DT_BOOLEAN to external component
 		- TODO: 
