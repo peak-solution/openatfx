@@ -87,7 +87,7 @@ public class AoSessionImplTest {
     @Test
     public void testGetType() {
         try {
-            assertEquals("asam29", aoSession.getType());
+            assertEquals("asam31", aoSession.getType());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -99,7 +99,7 @@ public class AoSessionImplTest {
     @Test
     public void testGetBaseStructure() {
         try {
-            assertEquals("asam29", aoSession.getBaseStructure().getVersion());
+            assertEquals("asam31", aoSession.getBaseStructure().getVersion());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -407,7 +407,7 @@ public class AoSessionImplTest {
     public void testGetEnumerationStructure() {
         try {
             EnumerationStructure[] es = aoSession.getEnumerationStructure();
-            assertEquals(7, es.length);
+            assertEquals(8, es.length);
         } catch (AoException e) {
             fail(e.reason);
         }

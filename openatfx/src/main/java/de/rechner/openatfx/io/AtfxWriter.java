@@ -553,9 +553,9 @@ public class AtfxWriter {
             // remove attribute of base type 'values', 'flags' and 'sequece_representation' from attribute list
             attrNames.remove(applAttrValues);
             attrNames.remove(applAttrSeqRep);
-	    if (applAttrFlagsAttr != null) {
+            if (applAttrFlagsAttr != null) {
                 attrNames.remove(applAttrFlagsAttr.aaName);
-	    }
+            }
             // attrNames sequence representation
             int seqRepEnum = ODSHelper.getEnumVal(ie.getValue(applAttrSeqRep));
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
@@ -625,6 +625,7 @@ public class AtfxWriter {
             return;
         }
         InstanceElement ieExtComp = iter.nextOne();
+        long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
 
         streamWriter.writeStartElement(modelCache.getLcValuesAaName());
         streamWriter.writeStartElement(AtfxTagConstants.COMPONENT);
@@ -663,6 +664,26 @@ public class AtfxWriter {
         // valuesperblock
         int valueOffset = ODSHelper.getLongVal(ieExtComp.getValueByBaseName("value_offset"));
         writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALOFFSETS, String.valueOf(valueOffset));
+
+        // bitcount
+        ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "ao_bit_count");
+        if (applAttr != null) {
+            NameValueUnit nvu = ieExtComp.getValueByBaseName("ao_bit_count");
+            if (!ODSHelper.isNullVal(nvu)) {
+                writeElement(streamWriter, AtfxTagConstants.COMPONENT_BITCOUNT,
+                             String.valueOf(ODSHelper.getShortVal(nvu)));
+            }
+        }
+
+        // bitoffset
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "ao_bit_offset");
+        if (applAttr != null) {
+            NameValueUnit nvu = ieExtComp.getValueByBaseName("ao_bit_offset");
+            if (!ODSHelper.isNullVal(nvu)) {
+                writeElement(streamWriter, AtfxTagConstants.COMPONENT_BITOFFSET,
+                             String.valueOf(ODSHelper.getShortVal(nvu)));
+            }
+        }
 
         streamWriter.writeEndElement();
         streamWriter.writeEndElement();

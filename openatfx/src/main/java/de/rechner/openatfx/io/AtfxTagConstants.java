@@ -31,6 +31,8 @@ class AtfxTagConstants {
     public static final String COMPONENT_BLOCKSIZE = "blocksize";
     public static final String COMPONENT_VALPERBLOCK = "valperblock";
     public static final String COMPONENT_VALOFFSETS = "valoffsets";
+    public static final String COMPONENT_BITCOUNT = "bitcount";
+    public static final String COMPONENT_BITOFFSET = "bitoffset";
 
     public static final String APPL_MODEL = "application_model";
 

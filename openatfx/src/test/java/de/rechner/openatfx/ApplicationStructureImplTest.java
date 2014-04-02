@@ -69,7 +69,7 @@ public class ApplicationStructureImplTest {
     @Test
     public void testListEnumerations() {
         try {
-            assertEquals(7, applicationStructure.listEnumerations().length);
+            assertEquals(8, applicationStructure.listEnumerations().length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -123,9 +123,9 @@ public class ApplicationStructureImplTest {
         try {
             applicationStructure.createEnumerationDefinition("new_enum");
             assertEquals("new_enum", applicationStructure.getEnumerationDefinition("new_enum").getName());
-            assertEquals(8, applicationStructure.listEnumerations().length);
+            assertEquals(9, applicationStructure.listEnumerations().length);
             applicationStructure.removeEnumerationDefinition("new_enum");
-            assertEquals(7, applicationStructure.listEnumerations().length);
+            assertEquals(8, applicationStructure.listEnumerations().length);
         } catch (AoException e) {
             fail(e.reason);
         }

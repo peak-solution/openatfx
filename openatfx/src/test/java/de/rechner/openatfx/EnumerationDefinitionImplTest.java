@@ -53,7 +53,7 @@ public class EnumerationDefinitionImplTest {
     @Test
     public void testGetIndex() {
         try {
-            assertEquals(5, enumerationDefinition.getIndex());
+            assertEquals(6, enumerationDefinition.getIndex());
         } catch (AoException e) {
             fail(e.reason);
         }

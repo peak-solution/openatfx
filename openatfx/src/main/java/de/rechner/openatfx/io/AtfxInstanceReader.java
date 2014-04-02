@@ -322,6 +322,9 @@ class AtfxInstanceReader {
         int blockSize = 0;
         int valPerBlock = 0;
         int valOffsets = 0;
+        Short bitCount = null;
+        Short bitOffset = null;
+
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
             // 'description'
             if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_DESCRIPTION))) {
@@ -360,6 +363,15 @@ class AtfxInstanceReader {
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALOFFSETS))) {
                 valOffsets = AtfxParseUtil.parseLong(reader.getElementText());
             }
+            // 'bitcount'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BITCOUNT))) {
+                bitCount = AtfxParseUtil.parseShort(reader.getElementText());
+            }
+            // 'bitoffset'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BITOFFSET))) {
+                bitOffset = AtfxParseUtil.parseShort(reader.getElementText());
+            }
+
             reader.next();
         }
 
@@ -409,6 +421,27 @@ class AtfxInstanceReader {
         if (applAttr != null && applAttr.aaName.length() > 0) {
             attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, 1));
         }
+
+        // optional base attribute 'bitcount'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "ao_bit_count");
+        if (bitCount != null) {
+            if (applAttr == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "No application attribute of type 'ao_bit_count' found!");
+            }
+            attrsList.add(ODSHelper.createShortNVU(applAttr.aaName, bitCount));
+        }
+
+        // optional base attribute 'bitoffset'
+        applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "ao_bit_offset");
+        if (bitOffset != null) {
+            if (applAttr == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "No application attribute of type 'ao_bit_offset' found!");
+            }
+            attrsList.add(ODSHelper.createShortNVU(applAttr.aaName, bitOffset));
+        }
+
         ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
     }
 

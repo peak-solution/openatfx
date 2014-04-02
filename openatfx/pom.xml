@@ -4,7 +4,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.5.0</version>
+	<version>0.5.1</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://openatfx.sourceforge.net</url>
 
@@ -18,9 +18,9 @@
 	</developers>
 
 	<scm>
-		<url>https://openatfx.svn.sourceforge.net/svnroot/openatfx/</url>
-		<connection>scm:svn:https://openatfx.svn.sourceforge.net/svnroot/openatfx/trunk</connection>
-		<developerConnection>scm:svn:https://openatfx.svn.sourceforge.net/svnroot/openatfx/trunk</developerConnection>
+		<url>https://svn.code.sf.net/p/openatfx/code/</url>
+		<connection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</connection>
+		<developerConnection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</developerConnection>
 	</scm>
 
 	<properties>

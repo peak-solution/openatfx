@@ -90,7 +90,7 @@ public class AoFactoryImplTest {
         try {
             URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
             AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
-            assertEquals("asam29", aoSession.getType());
+            assertEquals("asam31", aoSession.getType());
             aoSession.close();
         } catch (AoException e) {
             fail(e.reason);
@@ -113,7 +113,7 @@ public class AoFactoryImplTest {
             auth[0].value.u = new TS_Union();
             auth[0].value.u.stringVal(url.getPath());
             AoSession aoSession = aoFactory.newSessionNameValue(auth);
-            assertEquals("asam29", aoSession.getType());
+            assertEquals("asam31", aoSession.getType());
         } catch (AoException e) {
             fail(e.reason);
         }
