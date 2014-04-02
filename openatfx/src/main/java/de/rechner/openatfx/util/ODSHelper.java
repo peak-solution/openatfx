@@ -3293,4 +3293,15 @@ public abstract class ODSHelper {
         return seqRep;
     }
 
+    public static void setBit(byte[] data, int pos, boolean val) {
+        int posByte = pos / 8;
+        int posBit = pos % 8;
+        byte oldByte = data[posByte];
+        if (val) {
+            data[posByte] = (byte) (oldByte | (1 << 7 - posBit));
+        } else {
+            data[posByte] = (byte) (oldByte | (0 << 7 - posBit));
+        }
+    }
+
 }

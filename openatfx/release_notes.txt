@@ -28,7 +28,7 @@
 	    - Upgrade to woodstox 4.3.0
 	    - Increased default value of context parameter 'EXT_COMP_SEGSIZE' to 500 MB
 	    - Added handling of new ASAM ODS 5.3.0 base attributes 'ao_bit_count' and 'ao_bit_offset' 
-		- TODO: implement writing of DT_BOOLEAN to external component
+		- Implemented writing of DT_BOOLEAN values to external component files
 		
 
 	0.5.0 (Christian Rechner)

@@ -92,13 +92,27 @@ class ExtCompWriter {
             // write values
             int valueType = 0;
             int length = 0;
-            int typeSize = 0;
+            int blockSize = 0;
+            int valuesPerBlock = 0;
 
+            // DS_BOOLEAN
+            if (dt == DataType.DS_BOOLEAN) {
+                valueType = 0; // dt_boolean
+                length = value.u.booleanSeq().length;
+                blockSize = 1 + ((int) value.u.booleanSeq().length - 1) / 8;
+                valuesPerBlock = length;
+                byte[] target = new byte[length];
+                for (int i = 0; i < value.u.booleanSeq().length; i++) {
+                    ODSHelper.setBit(target, i, value.u.booleanSeq()[i]);
+                }
+                channel.write(ByteBuffer.wrap(target));
+            }
             // DS_STRING
-            if (dt == DataType.DS_STRING) {
-                valueType = 12;
-                typeSize = 0;
+            else if (dt == DataType.DS_STRING) {
+                valueType = 12; // dt_string
+                blockSize = 0;
                 length = 0;
+                valuesPerBlock = 0;
                 for (String str : value.u.stringSeq()) {
                     byte[] b = str.getBytes("ISO-8859-1");
                     length += b.length;
@@ -111,10 +125,11 @@ class ExtCompWriter {
             }
             // DS_BYTE
             else if (dt == DataType.DS_BYTE) {
-                valueType = 1;
-                typeSize = 1;
+                valueType = 1; // dt_byte
+                blockSize = 1;
+                valuesPerBlock = 1;
                 length = value.u.byteSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 for (int i = 0; i < length; i++) {
                     bb.put(value.u.byteSeq()[i]);
                 }
@@ -123,10 +138,11 @@ class ExtCompWriter {
             }
             // DS_SHORT
             else if (dt == DataType.DS_SHORT) {
-                valueType = 2;
-                typeSize = 2;
+                valueType = 2; // dt_short
+                blockSize = 2;
+                valuesPerBlock = 1;
                 length = value.u.shortSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putShort(value.u.shortSeq()[i]);
@@ -136,10 +152,11 @@ class ExtCompWriter {
             }
             // DS_LONG
             else if (dt == DataType.DS_LONG) {
-                valueType = 3;
-                typeSize = 4;
+                valueType = 3; // dt_long
+                blockSize = 4;
+                valuesPerBlock = 1;
                 length = value.u.longSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putInt(value.u.longSeq()[i]);
@@ -149,10 +166,11 @@ class ExtCompWriter {
             }
             // DS_LONGLONG
             else if (dt == DataType.DS_LONGLONG) {
-                valueType = 4;
-                typeSize = 8;
+                valueType = 4; // dt_longlong
+                blockSize = 8;
+                valuesPerBlock = 1;
                 length = value.u.longlongSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putLong(ODSHelper.asJLong(value.u.longlongSeq()[i]));
@@ -162,9 +180,10 @@ class ExtCompWriter {
             }
             // DS_DATE
             else if (dt == DataType.DS_DATE) {
-                valueType = 12;
-                typeSize = 0;
+                valueType = 12; // dt_date
+                blockSize = 0;
                 length = 0;
+                valuesPerBlock = 1;
                 for (String str : value.u.dateSeq()) {
                     byte[] b = str.getBytes("ISO-8859-1");
                     length += b.length;
@@ -177,10 +196,11 @@ class ExtCompWriter {
             }
             // DS_FLOAT
             else if (dt == DataType.DS_FLOAT) {
-                valueType = 5;
-                typeSize = 4;
+                valueType = 5; // dt_float
+                blockSize = 4;
+                valuesPerBlock = 1;
                 length = value.u.floatSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putFloat(value.u.floatSeq()[i]);
@@ -190,10 +210,11 @@ class ExtCompWriter {
             }
             // DS_COMPLEX
             else if (dt == DataType.DS_COMPLEX) {
-                valueType = 5;
-                typeSize = 4;
+                valueType = 5; // dt_float
+                blockSize = 4;
+                valuesPerBlock = 1;
                 length = value.u.complexSeq().length * 2;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < (length / 2); i++) {
                     bb.putFloat(value.u.complexSeq()[i].r);
@@ -204,10 +225,11 @@ class ExtCompWriter {
             }
             // DS_DOUBLE
             else if (dt == DataType.DS_DOUBLE) {
-                valueType = 6;
-                typeSize = 8;
+                valueType = 6; // dt_double
+                blockSize = 8;
+                valuesPerBlock = 1;
                 length = value.u.doubleSeq().length;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length; i++) {
                     bb.putDouble(value.u.doubleSeq()[i]);
@@ -217,10 +239,11 @@ class ExtCompWriter {
             }
             // DS_DCOMPLEX
             else if (dt == DataType.DS_DCOMPLEX) {
-                valueType = 6;
-                typeSize = 8;
+                valueType = 6; // dt_double
+                blockSize = 8;
+                valuesPerBlock = 1;
                 length = value.u.dcomplexSeq().length * 2;
-                ByteBuffer bb = ByteBuffer.allocate(length * typeSize);
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
                 bb.order(ByteOrder.LITTLE_ENDIAN);
                 for (int i = 0; i < length / 2; i++) {
                     bb.putDouble(value.u.dcomplexSeq()[i].r);
@@ -310,7 +333,8 @@ class ExtCompWriter {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
                                       "No application attribute of type 'block_size' found for '" + aidExtComp + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", (int) typeSize).value);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo,
+                                       ODSHelper.createLongNV("", (int) blockSize).value);
             // valuesperblock
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "valuesperblock");
             if (attrNo == null) {
@@ -318,7 +342,7 @@ class ExtCompWriter {
                                       "No application attribute of type 'valuesperblock' found for '" + aidExtComp
                                               + "'");
             }
-            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", 1).value);
+            atfxCache.setInstanceValue(aidExtComp, iidExtComp, attrNo, ODSHelper.createLongNV("", valuesPerBlock).value);
             // value_offset
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
             if (attrNo == null) {
