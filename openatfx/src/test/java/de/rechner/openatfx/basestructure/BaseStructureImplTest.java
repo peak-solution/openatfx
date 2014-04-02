@@ -24,7 +24,7 @@ public class BaseStructureImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, "asam30");
+        baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, "asam31");
     }
 
     /**
@@ -33,7 +33,7 @@ public class BaseStructureImplTest {
     @Test
     public void testGetVersion() {
         try {
-            assertEquals("asam30", baseStructure.getVersion());
+            assertEquals("asam31", baseStructure.getVersion());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -76,7 +76,7 @@ public class BaseStructureImplTest {
     @Test
     public void testListElements() {
         try {
-            assertEquals(28, baseStructure.listElements("*").length);
+            assertEquals(29, baseStructure.listElements("*").length);
             assertEquals(4, baseStructure.listElements("AoUnit*").length);
             // test case insensitivity of base element lookup
             assertEquals(1, baseStructure.listElements("aoquantityg*").length);
@@ -92,7 +92,7 @@ public class BaseStructureImplTest {
     @Test
     public void testGetElements() {
         try {
-            assertEquals(28, baseStructure.getElements("*").length);
+            assertEquals(29, baseStructure.getElements("*").length);
             assertEquals(4, baseStructure.getElements("AoUnit*").length);
             assertEquals(2, baseStructure.getElements("a?param*").length);
         } catch (AoException e) {

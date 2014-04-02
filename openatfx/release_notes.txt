@@ -23,6 +23,13 @@
 
 1. Changes
 
+	0.5.1 (Christian Rechner)
+
+		- Increased default value of context parameter 'EXT_COMP_SEGSIZE' to 500 MB
+		- TODO: implement writing of DT_BOOLEAN to external component
+		- TODO: 
+		
+
 	0.5.0 (Christian Rechner)
 	
 	    - Upgrade to ODS IDL 5.3.0 (not all new methods implemented)

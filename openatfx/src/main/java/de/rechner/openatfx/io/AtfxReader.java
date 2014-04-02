@@ -253,14 +253,14 @@ public class AtfxReader {
         if (aes.length == 1) {
             aeExtComp = aes[0];
         } else if (aes.length < 1) {
-            aeExtComp = implicitCreateAoExternalComponent(as);
+            aeExtComp = implicitCreateAoExtComp(as);
         } else if (aes.length > 1) {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "Multiple application elements of type 'AoExternalComponent' found");
         }
         // implicit create flag file attributes if missing
         if (aeExtComp != null) {
-            implicitCreateAoExternalComponentFlagsAttrs(aeExtComp);
+            implicitCreateAoExtCompOptAttrs(aeExtComp);
         }
 
         // fill map with application relations and sets the default relation range
@@ -309,7 +309,7 @@ public class AtfxReader {
      * @return The created application element.
      * @throws AoException Error creating application element.
      */
-    private ApplicationElement implicitCreateAoExternalComponent(ApplicationStructure as) throws AoException {
+    private ApplicationElement implicitCreateAoExtComp(ApplicationStructure as) throws AoException {
         ApplicationElement[] aeLCs = as.getElementsByBaseType("AoLocalColumn");
         if (aeLCs.length < 1) {
             return null;
@@ -337,13 +337,15 @@ public class AtfxReader {
     }
 
     /**
-     * Creates implicitly an application element of type "AoExternalComponent" including all relations.
+     * Creates implicitly all non mandatory application attributes of type "AoExternalComponent".
      * 
      * @param as The application structure.
      * @return The created application element.
      * @throws AoException Error creating application element.
      */
-    private void implicitCreateAoExternalComponentFlagsAttrs(ApplicationElement aeExtComp) throws AoException {
+    private void implicitCreateAoExtCompOptAttrs(ApplicationElement aeExtComp) throws AoException {
+
+        // fetch existing attributes
         Set<String> existingBaNames = new HashSet<String>();
         for (ApplicationAttribute aa : aeExtComp.getAttributes("*")) {
             BaseAttribute ba = aa.getBaseAttribute();
@@ -351,6 +353,11 @@ public class AtfxReader {
                 existingBaNames.add(ba.getName());
             }
         }
+
+        String baseModelVersion = aeExtComp.getApplicationStructure().getSession().getBaseStructure().getVersion();
+        int baseModelVersioNo = Integer.parseInt(baseModelVersion.replace("asam", ""));
+        System.out.println(baseModelVersioNo);
+
         // flags_filename_url
         if (!existingBaNames.contains("flags_filename_url")) {
             ApplicationAttribute aa = aeExtComp.createAttribute();
@@ -362,6 +369,18 @@ public class AtfxReader {
             ApplicationAttribute aa = aeExtComp.createAttribute();
             aa.setName("flags_start_offset");
             aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("flags_start_offset")[0]);
+        }
+        // ao_bit_count, only for asam31 models
+        if ((baseModelVersioNo > 30) && !existingBaNames.contains("ao_bit_count")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("bitcount");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("ao_bit_count")[0]);
+        }
+        // ao_bit_offset, only for asam31 models
+        if ((baseModelVersioNo > 30) && !existingBaNames.contains("ao_bit_offset")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("bitoffset");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("ao_bit_offset")[0]);
         }
     }
 
