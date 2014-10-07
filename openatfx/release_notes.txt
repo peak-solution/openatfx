@@ -23,6 +23,12 @@
 
 1. Changes
 
+	0.5.2 (Gigatronik Ingolstadt GmbH)
+
+	    - Added automatic determination for missing inverse relations of ATFX files.
+	    - Upgrade to woodstox 4.4.1
+
+
 	0.5.1 (Christian Rechner)
 
 	    - Upgrade to woodstox 4.3.0

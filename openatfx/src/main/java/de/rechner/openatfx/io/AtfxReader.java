@@ -278,6 +278,13 @@ public class AtfxReader {
                 BaseRelation baseRelation = rel.getBaseRelation();
                 ApplicationElement elem1 = rel.getElem1();
                 ApplicationElement elem2 = rel.getElem2();
+
+                // check if reference is complete
+                if (elem1 == null || elem2 == null) {
+                    fixIncompleteReleation(as, baseRelation, rel);
+                    elem1 = rel.getElem1();
+                    elem2 = rel.getElem2();
+                }
                 if ((baseRelation != null) && (elem1 != null) && (elem2 != null)) {
                     String relType = elem2.getBaseElement().getType();
                     String bTypeElem2 = baseRelation.getElem2().getType();
@@ -285,6 +292,7 @@ public class AtfxReader {
                         rel.setBaseRelation(lookupBaseRelation(elem1, elem2, baseRelation.getRelationName(), relType));
                     }
                 }
+
             }
         }
 
@@ -300,6 +308,48 @@ public class AtfxReader {
         }
         throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
                 + bRelName + "',targetBaseType='" + bType + "'");
+    }
+
+    /**
+     * Tries to fix incomplete relations. The base relation is required for getting the needed information.
+     * 
+     * @param as The application structure.
+     * @param base The base relation containing missing information.
+     * @param rel The relation that shall be fixed.
+     * @throws AoException Raised if an error occurs, or a fix is not possible.
+     */
+    private void fixIncompleteReleation(ApplicationStructure as, BaseRelation base, ApplicationRelation rel)
+            throws AoException {
+        ApplicationElement appelem = rel.getElem1();
+        if (appelem == null && base != null) {
+            BaseElement be = base.getElem1();
+            ApplicationElement[] aes = as.getElementsByBaseType(be.getType());
+            if (aes.length == 1) {
+                rel.setElem1(aes[0]);
+                appelem = rel.getElem1();
+                LOG.info("Automatically fixed reverse relation for " + appelem.getName());
+            } else {
+                String message = "ATFX File is missing required inverse relations. "
+                        + "Automatic correction is not possible.";
+                LOG.error(message);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, message);
+            }
+        }
+        appelem = rel.getElem2();
+        if (appelem == null && base != null) {
+            BaseElement be = base.getElem2();
+            ApplicationElement[] aes = as.getElementsByBaseType(be.getType());
+            if (aes.length == 1) {
+                rel.setElem2(aes[0]);
+                appelem = rel.getElem2();
+                LOG.info("Automatically fixed reverse relation for " + appelem.getName());
+            } else {
+                String message = "ATFX File is missing required inverse relations. "
+                        + "Automatic correction is not possible.";
+                LOG.error(message);
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, message);
+            }
+        }
     }
 
     /**

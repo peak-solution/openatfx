@@ -586,7 +586,8 @@ class AoSessionImpl extends AoSessionPOA {
                 ApplRel applRel = new ApplRel();
                 applRel.arName = ar.getRelationName();
                 applRel.elem1 = ar.getElem1().getId();
-                applRel.elem2 = ar.getElem2().getId();
+                ApplicationElement appelem = ar.getElem2();
+                applRel.elem2 = appelem.getId();
                 applRel.brName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getRelationName();
                 applRel.arRelationRange = ar.getRelationRange();
                 applRel.arRelationType = ar.getRelationType();
