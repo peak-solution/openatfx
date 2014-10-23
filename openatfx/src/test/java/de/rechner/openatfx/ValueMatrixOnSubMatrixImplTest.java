@@ -28,10 +28,11 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-public class SubMatrixImplTest {
+public class ValueMatrixOnSubMatrixImplTest {
 
     private static AoSession aoSession;
-    private static SubMatrix sm;
+    private static ValueMatrix vmStorage;
+    private static ValueMatrix vmCalculated;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -40,7 +41,9 @@ public class SubMatrixImplTest {
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
         ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
         ApplicationElement aeSm = applicationStructure.getElementByName("sm");
-        sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+        SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+        vmStorage = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+        vmCalculated = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
     }
 
     @AfterClass
@@ -49,51 +52,48 @@ public class SubMatrixImplTest {
     }
 
     @Test
-    public void testListColumns() {
+    public void testGetMode() {
         try {
-            String[] cols = sm.listColumns("*");
-            assertEquals(3, cols.length);
-            cols = sm.listColumns("?ime");
-            assertEquals(1, cols.length);
+            assertEquals(ValueMatrixMode.STORAGE, vmStorage.getMode());
+            assertEquals(ValueMatrixMode.CALCULATED, vmCalculated.getMode());
         } catch (AoException e) {
             fail(e.reason);
         }
+    }
+
+    @Test
+    public void testGetColumnCount() {
+        try {
+            vmStorage.getColumnCount();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testListColumns() {
+        // try {
+        // String[] cols = vmCalculated.listColumns("*");
+        // assertEquals(3, cols.length);
+        //
+        // cols = vmStorage.listColumns("?ime");
+        // assertEquals(1, cols.length);
+        // } catch (AoException e) {
+        // fail(e.reason);
+        // }
     }
 
     @Test
     public void testGetColumns() {
         try {
-            sm.getColumns("*");
+            vmStorage.getColumns("*");
             fail("AoException expected");
         } catch (AoException e) {
         }
     }
 
-    @Test
-    public void testGetValueMatrix() {
-        try {
-            ValueMatrix valueMatrix = sm.getValueMatrix();
-            assertEquals(ValueMatrixMode.CALCULATED, valueMatrix.getMode());
-        } catch (AoException e) {
-            fail(e.reason);
-        }
-    }
-
-    @Test
-    public void testGetValueMatrixInMode() {
-        try {
-            ValueMatrix vm = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
-            assertEquals(ValueMatrixMode.CALCULATED, vm.getMode());
-
-            vm = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
-            assertEquals(ValueMatrixMode.STORAGE, vm.getMode());
-        } catch (AoException e) {
-            fail(e.reason);
-        }
-    }
-
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(SubMatrixImplTest.class);
+        return new JUnit4TestAdapter(ValueMatrixOnSubMatrixImplTest.class);
     }
 
 }

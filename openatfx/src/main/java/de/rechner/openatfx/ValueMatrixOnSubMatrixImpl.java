@@ -7,6 +7,7 @@ import org.asam.ods.NameUnit;
 import org.asam.ods.NameValue;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnitIterator;
+import org.asam.ods.Relationship;
 import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_ValueSeq;
@@ -19,13 +20,19 @@ import org.asam.ods.ValueMatrixPOA;
  * 
  * @author Christian Rechner
  */
-class ValueMatrixImpl extends ValueMatrixPOA {
+class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
-    // private final SubMatrixImpl sourceSubMatrix;
+    private final SubMatrixImpl sourceSubMatrix;
     private final ValueMatrixMode mode;
 
-    public ValueMatrixImpl(SubMatrixImpl sourceSubMatrix, ValueMatrixMode mode) {
-        // this.sourceSubMatrix = sourceSubMatrix;
+    /**
+     * Constructor.
+     * 
+     * @param sourceSubMatrix The SubMatrix object.
+     * @param mode The ValueMatrixMode.
+     */
+    public ValueMatrixOnSubMatrixImpl(SubMatrixImpl sourceSubMatrix, ValueMatrixMode mode) {
+        this.sourceSubMatrix = sourceSubMatrix;
         this.mode = mode;
     }
 
@@ -44,6 +51,10 @@ class ValueMatrixImpl extends ValueMatrixPOA {
      * @see org.asam.ods.ValueMatrixOperations#getColumnCount()
      */
     public int getColumnCount() throws AoException {
+        
+        sourceSubMatrix.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+        
+        
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
     }
 

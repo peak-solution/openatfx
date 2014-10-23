@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.5.3 (Christian Rechner)
+
+	    - Implemented methods on ValueMatrix of AoSubMatrix:
+	      * 
+
 	0.5.2 (Gigatronik Ingolstadt GmbH)
 
 	    - Added automatic determination for missing inverse relations of ATFX files.
