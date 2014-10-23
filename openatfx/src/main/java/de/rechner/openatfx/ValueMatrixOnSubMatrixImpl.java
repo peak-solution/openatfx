@@ -3,8 +3,11 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.Column;
+import org.asam.ods.ColumnHelper;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
@@ -19,6 +22,10 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrixMode;
 import org.asam.ods.ValueMatrixPOA;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ObjectNotActive;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 
 /**
@@ -28,16 +35,21 @@ import org.asam.ods.ValueMatrixPOA;
  */
 class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
+    private static final Log LOG = LogFactory.getLog(ValueMatrixOnSubMatrixImpl.class);
+
+    private final POA modelPOA;
     private final SubMatrixImpl sourceSubMatrix;
     private final ValueMatrixMode mode;
 
     /**
      * Constructor.
      * 
+     * @param modelPOA The model POA.
      * @param sourceSubMatrix The SubMatrix object.
      * @param mode The ValueMatrixMode.
      */
-    public ValueMatrixOnSubMatrixImpl(SubMatrixImpl sourceSubMatrix, ValueMatrixMode mode) {
+    public ValueMatrixOnSubMatrixImpl(POA modelPOA, SubMatrixImpl sourceSubMatrix, ValueMatrixMode mode) {
+        this.modelPOA = modelPOA;
         this.sourceSubMatrix = sourceSubMatrix;
         this.mode = mode;
     }
@@ -121,7 +133,26 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
      * @see org.asam.ods.ValueMatrixOperations#getColumns(java.lang.String)
      */
     public Column[] getColumns(String colPattern) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        try {
+            InstanceElementIterator iter = sourceSubMatrix.getRelatedInstancesByRelationship(Relationship.CHILD,
+                                                                                             colPattern);
+            InstanceElement[] ies = iter.nextN(iter.getCount());
+            iter.destroy();
+
+            List<Column> list = new ArrayList<Column>(ies.length);
+            for (int i = 0; i < ies.length; i++) {
+                ColumnOnSubMatrixImpl columnImpl = new ColumnOnSubMatrixImpl(ies[i], this.mode);
+                Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
+                list.add(column);
+            }
+            return list.toArray(new Column[0]);
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -130,6 +161,46 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
      * @see org.asam.ods.ValueMatrixOperations#getIndependentColumns(java.lang.String)
      */
     public Column[] getIndependentColumns(String colPattern) throws AoException {
+        try {
+            InstanceElementIterator iter = sourceSubMatrix.getRelatedInstancesByRelationship(Relationship.CHILD,
+                                                                                             colPattern);
+            InstanceElement[] ies = iter.nextN(iter.getCount());
+            iter.destroy();
+
+            List<Column> list = new ArrayList<Column>(ies.length);
+            for (int i = 0; i < ies.length; i++) {
+                NameValueUnit nvu = ies[i].getValueByBaseName("independent");
+                if (nvu.value.flag == 15 && nvu.value.u.shortVal() > 0) {
+                    ColumnOnSubMatrixImpl columnImpl = new ColumnOnSubMatrixImpl(ies[i], this.mode);
+                    Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
+                    list.add(column);
+                }
+            }
+            return list.toArray(new Column[0]);
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ValueMatrixOperations#getValueVector(org.asam.ods.Column, int, int)
+     */
+    public TS_ValueSeq getValueVector(Column col, int startPoint, int count) throws AoException {
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ValueMatrixOperations#getValue(org.asam.ods.Column[], int, int)
+     */
+    public NameValueSeqUnit[] getValue(Column[] columns, int startPoint, int count) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
     }
 
@@ -145,10 +216,22 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ValueMatrixOperations#getValueVector(org.asam.ods.Column, int, int)
+     * @see org.asam.ods.ValueMatrixOperations#destroy()
      */
-    public TS_ValueSeq getValueVector(Column col, int startPoint, int count) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+    public void destroy() throws AoException {
+        try {
+            byte[] id = this.modelPOA.servant_to_id(this);
+            this.modelPOA.deactivate_object(id);
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ObjectNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -249,24 +332,6 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
      */
     public Column addColumnScaledBy(NameUnit newColumn, Column scalingColumn) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ValueMatrixOperations#getValue(org.asam.ods.Column[], int, int)
-     */
-    public NameValueSeqUnit[] getValue(Column[] columns, int startPoint, int count) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ValueMatrixOperations#destroy()
-     */
-    public void destroy() throws AoException {
-        // do nothing
     }
 
 }

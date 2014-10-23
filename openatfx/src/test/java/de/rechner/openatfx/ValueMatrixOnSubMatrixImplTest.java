@@ -13,6 +13,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.Column;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
@@ -25,7 +26,7 @@ import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
- * Test case for <code>de.rechner.openatfx.SubMatrixImpl</code>.
+ * Test case for <code>de.rechner.openatfx.ValueMatrixOnSubMatrixImpl</code>.
  * 
  * @author Christian Rechner
  */
@@ -104,11 +105,11 @@ public class ValueMatrixOnSubMatrixImplTest {
             assertEquals(1, cols.length);
             assertArrayEquals(new String[] { "Time" }, cols);
 
-            cols = vmStorage.listColumns("?ime");
+            cols = vmStorage.listIndependentColumns("?ime");
             assertEquals(1, cols.length);
             assertArrayEquals(new String[] { "Time" }, cols);
 
-            cols = vmStorage.listColumns("?Side");
+            cols = vmStorage.listIndependentColumns("Left Side");
             assertEquals(0, cols.length);
         } catch (AoException e) {
             fail(e.reason);
@@ -118,9 +119,49 @@ public class ValueMatrixOnSubMatrixImplTest {
     @Test
     public void testGetColumns() {
         try {
-            vmStorage.getColumns("*");
-            fail("AoException expected");
+            Column[] cols = vmCalculated.getColumns("*");
+            assertEquals(3, cols.length);
+
+            cols = vmStorage.getColumns("?ime");
+            assertEquals(1, cols.length);
         } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetIndependentColumns() {
+        try {
+            Column[] cols = vmCalculated.getIndependentColumns("*");
+            assertEquals(1, cols.length);
+
+            cols = vmStorage.getIndependentColumns("?ime");
+            assertEquals(1, cols.length);
+
+            cols = vmStorage.getIndependentColumns("Left Side");
+            assertEquals(0, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testDestroy() {
+        ValueMatrix vm = null;
+        try {
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+            SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+            vm = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+            vm.destroy();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            vm.getMode();
+            fail("Exception expected");
+        } catch (Throwable e) {
         }
     }
 

@@ -84,7 +84,7 @@ class SubMatrixImpl extends InstanceElementImpl implements SubMatrixOperations {
             }
 
             // create ValueMatrix object
-            ValueMatrixOnSubMatrixImpl valueMatrixImpl = new ValueMatrixOnSubMatrixImpl(this, vmMode);
+            ValueMatrixOnSubMatrixImpl valueMatrixImpl = new ValueMatrixOnSubMatrixImpl(this.modelPOA, this, vmMode);
             ValueMatrix valueMatrix = ValueMatrixHelper.unchecked_narrow(modelPOA.servant_to_reference(valueMatrixImpl));
             return valueMatrix;
         } catch (ServantNotActive e) {
@@ -103,7 +103,7 @@ class SubMatrixImpl extends InstanceElementImpl implements SubMatrixOperations {
      */
     public ValueMatrix getValueMatrixInMode(ValueMatrixMode vmMode) throws AoException {
         try {
-            ValueMatrixOnSubMatrixImpl valueMatrixImpl = new ValueMatrixOnSubMatrixImpl(this, vmMode);
+            ValueMatrixOnSubMatrixImpl valueMatrixImpl = new ValueMatrixOnSubMatrixImpl(this.modelPOA, this, vmMode);
             ValueMatrix valueMatrix = ValueMatrixHelper.unchecked_narrow(modelPOA.servant_to_reference(valueMatrixImpl));
             return valueMatrix;
         } catch (ServantNotActive e) {

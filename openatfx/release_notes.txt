@@ -31,6 +31,11 @@
 	      * getRowCount
 	      * listColumns
 	      * listIndependentColumns
+	      * getColumns
+	      * getIndependentColumns
+	      * destroy
+	    - Implemented methods of Column on ValueMatrix on AoSubMatrix
+	      * 
 
 
 	0.5.2 (Gigatronik Ingolstadt GmbH)
