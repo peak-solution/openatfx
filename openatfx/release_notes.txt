@@ -35,7 +35,11 @@
 	      * getIndependentColumns
 	      * destroy
 	    - Implemented methods of Column on ValueMatrix on AoSubMatrix
-	      * 
+	      * getSourceMQ
+	      * getName
+	      * getFormula
+	      * isIndependent
+	      * getDataType
 
 
 	0.5.2 (Gigatronik Ingolstadt GmbH)

@@ -1,13 +1,19 @@
 package de.rechner.openatfx;
 
+import java.util.Set;
+
 import org.asam.ods.AoException;
+import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ColumnPOA;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
-import org.asam.ods.ValueMatrixMode;
+
+import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
@@ -17,30 +23,18 @@ import org.asam.ods.ValueMatrixMode;
  */
 class ColumnOnSubMatrixImpl extends ColumnPOA {
 
-    // private final InstanceElement ieLocalColumn;
-    // private final ValueMatrixMode mode;
-
-    public ColumnOnSubMatrixImpl(InstanceElement ieLocalColumn, ValueMatrixMode mode) {
-//        this.ieLocalColumn = ieLocalColumn;
-//        this.mode = mode;
-    }
+    private final AtfxCache atfxCache;
+    private final InstanceElement ieLocalColumn;
 
     /**
-     * {@inheritDoc}
+     * Constructor.
      * 
-     * @see org.asam.ods.ColumnOperations#getFormula()
+     * @param atfxCache The cache.
+     * @param ieLocalColumn The Local Column.
      */
-    public String getFormula() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ColumnOperations#getName()
-     */
-    public String getName() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+    public ColumnOnSubMatrixImpl(AtfxCache atfxCache, InstanceElement ieLocalColumn) {
+        this.atfxCache = atfxCache;
+        this.ieLocalColumn = ieLocalColumn;
     }
 
     /**
@@ -49,7 +43,76 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
      * @see org.asam.ods.ColumnOperations#getSourceMQ()
      */
     public InstanceElement getSourceMQ() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        // get application element derived from 'AoLocalColumn'
+        Set<Long> aids = this.atfxCache.getAidsByBaseType("aolocalcolumn");
+        if (aids == null || aids.size() != 1) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "None or multiple application elements of type 'AoLocalColumn' found!");
+        }
+        long aidLc = aids.iterator().next();
+
+        // get application relation from 'AoLocalColumn' to 'AoMeasurementQuantity'
+        ApplicationRelation applRelLcMeq = this.atfxCache.getApplicationRelationByBaseName(aidLc,
+                                                                                           "measurement_quantity");
+        if (applRelLcMeq == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Application relation derived from base relation 'measurement_quantity' not found!");
+        }
+
+        // get related instance
+        InstanceElementIterator iter = this.ieLocalColumn.getRelatedInstances(applRelLcMeq, "*");
+        if (iter.getCount() != 1) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "None or multiple related instances found for base relation 'measurement_quantity': "
+                                          + this.ieLocalColumn.getAsamPath());
+        }
+        InstanceElement ieMeq = iter.nextOne();
+        iter.destroy();
+
+        return ieMeq;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#getName()
+     */
+    public String getName() throws AoException {
+        return getSourceMQ().getName();
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#getFormula()
+     */
+    public String getFormula() throws AoException {
+        return "";
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#isIndependent()
+     */
+    public boolean isIndependent() throws AoException {
+        NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("independent");
+        return (nvu.value.flag == 15) && (nvu.value.u.shortVal() > 0);
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#getDataType()
+     */
+    public DataType getDataType() throws AoException {
+        InstanceElement ieMeq = getSourceMQ();
+        NameValueUnit nvu = ieMeq.getValueByBaseName("datatype");
+        if (nvu.value.flag != 15) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Value of attribute 'datatype' not set:" + ieMeq.getAsamPath());
+        }
+        return ODSHelper.enum2dataType(nvu.value.u.enumVal());
     }
 
     /**
@@ -82,15 +145,6 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ColumnOperations#isIndependent()
-     */
-    public boolean isIndependent() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
      * @see org.asam.ods.ColumnOperations#isScaling()
      */
     public boolean isScaling() throws AoException {
@@ -112,15 +166,6 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
      * @see org.asam.ods.ColumnOperations#setScaling(boolean)
      */
     public void setScaling(boolean scaling) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ColumnOperations#getDataType()
-     */
-    public DataType getDataType() throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
     }
 

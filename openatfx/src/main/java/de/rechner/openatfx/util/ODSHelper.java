@@ -2809,6 +2809,81 @@ public abstract class ODSHelper {
     }
 
     /**
+     * Returns the <code>org.asam.ods.DataType</code> for the corresponding enum value.
+     * 
+     * @param e the enum value
+     * @return the DataType
+     */
+    public static DataType enum2dataType(int e) {
+        if (e == 12) {
+            return DataType.DT_BLOB;
+        } else if (e == 4) {
+            return DataType.DT_BOOLEAN;
+        } else if (e == 5) {
+            return DataType.DT_BYTE;
+        } else if (e == 11) {
+            return DataType.DT_BYTESTR;
+        } else if (e == 13) {
+            return DataType.DT_COMPLEX;
+        } else if (e == 10) {
+            return DataType.DT_DATE;
+        } else if (e == 14) {
+            return DataType.DT_DCOMPLEX;
+        } else if (e == 7) {
+            return DataType.DT_DOUBLE;
+        } else if (e == 30) {
+            return DataType.DT_ENUM;
+        } else if (e == 28) {
+            return DataType.DT_EXTERNALREFERENCE;
+        } else if (e == 3) {
+            return DataType.DT_FLOAT;
+        } else if (e == 9) {
+            return DataType.DT_ID;
+        } else if (e == 6) {
+            return DataType.DT_LONG;
+        } else if (e == 8) {
+            return DataType.DT_LONGLONG;
+        } else if (e == 2) {
+            return DataType.DT_SHORT;
+        } else if (e == 1) {
+            return DataType.DT_STRING;
+        } else if (e == 0) {
+            return DataType.DT_UNKNOWN;
+        } else if (e == 18) {
+            return DataType.DS_BOOLEAN;
+        } else if (e == 19) {
+            return DataType.DS_BYTE;
+        } else if (e == 27) {
+            return DataType.DS_BYTESTR;
+        } else if (e == 23) {
+            return DataType.DS_COMPLEX;
+        } else if (e == 26) {
+            return DataType.DS_DATE;
+        } else if (e == 23) {
+            return DataType.DS_COMPLEX;
+        } else if (e == 21) {
+            return DataType.DS_DOUBLE;
+        } else if (e == 31) {
+            return DataType.DS_ENUM;
+        } else if (e == 29) {
+            return DataType.DS_EXTERNALREFERENCE;
+        } else if (e == 17) {
+            return DataType.DS_FLOAT;
+        } else if (e == 25) {
+            return DataType.DS_ID;
+        } else if (e == 20) {
+            return DataType.DS_LONG;
+        } else if (e == 22) {
+            return DataType.DS_LONGLONG;
+        } else if (e == 16) {
+            return DataType.DS_SHORT;
+        } else if (e == 15) {
+            return DataType.DS_STRING;
+        }
+        throw new IllegalArgumentException("Unknown ODS datatype: " + e);
+    }
+
+    /**
      * Returns the string representation of an relation range short value.
      * 
      * @param relRange The relation range value.
