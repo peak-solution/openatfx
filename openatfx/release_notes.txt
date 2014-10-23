@@ -25,8 +25,13 @@
 
 	0.5.3 (Christian Rechner)
 
-	    - Implemented methods on ValueMatrix of AoSubMatrix:
-	      * 
+	    - Implemented methods of ValueMatrix on AoSubMatrix:
+	      * getMode
+	      * getColumnCount
+	      * getRowCount
+	      * listColumns
+	      * listIndependentColumns
+
 
 	0.5.2 (Gigatronik Ingolstadt GmbH)
 

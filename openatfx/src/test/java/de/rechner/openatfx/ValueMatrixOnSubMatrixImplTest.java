@@ -1,5 +1,6 @@
 package de.rechner.openatfx;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -64,7 +65,18 @@ public class ValueMatrixOnSubMatrixImplTest {
     @Test
     public void testGetColumnCount() {
         try {
-            vmStorage.getColumnCount();
+            assertEquals(3, vmStorage.getColumnCount());
+            assertEquals(3, vmCalculated.getColumnCount());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetRowCount() {
+        try {
+            assertEquals(167, vmStorage.getRowCount());
+            assertEquals(167, vmCalculated.getRowCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -72,15 +84,35 @@ public class ValueMatrixOnSubMatrixImplTest {
 
     @Test
     public void testListColumns() {
-        // try {
-        // String[] cols = vmCalculated.listColumns("*");
-        // assertEquals(3, cols.length);
-        //
-        // cols = vmStorage.listColumns("?ime");
-        // assertEquals(1, cols.length);
-        // } catch (AoException e) {
-        // fail(e.reason);
-        // }
+        try {
+            String[] cols = vmCalculated.listColumns("*");
+            assertEquals(3, cols.length);
+            assertArrayEquals(new String[] { "LS.Right Side", "Time", "LS.Left Side" }, cols);
+
+            cols = vmStorage.listColumns("?ime");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testListIndependentColumns() {
+        try {
+            String[] cols = vmCalculated.listIndependentColumns("*");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+
+            cols = vmStorage.listColumns("?ime");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+
+            cols = vmStorage.listColumns("?Side");
+            assertEquals(0, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
     }
 
     @Test

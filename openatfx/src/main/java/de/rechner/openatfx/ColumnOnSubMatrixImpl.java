@@ -7,6 +7,7 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
+import org.asam.ods.ValueMatrixMode;
 
 
 /**
@@ -15,6 +16,14 @@ import org.asam.ods.TS_Union;
  * @author Christian Rechner
  */
 class ColumnOnSubMatrixImpl extends ColumnPOA {
+
+    // private final InstanceElement ieLocalColumn;
+    // private final ValueMatrixMode mode;
+
+    public ColumnOnSubMatrixImpl(InstanceElement ieLocalColumn, ValueMatrixMode mode) {
+//        this.ieLocalColumn = ieLocalColumn;
+//        this.mode = mode;
+    }
 
     /**
      * {@inheritDoc}
