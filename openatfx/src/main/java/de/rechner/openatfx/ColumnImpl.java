@@ -2,6 +2,8 @@ package de.rechner.openatfx;
 
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ColumnPOA;
@@ -12,6 +14,11 @@ import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
+import org.asam.ods.ValueMatrixMode;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.ObjectNotActive;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -21,20 +28,28 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-class ColumnOnSubMatrixImpl extends ColumnPOA {
+class ColumnImpl extends ColumnPOA {
 
+    private static final Log LOG = LogFactory.getLog(ColumnImpl.class);
+
+    private final POA modelPOA;
     private final AtfxCache atfxCache;
     private final InstanceElement ieLocalColumn;
+    private final ValueMatrixMode mode;
 
     /**
      * Constructor.
      * 
+     * @param modelPOA The model POA.
      * @param atfxCache The cache.
      * @param ieLocalColumn The Local Column.
+     * @param mode The value matrix mode.
      */
-    public ColumnOnSubMatrixImpl(AtfxCache atfxCache, InstanceElement ieLocalColumn) {
+    public ColumnImpl(POA modelPOA, AtfxCache atfxCache, InstanceElement ieLocalColumn, ValueMatrixMode mode) {
+        this.modelPOA = modelPOA;
         this.atfxCache = atfxCache;
         this.ieLocalColumn = ieLocalColumn;
+        this.mode = mode;
     }
 
     /**
@@ -118,10 +133,77 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
     /**
      * {@inheritDoc}
      * 
+     * @see org.asam.ods.ColumnOperations#getSequenceRepresentation()
+     */
+    public int getSequenceRepresentation() throws AoException {
+        NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("sequence_representation");
+        if (nvu.value.flag != 15) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Value of attribute 'sequence_representation' not set:" + ieLocalColumn.getAsamPath());
+        }
+        return nvu.value.u.enumVal();
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#getGenerationParameters()
+     */
+    public TS_Union getGenerationParameters() throws AoException {
+        NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("generation_parameters");
+        if (nvu.value.flag != 15) {
+            TS_Union u = new TS_Union();
+            u.doubleSeq(new double[0]);
+            return u;
+        }
+        return nvu.value.u;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#getRawDataType()
+     */
+    public DataType getRawDataType() throws AoException {
+        // raw_linear (=4), raw_polynomial (=5), raw_linear_calibrated (=10)
+        int seqReq = getSequenceRepresentation();
+        if ((mode == ValueMatrixMode.STORAGE) && (seqReq == 4 || seqReq == 5 || seqReq == 10)) {
+            NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("raw_datatype'");
+            if (nvu.value.flag == 15) {
+                return ODSHelper.enum2dataType(nvu.value.u.enumVal());
+            }
+        }
+        return getDataType();
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
      * @see org.asam.ods.ColumnOperations#getUnit()
      */
     public String getUnit() throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ColumnOperations#destroy()
+     */
+    public void destroy() throws AoException {
+        try {
+            byte[] id = this.modelPOA.servant_to_id(this);
+            this.modelPOA.deactivate_object(id);
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ObjectNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
     }
 
     /**
@@ -172,24 +254,6 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ColumnOperations#destroy()
-     */
-    public void destroy() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ColumnOperations#getSequenceRepresentation()
-     */
-    public int getSequenceRepresentation() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
      * @see org.asam.ods.ColumnOperations#setSequenceRepresentation(int)
      */
     public void setSequenceRepresentation(int sequenceRepresentation) throws AoException {
@@ -199,27 +263,9 @@ class ColumnOnSubMatrixImpl extends ColumnPOA {
     /**
      * {@inheritDoc}
      * 
-     * @see org.asam.ods.ColumnOperations#getGenerationParameters()
-     */
-    public TS_Union getGenerationParameters() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
      * @see org.asam.ods.ColumnOperations#setGenerationParameters(org.asam.ods.TS_Union)
      */
     public void setGenerationParameters(TS_Union generationParameters) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ColumnOperations#getRawDataType()
-     */
-    public DataType getRawDataType() throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
     }
 

@@ -141,7 +141,9 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
             List<Column> list = new ArrayList<Column>(ies.length);
             for (int i = 0; i < ies.length; i++) {
-                ColumnOnSubMatrixImpl columnImpl = new ColumnOnSubMatrixImpl(this.sourceSubMatrix.atfxCache, ies[i]);
+                ColumnImpl columnImpl = new ColumnImpl(this.modelPOA,
+                                                                             this.sourceSubMatrix.atfxCache, ies[i],
+                                                                             this.mode);
                 Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
                 list.add(column);
             }
@@ -171,7 +173,9 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             for (int i = 0; i < ies.length; i++) {
                 NameValueUnit nvu = ies[i].getValueByBaseName("independent");
                 if (nvu.value.flag == 15 && nvu.value.u.shortVal() > 0) {
-                    ColumnOnSubMatrixImpl columnImpl = new ColumnOnSubMatrixImpl(this.sourceSubMatrix.atfxCache, ies[i]);
+                    ColumnImpl columnImpl = new ColumnImpl(this.modelPOA,
+                                                                                 this.sourceSubMatrix.atfxCache,
+                                                                                 ies[i], this.mode);
                     Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
                     list.add(column);
                 }

@@ -33,7 +33,7 @@ public class Main {
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
 
             // bind the Object Reference in Naming
-            NameComponent path[] = ncRef.to_name("ATFX");
+            NameComponent path[] = ncRef.to_name("ATFX.ASAM-ODS");
             ncRef.rebind(path, aoFactory);
 
             LOG.info("ATFX Server started");

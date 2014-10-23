@@ -40,6 +40,10 @@
 	      * getFormula
 	      * isIndependent
 	      * getDataType
+	      * getSequenceRepresentation
+	      * getGenerationParameters
+	      * getRawDataType
+	      * destroy
 
 
 	0.5.2 (Gigatronik Ingolstadt GmbH)

@@ -30,7 +30,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-public class ColumnOnSubMatrixImplTest {
+public class ColumnImplTest {
 
     private static AoSession aoSession;
     private static Column colTimeStorage;
@@ -112,8 +112,62 @@ public class ColumnOnSubMatrixImplTest {
         }
     }
 
+    @Test
+    public void testGetSequenceRepresentation() {
+        try {
+            assertEquals(0, colTimeStorage.getSequenceRepresentation());
+            assertEquals(0, colTimeCalculated.getSequenceRepresentation());
+            assertEquals(7, colExplicitStorage.getSequenceRepresentation());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetGenerationParametersn() {
+        try {
+            assertEquals(0, colTimeStorage.getGenerationParameters().doubleSeq().length);
+            assertEquals(0, colTimeCalculated.getGenerationParameters().doubleSeq().length);
+            assertEquals(0, colExplicitStorage.getGenerationParameters().doubleSeq().length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetRawDataType() {
+        try {
+            assertEquals(DataType.DT_DOUBLE, colTimeStorage.getRawDataType());
+            assertEquals(DataType.DT_DOUBLE, colTimeCalculated.getRawDataType());
+            assertEquals(DataType.DT_FLOAT, colExplicitStorage.getRawDataType());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testDestroy() {
+        Column col = null;
+        try {
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+            SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+            ValueMatrix vmStorage = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+            col = vmStorage.getColumns("Time")[0];
+            col.destroy();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            col.getDataType();
+            fail("Exception expected");
+        } catch (Throwable e) {
+        }
+    }
+
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ColumnOnSubMatrixImplTest.class);
+        return new JUnit4TestAdapter(ColumnImplTest.class);
     }
 
 }

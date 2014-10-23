@@ -11,6 +11,7 @@ import de.rechner.openatfx.ApplicationElementImplTest;
 import de.rechner.openatfx.ApplicationRelationImplTest;
 import de.rechner.openatfx.ApplicationStructureImplTest;
 import de.rechner.openatfx.BlobImplTest;
+import de.rechner.openatfx.ColumnImplTest;
 import de.rechner.openatfx.EnumerationDefinitionImplTest;
 import de.rechner.openatfx.InstanceElementImplTest;
 import de.rechner.openatfx.InstanceElementIteratorImplTest;
@@ -61,6 +62,7 @@ public class AllTests {
         suite.addTest(NameIteratorImplTest.suite());
         suite.addTest(NameValueIteratorImplTest.suite());
         suite.addTest(ValueMatrixOnSubMatrixImplTest.suite());
+        suite.addTest(ColumnImplTest.suite());
         suite.addTest(MeasurementImplTest.suite());
 
         suite.addTest(AtfxParseUtilTest.suite());
