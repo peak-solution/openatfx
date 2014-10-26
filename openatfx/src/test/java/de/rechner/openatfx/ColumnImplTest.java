@@ -33,7 +33,6 @@ import de.rechner.openatfx.util.ODSHelper;
 public class ColumnImplTest {
 
     private static AoSession aoSession;
-    private static Column colTimeStorage;
     private static Column colTimeCalculated;
     private static Column colExplicitStorage;
 
@@ -46,7 +45,6 @@ public class ColumnImplTest {
         ApplicationElement aeSm = applicationStructure.getElementByName("sm");
         SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
         ValueMatrix vmStorage = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
-        colTimeStorage = vmStorage.getColumns("Time")[0];
         colExplicitStorage = vmStorage.getColumns("LS.Left Side")[0];
         ValueMatrix vmCalculated = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
         colTimeCalculated = vmCalculated.getColumns("Time")[0];
@@ -60,7 +58,6 @@ public class ColumnImplTest {
     @Test
     public void testGetSourceMQ() {
         try {
-            assertEquals("Time", colTimeStorage.getSourceMQ().getName());
             assertEquals("Time", colTimeCalculated.getSourceMQ().getName());
             assertEquals("LS.Left Side", colExplicitStorage.getSourceMQ().getName());
         } catch (AoException e) {
@@ -71,7 +68,6 @@ public class ColumnImplTest {
     @Test
     public void testGetName() {
         try {
-            assertEquals("Time", colTimeStorage.getName());
             assertEquals("Time", colTimeCalculated.getName());
             assertEquals("LS.Left Side", colExplicitStorage.getName());
         } catch (AoException e) {
@@ -82,7 +78,6 @@ public class ColumnImplTest {
     @Test
     public void testGetFormula() {
         try {
-            assertEquals("", colTimeStorage.getFormula());
             assertEquals("", colTimeCalculated.getFormula());
             assertEquals("", colExplicitStorage.getFormula());
         } catch (AoException e) {
@@ -93,7 +88,6 @@ public class ColumnImplTest {
     @Test
     public void testIsIndependent() {
         try {
-            assertEquals(true, colTimeStorage.isIndependent());
             assertEquals(true, colTimeCalculated.isIndependent());
             assertEquals(false, colExplicitStorage.isIndependent());
         } catch (AoException e) {
@@ -104,7 +98,6 @@ public class ColumnImplTest {
     @Test
     public void testGetDataType() {
         try {
-            assertEquals(DataType.DT_DOUBLE, colTimeStorage.getDataType());
             assertEquals(DataType.DT_DOUBLE, colTimeCalculated.getDataType());
             assertEquals(DataType.DT_FLOAT, colExplicitStorage.getDataType());
         } catch (AoException e) {
@@ -115,7 +108,6 @@ public class ColumnImplTest {
     @Test
     public void testGetSequenceRepresentation() {
         try {
-            assertEquals(0, colTimeStorage.getSequenceRepresentation());
             assertEquals(0, colTimeCalculated.getSequenceRepresentation());
             assertEquals(7, colExplicitStorage.getSequenceRepresentation());
         } catch (AoException e) {
@@ -126,7 +118,6 @@ public class ColumnImplTest {
     @Test
     public void testGetGenerationParametersn() {
         try {
-            assertEquals(0, colTimeStorage.getGenerationParameters().doubleSeq().length);
             assertEquals(0, colTimeCalculated.getGenerationParameters().doubleSeq().length);
             assertEquals(0, colExplicitStorage.getGenerationParameters().doubleSeq().length);
         } catch (AoException e) {
@@ -137,9 +128,18 @@ public class ColumnImplTest {
     @Test
     public void testGetRawDataType() {
         try {
-            assertEquals(DataType.DT_DOUBLE, colTimeStorage.getRawDataType());
             assertEquals(DataType.DT_DOUBLE, colTimeCalculated.getRawDataType());
             assertEquals(DataType.DT_FLOAT, colExplicitStorage.getRawDataType());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetUnit() {
+        try {
+            assertEquals("s", colTimeCalculated.getUnit());
+            assertEquals("Pa", colExplicitStorage.getUnit());
         } catch (AoException e) {
             fail(e.reason);
         }

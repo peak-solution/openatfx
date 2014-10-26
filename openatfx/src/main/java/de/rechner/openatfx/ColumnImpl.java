@@ -37,6 +37,9 @@ class ColumnImpl extends ColumnPOA {
     private final InstanceElement ieLocalColumn;
     private final ValueMatrixMode mode;
 
+    /** is not null if other unit is set */
+    private InstanceElement unit = null;
+
     /**
      * Constructor.
      * 
@@ -53,7 +56,7 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the source measurement quantity.
      * 
      * @see org.asam.ods.ColumnOperations#getSourceMQ()
      */
@@ -88,7 +91,7 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the name of the column.
      * 
      * @see org.asam.ods.ColumnOperations#getName()
      */
@@ -97,7 +100,8 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the formula of the column. As there is currently no specification of a formula within ASAM ODS, this method
+     * should not be used; it will return an empty string if used.
      * 
      * @see org.asam.ods.ColumnOperations#getFormula()
      */
@@ -106,7 +110,7 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Is the column an independent column.
      * 
      * @see org.asam.ods.ColumnOperations#isIndependent()
      */
@@ -116,7 +120,12 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the data type of the column. This method always returns the data type of the measurement quantity to which
+     * this local column belongs, independent of
+     * <ul>
+     * <li>the value matrix mode of the value matrices this local column belongs to</li>
+     * <li>the sequence representation of this local column</li>
+     * </ul>
      * 
      * @see org.asam.ods.ColumnOperations#getDataType()
      */
@@ -131,11 +140,16 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the sequence representation of the column. When the value matrix mode of the value matrix to which the column
+     * belongs is 'CALCULATED', the sequence representation is always explicit.
      * 
      * @see org.asam.ods.ColumnOperations#getSequenceRepresentation()
      */
     public int getSequenceRepresentation() throws AoException {
+        if (this.mode == ValueMatrixMode.CALCULATED) {
+            return 0; // explicit
+        }
+
         NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("sequence_representation");
         if (nvu.value.flag != 15) {
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
@@ -145,11 +159,21 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the generation parameters of the column. If no generation parameters exist, an empty sequence is returned,
+     * whose type is double and whose length is 0. If the value matrix mode of the value matrix to which the column
+     * belongs is 'CALCULATED', an empty sequence is returned, whose type is double and whose length is 0. The data type
+     * of the generation parameters for implicit columns is the data type given at the corresponding measurement
+     * quantity. The data type of the generation parameters for raw data is always T_DOUBLE
      * 
      * @see org.asam.ods.ColumnOperations#getGenerationParameters()
      */
     public TS_Union getGenerationParameters() throws AoException {
+        if (this.mode == ValueMatrixMode.CALCULATED) {
+            TS_Union u = new TS_Union();
+            u.doubleSeq(new double[0]);
+            return u;
+        }
+
         NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("generation_parameters");
         if (nvu.value.flag != 15) {
             TS_Union u = new TS_Union();
@@ -160,7 +184,10 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the data type of the raw values (which is the value of the attribute derived from the base attribute
+     * 'raw_datatype'). If the local column does not contain raw values, the data type of the corresponding measurement
+     * quantity is returned. Also, if the value matrix mode of the value matrix to which the column belongs is
+     * 'CALCULATED', the data type of the measurement quantity is returned.
      * 
      * @see org.asam.ods.ColumnOperations#getRawDataType()
      */
@@ -177,16 +204,79 @@ class ColumnImpl extends ColumnPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the unit of the column. The method returns the unit of the values according the current setting. Initially
+     * within a session this is the unit as given in the storage. After setUnit() is called for a particular column, the
+     * unit as specified by setUnit() will be returned for this column. Thus the unit returned will be retrieved by the
+     * ODS server according to following strategy:
+     * <ul>
+     * <li>1) if a unit has already been set for the particular column by setUnit(..) before, that unit is returned,
+     * else</li>
+     * <li>2) if the related measurement quantity has a unit (i.e. it has a relation derived from the base relation
+     * 'unit' referencing an instance of base type AoUnit), that unit's name is returned, else</li>
+     * <li>3) if the related measurement quantity has a relation to a quantity (i.e. its relation derived from the base
+     * relation 'quantity' is referencing an instance of base type AoQuantity), and this quantity has a default unit
+     * (i.e. it has a relation derived from the base relation 'default_unit' referencing an instance of base type
+     * AoUnit), that unit's name is returned, else</li>
+     * <li>4) an empty string is returned.</li>
+     * </ul>
      * 
      * @see org.asam.ods.ColumnOperations#getUnit()
      */
     public String getUnit() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        InstanceElement ieMeq = getSourceMQ();
+
+        // 1) if a unit has already been set for the particular column by setUnit(..) before, that unit is returned,
+        if (this.unit != null) {
+            return this.unit.getName();
+        }
+
+        // 2) if the related measurement quantity has a unit (i.e. it has a relation derived from the
+        // base relation 'unit' referencing an instance of base type AoUnit), that unit's name is
+        // returned
+        long aidMeq = ODSHelper.asJLong(ieMeq.getApplicationElement().getId());
+        ApplicationRelation applRelMeqUnit = this.atfxCache.getApplicationRelationByBaseName(aidMeq, "unit");
+        if (applRelMeqUnit != null) {
+            InstanceElementIterator iter = ieMeq.getRelatedInstances(applRelMeqUnit, "*");
+            InstanceElement[] instances = iter.nextN(iter.getCount());
+            iter.destroy();
+            if (instances.length == 1) {
+                return instances[0].getName();
+            }
+        }
+
+        // 3) if the related measurement quantity has a relation to a quantity (i.e. its relation
+        // derived from the base relation 'quantity' is referencing an instance of base type
+        // AoQuantity), and this quantity has a default unit (i.e. it has a relation derived from the
+        // base relation 'default_unit' referencing an instance of base type AoUnit), that unit's
+        // name is returned
+        ApplicationRelation applRelMeqQuantity = this.atfxCache.getApplicationRelationByBaseName(aidMeq, "quantity");
+        if (applRelMeqQuantity != null) {
+            InstanceElementIterator iter = ieMeq.getRelatedInstances(applRelMeqQuantity, "*");
+            InstanceElement[] instances = iter.nextN(iter.getCount());
+            iter.destroy();
+            if (instances.length == 1) {
+                InstanceElement ieQuantity = instances[0];
+                long aidQuantity = ODSHelper.asJLong(ieQuantity.getApplicationElement().getId());
+                ApplicationRelation applRelQuantityUnit = this.atfxCache.getApplicationRelationByBaseName(aidQuantity,
+                                                                                                          "default_unit");
+                if (applRelQuantityUnit != null) {
+                    iter = ieQuantity.getRelatedInstances(applRelQuantityUnit, "*");
+                    instances = iter.nextN(iter.getCount());
+                    iter.destroy();
+                    if (instances.length == 1) {
+                        return instances[0].getName();
+                    }
+                }
+            }
+        }
+
+        // 4) an empty string is returned.
+        return "";
     }
 
     /**
-     * {@inheritDoc}
+     * Destroy the object on the server. This method is used to tell the server that this object is not used anymore by
+     * the client. Access to this object after the destroy method will lead to an exception.
      * 
      * @see org.asam.ods.ColumnOperations#destroy()
      */

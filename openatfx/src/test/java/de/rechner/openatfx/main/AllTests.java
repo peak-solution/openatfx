@@ -61,9 +61,9 @@ public class AllTests {
         suite.addTest(InstanceElementIteratorImplTest.suite());
         suite.addTest(NameIteratorImplTest.suite());
         suite.addTest(NameValueIteratorImplTest.suite());
+        suite.addTest(MeasurementImplTest.suite());
         suite.addTest(ValueMatrixOnSubMatrixImplTest.suite());
         suite.addTest(ColumnImplTest.suite());
-        suite.addTest(MeasurementImplTest.suite());
 
         suite.addTest(AtfxParseUtilTest.suite());
 
