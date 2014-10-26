@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -8,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.Column;
 import org.asam.ods.ColumnHelper;
+import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
@@ -19,13 +21,19 @@ import org.asam.ods.NameValueUnitIterator;
 import org.asam.ods.Relationship;
 import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_UnionSeq;
+import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.T_LONGLONG;
 import org.asam.ods.ValueMatrixMode;
 import org.asam.ods.ValueMatrixPOA;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+
+import de.rechner.openatfx.util.ODSHelper;
 
 
 /**
@@ -55,7 +63,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the current mode of the value matrix.
      * 
      * @see org.asam.ods.ValueMatrixOperations#getMode()
      */
@@ -64,8 +72,15 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the column count of the value matrix.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @return The number of columns of the value matrix.
      * @see org.asam.ods.ValueMatrixOperations#getColumnCount()
      */
     public int getColumnCount() throws AoException {
@@ -76,8 +91,15 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the row count of the value matrix.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @return The number of rows of the value matrix.
      * @see org.asam.ods.ValueMatrixOperations#getRowCount()
      */
     public int getRowCount() throws AoException {
@@ -89,8 +111,19 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the names of the columns of the value matrix no matter whether the column is dependent or independent. The
+     * pattern is case sensitive and may contain wildcard characters.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_BAD_PARAMETER<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @param colPattern The name or the search pattern for the column names.
+     * @return The column names of the value matrix, no matter whether the column is dependent, independent or scaled by
+     *         another one.
      * @see org.asam.ods.ValueMatrixOperations#listColumns(java.lang.String)
      */
     public String[] listColumns(String colPattern) throws AoException {
@@ -107,8 +140,18 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the names of the independent columns of the value matrix. The independent columns are the columns used to
+     * build the value matrix.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_BAD_PARAMETER<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @param colPattern The name or the search pattern for the independent column name.
+     * @return The names of the independent columns of the value matrix.
      * @see org.asam.ods.ValueMatrixOperations#listIndependentColumns(java.lang.String)
      */
     public String[] listIndependentColumns(String colPattern) throws AoException {
@@ -128,8 +171,18 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the columns of the value matrix no matter whether the column is dependent or independent. The pattern is case
+     * sensitive and may contain wildcard characters.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_BAD_PARAMETER<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @param colPattern The name or the search pattern for the column names.
+     * @return The columns of the value matrix, no matter whether the column is dependent, independent or scaling
      * @see org.asam.ods.ValueMatrixOperations#getColumns(java.lang.String)
      */
     public Column[] getColumns(String colPattern) throws AoException {
@@ -141,9 +194,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
             List<Column> list = new ArrayList<Column>(ies.length);
             for (int i = 0; i < ies.length; i++) {
-                ColumnImpl columnImpl = new ColumnImpl(this.modelPOA,
-                                                                             this.sourceSubMatrix.atfxCache, ies[i],
-                                                                             this.mode);
+                ColumnImpl columnImpl = new ColumnImpl(this.modelPOA, this.sourceSubMatrix.atfxCache, ies[i], this.mode);
                 Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
                 list.add(column);
             }
@@ -158,8 +209,18 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * Get the independent columns of the value matrix.<br>
+     * The independent columns are the columns used to build the value matrix.
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_BAD_PARAMETER<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
+     *             AO_SESSION_NOT_ACTIVE
+     * @param colPattern The name or the search pattern for the independent column name.
+     * @return The independent column of the value matrix.
      * @see org.asam.ods.ValueMatrixOperations#getIndependentColumns(java.lang.String)
      */
     public Column[] getIndependentColumns(String colPattern) throws AoException {
@@ -173,9 +234,8 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             for (int i = 0; i < ies.length; i++) {
                 NameValueUnit nvu = ies[i].getValueByBaseName("independent");
                 if (nvu.value.flag == 15 && nvu.value.u.shortVal() > 0) {
-                    ColumnImpl columnImpl = new ColumnImpl(this.modelPOA,
-                                                                                 this.sourceSubMatrix.atfxCache,
-                                                                                 ies[i], this.mode);
+                    ColumnImpl columnImpl = new ColumnImpl(this.modelPOA, this.sourceSubMatrix.atfxCache, ies[i],
+                                                           this.mode);
                     Column column = ColumnHelper.unchecked_narrow(modelPOA.servant_to_reference(columnImpl));
                     list.add(column);
                 }
@@ -191,12 +251,337 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     }
 
     /**
-     * {@inheritDoc}
+     * <p>
+     * Get the values or a part of values of the column from the value matrix. The parameter column specifies from which
+     * column the values will be returned. The startPoint and count specify the part of the vector. A startPoint = 0 and
+     * count = rowCount will return the entire vector. When startPoint >= rowCount an exception is thrown. If startPoint
+     * + count > rowCount only the remaining values of the vector are returned and no exception is thrown. Use the
+     * getName and getUnit method of the interface column for the name and the unit of the column. The name and the
+     * value are not stored at each element of the vector. The return type TS_ValueSeq is not a sequence of TS_Value but
+     * a special structure.
+     * </p>
+     * <p>
+     * The server behavior depends on the mode of the value matrix. Value matrix mode 'CALCULATED':<br>
+     * In case 'sequence_representation' of the corresponding local column is one of the entries 'raw_linear',
+     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated', or
+     * 'raw_linear_calibrated_external', the server will first calculate the physical values from raw values and
+     * generation parameters, before it returns them to the requesting client.
+     * </p>
+     * <p>
+     * Value matrix mode 'STORAGE':<br>
+     * In case 'sequence_representation' of the corresponding local column is one of the entries 'raw_linear',
+     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated', or
+     * 'raw_linear_calibrated_external', the server will return the raw values of the local column.
+     * </p>
      * 
+     * @throws AoException with the following possible error codes:<br>
+     *             AO_BAD_PARAMETER<br>
+     *             AO_CONNECTION_LOST<br>
+     *             AO_IMPLEMENTATION_PROBLEM<br>
+     *             AO_INVALID_COLUMN<br>
+     *             AO_INVALID_COUNT<br>
+     *             AO_NOT_IMPLEMENTED<br>
+     *             AO_NO_MEMORY<br>
      * @see org.asam.ods.ValueMatrixOperations#getValueVector(org.asam.ods.Column, int, int)
      */
     public TS_ValueSeq getValueVector(Column col, int startPoint, int count) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        int rowCount = getRowCount();
+        AtfxCache atfxCache = this.sourceSubMatrix.atfxCache;
+        InstanceElement ieLc = getLocalColumnInstanceByName(col.getName());
+        long aidLc = ODSHelper.asJLong(ieLc.getApplicationElement().getId());
+        long iidLc = ODSHelper.asJLong(ieLc.getId());
+        DataType targetDt = col.getDataType();
+
+        // range check
+        if (startPoint < 0) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "startPoint must be >0");
+        }
+        if (startPoint >= rowCount) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "startPoint must be <rowCount, rowCount=" + rowCount);
+        }
+        if (count < 0) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "count must be >0");
+        }
+        if ((count == 0) || ((startPoint + count) > rowCount)) {
+            count = rowCount - startPoint;
+        }
+
+        // create structure
+        TS_ValueSeq valueSeq = new TS_ValueSeq();
+        valueSeq.u = new TS_UnionSeq();
+
+        // load flags: first check global_flag, then flags
+        Integer attrNoGlobalFlag = atfxCache.getAttrNoByBaName(aidLc, "global_flag");
+        Integer attrNoFlags = atfxCache.getAttrNoByBaName(aidLc, "flags");
+        if (attrNoGlobalFlag != null) {
+            TS_Value globalFlag = atfxCache.getInstanceValue(aidLc, attrNoGlobalFlag, iidLc);
+            if (globalFlag.flag == 15) {
+                valueSeq.flag = new short[count];
+                Arrays.fill(valueSeq.flag, globalFlag.u.shortVal());
+            }
+        }
+        if (valueSeq.flag == null && attrNoFlags != null) {
+            TS_Value flags = atfxCache.getInstanceValue(aidLc, attrNoFlags, iidLc);
+            if (flags.flag == 15) {
+                valueSeq.flag = new short[count];
+                System.arraycopy(flags.u.shortSeq(), startPoint, valueSeq.flag, 0, count);
+            }
+        }
+        if (valueSeq.flag == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Either 'flags' or 'global_flag must be set!");
+        }
+
+        // load values
+        NameValueUnit nvuSeqReq = ieLc.getValueByBaseName("sequence_representation");
+        if (nvuSeqReq.value.flag != 15) {
+            throw new AoException(ErrorCode.AO_INVALID_COLUMN, SeverityFlag.ERROR, 0,
+                                  "sequence_representation not set!");
+        }
+        int seqReq = nvuSeqReq.value.u.enumVal();
+
+        // explicit (=0), external_component (=7)
+        if (seqReq == 0 || seqReq == 7) {
+            NameValueUnit values = ieLc.getValueByBaseName("values");
+            handleValuesExplicit(values, valueSeq, targetDt, startPoint, count);
+        }
+
+        // implicit_constant
+        else if (seqReq == 1) {
+            NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
+            handleValuesImplicitConstant(genParams.value.u.doubleSeq(), valueSeq, targetDt, count);
+        }
+
+        // implicit_linear
+        else if (seqReq == 2) {
+            NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
+            handleValuesImplicitLinear(genParams.value.u.doubleSeq(), valueSeq, targetDt, startPoint, count);
+        }
+
+        // implicit_linear (=2)
+        // implicit_saw (=3)
+        // raw_linear (=4), raw_linear_external (=8)
+        // raw_polynomial (=5), aw_polynomial_external (=9)
+        // formula (=6); not used in ASAM ODS V5.3.0
+        // raw_linear_calibrated (=10)
+        // raw_linear_calibrated_external (=11)
+
+        return valueSeq;
+    }
+
+    private void handleValuesExplicit(NameValueUnit values, TS_ValueSeq valueSeq, DataType targetDt, int startPoint,
+            int count) throws AoException {
+        DataType rawDt = values.value.u.discriminator();
+        if (rawDt == DataType.DS_STRING) {
+            valueSeq.u.stringVal(values.value.u.stringSeq());
+        } else if (rawDt == DataType.DS_DATE) {
+            valueSeq.u.dateVal(values.value.u.dateSeq());
+        } else if (rawDt == DataType.DS_BOOLEAN) {
+            valueSeq.u.booleanVal(values.value.u.booleanSeq());
+        } else if (rawDt == DataType.DS_COMPLEX) {
+            valueSeq.u.complexVal(values.value.u.complexSeq());
+        } else if (rawDt == DataType.DS_DCOMPLEX) {
+            valueSeq.u.dcomplexVal(values.value.u.dcomplexSeq());
+        } else {
+            List<Number> list = getNumbericValues(values.value.u);
+            // DS_SHORT
+            if (targetDt == DataType.DT_SHORT) {
+                valueSeq.u.shortVal(new short[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.shortVal()[i] = list.get(startPoint + i).shortValue();
+                }
+            }
+            // DS_FLOAT
+            else if (targetDt == DataType.DT_FLOAT) {
+                valueSeq.u.floatVal(new float[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.floatVal()[i] = list.get(startPoint + i).floatValue();
+                }
+            }
+            // DS_DOUBLE
+            else if (targetDt == DataType.DT_DOUBLE) {
+                valueSeq.u.doubleVal(new double[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.doubleVal()[i] = list.get(startPoint + i).doubleValue();
+                }
+            }
+            // DS_LONG
+            else if (targetDt == DataType.DT_LONG) {
+                valueSeq.u.longVal(new int[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.longVal()[i] = list.get(startPoint + i).intValue();
+                }
+            }
+            // DS_LONGLONG
+            else if (targetDt == DataType.DT_LONGLONG) {
+                valueSeq.u.longlongVal(new T_LONGLONG[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.longlongVal()[i] = ODSHelper.asODSLongLong(list.get(startPoint + i).longValue());
+                }
+            }
+            // DS_BYTE
+            else if (targetDt == DataType.DS_BYTE) {
+                valueSeq.u.byteVal(new byte[count]);
+                for (int i = 0; i < count; i++) {
+                    valueSeq.u.byteVal()[i] = list.get(startPoint + i).byteValue();
+                }
+            } else {
+                throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                      "Unsupported datatype for sequence_representation=explicit or external_component: "
+                                              + ODSHelper.dataType2String(rawDt));
+            }
+        }
+    }
+
+    private void handleValuesImplicitConstant(double[] genParams, TS_ValueSeq valueSeq, DataType targetDt, int count)
+            throws AoException {
+        if (genParams.length != 1) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "Generation parameters for sequence_representation=implicit_constant must have length=1");
+        }
+        Number genParam = genParams[0];
+
+        // DS_SHORT
+        if (targetDt == DataType.DT_SHORT) {
+            valueSeq.u.shortVal(new short[count]);
+            Arrays.fill(valueSeq.u.shortVal(), genParam.shortValue());
+        }
+        // DS_FLOAT
+        else if (targetDt == DataType.DT_FLOAT) {
+            valueSeq.u.floatVal(new float[count]);
+            Arrays.fill(valueSeq.u.floatVal(), genParam.floatValue());
+        }
+        // DS_DOUBLE
+        else if (targetDt == DataType.DT_DOUBLE) {
+            valueSeq.u.doubleVal(new double[count]);
+            Arrays.fill(valueSeq.u.doubleVal(), genParam.doubleValue());
+        }
+        // DS_LONG
+        else if (targetDt == DataType.DT_LONG) {
+            valueSeq.u.longVal(new int[count]);
+            Arrays.fill(valueSeq.u.longVal(), genParam.intValue());
+        }
+        // DS_LONGLONG
+        else if (targetDt == DataType.DT_LONGLONG) {
+            valueSeq.u.longlongVal(new T_LONGLONG[count]);
+            Arrays.fill(valueSeq.u.longlongVal(), ODSHelper.asODSLongLong(genParam.longValue()));
+        }
+        // DS_BYTE
+        else if (targetDt == DataType.DS_BYTE) {
+            valueSeq.u.byteVal(new byte[count]);
+            Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
+        } else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype for sequence_representation=implicit_constant: "
+                                          + ODSHelper.dataType2String(targetDt));
+        }
+    }
+
+    private void handleValuesImplicitLinear(double[] genParams, TS_ValueSeq valueSeq, DataType targetDt,
+            int startPoint, int count) throws AoException {
+        if (genParams.length != 2) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "Generation parameters for sequence_representation=implicit_linear must have length=2");
+        }
+        Number genParam = genParams[0];
+
+        // DS_SHORT
+        if (targetDt == DataType.DT_SHORT) {
+            valueSeq.u.shortVal(new short[count]);
+            for (int i = 0; i < count; i++) {
+                // valueSeq.u.shortVal()
+            }
+        }
+        // DS_FLOAT
+        else if (targetDt == DataType.DT_FLOAT) {
+            valueSeq.u.floatVal(new float[count]);
+            // Arrays.fill(valueSeq.u.floatVal(), genParam.floatValue());
+        }
+        // DS_DOUBLE
+        else if (targetDt == DataType.DT_DOUBLE) {
+            valueSeq.u.doubleVal(new double[count]);
+            // Arrays.fill(valueSeq.u.doubleVal(), genParam.doubleValue());
+        }
+        // DS_LONG
+        else if (targetDt == DataType.DT_LONG) {
+            valueSeq.u.longVal(new int[count]);
+            // Arrays.fill(valueSeq.u.longVal(), genParam.intValue());
+        }
+        // DS_LONGLONG
+        else if (targetDt == DataType.DT_LONGLONG) {
+            valueSeq.u.longlongVal(new T_LONGLONG[count]);
+            // Arrays.fill(valueSeq.u.longlongVal(), ODSHelper.asODSLongLong(genParam.longValue()));
+        }
+        // DS_BYTE
+        else if (targetDt == DataType.DS_BYTE) {
+            valueSeq.u.byteVal(new byte[count]);
+            // Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
+        } else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype for sequence_representation=implicit_linear: "
+                                          + ODSHelper.dataType2String(targetDt));
+        }
+    }
+
+    private List<Number> getNumbericValues(TS_Union u) throws AoException {
+        DataType dt = u.discriminator();
+        List<Number> list = new ArrayList<Number>();
+        // DS_SHORT
+        if (dt == DataType.DS_SHORT) {
+            for (short v : u.shortSeq()) {
+                list.add(v);
+            }
+        }
+        // DS_FLOAT
+        else if (dt == DataType.DS_FLOAT) {
+            for (float v : u.floatSeq()) {
+                list.add(v);
+            }
+        }
+        // DS_BYTE
+        else if (dt == DataType.DS_BYTE) {
+            for (byte v : u.byteSeq()) {
+                list.add(v);
+            }
+        }
+        // DS_LONG
+        else if (dt == DataType.DS_LONG) {
+            for (int v : u.longSeq()) {
+                list.add(v);
+            }
+        }
+        // DS_DOUBLE
+        else if (dt == DataType.DS_DOUBLE) {
+            for (double v : u.doubleSeq()) {
+                list.add(v);
+            }
+        }
+        // DS_LONGLONG
+        else if (dt == DataType.DS_LONGLONG) {
+            for (T_LONGLONG v : u.longlongSeq()) {
+                list.add(ODSHelper.asJLong(v));
+            }
+        }
+        // not allowed
+        else {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "not allowed numeric datatype: "
+                    + ODSHelper.dataType2String(dt));
+        }
+        return list;
+    }
+
+    private InstanceElement getLocalColumnInstanceByName(String name) throws AoException {
+        InstanceElementIterator iter = sourceSubMatrix.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+        InstanceElement[] ies = iter.nextN(iter.getCount());
+        iter.destroy();
+        for (InstanceElement ie : ies) {
+            if (ie.getName().equals(name)) {
+                return ie;
+            }
+        }
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "LocalColumn instance '" + name
+                + "' not found!");
     }
 
     /**

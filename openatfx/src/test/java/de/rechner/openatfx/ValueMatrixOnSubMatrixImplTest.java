@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 
 import junit.framework.JUnit4TestAdapter;
 
@@ -15,6 +16,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.Column;
 import org.asam.ods.SubMatrix;
+import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
 import org.junit.AfterClass;
@@ -140,6 +142,34 @@ public class ValueMatrixOnSubMatrixImplTest {
 
             cols = vmStorage.getIndependentColumns("Left Side");
             assertEquals(0, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetValueVector() {
+        try {
+            Column[] cols = vmCalculated.getColumns("*");
+            // whole array
+            TS_ValueSeq seq = vmCalculated.getValueVector(cols[0], 0, 0);
+            assertEquals(167, seq.flag.length);
+            assertEquals(167, seq.u.floatVal().length);
+
+            // part array
+            seq = vmCalculated.getValueVector(cols[0], 100, 3);
+            assertEquals(3, seq.flag.length);
+            assertEquals(3, seq.u.floatVal().length);
+
+            // part array with count overflow
+            seq = vmCalculated.getValueVector(cols[0], 100, 100);
+            assertEquals(67, seq.flag.length);
+            assertEquals(67, seq.u.floatVal().length);
+
+            
+            System.out.println(Arrays.toString(seq.flag));
+            System.out.println(Arrays.toString(seq.u.floatVal()));
+
         } catch (AoException e) {
             fail(e.reason);
         }
