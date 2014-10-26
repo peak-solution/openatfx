@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -196,22 +197,28 @@ class ExtCompReader {
 
         // read values
         RandomAccessFile raf = null;
-        byte[] backingBuffer = new byte[blockSize];
-        ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
-        ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-        if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 11)) {
-            byteOrder = ByteOrder.BIG_ENDIAN;
-        }
-        sourceMbb.order(byteOrder);
+        FileChannel inChannel = null;
+
         try {
             // open source channel
             raf = new RandomAccessFile(extCompFile, "r");
-            raf.seek(startOffset);
+            inChannel = raf.getChannel();
+            inChannel.position(startOffset);
+
+            // initialize buffer
+            ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
+            ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+            if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 11)) {
+                byteOrder = ByteOrder.BIG_ENDIAN;
+            }
+            sourceMbb.order(byteOrder);
 
             // loop over blocks
             for (int i = 0; i < componentLength; i += valuesperblock) {
-                raf.read(backingBuffer);
+                sourceMbb.clear();
+                inChannel.read(sourceMbb);
                 sourceMbb.position(valueOffset);
+
                 // sub blocks are consecutive, puhh!
                 for (int j = 0; j < valuesperblock; j++) {
 
@@ -241,7 +248,6 @@ class ExtCompReader {
                     }
                     // unsupported data type
                     else {
-                        raf.close();
                         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                               "Unsupported 'value_type': " + valueType);
                     }
@@ -255,14 +261,21 @@ class ExtCompReader {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
         } finally {
-            backingBuffer = null;
-            try {
-                if (raf != null) {
+            if (inChannel != null) {
+                try {
+                    inChannel.close();
+                } catch (IOException ioe) {
+                    LOG.error(ioe.getMessage(), ioe);
+                }
+                inChannel = null;
+            }
+            if (raf != null) {
+                try {
                     raf.close();
+                } catch (IOException ioe) {
+                    LOG.error(ioe.getMessage(), ioe);
                 }
                 raf = null;
-            } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
             }
         }
     }

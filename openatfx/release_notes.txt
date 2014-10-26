@@ -44,6 +44,8 @@
 	      * getGenerationParameters
 	      * getRawDataType
 	      * destroy
+	    - Changed reading of external component files to 'FileChannel'
+	      for performance reasons
 
 
 	0.5.2 (Gigatronik Ingolstadt GmbH)
