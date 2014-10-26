@@ -153,6 +153,8 @@ class ExtCompReader {
     }
 
     private List<Number> readNumberValues(AtfxCache atfxCache, long iidLc) throws AoException {
+        long start = System.currentTimeMillis();
+
         List<Number> list = new ArrayList<Number>();
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
@@ -246,6 +248,8 @@ class ExtCompReader {
                 }
             }
 
+            LOG.info("Read " + list.size() + " numeric values from external file in "
+                    + (System.currentTimeMillis() - start) + "ms");
             return list;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
@@ -264,6 +268,7 @@ class ExtCompReader {
     }
 
     private Collection<String> readStringValues(AtfxCache atfxCache, long iidExtComp) throws AoException {
+        long start = System.currentTimeMillis();
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
@@ -313,6 +318,9 @@ class ExtCompReader {
                     startPosition = position + 1;
                 }
             }
+
+            LOG.info("Read " + list.size() + " string values from external file in "
+                    + (System.currentTimeMillis() - start) + "ms");
             return list;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

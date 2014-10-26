@@ -347,25 +347,57 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             handleValuesExplicit(values, valueSeq, targetDt, startPoint, count);
         }
 
-        // implicit_constant
+        // implicit_constant (=1)
         else if (seqReq == 1) {
             NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
             handleValuesImplicitConstant(genParams.value.u.doubleSeq(), valueSeq, targetDt, count);
         }
 
-        // implicit_linear
+        // implicit_linear (=2)
         else if (seqReq == 2) {
             NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
             handleValuesImplicitLinear(genParams.value.u.doubleSeq(), valueSeq, targetDt, startPoint, count);
         }
 
-        // implicit_linear (=2)
         // implicit_saw (=3)
+        else if (seqReq == 3) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "sequence_representation=implicit_saw is not yet implemented");
+        }
+
         // raw_linear (=4), raw_linear_external (=8)
-        // raw_polynomial (=5), aw_polynomial_external (=9)
-        // formula (=6); not used in ASAM ODS V5.3.0
-        // raw_linear_calibrated (=10)
-        // raw_linear_calibrated_external (=11)
+        else if (seqReq == 4 || seqReq == 8) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "sequence_representation=raw_linear or raw_linear_external is not yet implemented");
+        }
+
+        // raw_polynomial (=5), raw_polynomial_external (=9)
+        else if (seqReq == 5 || seqReq == 9) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "sequence_representation=raw_polynomial or raw_polynomial_external is not yet implemented");
+        }
+
+        // formula (=6)
+        else if (seqReq == 6) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "sequence_representation=formula is not yet implemented");
+        }
+
+        // raw_linear_calibrated (=10), raw_linear_calibrated_external (=11)
+        else if (seqReq == 10 || seqReq == 11) {
+            if (this.mode == ValueMatrixMode.STORAGE) {
+                NameValueUnit values = ieLc.getValueByBaseName("values");
+                handleValuesRawLinearCalibratedStorage(values, valueSeq, startPoint, rowCount);
+            } else if (this.mode == ValueMatrixMode.CALCULATED) {
+                NameValueUnit values = ieLc.getValueByBaseName("values");
+                NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
+                handleValuesRawLinearCalibratedCalculated(values, genParams.value.u.doubleSeq(), valueSeq, targetDt,
+                                                          startPoint, rowCount);
+            } else {
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Unsupported ValueMatrixMode: " + this.mode);
+            }
+        }
 
         return valueSeq;
     }
@@ -373,15 +405,17 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
     private void handleValuesExplicit(NameValueUnit values, TS_ValueSeq valueSeq, DataType targetDt, int startPoint,
             int count) throws AoException {
         DataType rawDt = values.value.u.discriminator();
-        if (rawDt == DataType.DS_STRING) {
+        if (rawDt == DataType.DS_STRING && targetDt == DataType.DT_STRING) {
             valueSeq.u.stringVal(values.value.u.stringSeq());
-        } else if (rawDt == DataType.DS_DATE) {
+        } else if (rawDt == DataType.DS_STRING && targetDt == DataType.DT_DATE) {
+            valueSeq.u.dateVal(values.value.u.stringSeq());
+        } else if (rawDt == DataType.DS_DATE && targetDt == DataType.DT_DATE) {
             valueSeq.u.dateVal(values.value.u.dateSeq());
-        } else if (rawDt == DataType.DS_BOOLEAN) {
+        } else if (rawDt == DataType.DS_BOOLEAN && targetDt == DataType.DT_BOOLEAN) {
             valueSeq.u.booleanVal(values.value.u.booleanSeq());
-        } else if (rawDt == DataType.DS_COMPLEX) {
+        } else if (rawDt == DataType.DS_COMPLEX && targetDt == DataType.DT_COMPLEX) {
             valueSeq.u.complexVal(values.value.u.complexSeq());
-        } else if (rawDt == DataType.DS_DCOMPLEX) {
+        } else if (rawDt == DataType.DS_DCOMPLEX && targetDt == DataType.DT_DCOMPLEX) {
             valueSeq.u.dcomplexVal(values.value.u.dcomplexSeq());
         } else {
             List<Number> list = getNumbericValues(values.value.u);
@@ -426,7 +460,9 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
                 for (int i = 0; i < count; i++) {
                     valueSeq.u.byteVal()[i] = list.get(startPoint + i).byteValue();
                 }
-            } else {
+            }
+            // unsupported
+            else {
                 throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                       "Unsupported datatype for sequence_representation=explicit or external_component: "
                                               + ODSHelper.dataType2String(rawDt));
@@ -471,7 +507,9 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         else if (targetDt == DataType.DS_BYTE) {
             valueSeq.u.byteVal(new byte[count]);
             Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
-        } else {
+        }
+        // unsupported
+        else {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "Unsupported datatype for sequence_representation=implicit_constant: "
                                           + ODSHelper.dataType2String(targetDt));
@@ -484,44 +522,178 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "Generation parameters for sequence_representation=implicit_linear must have length=2");
         }
-        double factor = genParams[0];
-        double offset = genParams[1];
+        // xn=p1+(n-1)*p2 (start value, increment)
+        double offset = genParams[0];
+        double factor = genParams[1];
 
         // DS_SHORT
         if (targetDt == DataType.DT_SHORT) {
             valueSeq.u.shortVal(new short[count]);
             for (int i = 0; i < count; i++) {
-                // valueSeq.u.shortVal()
+                valueSeq.u.shortVal()[i] = (short) (offset + (startPoint + i) * factor);
             }
         }
         // DS_FLOAT
         else if (targetDt == DataType.DT_FLOAT) {
             valueSeq.u.floatVal(new float[count]);
-            // Arrays.fill(valueSeq.u.floatVal(), genParam.floatValue());
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.floatVal()[i] = (float) (offset + (startPoint + i) * factor);
+            }
         }
         // DS_DOUBLE
         else if (targetDt == DataType.DT_DOUBLE) {
             valueSeq.u.doubleVal(new double[count]);
-            // Arrays.fill(valueSeq.u.doubleVal(), genParam.doubleValue());
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.doubleVal()[i] = (offset + (startPoint + i) * factor);
+            }
         }
         // DS_LONG
         else if (targetDt == DataType.DT_LONG) {
             valueSeq.u.longVal(new int[count]);
-            // Arrays.fill(valueSeq.u.longVal(), genParam.intValue());
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.longVal()[i] = (int) (offset + (startPoint + i) * factor);
+            }
         }
         // DS_LONGLONG
         else if (targetDt == DataType.DT_LONGLONG) {
             valueSeq.u.longlongVal(new T_LONGLONG[count]);
-            // Arrays.fill(valueSeq.u.longlongVal(), ODSHelper.asODSLongLong(genParam.longValue()));
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.longlongVal()[i] = ODSHelper.asODSLongLong((long) (offset + (startPoint + i) * factor));
+            }
         }
         // DS_BYTE
         else if (targetDt == DataType.DS_BYTE) {
             valueSeq.u.byteVal(new byte[count]);
-            // Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
-        } else {
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.byteVal()[i] = (byte) (offset + (startPoint + i) * factor);
+            }
+        }
+        // unsupported
+        else {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "Unsupported datatype for sequence_representation=implicit_linear: "
                                           + ODSHelper.dataType2String(targetDt));
+        }
+    }
+
+    private void handleValuesRawLinearCalibratedStorage(NameValueUnit values, TS_ValueSeq valueSeq, int startPoint,
+            int count) throws AoException {
+        DataType rawDt = values.value.u.discriminator();
+        // DS_SHORT
+        if (rawDt == DataType.DT_SHORT) {
+            valueSeq.u.shortVal(new short[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.shortVal()[i] = values.value.u.shortSeq()[startPoint + i];
+            }
+        }
+        // DS_FLOAT
+        else if (rawDt == DataType.DT_FLOAT) {
+            valueSeq.u.floatVal(new float[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.floatVal()[i] = values.value.u.floatSeq()[startPoint + i];
+            }
+        }
+        // DS_DOUBLE
+        else if (rawDt == DataType.DT_DOUBLE) {
+            valueSeq.u.doubleVal(new double[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.doubleVal()[i] = values.value.u.doubleSeq()[startPoint + i];
+            }
+        }
+        // DS_LONG
+        else if (rawDt == DataType.DT_LONG) {
+            valueSeq.u.longVal(new int[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.longVal()[i] = values.value.u.longSeq()[startPoint + i];
+            }
+        }
+        // DS_LONGLONG
+        else if (rawDt == DataType.DT_LONGLONG) {
+            valueSeq.u.longlongVal(new T_LONGLONG[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.longlongVal()[i] = values.value.u.longlongSeq()[startPoint + i];
+            }
+        }
+        // DS_BYTE
+        else if (rawDt == DataType.DS_BYTE) {
+            valueSeq.u.byteVal(new byte[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.byteVal()[i] = values.value.u.byteSeq()[startPoint + i];
+            }
+        }
+        // unsupported
+        else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype for sequence_representation=explicit or external_component: "
+                                          + ODSHelper.dataType2String(values.value.u.discriminator()));
+        }
+    }
+
+    private void handleValuesRawLinearCalibratedCalculated(NameValueUnit values, double[] genParams,
+            TS_ValueSeq valueSeq, DataType targetDt, int startPoint, int count) throws AoException {
+        if (genParams.length != 3) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "Generation parameters for sequence_representation=raw_linear_calibrated must have length=3");
+        }
+        // xn = (p1 + p2*rn)*p3 (offset, factor, calibration)
+        double offset = genParams[0];
+        double factor = genParams[1];
+        double calibration = genParams[2];
+
+        List<Number> list = getNumbericValues(values.value.u);
+        // DS_SHORT
+        if (targetDt == DataType.DT_SHORT) {
+            valueSeq.u.shortVal(new short[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.shortVal()[i] = (short) ((offset + factor * rawValue) * calibration);
+            }
+        }
+        // DS_FLOAT
+        else if (targetDt == DataType.DT_FLOAT) {
+            valueSeq.u.floatVal(new float[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.floatVal()[i] = (float) ((offset + factor * rawValue) * calibration);
+            }
+        }
+        // DS_DOUBLE
+        else if (targetDt == DataType.DT_DOUBLE) {
+            valueSeq.u.doubleVal(new double[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.doubleVal()[i] = (offset + factor * rawValue) * calibration;
+            }
+        }
+        // DS_LONG
+        else if (targetDt == DataType.DT_LONG) {
+            valueSeq.u.longVal(new int[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.longVal()[i] = (int) ((offset + factor * rawValue) * calibration);
+            }
+        }
+        // DS_LONGLONG
+        else if (targetDt == DataType.DT_LONGLONG) {
+            valueSeq.u.longlongVal(new T_LONGLONG[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.longlongVal()[i] = ODSHelper.asODSLongLong((long) ((offset + factor * rawValue) * calibration));
+            }
+        }
+        // DS_BYTE
+        else if (targetDt == DataType.DS_BYTE) {
+            valueSeq.u.byteVal(new byte[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.byteVal()[i] = (byte) ((offset + factor * rawValue) * calibration);
+            }
+        }
+        // unsupported
+        else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype for sequence_representation=explicit or external_component: "
+                                          + ODSHelper.dataType2String(values.value.u.discriminator()));
         }
     }
 
