@@ -465,7 +465,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
                 }
             }
             // DS_BYTE
-            else if (targetDt == DataType.DS_BYTE) {
+            else if (targetDt == DataType.DT_BYTE) {
                 valueSeq.u.byteVal(new byte[count]);
                 for (int i = 0; i < count; i++) {
                     valueSeq.u.byteVal()[i] = list.get(startPoint + i).byteValue();
@@ -641,7 +641,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
     private void handleValuesRawLinearCalculated(NameValueUnit values, double[] genParams, TS_ValueSeq valueSeq,
             DataType targetDt, int startPoint, int count) throws AoException {
-        if (genParams.length != 3) {
+        if (genParams.length != 2) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "Generation parameters for sequence_representation=raw_linear must have length=2");
         }
