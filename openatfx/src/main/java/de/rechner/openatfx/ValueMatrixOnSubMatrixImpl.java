@@ -159,7 +159,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         InstanceElement[] ies = iter.nextN(iter.getCount());
         iter.destroy();
 
-        List<String> list = new ArrayList<String>(ies.length);
+        List<String> list = new ArrayList<String>();
         for (int i = 0; i < ies.length; i++) {
             NameValueUnit nvu = ies[i].getValueByBaseName("independent");
             if (nvu.value.flag == 15 && nvu.value.u.shortVal() > 0) {
@@ -484,7 +484,8 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "Generation parameters for sequence_representation=implicit_linear must have length=2");
         }
-        Number genParam = genParams[0];
+        double factor = genParams[0];
+        double offset = genParams[1];
 
         // DS_SHORT
         if (targetDt == DataType.DT_SHORT) {

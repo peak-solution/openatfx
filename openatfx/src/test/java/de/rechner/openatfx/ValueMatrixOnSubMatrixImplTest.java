@@ -6,7 +6,6 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Arrays;
 
 import junit.framework.JUnit4TestAdapter;
 
@@ -165,11 +164,6 @@ public class ValueMatrixOnSubMatrixImplTest {
             seq = vmCalculated.getValueVector(cols[0], 100, 100);
             assertEquals(67, seq.flag.length);
             assertEquals(67, seq.u.floatVal().length);
-
-            
-            System.out.println(Arrays.toString(seq.flag));
-            System.out.println(Arrays.toString(seq.u.floatVal()));
-
         } catch (AoException e) {
             fail(e.reason);
         }
