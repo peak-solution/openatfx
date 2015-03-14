@@ -22,6 +22,8 @@ import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementHelper;
+import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
@@ -69,6 +71,11 @@ class AtfxCache {
     /** instance element CORBA object references */
     private final Map<Long, Map<Long, InstanceElement>> instanceElementCache; // <aid,<iid,<InstanceElement>>>
 
+    /** the instance iterator references */
+    private final Map<Long, InstanceElement[]> instanceIteratorElementCache;
+    private final Map<Long, Integer> instanceIteratorPointerCache;
+    private long nextInstanceIteratorId = 0;
+
     /** The counters for ids */
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
@@ -98,6 +105,8 @@ class AtfxCache {
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, Object>>>();
         this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
         this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
+        this.instanceIteratorElementCache = new HashMap<Long, InstanceElement[]>();
+        this.instanceIteratorPointerCache = new HashMap<Long, Integer>();
 
         this.nextAid = 1;
         this.nextAttrNoMap = new HashMap<Long, Integer>();
@@ -1089,6 +1098,29 @@ class AtfxCache {
      */
     public Collection<Long> getRelatedInstanceIds(long aid, long iid, ApplicationRelation applRel) throws AoException {
         return new ArrayList<Long>(this.instanceRelMap.get(aid).get(iid).get(applRel));
+    }
+
+    public synchronized InstanceElementIterator newInstanceElementIterator(POA instancePOA, InstanceElement[] instances)
+            throws AoException {
+        nextInstanceIteratorId++;
+        this.instanceIteratorElementCache.put(nextInstanceIteratorId, instances);
+        this.instanceIteratorPointerCache.put(nextInstanceIteratorId, 0);
+
+        byte[] oid = toByta(new long[] { 3, nextInstanceIteratorId, 0 }); // 3=InstanceElementIterator
+        org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementIteratorHelper.id());
+        return InstanceElementIteratorHelper.unchecked_narrow(obj);
+    }
+
+    public InstanceElement[] getIteratorInstances(long id) {
+        return this.instanceIteratorElementCache.get(id);
+    }
+
+    public int getIteratorPointer(long id) {
+        return this.instanceIteratorPointerCache.get(id);
+    }
+
+    public void setIteratorPointer(long id, int pointer) {
+        this.instanceIteratorPointerCache.put(id, pointer);
     }
 
 }

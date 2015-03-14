@@ -21,7 +21,6 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
-import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameIteratorHelper;
 import org.asam.ods.NameValueSeqUnit;
@@ -49,14 +48,14 @@ import de.rechner.openatfx.util.PatternUtil;
  */
 class ApplicationElementImpl extends ApplicationElementPOA {
 
-    private static final Log           LOG = LogFactory.getLog(ApplicationElementImpl.class);
+    private static final Log LOG = LogFactory.getLog(ApplicationElementImpl.class);
 
-    private final POA                  modelPOA;
-    private final POA                  instancePOA;
-    private final AtfxCache            atfxCache;
+    private final POA modelPOA;
+    private final POA instancePOA;
+    private final AtfxCache atfxCache;
     private final ApplicationStructure applicationStructure;
-    private final BaseElement          baseElement;
-    private final long                 aid;
+    private final BaseElement baseElement;
+    private final long aid;
 
     /**
      * Constructor.
@@ -440,30 +439,20 @@ class ApplicationElementImpl extends ApplicationElementPOA {
      * @see org.asam.ods.ApplicationElementOperations#getInstances(java.lang.String)
      */
     public InstanceElementIterator getInstances(String iePattern) throws AoException {
-        try {
-            InstanceElement[] ieAr = null;
-            // check filter 'all' for performance tuning
-            if (iePattern.equals("*")) {
-                ieAr = this.atfxCache.getInstances(this.instancePOA, aid);
-            } else {
-                Collection<InstanceElement> list = new ArrayList<InstanceElement>();
-                for (InstanceElement ie : this.atfxCache.getInstances(this.instancePOA, aid)) {
-                    if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
-                        list.add(ie);
-                    }
+        InstanceElement[] ieAr = null;
+        // check filter 'all' for performance tuning
+        if (iePattern.equals("*")) {
+            ieAr = this.atfxCache.getInstances(this.instancePOA, aid);
+        } else {
+            Collection<InstanceElement> list = new ArrayList<InstanceElement>();
+            for (InstanceElement ie : this.atfxCache.getInstances(this.instancePOA, aid)) {
+                if (PatternUtil.nameFilterMatch(ie.getName(), iePattern)) {
+                    list.add(ie);
                 }
-                ieAr = list.toArray(new InstanceElement[0]);
             }
-
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
-            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+            ieAr = list.toArray(new InstanceElement[0]);
         }
+        return atfxCache.newInstanceElementIterator(instancePOA, ieAr);
     }
 
     /**

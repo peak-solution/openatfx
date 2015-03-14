@@ -1,5 +1,6 @@
 package de.rechner.openatfx;
 
+import org.asam.ods.InstanceElementIteratorPOATie;
 import org.asam.ods.MeasurementPOATie;
 import org.asam.ods.SubMatrixPOATie;
 import org.omg.CORBA.LocalObject;
@@ -58,6 +59,10 @@ class InstanceServantLocator extends LocalObject implements ServantLocator {
         // type=2, object is a <code>org.asam.ods.SubMatrix</code>
         else if (type == 2) {
             return new SubMatrixPOATie(new SubMatrixImpl(modelPOA, adapter, atfxCache, aid, iid));
+        }
+        // type=3, object is a <code>org.asam.ods.InstanceElementIterator</code>
+        else if (type == 3) {
+            return new InstanceElementIteratorPOATie(new InstanceElementIteratorImpl(atfxCache, aid));
         }
         throw new ForwardRequest();
     }

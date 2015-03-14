@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.5.4 (Christian Rechner)
+
+	    - Implemented InstanceElementIterator with flyweight pattern
+	      to improve memory consumption.
+
 	0.5.3 (Christian Rechner)
 
 	    - Implemented methods of ValueMatrix on AoSubMatrix:

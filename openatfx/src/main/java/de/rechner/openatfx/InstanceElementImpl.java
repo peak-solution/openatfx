@@ -22,7 +22,6 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
-import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.InstanceElementPOA;
 import org.asam.ods.Measurement;
 import org.asam.ods.MeasurementHelper;
@@ -431,17 +430,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElementIterator getRelatedInstances(ApplicationRelation applRel, String iePattern)
             throws AoException {
-        try {
-            InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern);
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
-            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        }
+        InstanceElement[] ieAr = collectRelatedInstances(applRel, iePattern);
+        return atfxCache.newInstanceElementIterator(instancePOA, ieAr);
     }
 
     /**
@@ -511,17 +501,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElementIterator getRelatedInstancesByRelationship(Relationship ieRelationship, String iePattern)
             throws AoException {
-        try {
-            InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern).toArray(new InstanceElement[0]);
-            InstanceElementIteratorImpl ieIteratorImpl = new InstanceElementIteratorImpl(this.modelPOA, ieAr);
-            return InstanceElementIteratorHelper.narrow(this.modelPOA.servant_to_reference(ieIteratorImpl));
-        } catch (ServantNotActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        }
+        InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern).toArray(new InstanceElement[0]);
+        return atfxCache.newInstanceElementIterator(instancePOA, ieAr);
     }
 
     /**
