@@ -1123,4 +1123,9 @@ class AtfxCache {
         this.instanceIteratorPointerCache.put(id, pointer);
     }
 
+    public void removeInstanceIterator(long id) {
+        this.instanceIteratorElementCache.remove(id);
+        this.instanceIteratorPointerCache.remove(id);
+    }
+
 }

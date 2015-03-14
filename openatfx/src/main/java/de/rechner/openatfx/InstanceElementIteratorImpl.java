@@ -101,7 +101,7 @@ class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
      * @see org.asam.ods.InstanceElementIteratorOperations#destroy()
      */
     public void destroy() throws AoException {
-        // do nothing
+        this.atfxCache.removeInstanceIterator(this.id);
     }
 
     private InstanceElement[] getInstanceElements() throws AoException {
