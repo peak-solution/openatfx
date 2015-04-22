@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.5.5 (Christian Rechner)
+
+	    - Included patch from Olaf Flebbe to support single bits with dt_bit_uint in external components
+	    - Changed name generation of external component files from fixed "data_1.bin" to ATFX file name
+
 	0.5.4 (Christian Rechner)
 
 	    - Implemented InstanceElementIterator with flyweight pattern

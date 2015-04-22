@@ -23,6 +23,7 @@ import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
 
+import de.rechner.openatfx.util.Bit;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -73,8 +74,16 @@ class ExtCompReader {
             for (long iidExtComp : iidExtComps) {
                 list.addAll(readNumberValues(atfxCache, iidExtComp));
             }
+            // DS_BOOLEAN
+            if (targetDataType == DataType.DS_BOOLEAN) {
+                boolean[] ar = new boolean[list.size()];
+                for (int i = 0; i < list.size(); i++) {
+                    ar[i] = list.get(i).byteValue() != 0;
+                }
+                tsValue.u.booleanSeq(ar);
+            }
             // DS_BYTE
-            if (targetDataType == DataType.DS_BYTE) {
+            else if (targetDataType == DataType.DS_BYTE) {
                 byte[] ar = new byte[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).byteValue();
@@ -169,6 +178,20 @@ class ExtCompReader {
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
         int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.enumVal();
 
+        short bitCount = -1;
+        short bitOffset = -1;
+
+        // Only for bit types
+        if (valueType >= 27 && valueType <= 32) {
+            // get datatype
+            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_count");
+            bitCount = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.shortVal();
+
+            // get datatype
+            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_offset");
+            bitOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.shortVal();
+        }
+
         // read length
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
         int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
@@ -245,6 +268,16 @@ class ExtCompReader {
                     // 1=dt_byte
                     else if (valueType == 1) {
                         list.add(sourceMbb.get());
+                    }
+                    // 29=dt_bit_uint
+                    else if (valueType == 29) {
+                        if (bitCount != 1) {
+                            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                                  "Unsupported 'bitcount != 1'");
+                        }
+                        byte byteBuffer = sourceMbb.get();
+                        int value = (byteBuffer >>> bitOffset) & 0x01;
+                        list.add(new Bit(value));
                     }
                     // unsupported data type
                     else {

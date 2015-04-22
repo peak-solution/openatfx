@@ -2859,8 +2859,8 @@ public abstract class ODSHelper {
             return DataType.DS_COMPLEX;
         } else if (e == 26) {
             return DataType.DS_DATE;
-        } else if (e == 23) {
-            return DataType.DS_COMPLEX;
+        } else if (e == 24) {
+            return DataType.DS_DCOMPLEX;
         } else if (e == 21) {
             return DataType.DS_DOUBLE;
         } else if (e == 31) {
