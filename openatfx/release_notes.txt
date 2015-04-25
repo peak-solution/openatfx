@@ -26,7 +26,8 @@
 	0.5.6 (Christian Rechner)
 
 	    - Added buffer when reading external component files to increase performance
-
+	    - Implemented reading flags from external component file
+	    - Implemented handling flags in component file
 
 	0.5.5 (Christian Rechner)
 

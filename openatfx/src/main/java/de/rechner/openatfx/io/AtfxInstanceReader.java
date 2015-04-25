@@ -1,5 +1,13 @@
 package de.rechner.openatfx.io;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,6 +47,8 @@ import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 
+import de.rechner.openatfx.util.BufferedRandomAccessFile;
+import de.rechner.openatfx.util.FileUtil;
 import de.rechner.openatfx.util.ModelCache;
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -446,7 +456,10 @@ class AtfxInstanceReader {
     }
 
     /**
-     * Parse the 'component' XML element and fill an external component instance with the flags information.
+     * Parse the 'component' XML element, read the values from the component file and append to external flag file.
+     * <p/>
+     * This operation is necessary because a MixedMode Server may not store flags in component file with block wise
+     * persistence (all flags have to be in one block).
      * 
      * @param ieExtComp The external component instance.
      * @param files Map with component files.
@@ -482,6 +495,11 @@ class AtfxInstanceReader {
             // 'datatype'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_DATATYPE))) {
                 dataType = typeSpectEnum.getItem(reader.getElementText());
+                // only 'dt_short' is currently supported
+                if (dataType != 2) {
+                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                          "Unsupported 'dataType' for flags component file: " + dataType);
+                }
             }
             // 'length'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_LENGTH))) {
@@ -509,135 +527,77 @@ class AtfxInstanceReader {
 
         // read flags to memory because the MixedMode server may not handle flags in component structure :-(
         long start = System.currentTimeMillis();
-        // File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
-        // File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
-        //
-        // RandomAccessFile raf = null;
-        // FileChannel inChannel = null;
-        //
-        // try {
-        // // open source channel
-        // raf = new RandomAccessFile(extCompFile, "r");
-        // inChannel = raf.getChannel();
-        // inChannel.position(valOffsets);
-        //
-        // // initialize buffer
-        // ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
-        // ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-        // if ((dataType == 7) || (dataType == 8) || (dataType == 9) || (dataType == 11)) {
-        // byteOrder = ByteOrder.BIG_ENDIAN;
-        // }
-        // sourceMbb.order(byteOrder);
-        //
-        // // loop over blocks
-        // for (int i = 0; i < length; i += valPerBlock) {
-        // sourceMbb.clear();
-        // inChannel.read(sourceMbb);
-        // sourceMbb.position(valueOffset);
-        //
-        // // sub blocks are consecutive, puhh!
-        // for (int j = 0; j < valuesperblock; j++) {
-        //
-        // // 2=dt_short
-        // if (valueType == 2) {
-        // list.add(sourceMbb.getShort());
-        // }
-        // // 3=dt_long, 8=dt_long_beo
-        // else if ((valueType == 3) || (valueType == 8)) {
-        // list.add(sourceMbb.getInt());
-        // }
-        // // 4=dt_longlong, 8=dt_long_beo
-        // else if ((valueType == 4) || (valueType == 9)) {
-        // list.add(sourceMbb.getLong());
-        // }
-        // // 5=ieeefloat4, 10=ieeefloat4_beo
-        // else if ((valueType == 5) || (valueType == 10)) {
-        // list.add(sourceMbb.getFloat());
-        // }
-        // // 6=ieeefloat8, 10=ieeefloat8_beo
-        // else if ((valueType == 6) || (valueType == 11)) {
-        // list.add(sourceMbb.getDouble());
-        // }
-        // // 1=dt_byte
-        // else if (valueType == 1) {
-        // list.add(sourceMbb.get());
-        // }
-        // // 29=dt_bit_uint
-        // else if (valueType == 29) {
-        // if (bitCount != 1) {
-        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-        // "Unsupported 'bitcount != 1'");
-        // }
-        // byte byteBuffer = sourceMbb.get();
-        // int value = (byteBuffer >>> bitOffset) & 0x01;
-        // list.add(new Bit(value));
-        // }
-        // // unsupported data type
-        // else {
-        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-        // "Unsupported 'value_type': " + valueType);
-        // }
-        // }
-        // }
-        //
-        // LOG.info("Read " + list.size() + " numeric values from external file in "
-        // + (System.currentTimeMillis() - start) + "ms");
-        // return list;
-        // } catch (IOException e) {
-        // LOG.error(e.getMessage(), e);
-        // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
-        // } finally {
-        // if (inChannel != null) {
-        // try {
-        // inChannel.close();
-        // } catch (IOException ioe) {
-        // LOG.error(ioe.getMessage(), ioe);
-        // }
-        // inChannel = null;
-        // }
-        // if (raf != null) {
-        // try {
-        // raf.close();
-        // } catch (IOException ioe) {
-        // LOG.error(ioe.getMessage(), ioe);
-        // }
-        // raf = null;
-        // }
-        // }
+        File atfxFile = new File(ieExtComp.getApplicationElement().getApplicationStructure().getSession()
+                                          .getContextByName("FILENAME").value.u.stringVal());
+        File componentFile = new File(atfxFile.getParentFile(), fileName);
+        File flagsFile = new File(atfxFile.getParentFile(), FileUtil.stripExtension(fileName) + "_flags.btf");
 
-        // String flagsFileName = "";
-        // long flagsStartOffset = 0;
-        // while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
-        // // 'identifier'
-        // if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
-        // String identifier = reader.getElementText();
-        // flagsFileName = files.get(identifier);
-        // if (flagsFileName == null) {
-        // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-        // "External component file not found for identifier '" + identifier + "'");
-        // }
-        // }
-        // // 'inioffset'
-        // else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-        // flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
-        // }
-        // reader.next();
-        // }
-        //
-        // List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
-        // long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
-        // // mandatory base attribute 'flags_filename_url'
-        // ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
-        // attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
-        // // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
-        // applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
-        // if (applAttr.dType == DataType.DT_LONG) {
-        // attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
-        // } else {
-        // attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
-        // }
-        //
-        // ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
+        // read values
+        RandomAccessFile raf = null;
+        OutputStream fos = null;
+        try {
+            // open source stream
+            raf = new BufferedRandomAccessFile(componentFile, "r", 32768);
+            raf.seek(inioffset);
+
+            // open target stream
+            fos = new BufferedOutputStream(new FileOutputStream(flagsFile, true));
+            long startOffset = flagsFile.length();
+
+            // initialize source buffer
+            ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
+            sourceMbb.order(ByteOrder.LITTLE_ENDIAN);
+
+            // loop over blocks
+            for (int i = 0; i < length; i += valPerBlock) {
+                byte[] buffer = new byte[blockSize];
+                raf.read(buffer, 0, buffer.length);
+
+                sourceMbb.clear();
+                sourceMbb.put(buffer);
+                sourceMbb.position(valOffsets);
+
+                // read flag values and append to flags file
+                for (int j = 0; j < valPerBlock; j++) {
+                    byte[] b = new byte[2]; // read 2 bytes
+                    sourceMbb.get(b);
+                    fos.write(b);
+                }
+            }
+
+            // set external component instance values
+            ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
+            ieExtComp.setValue(ODSHelper.createStringNVU(applAttr.aaName, flagsFile.getName()));
+            applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
+            if (applAttr.dType == DataType.DT_LONG) {
+                ieExtComp.setValue(ODSHelper.createLongNVU(applAttr.aaName, (int) startOffset));
+            } else {
+                ieExtComp.setValue(ODSHelper.createLongLongNVU(applAttr.aaName, startOffset));
+            }
+
+            LOG.info("Copied " + length + " flags from component file '" + fileName + "' to external component '"
+                    + flagsFile.getName() + "' in " + (System.currentTimeMillis() - start) + "ms");
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
+        } finally {
+            if (raf != null) {
+                try {
+                    raf.close();
+                } catch (IOException ioe) {
+                    LOG.error(ioe.getMessage(), ioe);
+                }
+                raf = null;
+            }
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException ioe) {
+                    LOG.error(ioe.getMessage(), ioe);
+                }
+                fos = null;
+            }
+        }
     }
 
     /**

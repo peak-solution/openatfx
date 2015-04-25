@@ -35,6 +35,7 @@ import de.rechner.openatfx.util.ODSHelper;
 class ExtCompReader {
 
     private static final Log LOG = LogFactory.getLog(ExtCompReader.class);
+    private static final int BUFFER_SIZE = 32768;
 
     /** The singleton instance */
     private static volatile ExtCompReader instance;
@@ -220,11 +221,9 @@ class ExtCompReader {
 
         // read values
         RandomAccessFile raf = null;
-        // FileChannel inChannel = null;
-
         try {
             // open source channel
-            raf = new BufferedRandomAccessFile(extCompFile, "r", 32768);
+            raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE);
             raf.seek(startOffset);
 
             // initialize buffer
@@ -289,7 +288,7 @@ class ExtCompReader {
                 }
             }
 
-            LOG.info("Read " + list.size() + " numeric values from external file in "
+            LOG.info("Read " + list.size() + " numeric values from component file '" + filenameUrl + "' in "
                     + (System.currentTimeMillis() - start) + "ms");
             return list;
         } catch (IOException e) {
@@ -339,7 +338,7 @@ class ExtCompReader {
             startOffset = ODSHelper.asJLong(vStartOffset.u.longlongVal());
         }
 
-        // value_offset is irrelevant ODS Standard 3.42, page 3-51
+        // value_offset is irrelevant according ODS Standard 3.42, page 3-51
 
         // read values
         RandomAccessFile raf = null;
@@ -347,9 +346,9 @@ class ExtCompReader {
         List<String> list = new ArrayList<String>();
         try {
             // open source channel
-            raf = new RandomAccessFile(extCompFile, "r");
+            raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE);
             raf.seek(startOffset);
-            raf.read(backingBuffer);
+            raf.read(backingBuffer, 0, backingBuffer.length);
 
             int startPosition = 0;
             for (int position = 0; position < componentLength; position++) {
@@ -359,7 +358,7 @@ class ExtCompReader {
                 }
             }
 
-            LOG.info("Read " + list.size() + " string values from external file in "
+            LOG.info("Read " + list.size() + " string values from component file '" + filenameUrl + "' in "
                     + (System.currentTimeMillis() - start) + "ms");
             return list;
         } catch (IOException e) {
@@ -378,6 +377,8 @@ class ExtCompReader {
     }
 
     public TS_Value readFlags(AtfxCache atfxCache, long iidLc) throws AoException {
+        long start = System.currentTimeMillis();
+
         // read external component instances
         long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
         ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
@@ -431,19 +432,20 @@ class ExtCompReader {
 
         RandomAccessFile raf = null;
         byte[] backingBuffer = new byte[2];
-        ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
-        ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-        sourceMbb.order(byteOrder);
         try {
             // open source channel
-            raf = new RandomAccessFile(flagsFile, "r");
+            raf = new BufferedRandomAccessFile(flagsFile, "r", BUFFER_SIZE);
             raf.seek(flagsStartOffset);
 
             for (int i = 0; i < componentLength; i++) {
-                raf.read(backingBuffer);
+                raf.read(backingBuffer, 0, backingBuffer.length);
+                ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
+                sourceMbb.order(ByteOrder.LITTLE_ENDIAN);
                 tsValue.u.shortSeq()[i] = sourceMbb.getShort();
             }
 
+            LOG.info("Read " + componentLength + " flags from component file '" + flagsFilenameUrl + "' in "
+                    + (System.currentTimeMillis() - start) + "ms");
             return tsValue;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

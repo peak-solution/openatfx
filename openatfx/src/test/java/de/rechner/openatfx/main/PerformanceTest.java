@@ -19,11 +19,12 @@ import de.rechner.openatfx.InstanceElementImplTest;
  */
 public class PerformanceTest {
 
+    private static ORB orb;
     private static AoSession aoSession;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        ORB orb = ORB.init(new String[0], System.getProperties());
+        orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
     }
@@ -50,4 +51,30 @@ public class PerformanceTest {
     // }
     // }
 
+    // @Test
+    // public void readAllValues() {
+    // try {
+    // File dir = new File("C:/Users/FGAAW8T/Desktop/dala_export");
+    // for (File file : dir.listFiles()) {
+    // if (!file.getName().endsWith("atfx")) {
+    // continue;
+    // }
+    //
+    // AoSession session = AoServiceFactory.getInstance().newAoSession(orb, file);
+    // for (ApplicationElement ae : session.getApplicationStructure().getElements("*")) {
+    // InstanceElementIterator iter = ae.getInstances("*");
+    // for (InstanceElement ie : iter.nextN(iter.getCount())) {
+    // List<String> valNames = new ArrayList<String>();
+    // valNames.addAll(Arrays.asList(ie.listAttributes("*", AttrType.ALL)));
+    // ie.getValueSeq(valNames.toArray(new String[0]));
+    // }
+    // iter.destroy();
+    // }
+    // session.close();
+    // }
+    // } catch (AoException aoe) {
+    // fail(aoe.reason);
+    // }
+    // }
+    //
 }

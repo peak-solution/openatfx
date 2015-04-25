@@ -5,6 +5,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 
+/**
+ * RandomAccessFile with buffer.
+ * 
+ * @author Christian Rechner
+ */
 public class BufferedRandomAccessFile extends RandomAccessFile {
 
     boolean reading = true;

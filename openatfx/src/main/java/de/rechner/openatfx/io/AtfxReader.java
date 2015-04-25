@@ -366,7 +366,7 @@ public class AtfxReader {
         }
         ApplicationElement aeLC = aeLCs[0];
 
-        LOG.warn("No application element of type 'AoExternalComponent' found, creating dummy");
+        LOG.info("No application element of type 'AoExternalComponent' found, creating dummy");
 
         // create application element, this includes all mandatory attributes
         BaseStructure bs = as.getSession().getBaseStructure();
