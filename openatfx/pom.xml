@@ -6,14 +6,11 @@
 	<name>openATFX</name>
 	<version>0.5.6</version>
 	<description>Open source ASAM ODS ATFX driver</description>
-	<url>http://openatfx.sourceforge.net</url>
+	<url>http://sourceforge.net/projects/openatfx/</url>
 
 	<developers>
 		<developer>
 			<name>Christian Rechner</name>
-		</developer>
-		<developer>
-			<name>Florian Steinberger</name>
 		</developer>
 	</developers>
 
@@ -33,8 +30,8 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
+					<source>1.6</source>
+					<target>1.6</target>
 				</configuration>
 			</plugin>
 			<!-- build assembly -->
