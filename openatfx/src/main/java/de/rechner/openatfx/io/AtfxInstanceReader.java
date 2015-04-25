@@ -90,6 +90,16 @@ class AtfxInstanceReader {
 
         long start = System.currentTimeMillis();
 
+        // delete 'old' flags file if
+        File flagsFile = getFlagsTmpFile(aoSession);
+        if (flagsFile.isFile() && flagsFile.exists() && flagsFile.length() > 0 && flagsFile.canWrite()) {
+            if (!flagsFile.delete()) {
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unable to delete file '"
+                        + flagsFile + "'");
+            }
+            LOG.info("Deleted existing flag file: " + flagsFile.getName());
+        }
+
         // parse instances
         reader.next();
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
@@ -456,7 +466,7 @@ class AtfxInstanceReader {
     }
 
     /**
-     * Parse the 'component' XML element, read the values from the component file and append to external flag file.
+     * Parse the 'component' XML element, read the flags from the component file and append to external flag file.
      * <p/>
      * This operation is necessary because a MixedMode Server may not store flags in component file with block wise
      * persistence (all flags have to be in one block).
@@ -527,10 +537,10 @@ class AtfxInstanceReader {
 
         // read flags to memory because the MixedMode server may not handle flags in component structure :-(
         long start = System.currentTimeMillis();
-        File atfxFile = new File(ieExtComp.getApplicationElement().getApplicationStructure().getSession()
-                                          .getContextByName("FILENAME").value.u.stringVal());
+        AoSession aoSession = ieExtComp.getApplicationElement().getApplicationStructure().getSession();
+        File atfxFile = new File(aoSession.getContextByName("FILENAME").value.u.stringVal());
         File componentFile = new File(atfxFile.getParentFile(), fileName);
-        File flagsFile = new File(atfxFile.getParentFile(), FileUtil.stripExtension(fileName) + "_flags.btf");
+        File flagsFile = getFlagsTmpFile(aoSession);
 
         // read values
         RandomAccessFile raf = null;
@@ -598,6 +608,13 @@ class AtfxInstanceReader {
                 fos = null;
             }
         }
+    }
+
+    private File getFlagsTmpFile(AoSession session) throws AoException {
+        File atfxFile = new File(session.getContextByName("FILENAME").value.u.stringVal());
+        File flagsFile = new File(atfxFile.getParentFile(), FileUtil.stripExtension(atfxFile.getName())
+                + "_flags_extract.btf");
+        return flagsFile;
     }
 
     /**

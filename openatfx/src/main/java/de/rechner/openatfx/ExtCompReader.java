@@ -7,6 +7,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -44,11 +46,14 @@ class ExtCompReader {
         // read external component instances
         long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
         ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
-        Collection<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
-        if (iidExtComps.size() != 1) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "The implementation currently only may read exactly one external component file");
+        List<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
+        if (iidExtComps.size() > 0) {
+            Collections.sort(iidExtComps, new ExternalComponentComparator(atfxCache));
         }
+        // if (iidExtComps.size() != 1) {
+        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+        // "The implementation currently only may read exactly one external component file");
+        // }
 
         TS_Value tsValue = new TS_Value();
         tsValue.flag = (short) 15;
@@ -163,7 +168,7 @@ class ExtCompReader {
         return tsValue;
     }
 
-    private List<Number> readNumberValues(AtfxCache atfxCache, long iidLc) throws AoException {
+    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp) throws AoException {
         long start = System.currentTimeMillis();
 
         List<Number> list = new ArrayList<Number>();
@@ -171,13 +176,13 @@ class ExtCompReader {
 
         // get filename
         int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
-        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.stringVal();
+        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
         File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
         File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
 
         // get datatype
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
-        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.enumVal();
+        int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
 
         short bitCount = -1;
         short bitOffset = -1;
@@ -186,21 +191,21 @@ class ExtCompReader {
         if (valueType >= 27 && valueType <= 32) {
             // get datatype
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_count");
-            bitCount = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.shortVal();
+            bitCount = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
 
             // get datatype
             attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_offset");
-            bitOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.shortVal();
+            bitOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
         }
 
         // read length
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
-        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // read start offset, may be DT_LONG or DT_LONGLONG
         int startOffset = 0;
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
-        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
         if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
             startOffset = vStartOffset.u.longVal();
         } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
@@ -209,15 +214,15 @@ class ExtCompReader {
 
         // value_offset
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
-        int valueOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int valueOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // block_size, valuesperblock
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "block_size");
-        int blockSize = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int blockSize = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // valuesperblock
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "valuesperblock");
-        int valuesperblock = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int valuesperblock = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // read values
         RandomAccessFile raf = null;
@@ -473,6 +478,46 @@ class ExtCompReader {
             instance = new ExtCompReader();
         }
         return instance;
+    }
+
+    /**
+     * Custom comparator so sort multiple instances of 'AoExternalComponent' for the same 'AoLocalColumn' instance by
+     * the value of the base attribute 'ordinal_number'.
+     */
+    private static class ExternalComponentComparator implements Comparator<Long> {
+
+        private final AtfxCache atfxCache;
+
+        public ExternalComponentComparator(AtfxCache atfxCache) {
+            this.atfxCache = atfxCache;
+        }
+
+        /**
+         * {@inheritDoc}
+         * 
+         * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+         */
+        public int compare(Long iidExtComp1, Long iidExtComp2) {
+            try {
+                Integer ordExtComp1 = 0;
+                Integer ordExtComp2 = 0;
+
+                long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
+                Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ordinal_number");
+                if (attrNo == null) {
+                    LOG.warn("Application attribute derived from 'ordinal_number' not found!");
+                    return 0;
+                }
+
+                ordExtComp1 = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp1).u.longVal();
+                ordExtComp2 = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp2).u.longVal();
+
+                return ordExtComp1.compareTo(ordExtComp2);
+            } catch (AoException e) {
+                LOG.warn(e.reason, e);
+                return 0;
+            }
+        }
     }
 
 }

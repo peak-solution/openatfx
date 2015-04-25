@@ -28,6 +28,8 @@
 	    - Added buffer when reading external component files to increase performance
 	    - Implemented reading flags from external component file
 	    - Implemented handling flags in component file
+	    - Support for multiple external component instances at one local column instance
+
 
 	0.5.5 (Christian Rechner)
 
