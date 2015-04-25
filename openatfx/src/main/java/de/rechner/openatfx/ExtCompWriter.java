@@ -19,6 +19,7 @@ import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 
+import de.rechner.openatfx.util.FileUtil;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -29,16 +30,12 @@ class ExtCompWriter {
     /** The singleton instance */
     private static volatile ExtCompWriter instance;
 
-    private static String stripExtension(final String s) {
-        return s != null && s.lastIndexOf(".") > 0 ? s.substring(0, s.lastIndexOf(".")) : s;
-    }
-
     private static File getExtCompFile(AtfxCache atfxCache, int cnt) {
         Map<String, NameValue> context = atfxCache.getContext();
         String rootPath = context.get("FILE_ROOT").value.u.stringVal();
         File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
         long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
-        File binFile = new File(rootPath, stripExtension(atfxPath.getName()) + "_" + cnt + ".btf");
+        File binFile = new File(rootPath, FileUtil.stripExtension(atfxPath.getName()) + "_" + cnt + ".btf");
         if (binFile.length() > extCompSize) {
             binFile = getExtCompFile(atfxCache, cnt + 1);
         }
@@ -50,7 +47,7 @@ class ExtCompWriter {
         String rootPath = context.get("FILE_ROOT").value.u.stringVal();
         File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
         long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
-        File binFile = new File(rootPath, stripExtension(atfxPath.getName()) + "_" + cnt + "_string.btf");
+        File binFile = new File(rootPath, FileUtil.stripExtension(atfxPath.getName()) + "_" + cnt + "_string.btf");
         if (binFile.length() > extCompSize) {
             binFile = getExtCompFile(atfxCache, cnt + 1);
         }
@@ -62,7 +59,7 @@ class ExtCompWriter {
         String rootPath = context.get("FILE_ROOT").value.u.stringVal();
         File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
         long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
-        File binFile = new File(rootPath, stripExtension(atfxPath.getName()) + "_" + cnt + "_flags.btf");
+        File binFile = new File(rootPath, FileUtil.stripExtension(atfxPath.getName()) + "_" + cnt + "_flags.btf");
         if (binFile.length() > extCompSize) {
             binFile = getExtCompFile(atfxCache, cnt + 1);
         }

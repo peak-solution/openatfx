@@ -921,7 +921,7 @@ class AtfxCache {
         Collection<Long> set = getRelatedInstanceIds(lcAid, lcIid, relMeaQua);
         if (set.size() != 1) {
             throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "None or multiple related instances found for base relation 'measurement_quantity' for iid="
+                                  "None or multiple related instances found for base relation 'measurement_quantity' for local column with iid="
                                           + lcIid);
         }
         return set.iterator().next();

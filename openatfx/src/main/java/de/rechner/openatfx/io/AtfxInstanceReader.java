@@ -170,28 +170,28 @@ class AtfxInstanceReader {
                 }
             }
 
-            // // base attribute 'flags' of 'LocalColumn'
-            // else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
-            // reader.nextTag();
-            // // external component
-            // if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-            // if (ieExternalComponent == null) {
-            // ieExternalComponent = createExtCompIe(aoSession);
-            // }
-            // parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
-            // }
-            // // explicit values inline XML
-            // else if (reader.isStartElement()) {
-            // TS_Value value = parseLocalColumnValues(modelCache, reader);
-            // AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
-            // valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
-            // valuesAttrValue.attr = new AIDName();
-            // valuesAttrValue.attr.aid = applElem.aid;
-            // valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
-            // valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
-            // applAttrValues.add(valuesAttrValue);
-            // }
-            // }
+            // base attribute 'flags' of 'LocalColumn'
+            else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
+                reader.nextTag();
+                // external component
+                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
+                    if (ieExternalComponent == null) {
+                        ieExternalComponent = createExtCompIe(aoSession);
+                    }
+                    parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
+                }
+                // explicit values inline XML
+                else if (reader.isStartElement()) {
+                    TS_Value value = parseLocalColumnValues(modelCache, reader);
+                    AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
+                    valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    valuesAttrValue.attr = new AIDName();
+                    valuesAttrValue.attr.aid = applElem.aid;
+                    valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
+                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
+                    applAttrValues.add(valuesAttrValue);
+                }
+            }
 
             // application attribute value
             else if (reader.isStartElement() && (modelCache.getApplAttr(aid, currentTagName) != null)) {
@@ -454,42 +454,191 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error creating instance element.
      */
-    // private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
-    // ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
-    // String flagsFileName = "";
-    // long flagsStartOffset = 0;
-    // while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
-    // // 'identifier'
-    // if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
-    // String identifier = reader.getElementText();
-    // flagsFileName = files.get(identifier);
-    // if (flagsFileName == null) {
-    // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-    // "External component file not found for identifier '" + identifier + "'");
-    // }
-    // }
-    // // 'inioffset'
-    // else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-    // flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
-    // }
-    // reader.next();
-    // }
-    //
-    // List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
-    // long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
-    // // mandatory base attribute 'flags_filename_url'
-    // ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
-    // attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
-    // // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
-    // applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
-    // if (applAttr.dType == DataType.DT_LONG) {
-    // attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
-    // } else {
-    // attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
-    // }
-    //
-    // ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
-    // }
+    private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
+            ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
+        ApplicationElement aeExtComp = ieExtComp.getApplicationElement();
+        ApplicationStructure as = aeExtComp.getApplicationStructure();
+        EnumerationDefinition typeSpectEnum = as.getEnumerationDefinition("typespec_enum");
+        long aidExtComp = ODSHelper.asJLong(aeExtComp.getId());
+
+        String fileName = "";
+        int dataType = 0;
+        int length = 0;
+        long inioffset = 0;
+        int blockSize = 0;
+        int valPerBlock = 0;
+        int valOffsets = 0;
+
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+            // 'identifier'
+            if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
+                String identifier = reader.getElementText();
+                fileName = files.get(identifier);
+                if (fileName == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                          "External component file not found for identifier '" + identifier + "'");
+                }
+            }
+            // 'datatype'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_DATATYPE))) {
+                dataType = typeSpectEnum.getItem(reader.getElementText());
+            }
+            // 'length'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_LENGTH))) {
+                length = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'inioffset'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
+                inioffset = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'blocksize'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
+                blockSize = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'valperblock'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
+                valPerBlock = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+            // 'valoffsets'
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALOFFSETS))) {
+                valOffsets = AtfxParseUtil.parseLong(reader.getElementText());
+            }
+
+            reader.next();
+        }
+
+        // read flags to memory because the MixedMode server may not handle flags in component structure :-(
+        long start = System.currentTimeMillis();
+        // File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
+        // File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
+        //
+        // RandomAccessFile raf = null;
+        // FileChannel inChannel = null;
+        //
+        // try {
+        // // open source channel
+        // raf = new RandomAccessFile(extCompFile, "r");
+        // inChannel = raf.getChannel();
+        // inChannel.position(valOffsets);
+        //
+        // // initialize buffer
+        // ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
+        // ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
+        // if ((dataType == 7) || (dataType == 8) || (dataType == 9) || (dataType == 11)) {
+        // byteOrder = ByteOrder.BIG_ENDIAN;
+        // }
+        // sourceMbb.order(byteOrder);
+        //
+        // // loop over blocks
+        // for (int i = 0; i < length; i += valPerBlock) {
+        // sourceMbb.clear();
+        // inChannel.read(sourceMbb);
+        // sourceMbb.position(valueOffset);
+        //
+        // // sub blocks are consecutive, puhh!
+        // for (int j = 0; j < valuesperblock; j++) {
+        //
+        // // 2=dt_short
+        // if (valueType == 2) {
+        // list.add(sourceMbb.getShort());
+        // }
+        // // 3=dt_long, 8=dt_long_beo
+        // else if ((valueType == 3) || (valueType == 8)) {
+        // list.add(sourceMbb.getInt());
+        // }
+        // // 4=dt_longlong, 8=dt_long_beo
+        // else if ((valueType == 4) || (valueType == 9)) {
+        // list.add(sourceMbb.getLong());
+        // }
+        // // 5=ieeefloat4, 10=ieeefloat4_beo
+        // else if ((valueType == 5) || (valueType == 10)) {
+        // list.add(sourceMbb.getFloat());
+        // }
+        // // 6=ieeefloat8, 10=ieeefloat8_beo
+        // else if ((valueType == 6) || (valueType == 11)) {
+        // list.add(sourceMbb.getDouble());
+        // }
+        // // 1=dt_byte
+        // else if (valueType == 1) {
+        // list.add(sourceMbb.get());
+        // }
+        // // 29=dt_bit_uint
+        // else if (valueType == 29) {
+        // if (bitCount != 1) {
+        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+        // "Unsupported 'bitcount != 1'");
+        // }
+        // byte byteBuffer = sourceMbb.get();
+        // int value = (byteBuffer >>> bitOffset) & 0x01;
+        // list.add(new Bit(value));
+        // }
+        // // unsupported data type
+        // else {
+        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+        // "Unsupported 'value_type': " + valueType);
+        // }
+        // }
+        // }
+        //
+        // LOG.info("Read " + list.size() + " numeric values from external file in "
+        // + (System.currentTimeMillis() - start) + "ms");
+        // return list;
+        // } catch (IOException e) {
+        // LOG.error(e.getMessage(), e);
+        // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
+        // } finally {
+        // if (inChannel != null) {
+        // try {
+        // inChannel.close();
+        // } catch (IOException ioe) {
+        // LOG.error(ioe.getMessage(), ioe);
+        // }
+        // inChannel = null;
+        // }
+        // if (raf != null) {
+        // try {
+        // raf.close();
+        // } catch (IOException ioe) {
+        // LOG.error(ioe.getMessage(), ioe);
+        // }
+        // raf = null;
+        // }
+        // }
+
+        // String flagsFileName = "";
+        // long flagsStartOffset = 0;
+        // while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT))) {
+        // // 'identifier'
+        // if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_IDENTIFIER))) {
+        // String identifier = reader.getElementText();
+        // flagsFileName = files.get(identifier);
+        // if (flagsFileName == null) {
+        // throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+        // "External component file not found for identifier '" + identifier + "'");
+        // }
+        // }
+        // // 'inioffset'
+        // else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
+        // flagsStartOffset = AtfxParseUtil.parseLong(reader.getElementText());
+        // }
+        // reader.next();
+        // }
+        //
+        // List<NameValueUnit> attrsList = new ArrayList<NameValueUnit>();
+        // long aidExtComp = ODSHelper.asJLong(ieExtComp.getApplicationElement().getId());
+        // // mandatory base attribute 'flags_filename_url'
+        // ApplAttr applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_filename_url");
+        // attrsList.add(ODSHelper.createStringNVU(applAttr.aaName, flagsFileName));
+        // // mandatory base attribute 'flags_start_offset', may be DT_LONG or DT_LONGLONG
+        // applAttr = modelCache.getApplAttrByBaseName(aidExtComp, "flags_start_offset");
+        // if (applAttr.dType == DataType.DT_LONG) {
+        // attrsList.add(ODSHelper.createLongNVU(applAttr.aaName, (int) flagsStartOffset));
+        // } else {
+        // attrsList.add(ODSHelper.createLongLongNVU(applAttr.aaName, flagsStartOffset));
+        // }
+        //
+        // ieExtComp.setValueSeq(attrsList.toArray(new NameValueUnit[0]));
+    }
 
     /**
      * Parse the explicit inline XML mass data from the local column 'values' attribute.

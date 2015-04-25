@@ -33,59 +33,61 @@ package de.rechner.openatfx.util;
  * @author Olaf Flebbe o.flebbe@science-computing.de
  */
 public class Bit extends Number {
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = -4780315505841860471L;
-	private boolean _bit;
 
-	
-	public Bit( int value) {
-		switch (value) {
-		case 1:
-			_bit = true;
-			break;
-		case 0:
-			_bit = false;
-			break;
-		default:
-			throw new RuntimeException( "Bit not 1 or 0");
-		}
-	}
+    private static final long serialVersionUID = -4780315505841860471L;
+    private boolean _bit;
 
-	public Bit( boolean value) {
-		_bit = value;
-	}
-	/* (non-Javadoc)
-	 * @see java.lang.Number#intValue()
-	 */
-	@Override
-	public int intValue() {
-		return (_bit ? 1 : 0);
-	}
+    public Bit(int value) {
+        switch (value) {
+            case 1:
+                _bit = true;
+            break;
+            case 0:
+                _bit = false;
+            break;
+            default:
+                throw new RuntimeException("Bit not 1 or 0");
+        }
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Number#longValue()
-	 */
-	@Override
-	public long longValue() {
-		return (_bit ? 1 : 0);
-	}
+    public Bit(boolean value) {
+        _bit = value;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Number#floatValue()
-	 */
-	@Override
-	public float floatValue() {
-		return (_bit ? 1.f : 0.f);
-	}
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Number#intValue()
+     */
+    @Override
+    public int intValue() {
+        return (_bit ? 1 : 0);
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Number#doubleValue()
-	 */
-	@Override
-	public double doubleValue() {
-		return (_bit ? 1. : 0.);
-	}
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Number#longValue()
+     */
+    @Override
+    public long longValue() {
+        return (_bit ? 1 : 0);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Number#floatValue()
+     */
+    @Override
+    public float floatValue() {
+        return (_bit ? 1.f : 0.f);
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Number#doubleValue()
+     */
+    @Override
+    public double doubleValue() {
+        return (_bit ? 1. : 0.);
+    }
 
 }

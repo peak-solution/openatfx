@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,6 +23,7 @@ import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.Bit;
+import de.rechner.openatfx.util.BufferedRandomAccessFile;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -220,13 +220,12 @@ class ExtCompReader {
 
         // read values
         RandomAccessFile raf = null;
-        FileChannel inChannel = null;
+        // FileChannel inChannel = null;
 
         try {
             // open source channel
-            raf = new RandomAccessFile(extCompFile, "r");
-            inChannel = raf.getChannel();
-            inChannel.position(startOffset);
+            raf = new BufferedRandomAccessFile(extCompFile, "r", 32768);
+            raf.seek(startOffset);
 
             // initialize buffer
             ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
@@ -238,8 +237,11 @@ class ExtCompReader {
 
             // loop over blocks
             for (int i = 0; i < componentLength; i += valuesperblock) {
+                byte[] buffer = new byte[blockSize];
+                raf.read(buffer, 0, buffer.length);
+
                 sourceMbb.clear();
-                inChannel.read(sourceMbb);
+                sourceMbb.put(buffer);
                 sourceMbb.position(valueOffset);
 
                 // sub blocks are consecutive, puhh!
@@ -294,14 +296,6 @@ class ExtCompReader {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
         } finally {
-            if (inChannel != null) {
-                try {
-                    inChannel.close();
-                } catch (IOException ioe) {
-                    LOG.error(ioe.getMessage(), ioe);
-                }
-                inChannel = null;
-            }
             if (raf != null) {
                 try {
                     raf.close();
@@ -414,7 +408,11 @@ class ExtCompReader {
         // read start offset, may be DT_LONG or DT_LONGLONG
         int flagsStartOffset = 0;
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
-        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc);
+        if (attrNo == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "Application attribute derived from base attribute 'flags_start_offset' not found");
+        }
+        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
         if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
             flagsStartOffset = vStartOffset.u.longVal();
         } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
@@ -423,7 +421,7 @@ class ExtCompReader {
 
         // read length
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
-        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidLc).u.longVal();
+        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // read values
         TS_Value tsValue = new TS_Value();

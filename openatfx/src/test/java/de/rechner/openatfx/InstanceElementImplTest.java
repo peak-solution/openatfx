@@ -267,7 +267,6 @@ public class InstanceElementImplTest {
 
             // flags 'external_component'
             nvu = ieLc.getValue("flags");
-
         } catch (AoException e) {
             fail(e.reason);
         }

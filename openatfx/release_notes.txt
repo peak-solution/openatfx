@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.5.6 (Christian Rechner)
+
+	    - Added buffer when reading external component files to increase performance
+
+
 	0.5.5 (Christian Rechner)
 
 	    - Included patch from Olaf Flebbe to support single bits with dt_bit_uint in external components
