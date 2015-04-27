@@ -90,7 +90,7 @@ class AtfxInstanceReader {
 
         long start = System.currentTimeMillis();
 
-        // delete 'old' flags file if
+        // delete 'old' flags file if existing (in case flags are stored as component file)
         File flagsFile = getFlagsTmpFile(aoSession);
         if (flagsFile.isFile() && flagsFile.exists() && flagsFile.length() > 0 && flagsFile.canWrite()) {
             if (!flagsFile.delete()) {
@@ -133,7 +133,7 @@ class AtfxInstanceReader {
      * @param reader The XML stream reader.
      * @param aoSession The session.
      * @param modelCache The application model cache.
-     * @return Map containing the information about the instance relations (the relation has to be set after all
+     * @return Map containing the information about the instance relations (the relations have to be set AFTER all
      *         instances have been created!).
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
@@ -234,7 +234,7 @@ class AtfxInstanceReader {
                 ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
                 short relMax = applRel.arRelationRange.max;
                 short invMax = applRel.invRelationRange.max;
-                if (relMax == -1 || (relMax == 1 && invMax == 1)) {
+                if ((relMax == -1) || (relMax == 1 && invMax == 1) || (applRel.brName.equals("measurement_quantity"))) {
                     String textContent = reader.getElementText();
                     if (textContent.length() > 0) {
                         T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);

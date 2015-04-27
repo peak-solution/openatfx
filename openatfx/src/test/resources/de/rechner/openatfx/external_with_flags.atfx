@@ -505,7 +505,7 @@
    <Description></Description>
    <DataType>DT_DOUBLE</DataType>
    <Measurement>3</Measurement>
-   <LocalColumns>6 21</LocalColumns>
+   <LocalColumns>6</LocalColumns>
    <Unit>8</Unit>
    <Quantity>9</Quantity>
   </MeasurementQuantity>
