@@ -28,7 +28,8 @@
 		- Added interface for file system abstraction layer
 		- Added support for value types:
 		  * dt_ushort
-
+		  * dt_ushort_beo
+		
 
 	0.5.6 (Christian Rechner)
 

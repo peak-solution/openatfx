@@ -24,7 +24,7 @@ import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
 
-import de.rechner.openatfx.util.Bit;
+import de.rechner.openatfx.util.BitInputStream;
 import de.rechner.openatfx.util.BufferedRandomAccessFile;
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -55,6 +55,14 @@ class ExtCompReader {
         tsValue.flag = (short) 15;
         tsValue.u = new TS_Union();
 
+        // get raw data type
+        Integer rawDataType = null;
+        Integer attrNo = atfxCache.getAttrNoByBaName(aidLc, "raw_datatype");
+        TS_Value valRawDatatype = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
+        if (valRawDatatype != null && valRawDatatype.flag == 15) {
+            rawDataType = valRawDatatype.u.enumVal();
+        }
+
         // DS_STRING
         if (targetDataType == DataType.DS_STRING || targetDataType == DataType.DS_BYTESTR) {
             List<String> list = new ArrayList<String>();
@@ -74,7 +82,7 @@ class ExtCompReader {
         else {
             List<Number> list = new ArrayList<Number>();
             for (long iidExtComp : iidExtComps) {
-                list.addAll(readNumberValues(atfxCache, iidExtComp));
+                list.addAll(readNumberValues(atfxCache, iidExtComp, rawDataType));
             }
             // DS_BOOLEAN
             if (targetDataType == DataType.DS_BOOLEAN) {
@@ -164,7 +172,7 @@ class ExtCompReader {
         return tsValue;
     }
 
-    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp) throws AoException {
+    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp, Integer rawDataType) throws AoException {
         long start = System.currentTimeMillis();
 
         List<Number> list = new ArrayList<Number>();
@@ -260,8 +268,12 @@ class ExtCompReader {
                     if (valueType == 1) {
                         list.add(sourceMbb.get());
                     }
-                    // 2=dt_short, 21=dt_ushort
-                    else if ((valueType == 2) || (valueType == 21)) {
+                    // 19=dt_sbyte
+                    else if (valueType == 19) {
+                        list.add(sourceMbb.get());
+                    }
+                    // 2=dt_short, 7=dt_short_beo
+                    else if ((valueType == 2) || (valueType == 7)) {
                         list.add(sourceMbb.getShort());
                     }
                     // 3=dt_long, 8=dt_long_beo
@@ -280,15 +292,48 @@ class ExtCompReader {
                     else if ((valueType == 6) || (valueType == 11)) {
                         list.add(sourceMbb.getDouble());
                     }
-                    // 29=dt_bit_uint
-                    else if (valueType == 29) {
-                        if (bitCount != 1) {
-                            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                                  "Unsupported 'bitcount != 1'");
+                    // 21=dt_ushort, 22=dt_ushort_beo
+                    else if ((valueType == 21) || (valueType == 22)) {
+                        list.add(sourceMbb.getShort() & 0xffff);
+                    }
+                    // 23=dt_ulong, 24=dt_ulong_beo
+                    else if ((valueType == 23) || (valueType == 24)) {
+                        list.add(sourceMbb.getInt() & 0xffffffffL);
+                    }
+                    // 27=dt_bit_int, 28=dt_bit_int_beo, 29=dt_bit_uint, 30=dt_bit_uint_beo
+                    else if ((valueType == 27) || (valueType == 28) || (valueType == 29) || (valueType == 30)) {
+                        if (rawDataType == null) {
+                            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                                  "'raw_datatype' has to be set for bit type");
                         }
-                        byte byteBuffer = sourceMbb.get();
-                        int value = (byteBuffer >>> bitOffset) & 0x01;
-                        list.add(new Bit(value));
+                        // allocate target buffer (byte): INT[(ao_bit_count + ao_bit_offset - 1) / 8] + 1
+                        int targetValueSize = ((bitCount + bitOffset - 1) / 8) + 1;
+                        byte[] b = new byte[targetValueSize];
+                        sourceMbb.get(b);
+
+                        // skip first bits and read value
+                        BitInputStream bis = new BitInputStream(b);
+                        bis.skip(bitOffset);
+                        b = bis.readByteArray(bitCount);
+
+                        // convert to raw_data_type
+                        if (rawDataType == 6) { // DT_LONG
+                            ByteBuffer target = ByteBuffer.allocate(4);
+                            target.order(ByteOrder.LITTLE_ENDIAN);
+                            if (valueType == 28 || valueType == 30) { // big endian
+                                target.order(ByteOrder.BIG_ENDIAN);
+                            }
+                            target.put(b);
+                            target.rewind();
+                            if (valueType == 29 || valueType == 30) {// unsigned
+                                list.add(target.getInt() & 0xffffffffL);
+                            } else {
+                                list.add(target.getInt());
+                            }
+                        } else {
+                            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                                  "'raw_datatype' not yet supported:" + rawDataType);
+                        }
                     }
                     // unsupported data type
                     else {
@@ -299,7 +344,7 @@ class ExtCompReader {
             }
 
             LOG.info("Read " + list.size() + " numeric values from component file '" + filenameUrl + "' in "
-                    + (System.currentTimeMillis() - start) + "ms");
+                    + (System.currentTimeMillis() - start) + "ms [value_type=" + valueType + "]");
             return list;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

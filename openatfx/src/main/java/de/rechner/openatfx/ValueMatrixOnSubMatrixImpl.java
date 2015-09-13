@@ -296,9 +296,9 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         if (startPoint < 0) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "startPoint must be >0");
         }
-        if (startPoint >= rowCount) {
+        if (startPoint > rowCount) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                  "startPoint must be <rowCount, rowCount=" + rowCount);
+                                  "startPoint must be < rowCount, rowCount=" + rowCount);
         }
         if (count < 0) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "count must be >0");
