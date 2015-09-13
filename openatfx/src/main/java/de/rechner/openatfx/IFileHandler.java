@@ -14,8 +14,20 @@ public interface IFileHandler {
 
     public String getFileRoot(String path) throws IOException;
 
+    /**
+     * Returns the file name without path information
+     * 
+     * @param path
+     * @return
+     * @throws IOException
+     */
     public String getFileName(String path) throws IOException;
 
+    /**
+     * @param path
+     * @return
+     * @throws IOException
+     */
     public InputStream getFileStream(String path) throws IOException;
 
 }

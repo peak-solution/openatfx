@@ -68,7 +68,7 @@ import de.rechner.openatfx.util.PatternUtil;
  * 
  * @author Christian Rechner
  */
-class AoSessionImpl extends AoSessionPOA {
+public class AoSessionImpl extends AoSessionPOA {
 
     private static final Log LOG = LogFactory.getLog(AoSessionImpl.class);
 
@@ -91,6 +91,8 @@ class AoSessionImpl extends AoSessionPOA {
         STATIC_CONTEXT.put("TYPE", ODSHelper.createStringNV("TYPE", "XATF-ASCII"));
     }
 
+    private static int SESSION_NO;
+
     private final POA modelPOA;
     private final BaseStructure baseStructure;
     private final AtfxCache atfxCache;
@@ -112,17 +114,17 @@ class AoSessionImpl extends AoSessionPOA {
      * @param modelPOA The POA.
      * @param fileHandler The file handler.
      * @param path The path to the ATFX file.
-     * @param id The session id.
      * @param baseStructure The base structure.
      * @throws IOException
      */
-    public AoSessionImpl(POA modelPOA, IFileHandler fileHandler, String path, int id, BaseStructure baseStructure)
+    public AoSessionImpl(POA modelPOA, IFileHandler fileHandler, String path, BaseStructure baseStructure)
             throws IOException {
         this.modelPOA = modelPOA;
-        this.id = id;
         this.baseStructure = baseStructure;
         this.atfxCache = new AtfxCache(fileHandler);
         this.path = path;
+        SESSION_NO++;
+        this.id = SESSION_NO;
 
         // fill initial context
         String fileStr = fileHandler.getFileName(path);

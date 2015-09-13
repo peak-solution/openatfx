@@ -177,8 +177,8 @@ class ExtCompReader {
         // get filename
         int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
         String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
-        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
-        File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
+        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
+        File extCompFile = new File(fileRoot, filenameUrl);
 
         // get datatype
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
@@ -318,8 +318,8 @@ class ExtCompReader {
         // get filename
         int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
         String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
-        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
-        File extCompFile = new File(atfxFile.getParentFile(), filenameUrl);
+        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
+        File extCompFile = new File(fileRoot, filenameUrl);
 
         // get datatype
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
@@ -408,8 +408,8 @@ class ExtCompReader {
             return null;
         }
         String flagsFilenameUrl = v.u.stringVal();
-        File atfxFile = new File(atfxCache.getContext().get("FILENAME").value.u.stringVal());
-        File flagsFile = new File(atfxFile.getParentFile(), flagsFilenameUrl);
+        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
+        File flagsFile = new File(fileRoot, flagsFilenameUrl);
 
         // read start offset, may be DT_LONG or DT_LONGLONG
         int flagsStartOffset = 0;

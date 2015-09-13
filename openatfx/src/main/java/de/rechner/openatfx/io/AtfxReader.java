@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.xml.stream.StreamFilter;
 import javax.xml.stream.XMLInputFactory;
@@ -31,8 +32,25 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.RelationRange;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
+import org.omg.CORBA.Policy;
+import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.PortableServer.IdAssignmentPolicyValue;
+import org.omg.PortableServer.IdUniquenessPolicyValue;
+import org.omg.PortableServer.ImplicitActivationPolicyValue;
+import org.omg.PortableServer.LifespanPolicyValue;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAHelper;
+import org.omg.PortableServer.RequestProcessingPolicyValue;
+import org.omg.PortableServer.ServantRetentionPolicyValue;
+import org.omg.PortableServer.ThreadPolicyValue;
+import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
+import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
+import org.omg.PortableServer.POAPackage.InvalidPolicy;
+import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
+import org.omg.PortableServer.POAPackage.ServantNotActive;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
+import de.rechner.openatfx.AoSessionImpl;
 import de.rechner.openatfx.IFileHandler;
 import de.rechner.openatfx.basestructure.BaseStructureFactory;
 import de.rechner.openatfx.util.ODSHelper;
@@ -117,10 +135,9 @@ public class AtfxReader {
 
                 // create AoSession object and write documentation to context
                 if ((baseModelVersion.length() > 0) && (aoSession == null)) {
-                    // read base structure
                     BaseStructure bs = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
                     POA modelPOA = createModelPOA(orb);
-                    AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, this.sessionNo, bs);
+                    AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, bs);
                     modelPOA.activate_object(aoSessionImpl);
                     aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
                 }
@@ -141,6 +158,15 @@ public class AtfxReader {
         } catch (XMLStreamException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantAlreadyActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } finally {
             if (in != null) {
                 try {
@@ -154,6 +180,45 @@ public class AtfxReader {
             this.applElems.clear();
             this.applAttrs.clear();
             this.applRels.clear();
+        }
+    }
+
+    /**
+     * Creates a new POA for all elements of the application structure for the session.
+     * 
+     * @param orb The ORB object.
+     * @return The POA.
+     * @throws AoException Error creating POA.
+     */
+    private POA createModelPOA(ORB orb) throws AoException {
+        try {
+            String poaName = "AoSession.ModelPOA." + UUID.randomUUID().toString();
+            POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+            POA poa = rootPOA.create_POA(poaName,
+                                         null,
+                                         new Policy[] {
+                                                 rootPOA.create_id_assignment_policy(IdAssignmentPolicyValue.SYSTEM_ID),
+                                                 rootPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
+                                                 rootPOA.create_id_uniqueness_policy(IdUniquenessPolicyValue.UNIQUE_ID),
+                                                 rootPOA.create_implicit_activation_policy(ImplicitActivationPolicyValue.IMPLICIT_ACTIVATION),
+                                                 rootPOA.create_servant_retention_policy(ServantRetentionPolicyValue.RETAIN),
+                                                 rootPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_ACTIVE_OBJECT_MAP_ONLY),
+                                                 rootPOA.create_thread_policy(ThreadPolicyValue.ORB_CTRL_MODEL) });
+            poa.the_POAManager().activate();
+            LOG.debug("Created session POA");
+            return poa;
+        } catch (InvalidName e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (AdapterAlreadyExists e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (InvalidPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (AdapterInactive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
     }
 

@@ -50,7 +50,7 @@ public class LocalFileHandler implements IFileHandler {
     @Override
     public String getFileName(String path) throws IOException {
         File file = new File(path);
-        return file.getAbsolutePath().replaceAll("\\\\", "/");
+        return file.getName();
     }
 
 }

@@ -49,9 +49,6 @@ public class AoServiceFactory {
     /** The singleton instance */
     private static AoServiceFactory instance;
 
-    /** The number of sessions */
-    private int sessionNo = 0;
-
     /**
      * Non visible constructor.
      */
@@ -143,10 +140,9 @@ public class AoServiceFactory {
             POA modelPOA = createModelPOA(orb);
 
             // create AoSession object
-            this.sessionNo++;
             IFileHandler fileHandler = new LocalFileHandler();
             String path = atfxFile.getAbsolutePath();
-            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, this.sessionNo, baseStructure);
+            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, baseStructure);
             modelPOA.activate_object(aoSessionImpl);
             AoSession aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
 
