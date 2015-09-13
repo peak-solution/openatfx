@@ -3,6 +3,7 @@ package de.rechner.openatfx;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -319,7 +320,31 @@ class ExtCompReader {
                         b = bis.readByteArray(bitCount);
 
                         // convert to raw_data_type
-                        if (rawDataType == 6) { // DT_LONG
+                        if (rawDataType == 5) { // DT_BYTE
+                            ByteBuffer target = ByteBuffer.allocate(1);
+                            target.put(b);
+                            target.rewind();
+                            if (valueType == 1) {// unsigned
+                                list.add(target.get());
+                            } else {
+                                list.add(target.get() & 0xFF);
+                            }
+                        } else if (rawDataType == 2) { // DT_SHORT
+                            ByteBuffer target = ByteBuffer.allocate(2);
+                            target.order(ByteOrder.LITTLE_ENDIAN);
+                            if (valueType == 28 || valueType == 30) { // big endian
+                                target.order(ByteOrder.BIG_ENDIAN);
+                            }
+                            target.put(b);
+                            target.rewind();
+                            if (valueType == 29 || valueType == 30) {// unsigned
+                                list.add(target.getShort() & 0xffffffffL);
+                            } else {
+                                list.add(target.getShort());
+                            }
+                        }
+
+                        else if (rawDataType == 6) { // DT_LONG
                             ByteBuffer target = ByteBuffer.allocate(4);
                             target.order(ByteOrder.LITTLE_ENDIAN);
                             if (valueType == 28 || valueType == 30) { // big endian
@@ -332,7 +357,28 @@ class ExtCompReader {
                             } else {
                                 list.add(target.getInt());
                             }
-                        } else {
+                        } else if (rawDataType == 8) { // DT_LONGLONG
+                            ByteBuffer target = ByteBuffer.allocate(8);
+                            target.order(ByteOrder.LITTLE_ENDIAN);
+                            if (valueType == 28 || valueType == 30) { // big endian
+                                target.order(ByteOrder.BIG_ENDIAN);
+                            }
+                            target.put(b);
+                            target.rewind();
+                            if (valueType == 29 || valueType == 30) {// unsigned
+                                byte[] data = new byte[8];
+                                target.get(data);
+                                long l1 = (((long) data[0] & 0xff) << 0) | (((long) data[1] & 0xff) << 8)
+                                        | (((long) data[2] & 0xff) << 16) | (((long) data[3] & 0xff) << 24);
+                                long l2 = (((long) data[4] & 0xff) << 0) | (((long) data[5] & 0xff) << 8)
+                                        | (((long) data[6] & 0xff) << 16) | (((long) data[7] & 0xff) << 24);
+                                list.add(BigInteger.valueOf((l1 << 0) | (l2 << 32)));
+                            } else {
+                                list.add(target.getLong());
+                            }
+                        }
+
+                        else {
                             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                                   "'raw_datatype' not yet supported:" + rawDataType);
                         }
@@ -361,6 +407,17 @@ class ExtCompReader {
                 raf = null;
             }
         }
+    }
+
+    public static void main(String[] args) {
+        // ASAM dt_byte: unsigned => Java convert
+        // ASAM dt_sbyte: signed => Java byte ok
+
+        byte b = -128;
+        ByteBuffer bb = ByteBuffer.wrap(new byte[] { b });
+        bb.order(ByteOrder.BIG_ENDIAN);
+        System.out.println(Integer.toBinaryString(b));
+        System.out.println(Integer.toBinaryString((b << 4)));
     }
 
     private Collection<String> readStringValues(AtfxCache atfxCache, long iidExtComp) throws AoException {

@@ -590,35 +590,35 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             throws AoException {
         DataType rawDt = values.value.u.discriminator();
         // DS_SHORT
-        if (rawDt == DataType.DT_SHORT) {
+        if (rawDt == DataType.DS_SHORT) {
             valueSeq.u.shortVal(new short[count]);
             for (int i = 0; i < count; i++) {
                 valueSeq.u.shortVal()[i] = values.value.u.shortSeq()[startPoint + i];
             }
         }
         // DS_FLOAT
-        else if (rawDt == DataType.DT_FLOAT) {
+        else if (rawDt == DataType.DS_FLOAT) {
             valueSeq.u.floatVal(new float[count]);
             for (int i = 0; i < count; i++) {
                 valueSeq.u.floatVal()[i] = values.value.u.floatSeq()[startPoint + i];
             }
         }
         // DS_DOUBLE
-        else if (rawDt == DataType.DT_DOUBLE) {
+        else if (rawDt == DataType.DS_DOUBLE) {
             valueSeq.u.doubleVal(new double[count]);
             for (int i = 0; i < count; i++) {
                 valueSeq.u.doubleVal()[i] = values.value.u.doubleSeq()[startPoint + i];
             }
         }
         // DS_LONG
-        else if (rawDt == DataType.DT_LONG) {
+        else if (rawDt == DataType.DS_LONG) {
             valueSeq.u.longVal(new int[count]);
             for (int i = 0; i < count; i++) {
                 valueSeq.u.longVal()[i] = values.value.u.longSeq()[startPoint + i];
             }
         }
         // DS_LONGLONG
-        else if (rawDt == DataType.DT_LONGLONG) {
+        else if (rawDt == DataType.DS_LONGLONG) {
             valueSeq.u.longlongVal(new T_LONGLONG[count]);
             for (int i = 0; i < count; i++) {
                 valueSeq.u.longlongVal()[i] = values.value.u.longlongSeq()[startPoint + i];
