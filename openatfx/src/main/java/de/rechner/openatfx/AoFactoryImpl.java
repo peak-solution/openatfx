@@ -29,14 +29,17 @@ class AoFactoryImpl extends AoFactoryPOA {
     private static final Log LOG = LogFactory.getLog(AoFactoryImpl.class);
 
     private final ORB orb;
+    private final IFileHandler fileHandler;
 
     /**
      * Creates a new AoFactory object.
      * 
      * @param orb The ORB.
+     * @param fileHandler The file handler.
      */
-    public AoFactoryImpl(ORB orb) {
+    public AoFactoryImpl(ORB orb, IFileHandler fileHandler) {
         this.orb = orb;
+        this.fileHandler = fileHandler;
     }
 
     /**
@@ -119,13 +122,7 @@ class AoFactoryImpl extends AoFactoryPOA {
                 throw new AoException(ErrorCode.AO_MISSING_VALUE, SeverityFlag.ERROR, 0,
                                       "Parameter 'FILENAME' not found");
             }
-            if (!atfxFile.exists()) {
-                throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
-                        + atfxFile.getAbsolutePath());
-            }
-
-            IFileHandler fileHandler = new LocalFileHandler();
-            return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, atfxFile.getAbsolutePath());
+            return AtfxReader.getInstance().createSessionForATFX(orb, this.fileHandler, atfxFile.getAbsolutePath());
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;

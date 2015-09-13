@@ -68,7 +68,41 @@ public class AoServiceFactory {
             rootpoa.the_POAManager().activate();
 
             // create servant and register it with the ORB
-            AoFactoryImpl aoFactoryImpl = new AoFactoryImpl(orb);
+            AoFactoryImpl aoFactoryImpl = new AoFactoryImpl(orb, new LocalFileHandler());
+            org.omg.CORBA.Object ref = rootpoa.servant_to_reference(aoFactoryImpl);
+            AoFactory aoFactory = AoFactoryHelper.narrow(ref);
+
+            return aoFactory;
+        } catch (InvalidName e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (AdapterInactive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (ServantNotActive e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        } catch (WrongPolicy e) {
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+    }
+
+    /**
+     * Creates a new <code>org.asam.ods.AoFactory</code> object.
+     * 
+     * @param orb The ORB.
+     * @return The AoFactory object.
+     * @throws AoException Error creating AoFactory.
+     */
+    public AoFactory newAoFactory(ORB orb, IFileHandler fileHandler) throws AoException {
+        try {
+            // get reference to rootpoa & activate the POAManager
+            POA rootpoa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
+            rootpoa.the_POAManager().activate();
+
+            // create servant and register it with the ORB
+            AoFactoryImpl aoFactoryImpl = new AoFactoryImpl(orb, fileHandler);
             org.omg.CORBA.Object ref = rootpoa.servant_to_reference(aoFactoryImpl);
             AoFactory aoFactory = AoFactoryHelper.narrow(ref);
 

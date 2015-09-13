@@ -26,6 +26,8 @@
 	0.6.0 (Christian Rechner)
 	
 		- Added interface for file system abstraction layer
+		- Added support for value types:
+		  * dt_ushort
 
 
 	0.5.6 (Christian Rechner)

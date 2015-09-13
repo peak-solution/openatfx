@@ -50,10 +50,6 @@ class ExtCompReader {
         if (iidExtComps.size() > 0) {
             Collections.sort(iidExtComps, new ExternalComponentComparator(atfxCache));
         }
-        // if (iidExtComps.size() != 1) {
-        // throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-        // "The implementation currently only may read exactly one external component file");
-        // }
 
         TS_Value tsValue = new TS_Value();
         tsValue.flag = (short) 15;
@@ -175,28 +171,14 @@ class ExtCompReader {
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
-        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
+        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
         String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
         File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
         File extCompFile = new File(fileRoot, filenameUrl);
 
-        // get datatype
+        // get value type
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
         int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
-
-        short bitCount = -1;
-        short bitOffset = -1;
-
-        // Only for bit types
-        if (valueType >= 27 && valueType <= 32) {
-            // get datatype
-            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_count");
-            bitCount = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
-
-            // get datatype
-            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_offset");
-            bitOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
-        }
 
         // read length
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
@@ -212,9 +194,23 @@ class ExtCompReader {
             startOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
         }
 
-        // value_offset
+        // read value offset
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_offset");
         int valueOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
+
+        // read bit count
+        short bitCount = 0;
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_count");
+        if (attrNo != null) {
+            bitCount = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
+        }
+
+        // read bit offset
+        short bitOffset = 0;
+        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "ao_bit_offset");
+        if (attrNo != null) {
+            bitOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.shortVal();
+        }
 
         // block_size, valuesperblock
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "block_size");
@@ -234,13 +230,22 @@ class ExtCompReader {
             // initialize buffer
             ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
             ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-            if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 11)) {
+            // dt_short_beo [7], dt_long_beo [8], dt_longlong_beo [9], ieeefloat4_beo [10], ieeefloat8_beo [11],
+            // dt_boolean_flags_beo [15], dt_byte_flags_beo [16], dt_string_flags_beo [17], dt_bytestr_beo [18],
+            // dt_sbyte_flags_beo [20], dt_ushort_beo [22], dt_ulong_beo [24], dt_string_utf8_beo [26]
+            // dt_bit_int_beo [28], dt_bit_uint_beo [30], dt_bit_float_beo [32]
+            if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 10) || (valueType == 11)
+                    || (valueType == 15) || (valueType == 16) || (valueType == 17) || (valueType == 18)
+                    || (valueType == 20) || (valueType == 22) || (valueType == 24) || (valueType == 26)
+                    || (valueType == 28) || (valueType == 30) || (valueType == 32)) {
                 byteOrder = ByteOrder.BIG_ENDIAN;
             }
             sourceMbb.order(byteOrder);
 
             // loop over blocks
             for (int i = 0; i < componentLength; i += valuesperblock) {
+
+                // read whole block into memory
                 byte[] buffer = new byte[blockSize];
                 raf.read(buffer, 0, buffer.length);
 
@@ -251,15 +256,19 @@ class ExtCompReader {
                 // sub blocks are consecutive, puhh!
                 for (int j = 0; j < valuesperblock; j++) {
 
-                    // 2=dt_short
-                    if (valueType == 2) {
+                    // 1=dt_byte
+                    if (valueType == 1) {
+                        list.add(sourceMbb.get());
+                    }
+                    // 2=dt_short, 21=dt_ushort
+                    else if ((valueType == 2) || (valueType == 21)) {
                         list.add(sourceMbb.getShort());
                     }
                     // 3=dt_long, 8=dt_long_beo
                     else if ((valueType == 3) || (valueType == 8)) {
                         list.add(sourceMbb.getInt());
                     }
-                    // 4=dt_longlong, 8=dt_long_beo
+                    // 4=dt_longlong, 9=dt_longlong_beo
                     else if ((valueType == 4) || (valueType == 9)) {
                         list.add(sourceMbb.getLong());
                     }
@@ -267,13 +276,9 @@ class ExtCompReader {
                     else if ((valueType == 5) || (valueType == 10)) {
                         list.add(sourceMbb.getFloat());
                     }
-                    // 6=ieeefloat8, 10=ieeefloat8_beo
+                    // 6=ieeefloat8, 11=ieeefloat8_beo
                     else if ((valueType == 6) || (valueType == 11)) {
                         list.add(sourceMbb.getDouble());
-                    }
-                    // 1=dt_byte
-                    else if (valueType == 1) {
-                        list.add(sourceMbb.get());
                     }
                     // 29=dt_bit_uint
                     else if (valueType == 29) {
