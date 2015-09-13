@@ -58,9 +58,11 @@ class ExtCompReader {
         // get raw data type
         Integer rawDataType = null;
         Integer attrNo = atfxCache.getAttrNoByBaName(aidLc, "raw_datatype");
-        TS_Value valRawDatatype = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
-        if (valRawDatatype != null && valRawDatatype.flag == 15) {
-            rawDataType = valRawDatatype.u.enumVal();
+        if (attrNo != null) {
+            TS_Value valRawDatatype = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
+            if (valRawDatatype != null && valRawDatatype.flag == 15) {
+                rawDataType = valRawDatatype.u.enumVal();
+            }
         }
 
         // DS_STRING
