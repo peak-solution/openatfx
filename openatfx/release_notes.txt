@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.6.0 (Christian Rechner)
+	
+		- Added interface for file system abstraction layer
+
+
 	0.5.6 (Christian Rechner)
 
 	    - Added buffer when reading external component files to increase performance

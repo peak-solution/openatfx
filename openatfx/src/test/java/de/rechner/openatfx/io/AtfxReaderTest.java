@@ -13,6 +13,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 
+import de.rechner.openatfx.IFileHandler;
+import de.rechner.openatfx.LocalFileHandler;
+
 
 /**
  * Test case for <code>de.rechner.openatfx.io.AtfxReaderTest</code>.
@@ -35,7 +38,9 @@ public class AtfxReaderTest {
         try {
             URL url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
             AtfxReader reader = AtfxReader.getInstance();
-            AoSession aoSession = reader.createSessionForATFX(orb, new File(url.getFile()));
+            IFileHandler fileHandler = new LocalFileHandler();
+            String path = new File(url.getFile()).getAbsolutePath();
+            AoSession aoSession = reader.createSessionForATFX(orb, fileHandler, path);
             aoSession.close();
         } catch (AoException e) {
             LOG.error(e.reason, e);

@@ -78,7 +78,7 @@ class AoSessionImpl extends AoSessionPOA {
         STATIC_CONTEXT.put("WILDCARD_ALL", ODSHelper.createStringNV("WILDCARD_ALL", "*"));
         STATIC_CONTEXT.put("WILDCARD_ESC", ODSHelper.createStringNV("WILDCARD_ESC", "\\"));
         STATIC_CONTEXT.put("WILDCARD_ONE", ODSHelper.createStringNV("WILDCARD_ONE", "."));
-        STATIC_CONTEXT.put("USER", ODSHelper.createStringNV("USER", ""));
+        STATIC_CONTEXT.put("USER", ODSHelper.createStringNV("USER", System.getProperty("user.name")));
         STATIC_CONTEXT.put("PASSWORD", ODSHelper.createStringNV("PASSWORD", "***********"));
         STATIC_CONTEXT.put("ODSVERSION", ODSHelper.createStringNV("ODSVERSION", "5.3.0"));
         STATIC_CONTEXT.put("CREATE_COSESSION_ALLOWED", ODSHelper.createStringNV("CREATE_COSESSION_ALLOWED", "FALSE"));
@@ -92,9 +92,9 @@ class AoSessionImpl extends AoSessionPOA {
     }
 
     private final POA modelPOA;
-    private final File atfxFile;
     private final BaseStructure baseStructure;
     private final AtfxCache atfxCache;
+    private final String path;
 
     /** lazy loaded objects */
     private POA instancePOA;
@@ -110,20 +110,23 @@ class AoSessionImpl extends AoSessionPOA {
      * Constructor.
      * 
      * @param modelPOA The POA.
-     * @param atfxFile The ATFX file.
+     * @param fileHandler The file handler.
+     * @param path The path to the ATFX file.
      * @param id The session id.
      * @param baseStructure The base structure.
+     * @throws IOException
      */
-    public AoSessionImpl(POA modelPOA, File atfxFile, int id, BaseStructure baseStructure) {
+    public AoSessionImpl(POA modelPOA, IFileHandler fileHandler, String path, int id, BaseStructure baseStructure)
+            throws IOException {
         this.modelPOA = modelPOA;
-        this.atfxFile = atfxFile;
         this.id = id;
         this.baseStructure = baseStructure;
-        this.atfxCache = new AtfxCache();
+        this.atfxCache = new AtfxCache(fileHandler);
+        this.path = path;
 
         // fill initial context
-        String fileStr = atfxFile.getAbsolutePath().replaceAll("\\\\", "/");
-        String directoryStr = atfxFile.getParentFile().getAbsolutePath().replaceAll("\\\\", "/");
+        String fileStr = fileHandler.getFileName(path);
+        String directoryStr = fileHandler.getFileRoot(path);
         this.atfxCache.getContext().putAll(STATIC_CONTEXT);
         this.atfxCache.getContext().put("write_mode", ODSHelper.createStringNV("write_mode", "database"));
         this.atfxCache.getContext().put("FILE_ROOT", ODSHelper.createStringNV("FILE_ROOT", directoryStr));
@@ -151,7 +154,7 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#getName()
      */
     public String getName() throws AoException {
-        return this.atfxFile.getName();
+        return this.atfxCache.getContext().get("FILENAME").value.u.stringVal();
     }
 
     /**
@@ -452,6 +455,13 @@ class AoSessionImpl extends AoSessionPOA {
      * @see org.asam.ods.AoSessionOperations#startTransaction()
      */
     public void startTransaction() throws AoException {
+        // writing to ATFX file is only possible on local file system!
+        if (!(this.atfxCache.getFileHandler() instanceof LocalFileHandler)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Writing to ATFX file is only possible on local file system");
+        }
+        File localAtfxFile = new File(this.path);
+
         // check if already a transaction is opened - multiple transactions are not supported!
         if (this.transactionFile != null) {
             throw new AoException(ErrorCode.AO_TRANSACTION_ALREADY_ACTIVE, SeverityFlag.ERROR, 0,
@@ -462,7 +472,7 @@ class AoSessionImpl extends AoSessionPOA {
         try {
             File backupFile = File.createTempFile("openatfx_backup", ".atfx");
             backupFile.deleteOnExit();
-            FileUtil.copyFile(this.atfxFile, backupFile);
+            FileUtil.copyFile(localAtfxFile, backupFile);
             this.transactionFile = backupFile;
 
             LOG.info("Started transaction [backupFile=" + backupFile + "]");
@@ -483,9 +493,16 @@ class AoSessionImpl extends AoSessionPOA {
             throw new AoException(ErrorCode.AO_TRANSACTION_NOT_ACTIVE, SeverityFlag.ERROR, 0, "No transaction active");
         }
 
+        // writing to ATFX file is only possible on local file system!
+        if (!(this.atfxCache.getFileHandler() instanceof LocalFileHandler)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Writing to ATFX file is only possible on local file system");
+        }
+        File localAtfxFile = new File(this.path);
+
         // restore backup
         try {
-            FileUtil.copyFile(this.transactionFile, this.atfxFile);
+            FileUtil.copyFile(this.transactionFile, localAtfxFile);
             this.transactionFile.delete();
             this.transactionFile = null;
 
@@ -507,15 +524,22 @@ class AoSessionImpl extends AoSessionPOA {
             throw new AoException(ErrorCode.AO_TRANSACTION_NOT_ACTIVE, SeverityFlag.ERROR, 0, "No transaction active");
         }
 
+        // writing to ATFX file is only possible on local file system!
+        if (!(this.atfxCache.getFileHandler() instanceof LocalFileHandler)) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Writing to ATFX file is only possible on local file system");
+        }
+        File localAtfxFile = new File(this.path);
+
         try {
             // overwrite backup file
             AtfxWriter.getInstance().writeXML(this.transactionFile, _this());
 
-            FileUtil.copyFile(this.transactionFile, this.atfxFile);
+            FileUtil.copyFile(this.transactionFile, localAtfxFile);
             this.transactionFile.delete();
             this.transactionFile = null;
 
-            LOG.info("Commited transaction to '" + this.atfxFile.getAbsolutePath() + "'");
+            LOG.info("Commited transaction to '" + localAtfxFile.getAbsolutePath() + "'");
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());

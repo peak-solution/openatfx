@@ -123,7 +123,9 @@ class AoFactoryImpl extends AoFactoryPOA {
                 throw new AoException(ErrorCode.AO_ACCESS_DENIED, SeverityFlag.ERROR, 0, "Unable to open ATFX file: "
                         + atfxFile.getAbsolutePath());
             }
-            return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+
+            IFileHandler fileHandler = new LocalFileHandler();
+            return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, atfxFile.getAbsolutePath());
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;

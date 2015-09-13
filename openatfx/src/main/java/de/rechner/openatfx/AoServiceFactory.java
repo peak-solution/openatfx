@@ -102,7 +102,24 @@ public class AoServiceFactory {
      * @throws AoException Error creating session.
      */
     public synchronized AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
-        return AtfxReader.getInstance().createSessionForATFX(orb, atfxFile);
+        return newAoSession(orb, new LocalFileHandler(), atfxFile.getAbsolutePath());
+    }
+
+    /**
+     * Creates a new <code>org.asam.ods.AoSession</code> with the content of given ATFX file at a remote location.
+     * <p>
+     * The session will contain the complete application structure and all found instances.
+     * <p>
+     * If a remote file location is used the ATFX file will be readonly.
+     * 
+     * @param orb The ORB.
+     * @param fileHandler The file handler, must not be null.
+     * @param path The path to the ATFX file.
+     * @return The created session.
+     * @throws AoException Error creating session.
+     */
+    public synchronized AoSession newAoSession(ORB orb, IFileHandler fileHandler, String path) throws AoException {
+        return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, path);
     }
 
     /**
@@ -127,7 +144,9 @@ public class AoServiceFactory {
 
             // create AoSession object
             this.sessionNo++;
-            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, atfxFile, this.sessionNo, baseStructure);
+            IFileHandler fileHandler = new LocalFileHandler();
+            String path = atfxFile.getAbsolutePath();
+            AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, this.sessionNo, baseStructure);
             modelPOA.activate_object(aoSessionImpl);
             AoSession aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
 

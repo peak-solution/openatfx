@@ -1,8 +1,5 @@
 package de.rechner.openatfx.io;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -19,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
+import org.asam.ods.AoSessionHelper;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
@@ -33,8 +31,10 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.RelationRange;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
+import org.omg.PortableServer.POA;
 
-import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.IFileHandler;
+import de.rechner.openatfx.basestructure.BaseStructureFactory;
 import de.rechner.openatfx.util.ODSHelper;
 
 
@@ -72,18 +72,20 @@ public class AtfxReader {
      * Returns the ASAM ODS aoSession object for a ATFX file.
      * 
      * @param orb The ORB.
-     * @param atfxFile The ATFX file.
+     * @param in The ATFX file input stream.
      * @return The aoSession object.
      * @throws AoException Error getting aoSession.
      */
-    public synchronized AoSession createSessionForATFX(ORB orb, File atfxFile) throws AoException {
+    public synchronized AoSession createSessionForATFX(ORB orb, IFileHandler fileHandler, String path)
+            throws AoException {
         long start = System.currentTimeMillis();
-
         InputStream in = null;
         try {
+            // get stream from file handler
+            in = fileHandler.getFileStream(path);
+
             // open XML file
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-            in = new BufferedInputStream(new FileInputStream(atfxFile));
             XMLStreamReader rawReader = inputFactory.createXMLStreamReader(in);
             XMLStreamReader reader = inputFactory.createFilteredReader(rawReader, new StartEndElementFilter());
 
@@ -115,7 +117,12 @@ public class AtfxReader {
 
                 // create AoSession object and write documentation to context
                 if ((baseModelVersion.length() > 0) && (aoSession == null)) {
-                    aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, atfxFile, baseModelVersion);
+                    // read base structure
+                    BaseStructure bs = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
+                    POA modelPOA = createModelPOA(orb);
+                    AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, this.sessionNo, bs);
+                    modelPOA.activate_object(aoSessionImpl);
+                    aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
                 }
 
                 reader.nextTag();
@@ -126,7 +133,7 @@ public class AtfxReader {
                 aoSession.setContextString("documentation_" + docKey, documentation.get(docKey));
             }
 
-            LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms: " + atfxFile.getAbsolutePath());
+            LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms");
             return aoSession;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

@@ -40,6 +40,9 @@ import de.rechner.openatfx.util.ODSHelper;
  */
 class AtfxCache {
 
+    /** the file handler */
+    private final IFileHandler fileHandler;
+
     /** session context variables */
     private final Map<String, NameValue> context;
 
@@ -82,8 +85,12 @@ class AtfxCache {
 
     /**
      * Constructor.
+     * 
+     * @param fileHandler The file handler.
      */
-    public AtfxCache() {
+    public AtfxCache(IFileHandler fileHandler) {
+        this.fileHandler = fileHandler;
+
         /** session context */
         this.context = new LinkedHashMap<String, NameValue>();
 
@@ -110,6 +117,15 @@ class AtfxCache {
 
         this.nextAid = 1;
         this.nextAttrNoMap = new HashMap<Long, Integer>();
+    }
+
+    /**
+     * Returns the file handler object.
+     * 
+     * @return The file handler.
+     */
+    public IFileHandler getFileHandler() {
+        return fileHandler;
     }
 
     /**
