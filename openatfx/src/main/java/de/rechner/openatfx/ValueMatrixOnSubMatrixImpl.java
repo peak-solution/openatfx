@@ -792,7 +792,7 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         // DS_BYTE
         else if (dt == DataType.DS_BYTE) {
             for (byte v : u.byteSeq()) {
-                list.add(v);
+                list.add(v & 0xff); // ODS is SIGNED byte!
             }
         }
         // DS_LONG

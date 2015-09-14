@@ -3,7 +3,6 @@ package de.rechner.openatfx;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -25,7 +24,6 @@ import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
 
-import de.rechner.openatfx.util.BitInputStream;
 import de.rechner.openatfx.util.BufferedRandomAccessFile;
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -57,24 +55,53 @@ class ExtCompReader {
         tsValue.u = new TS_Union();
 
         // get raw data type
-        Integer rawDataType = null;
+        DataType rawDataType = targetDataType;
         Integer attrNo = atfxCache.getAttrNoByBaName(aidLc, "raw_datatype");
         if (attrNo != null) {
             TS_Value valRawDatatype = atfxCache.getInstanceValue(aidLc, attrNo, iidLc);
             if (valRawDatatype != null && valRawDatatype.flag == 15) {
-                rawDataType = valRawDatatype.u.enumVal();
+                int val = valRawDatatype.u.enumVal();
+                if (val == 1) { // DT_STRING
+                    rawDataType = DataType.DS_STRING;
+                } else if (val == 2) { // DT_SHORT
+                    rawDataType = DataType.DS_SHORT;
+                } else if (val == 3) { // DT_FLOAT
+                    rawDataType = DataType.DS_FLOAT;
+                } else if (val == 4) { // DT_BOOLEAN
+                    rawDataType = DataType.DS_BOOLEAN;
+                } else if (val == 5) { // DT_BYTE
+                    rawDataType = DataType.DS_BYTE;
+                } else if (val == 6) { // DT_LONG
+                    rawDataType = DataType.DS_LONG;
+                } else if (val == 7) { // DT_DOUBLE
+                    rawDataType = DataType.DS_DOUBLE;
+                } else if (val == 8) { // DT_LONGLONG
+                    rawDataType = DataType.DS_LONGLONG;
+                } else if (val == 10) { // DT_DATE
+                    rawDataType = DataType.DS_DATE;
+                } else if (val == 11) { // DT_BYTESTR
+                    rawDataType = DataType.DS_BYTESTR;
+                } else if (val == 13) { // DT_COMPLEX
+                    rawDataType = DataType.DS_COMPLEX;
+                } else if (val == 14) { // DT_DCOMPLEX
+                    rawDataType = DataType.DS_DCOMPLEX;
+                } else if (val == 28) { // DT_EXTERNALREFERENCE
+                    rawDataType = DataType.DS_EXTERNALREFERENCE;
+                } else if (val == 30) { // DT_ENUM
+                    rawDataType = DataType.DS_ENUM;
+                }
             }
         }
 
         // DS_STRING
-        if (targetDataType == DataType.DS_STRING || targetDataType == DataType.DS_BYTESTR) {
+        if (rawDataType == DataType.DS_STRING || rawDataType == DataType.DS_BYTESTR) {
             List<String> list = new ArrayList<String>();
             for (long iidExtComp : iidExtComps) {
                 list.addAll(readStringValues(atfxCache, iidExtComp));
             }
             tsValue.u.stringSeq(list.toArray(new String[0]));
         } // DS_DATE
-        else if (targetDataType == DataType.DS_DATE) {
+        else if (rawDataType == DataType.DS_DATE) {
             List<String> list = new ArrayList<String>();
             for (long iidExtComp : iidExtComps) {
                 list.addAll(readStringValues(atfxCache, iidExtComp));
@@ -88,7 +115,7 @@ class ExtCompReader {
                 list.addAll(readNumberValues(atfxCache, iidExtComp, rawDataType));
             }
             // DS_BOOLEAN
-            if (targetDataType == DataType.DS_BOOLEAN) {
+            if (rawDataType == DataType.DS_BOOLEAN) {
                 boolean[] ar = new boolean[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).byteValue() != 0;
@@ -96,7 +123,7 @@ class ExtCompReader {
                 tsValue.u.booleanSeq(ar);
             }
             // DS_BYTE
-            else if (targetDataType == DataType.DS_BYTE) {
+            else if (rawDataType == DataType.DS_BYTE) {
                 byte[] ar = new byte[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).byteValue();
@@ -104,7 +131,7 @@ class ExtCompReader {
                 tsValue.u.byteSeq(ar);
             }
             // DS_SHORT
-            else if (targetDataType == DataType.DS_SHORT) {
+            else if (rawDataType == DataType.DS_SHORT) {
                 short[] ar = new short[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).shortValue();
@@ -112,7 +139,7 @@ class ExtCompReader {
                 tsValue.u.shortSeq(ar);
             }
             // DS_LONG
-            else if (targetDataType == DataType.DS_LONG) {
+            else if (rawDataType == DataType.DS_LONG) {
                 int[] ar = new int[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).intValue();
@@ -120,7 +147,7 @@ class ExtCompReader {
                 tsValue.u.longSeq(ar);
             }
             // DS_DOUBLE
-            else if (targetDataType == DataType.DS_DOUBLE) {
+            else if (rawDataType == DataType.DS_DOUBLE) {
                 double[] ar = new double[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).doubleValue();
@@ -128,7 +155,7 @@ class ExtCompReader {
                 tsValue.u.doubleSeq(ar);
             }
             // DS_LONGLONG
-            else if (targetDataType == DataType.DS_LONGLONG) {
+            else if (rawDataType == DataType.DS_LONGLONG) {
                 T_LONGLONG[] ar = new T_LONGLONG[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = ODSHelper.asODSLongLong(list.get(i).longValue());
@@ -136,7 +163,7 @@ class ExtCompReader {
                 tsValue.u.longlongSeq(ar);
             }
             // DS_FLOAT
-            else if (targetDataType == DataType.DS_FLOAT) {
+            else if (rawDataType == DataType.DS_FLOAT) {
                 float[] ar = new float[list.size()];
                 for (int i = 0; i < list.size(); i++) {
                     ar[i] = list.get(i).floatValue();
@@ -144,7 +171,7 @@ class ExtCompReader {
                 tsValue.u.floatSeq(ar);
             }
             // DS_COMPLEX
-            else if (targetDataType == DataType.DS_COMPLEX) {
+            else if (rawDataType == DataType.DS_COMPLEX) {
                 int size = list.size() / 2;
                 T_COMPLEX[] ar = new T_COMPLEX[size];
                 for (int i = 0; i < size; i++) {
@@ -155,7 +182,7 @@ class ExtCompReader {
                 tsValue.u.complexSeq(ar);
             }
             // DS_DCOMPLEX
-            else if (targetDataType == DataType.DS_DCOMPLEX) {
+            else if (rawDataType == DataType.DS_DCOMPLEX) {
                 int size = list.size() / 2;
                 T_DCOMPLEX[] ar = new T_DCOMPLEX[size];
                 for (int i = 0; i < size; i++) {
@@ -175,7 +202,8 @@ class ExtCompReader {
         return tsValue;
     }
 
-    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp, Integer rawDataType) throws AoException {
+    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp, DataType rawDataType)
+            throws AoException {
         long start = System.currentTimeMillis();
 
         List<Number> list = new ArrayList<Number>();
@@ -234,7 +262,7 @@ class ExtCompReader {
         // read values
         RandomAccessFile raf = null;
         try {
-            // open source channel
+            // open source file
             raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE);
             raf.seek(startOffset);
 
@@ -257,11 +285,11 @@ class ExtCompReader {
             for (int i = 0; i < componentLength; i += valuesperblock) {
 
                 // read whole block into memory
-                byte[] buffer = new byte[blockSize];
-                raf.read(buffer, 0, buffer.length);
+                byte[] record = new byte[blockSize];
+                raf.read(record, 0, record.length);
 
                 sourceMbb.clear();
-                sourceMbb.put(buffer);
+                sourceMbb.put(record);
                 sourceMbb.position(valueOffset);
 
                 // sub blocks are consecutive, puhh!
@@ -269,11 +297,13 @@ class ExtCompReader {
 
                     // 1=dt_byte
                     if (valueType == 1) {
-                        list.add(sourceMbb.get());
+                        int b = sourceMbb.get() & 0xFF;
+                        list.add((short) b);
                     }
                     // 19=dt_sbyte
                     else if (valueType == 19) {
-                        list.add(sourceMbb.get());
+                        int b = sourceMbb.get() & 0xFF;
+                        list.add((short) b);
                     }
                     // 2=dt_short, 7=dt_short_beo
                     else if ((valueType == 2) || (valueType == 7)) {
@@ -297,7 +327,7 @@ class ExtCompReader {
                     }
                     // 21=dt_ushort, 22=dt_ushort_beo
                     else if ((valueType == 21) || (valueType == 22)) {
-                        list.add(sourceMbb.getShort() & 0xffff);
+                        list.add(sourceMbb.getShort() & 0xFFFF);
                     }
                     // 23=dt_ulong, 24=dt_ulong_beo
                     else if ((valueType == 23) || (valueType == 24)) {
@@ -305,82 +335,64 @@ class ExtCompReader {
                     }
                     // 27=dt_bit_int, 28=dt_bit_int_beo, 29=dt_bit_uint, 30=dt_bit_uint_beo
                     else if ((valueType == 27) || (valueType == 28) || (valueType == 29) || (valueType == 30)) {
-                        if (rawDataType == null) {
-                            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                                  "'raw_datatype' has to be set for bit type");
+
+                        // Read that number of bytes from the byte position within the file
+                        int bytesToRead = ((bitCount + bitOffset - 1) / 8) + 1;
+                        byte[] tmp = new byte[bytesToRead];
+                        sourceMbb.get(tmp);
+
+                        // one single bit
+                        if (bitCount == 1) {
+                            list.add(getBit(tmp, bitOffset) ? 1 : 0);
                         }
-                        // allocate target buffer (byte): INT[(ao_bit_count + ao_bit_offset - 1) / 8] + 1
-                        int targetValueSize = ((bitCount + bitOffset - 1) / 8) + 1;
-                        byte[] b = new byte[targetValueSize];
-                        sourceMbb.get(b);
-
-                        // skip first bits and read value
-                        BitInputStream bis = new BitInputStream(b);
-                        bis.skip(bitOffset);
-                        b = bis.readByteArray(bitCount);
-
-                        // convert to raw_data_type
-                        if (rawDataType == 5) { // DT_BYTE
+                        // DT_BYTE
+                        else if (bitCount > 1 && bitCount <= 8) {
                             ByteBuffer target = ByteBuffer.allocate(1);
-                            target.put(b);
+                            target.order(byteOrder);
+                            target.put(tmp);
                             target.rewind();
-                            if (valueType == 1) {// unsigned
-                                list.add(target.get());
-                            } else {
-                                list.add(target.get() & 0xFF);
+                            if (valueType == 29 || valueType == 30) { // unsigned
+                                byte b = target.get();
+                                list.add((b >> bitOffset) & 0xff);
+                            } else { // signed
+                                list.add(target.get() >> bitOffset);
                             }
-                        } else if (rawDataType == 2) { // DT_SHORT
+                        }
+                        // DT_SHORT
+                        else if (bitCount > 8 && bitCount <= 16) {
                             ByteBuffer target = ByteBuffer.allocate(2);
-                            target.order(ByteOrder.LITTLE_ENDIAN);
-                            if (valueType == 28 || valueType == 30) { // big endian
-                                target.order(ByteOrder.BIG_ENDIAN);
-                            }
-                            target.put(b);
+                            target.order(byteOrder);
+                            target.put(tmp);
                             target.rewind();
-                            if (valueType == 29 || valueType == 30) {// unsigned
-                                list.add(target.getShort() & 0xffffffffL);
-                            } else {
-                                list.add(target.getShort());
+                            if (valueType == 29 || valueType == 30) { // unsigned
+                                list.add((target.getShort() >> bitOffset) & 0xffff);
+                            } else { // signed
+                                list.add(target.getShort() >> bitOffset);
                             }
                         }
-
-                        else if (rawDataType == 6) { // DT_LONG
+                        // DT_LONG
+                        else if (bitCount > 16 && bitCount <= 32) {
                             ByteBuffer target = ByteBuffer.allocate(4);
-                            target.order(ByteOrder.LITTLE_ENDIAN);
-                            if (valueType == 28 || valueType == 30) { // big endian
-                                target.order(ByteOrder.BIG_ENDIAN);
-                            }
-                            target.put(b);
+                            target.order(byteOrder);
+                            target.put(tmp);
                             target.rewind();
-                            if (valueType == 29 || valueType == 30) {// unsigned
-                                list.add(target.getInt() & 0xffffffffL);
-                            } else {
-                                list.add(target.getInt());
-                            }
-                        } else if (rawDataType == 8) { // DT_LONGLONG
-                            ByteBuffer target = ByteBuffer.allocate(8);
-                            target.order(ByteOrder.LITTLE_ENDIAN);
-                            if (valueType == 28 || valueType == 30) { // big endian
-                                target.order(ByteOrder.BIG_ENDIAN);
-                            }
-                            target.put(b);
-                            target.rewind();
-                            if (valueType == 29 || valueType == 30) {// unsigned
-                                byte[] data = new byte[8];
-                                target.get(data);
-                                long l1 = (((long) data[0] & 0xff) << 0) | (((long) data[1] & 0xff) << 8)
-                                        | (((long) data[2] & 0xff) << 16) | (((long) data[3] & 0xff) << 24);
-                                long l2 = (((long) data[4] & 0xff) << 0) | (((long) data[5] & 0xff) << 8)
-                                        | (((long) data[6] & 0xff) << 16) | (((long) data[7] & 0xff) << 24);
-                                list.add(BigInteger.valueOf((l1 << 0) | (l2 << 32)));
-                            } else {
-                                list.add(target.getLong());
+                            if (valueType == 29 || valueType == 30) { // unsigned
+                                list.add(target.getInt() >> bitOffset & 0xffffff);
+                            } else { // signed
+                                list.add(target.getInt() >> bitOffset);
                             }
                         }
-
-                        else {
-                            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                                  "'raw_datatype' not yet supported:" + rawDataType);
+                        // DT_LONGLONG
+                        else if (bitCount > 32 && bitCount <= 64) {
+                            ByteBuffer target = ByteBuffer.allocate(8);
+                            target.order(byteOrder);
+                            target.put(tmp);
+                            target.rewind();
+                            if (valueType == 29 || valueType == 30) { // unsigned
+                                list.add(target.getLong() >> bitOffset & 0xffffff);
+                            } else { // signed
+                                list.add(target.getLong() >> bitOffset);
+                            }
                         }
                     }
                     // unsupported data type
@@ -409,15 +421,11 @@ class ExtCompReader {
         }
     }
 
-    public static void main(String[] args) {
-        // ASAM dt_byte: unsigned => Java convert
-        // ASAM dt_sbyte: signed => Java byte ok
-
-        byte b = -128;
-        ByteBuffer bb = ByteBuffer.wrap(new byte[] { b });
-        bb.order(ByteOrder.BIG_ENDIAN);
-        System.out.println(Integer.toBinaryString(b));
-        System.out.println(Integer.toBinaryString((b << 4)));
+    public static boolean getBit(byte[] data, int pos) {
+        int posByte = pos / 8;
+        int posBit = pos % 8;
+        byte valByte = data[posByte];
+        return (valByte & (1 << posBit)) != 0;
     }
 
     private Collection<String> readStringValues(AtfxCache atfxCache, long iidExtComp) throws AoException {
