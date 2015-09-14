@@ -2,7 +2,7 @@ package de.rechner.openatfx.main;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,7 +35,7 @@ public class TestCompareMinMaxATFX {
     public static void main(String[] args) {
         BasicConfigurator.configure();
         ORB orb = ORB.init(args, System.getProperties());
-        File file = new File("D:\\PUBLIC\\test\\test\\test2.atfx");
+        File file = new File("D:\\PUBLIC\\test\\test\\test1.atfx");
         List<String> failures = new ArrayList<String>();
         int checked = 0;
 
@@ -68,6 +68,10 @@ public class TestCompareMinMaxATFX {
 
                 Column[] columns = vm.getColumns("*");
                 for (Column col : columns) {
+                    // if (!col.getName().equals("zwout")) {
+                    // continue;
+                    // }
+
                     TS_ValueSeq valueSeq = vm.getValueVector(col, 0, 0);
 
                     // check min
@@ -76,7 +80,11 @@ public class TestCompareMinMaxATFX {
                     Double minFile = min.get(col.getName());
                     if (minCalc != null && minFile != null) {
                         if (minCalc.compareTo(minFile) != 0) {
-                            failures.add(col.getName() + ": in file stands " + minFile + ", calculated " + minCalc);
+                            String failure = col.getName() + ": in file stands " + minFile + ", calculated " + minCalc;
+                            failures.add(failure);
+                            System.err.println(failure);
+                        } else {
+                            System.err.println(col.getName() + ": ok");
                         }
                         checked++;
                     }
@@ -98,23 +106,23 @@ public class TestCompareMinMaxATFX {
 
     }
 
-    private static String valueSeq2String(TS_ValueSeq valueSeq) {
-        DataType dt = valueSeq.u.discriminator();
-        if (dt == DataType.DT_BYTE) {
-            return Arrays.toString(valueSeq.u.byteVal());
-        } else if (dt == DataType.DT_SHORT) {
-            return Arrays.toString(valueSeq.u.shortVal());
-        } else if (dt == DataType.DT_LONG) {
-            return Arrays.toString(valueSeq.u.longVal());
-        } else if (dt == DataType.DT_DOUBLE) {
-            return Arrays.toString(valueSeq.u.doubleVal());
-        } else if (dt == DataType.DT_FLOAT) {
-            return Arrays.toString(valueSeq.u.floatVal());
-        } else if (dt == DataType.DT_STRING) {
-            return Arrays.toString(valueSeq.u.stringVal());
-        }
-        return valueSeq.toString();
-    }
+    // private static String valueSeq2String(TS_ValueSeq valueSeq) {
+    // DataType dt = valueSeq.u.discriminator();
+    // if (dt == DataType.DT_BYTE) {
+    // return Arrays.toString(valueSeq.u.byteVal());
+    // } else if (dt == DataType.DT_SHORT) {
+    // return Arrays.toString(valueSeq.u.shortVal());
+    // } else if (dt == DataType.DT_LONG) {
+    // return Arrays.toString(valueSeq.u.longVal());
+    // } else if (dt == DataType.DT_DOUBLE) {
+    // return Arrays.toString(valueSeq.u.doubleVal());
+    // } else if (dt == DataType.DT_FLOAT) {
+    // return Arrays.toString(valueSeq.u.floatVal());
+    // } else if (dt == DataType.DT_STRING) {
+    // return Arrays.toString(valueSeq.u.stringVal());
+    // }
+    // return valueSeq.toString();
+    // }
 
     /**
      * Performs the calculation of min/max/avg/dev values on a value vector.
@@ -123,6 +131,12 @@ public class TestCompareMinMaxATFX {
      * @return The calculation result as map with attribute name as key.
      */
     private static Map<String, Double> calculate(TS_ValueSeq valueSeq) {
+        if (valueSeq.u.discriminator() == DataType.DT_LONGLONG) {
+            return Collections.emptyMap();
+        }
+
+        System.out.println("Berechne auf... " + valueSeq.flag.length + " werten des Datentyp: "
+                + ODSHelper.dataType2String(valueSeq.u.discriminator()));
         SummaryStatistics stat = new SummaryStatistics();
         DataType dt = valueSeq.u.discriminator();
 
@@ -151,7 +165,7 @@ public class TestCompareMinMaxATFX {
         }
 
         // build values map
-        Map<String, Double> map = new HashMap<String, Double>(4);
+        Map<String, Double> map = new HashMap<String, Double>(2);
         double min = stat.getMin();
         if (!Double.isNaN(min) && (min != Double.MIN_VALUE) && min != Double.MAX_VALUE) {
             map.put("Minimum", min);
@@ -160,14 +174,8 @@ public class TestCompareMinMaxATFX {
         if (!Double.isNaN(max) && (max != Double.MIN_VALUE) && max != Double.MAX_VALUE) {
             map.put("Maximum", max);
         }
-        double avg = stat.getMean();
-        if (!Double.isNaN(avg) && (avg != Double.MIN_VALUE) && avg != Double.MAX_VALUE) {
-            map.put("Average", avg);
-        }
-        double dev = stat.getStandardDeviation();
-        if (!Double.isNaN(dev) && (dev != Double.MIN_VALUE) && dev != Double.MAX_VALUE) {
-            map.put("Deviation", dev);
-        }
+
+        System.out.println(".... fertig");
 
         return map;
     }

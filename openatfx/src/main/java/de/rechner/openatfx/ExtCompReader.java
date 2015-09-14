@@ -297,13 +297,13 @@ class ExtCompReader {
 
                     // 1=dt_byte
                     if (valueType == 1) {
-                        int b = sourceMbb.get() & 0xFF;
-                        list.add((short) b);
+                        // int b = sourceMbb.get() & 0xFF;
+                        list.add(sourceMbb.get());
                     }
                     // 19=dt_sbyte
                     else if (valueType == 19) {
-                        int b = sourceMbb.get() & 0xFF;
-                        list.add((short) b);
+                        // short b = (short) (sourceMbb.get() & 0xFF);
+                        list.add(sourceMbb.get());
                     }
                     // 2=dt_short, 7=dt_short_beo
                     else if ((valueType == 2) || (valueType == 7)) {
