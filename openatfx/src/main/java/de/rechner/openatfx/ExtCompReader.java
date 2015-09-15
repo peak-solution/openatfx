@@ -332,10 +332,11 @@ class ExtCompReader {
                     }
                     // 23=dt_ulong, 24=dt_ulong_beo
                     else if ((valueType == 23) || (valueType == 24)) {
-                        list.add(sourceMbb.getInt() & 0xffffffffL);
+                        long val = sourceMbb.getInt() & 0xffffffffL;
+                        list.add(val);
                     }
-                    // 27=dt_bit_int, 28=dt_bit_int_beo, 29=dt_bit_uint, 30=dt_bit_uint_beo
-                    else if ((valueType == 27) || (valueType == 28) || (valueType == 29) || (valueType == 30)) {
+                    // 29=dt_bit_uint, 30=dt_bit_uint_beo
+                    else if ((valueType == 29) || (valueType == 30)) {
 
                         // read that number of bytes from the byte position within the file
                         int bytesToRead = ((bitCount + bitOffset - 1) / 8) + 1;
@@ -370,13 +371,14 @@ class ExtCompReader {
                     // unsupported data type
                     else {
                         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                              "Unsupported 'value_type': " + valueType);
+                                              "Unsupported 'value_type': " + ODSHelper.valueType2String(valueType));
                     }
                 }
             }
 
             LOG.info("Read " + list.size() + " numeric values from component file '" + filenameUrl + "' in "
-                    + (System.currentTimeMillis() - start) + "ms [value_type=" + valueType + "]");
+                    + (System.currentTimeMillis() - start) + "ms [value_type=" + ODSHelper.valueType2String(valueType)
+                    + "]");
             return list;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
@@ -446,7 +448,8 @@ class ExtCompReader {
             }
 
             LOG.info("Read " + list.size() + " string values from component file '" + filenameUrl + "' in "
-                    + (System.currentTimeMillis() - start) + "ms");
+                    + (System.currentTimeMillis() - start) + "ms [value_type=" + ODSHelper.valueType2String(valueType)
+                    + "]");
             return list;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);

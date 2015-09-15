@@ -28,10 +28,16 @@
 		- Added license file for LGPL license
 		- Added interface for file system abstraction layer
 		- Added support for value types:
-		  * dt_ushort
+		  * dt_short_beo
+		  * dt_long_beo
+		  * dt_longlong_beo
+		  * ieeefloat4_beo
+		  * ieeefloat8_beo
 		  * dt_ushort_beo
-		  * dt_int*
-		
+		  * dt_ulong_beo
+		  * dt_bit_uint
+		  * dt_bit_uint_beo
+
 
 	0.5.6 (Christian Rechner)
 

@@ -2655,6 +2655,83 @@ public abstract class ODSHelper {
     }
 
     /**
+     * Returns the string representation of an ASAM ODS value type enum.
+     * 
+     * @param e the value type
+     * @return the string representation
+     */
+    public static String valueType2String(int e) {
+        if (e == 0) {
+            return "dt_boolean";
+        } else if (e == 1) {
+            return "dt_byte";
+        } else if (e == 2) {
+            return "dt_short";
+        } else if (e == 3) {
+            return "dt_long";
+        } else if (e == 4) {
+            return "dt_longlong";
+        } else if (e == 5) {
+            return "ieeefloat4";
+        } else if (e == 6) {
+            return "ieeefloat8";
+        } else if (e == 7) {
+            return "dt_short_beo";
+        } else if (e == 8) {
+            return "dt_long_beo";
+        } else if (e == 9) {
+            return "dt_longlong_beo";
+        } else if (e == 10) {
+            return "ieeefloat4_beo";
+        } else if (e == 11) {
+            return "ieeefloat8_beo";
+        } else if (e == 12) {
+            return "dt_string";
+        } else if (e == 13) {
+            return "dt_bytestr";
+        } else if (e == 14) {
+            return "dt_blob";
+        } else if (e == 15) {
+            return "dt_boolean_flags_beo";
+        } else if (e == 16) {
+            return "dt_byte_flags_beo";
+        } else if (e == 17) {
+            return "dt_string_flags_beo";
+        } else if (e == 18) {
+            return "dt_bytestr_beo";
+        } else if (e == 19) {
+            return "dt_sbyte";
+        } else if (e == 20) {
+            return "dt_sbyte_flags_beo";
+        } else if (e == 21) {
+            return "dt_ushort";
+        } else if (e == 22) {
+            return "dt_ushort_beo";
+        } else if (e == 23) {
+            return "dt_ulong";
+        } else if (e == 24) {
+            return "dt_ulong_beo";
+        } else if (e == 25) {
+            return "dt_string_utf8";
+        } else if (e == 26) {
+            return "dt_string_utf8_beo";
+        } else if (e == 27) {
+            return "dt_bit_int";
+        } else if (e == 28) {
+            return "dt_bit_int_beo";
+        } else if (e == 29) {
+            return "dt_bit_uint";
+        } else if (e == 30) {
+            return "dt_bit_uint_beo";
+        } else if (e == 31) {
+            return "dt_bit_float";
+        } else if (e == 32) {
+            return "dt_bit_float_beo";
+        }
+        throw new IllegalArgumentException("Unknown ODS value type enum: " + e);
+    }
+
+    /**
      * Returns the string representation of an <code>org.asam.ods.DataType</code> object.
      * 
      * @param dt the DataType

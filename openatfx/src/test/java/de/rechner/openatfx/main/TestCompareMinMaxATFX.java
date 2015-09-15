@@ -2,7 +2,6 @@ package de.rechner.openatfx.main;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -50,15 +49,15 @@ public class TestCompareMinMaxATFX {
                 InstanceElement ieSM = iter.nextOne();
 
                 // load min/max
-                Map<String, Double> min = new LinkedHashMap<String, Double>();
+                Map<String, Double> max = new LinkedHashMap<String, Double>();
                 InstanceElementIterator iterLc = ieSM.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
                 for (int x = 0; x < iterLc.getCount(); x++) {
                     InstanceElement ieLC = iterLc.nextOne();
                     String mt = ODSHelper.getStringVal(ieLC.getValueByBaseName("mime_type"));
                     if (mt != null && !mt.startsWith("application/x-asam.aolocalcolumn.lookup")) {
-                        TS_Value v = ieLC.getValueByBaseName("minimum").value;
+                        TS_Value v = ieLC.getValueByBaseName("maximum").value;
                         if (v.flag == 15) {
-                            min.put(ieLC.getName(), ODSHelper.getDoubleVal(ieLC.getValueByBaseName("minimum")));
+                            max.put(ieLC.getName(), v.u.doubleVal());
                         }
                     }
                 }
@@ -69,19 +68,16 @@ public class TestCompareMinMaxATFX {
 
                 Column[] columns = vm.getColumns("*");
                 for (Column col : columns) {
-                    if (!col.getName().equals("FR1_MO_Drehzahl_01")) {
-                        continue;
-                    }
-
                     TS_ValueSeq valueSeq = vm.getValueVector(col, 0, 0);
 
                     // check min
                     Map<String, Double> minMaxValues = calculate(valueSeq);
-                    Double minCalc = minMaxValues.get("Minimum");
-                    Double minFile = min.get(col.getName());
-                    if (minCalc != null && minFile != null) {
-                        if (minCalc.compareTo(minFile) != 0) {
-                            String failure = col.getName() + ": in file stands " + minFile + ", calculated " + minCalc;
+                    Double maxCalc = minMaxValues.get("Maximum");
+                    Double maxFile = max.get(col.getName());
+                    if (maxCalc != null && maxFile != null) {
+                        if (maxCalc.compareTo(maxFile) != 0) {
+                            String failure = col.getName() + ": in file stands maximum " + maxFile + ", calculated "
+                                    + maxCalc;
                             failures.add(failure);
                             System.err.println(failure);
                         } else {
@@ -111,23 +107,23 @@ public class TestCompareMinMaxATFX {
 
     }
 
-    private static String valueSeq2String(TS_ValueSeq valueSeq) {
-        DataType dt = valueSeq.u.discriminator();
-        if (dt == DataType.DT_BYTE) {
-            return Arrays.toString(valueSeq.u.byteVal());
-        } else if (dt == DataType.DT_SHORT) {
-            return Arrays.toString(valueSeq.u.shortVal());
-        } else if (dt == DataType.DT_LONG) {
-            return Arrays.toString(valueSeq.u.longVal());
-        } else if (dt == DataType.DT_DOUBLE) {
-            return Arrays.toString(valueSeq.u.doubleVal());
-        } else if (dt == DataType.DT_FLOAT) {
-            return Arrays.toString(valueSeq.u.floatVal());
-        } else if (dt == DataType.DT_STRING) {
-            return Arrays.toString(valueSeq.u.stringVal());
-        }
-        return valueSeq.toString();
-    }
+    // private static String valueSeq2String(TS_ValueSeq valueSeq) {
+    // DataType dt = valueSeq.u.discriminator();
+    // if (dt == DataType.DT_BYTE) {
+    // return Arrays.toString(valueSeq.u.byteVal());
+    // } else if (dt == DataType.DT_SHORT) {
+    // return Arrays.toString(valueSeq.u.shortVal());
+    // } else if (dt == DataType.DT_LONG) {
+    // return Arrays.toString(valueSeq.u.longVal());
+    // } else if (dt == DataType.DT_DOUBLE) {
+    // return Arrays.toString(valueSeq.u.doubleVal());
+    // } else if (dt == DataType.DT_FLOAT) {
+    // return Arrays.toString(valueSeq.u.floatVal());
+    // } else if (dt == DataType.DT_STRING) {
+    // return Arrays.toString(valueSeq.u.stringVal());
+    // }
+    // return valueSeq.toString();
+    // }
 
     /**
      * Performs the calculation of min/max/avg/dev values on a value vector.
