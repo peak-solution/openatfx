@@ -538,8 +538,8 @@ class AtfxInstanceReader {
         // read flags to memory because the MixedMode server may not handle flags in component structure :-(
         long start = System.currentTimeMillis();
         AoSession aoSession = ieExtComp.getApplicationElement().getApplicationStructure().getSession();
-        File atfxFile = new File(aoSession.getContextByName("FILENAME").value.u.stringVal());
-        File componentFile = new File(atfxFile.getParentFile(), fileName);
+        File fileRoot = new File(aoSession.getContextByName("FILE_ROOT").value.u.stringVal());
+        File componentFile = new File(fileRoot, fileName);
         File flagsFile = getFlagsTmpFile(aoSession);
 
         // read values
@@ -610,10 +610,10 @@ class AtfxInstanceReader {
         }
     }
 
-    private File getFlagsTmpFile(AoSession session) throws AoException {
-        File atfxFile = new File(session.getContextByName("FILENAME").value.u.stringVal());
-        File flagsFile = new File(atfxFile.getParentFile(), FileUtil.stripExtension(atfxFile.getName())
-                + "_flags_extract.btf");
+    private File getFlagsTmpFile(AoSession aoSession) throws AoException {
+        File fileRoot = new File(aoSession.getContextByName("FILE_ROOT").value.u.stringVal());
+        File atfxFile = new File(aoSession.getContextByName("FILENAME").value.u.stringVal());
+        File flagsFile = new File(fileRoot, FileUtil.stripExtension(atfxFile.getName()) + "_flags_extract.btf");
         return flagsFile;
     }
 
