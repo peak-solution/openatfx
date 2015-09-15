@@ -327,7 +327,8 @@ class ExtCompReader {
                     }
                     // 21=dt_ushort, 22=dt_ushort_beo
                     else if ((valueType == 21) || (valueType == 22)) {
-                        list.add(sourceMbb.getShort() & 0xFFFF);
+                        int val = sourceMbb.getShort() & 0xffff;
+                        list.add(val);
                     }
                     // 23=dt_ulong, 24=dt_ulong_beo
                     else if ((valueType == 23) || (valueType == 24)) {
@@ -336,63 +337,34 @@ class ExtCompReader {
                     // 27=dt_bit_int, 28=dt_bit_int_beo, 29=dt_bit_uint, 30=dt_bit_uint_beo
                     else if ((valueType == 27) || (valueType == 28) || (valueType == 29) || (valueType == 30)) {
 
-                        // Read that number of bytes from the byte position within the file
+                        // read that number of bytes from the byte position within the file
                         int bytesToRead = ((bitCount + bitOffset - 1) / 8) + 1;
                         byte[] tmp = new byte[bytesToRead];
                         sourceMbb.get(tmp);
 
-                        // one single bit
-                        if (bitCount == 1) {
-                            list.add(getBit(tmp, bitOffset) ? 1 : 0);
+                        // put the byte into an integer to enable bit shifting
+                        if (tmp.length <= 4) {
+                            ByteBuffer bb = ByteBuffer.allocate(4);
+                            bb.order(byteOrder);
+                            bb.put(tmp);
+                            bb.rewind();
+                            int intValue = bb.getInt();
+                            intValue = intValue >> bitOffset; // shift right bit offset
+                            int mask = 0xFFFFFFFF >>> (32 - bitCount); // mask out unnecessary bits
+                            intValue = intValue & mask;
+                            list.add(intValue);
                         }
-                        // DT_BYTE
-                        else if (bitCount > 1 && bitCount <= 8) {
-                            ByteBuffer target = ByteBuffer.allocate(1);
-                            target.order(byteOrder);
-                            target.put(tmp);
-                            target.rewind();
-                            if (valueType == 29 || valueType == 30) { // unsigned
-                                byte b = target.get();
-                                list.add((b >> bitOffset) & 0xff);
-                            } else { // signed
-                                list.add(target.get() >> bitOffset);
-                            }
-                        }
-                        // DT_SHORT
-                        else if (bitCount > 8 && bitCount <= 16) {
-                            ByteBuffer target = ByteBuffer.allocate(2);
-                            target.order(byteOrder);
-                            target.put(tmp);
-                            target.rewind();
-                            if (valueType == 29 || valueType == 30) { // unsigned
-                                list.add((target.getShort() >> bitOffset) & 0xffff);
-                            } else { // signed
-                                list.add(target.getShort() >> bitOffset);
-                            }
-                        }
-                        // DT_LONG
-                        else if (bitCount > 16 && bitCount <= 32) {
-                            ByteBuffer target = ByteBuffer.allocate(4);
-                            target.order(byteOrder);
-                            target.put(tmp);
-                            target.rewind();
-                            if (valueType == 29 || valueType == 30) { // unsigned
-                                list.add(target.getInt() >> bitOffset & 0xffffff);
-                            } else { // signed
-                                list.add(target.getInt() >> bitOffset);
-                            }
-                        }
-                        // DT_LONGLONG
-                        else if (bitCount > 32 && bitCount <= 64) {
-                            ByteBuffer target = ByteBuffer.allocate(8);
-                            target.order(byteOrder);
-                            target.put(tmp);
-                            target.rewind();
-                            if (valueType == 29 || valueType == 30) { // unsigned
-                                list.add(target.getLong() >> bitOffset & 0xffffff);
-                            } else { // signed
-                                list.add(target.getLong() >> bitOffset);
-                            }
+                        // put the byte into a long to enable bit shifting
+                        else {
+                            ByteBuffer bb = ByteBuffer.allocate(8);
+                            bb.order(byteOrder);
+                            bb.put(tmp);
+                            bb.rewind();
+                            long longValue = bb.getLong();
+                            longValue = longValue >> bitOffset; // shift right bit offset
+                            long mask = 0xFFFFFFFFFFFFFFFFl >>> (64 - bitCount); // mask out unnecessary bits
+                            longValue = longValue & mask;
+                            list.add(longValue);
                         }
                     }
                     // unsupported data type
@@ -419,13 +391,6 @@ class ExtCompReader {
                 raf = null;
             }
         }
-    }
-
-    public static boolean getBit(byte[] data, int pos) {
-        int posByte = pos / 8;
-        int posBit = pos % 8;
-        byte valByte = data[posByte];
-        return (valByte & (1 << posBit)) != 0;
     }
 
     private Collection<String> readStringValues(AtfxCache atfxCache, long iidExtComp) throws AoException {

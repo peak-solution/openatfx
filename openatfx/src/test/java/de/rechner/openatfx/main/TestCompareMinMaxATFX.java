@@ -2,6 +2,7 @@ package de.rechner.openatfx.main;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -35,7 +36,7 @@ public class TestCompareMinMaxATFX {
     public static void main(String[] args) {
         BasicConfigurator.configure();
         ORB orb = ORB.init(args, System.getProperties());
-        File file = new File("D:\\PUBLIC\\test\\test\\test1.atfx");
+        File file = new File("D:\\PUBLIC\\test\\test\\test.atfx");
         List<String> failures = new ArrayList<String>();
         int checked = 0;
 
@@ -68,9 +69,9 @@ public class TestCompareMinMaxATFX {
 
                 Column[] columns = vm.getColumns("*");
                 for (Column col : columns) {
-                    // if (!col.getName().equals("zwout")) {
-                    // continue;
-                    // }
+                    if (!col.getName().equals("FR1_MO_Drehzahl_01")) {
+                        continue;
+                    }
 
                     TS_ValueSeq valueSeq = vm.getValueVector(col, 0, 0);
 
@@ -88,6 +89,10 @@ public class TestCompareMinMaxATFX {
                         }
                         checked++;
                     }
+
+                    // System.out.println(minCalc);
+                    // System.out.println(valueSeq2String(valueSeq));
+
                 }
             }
 
@@ -106,23 +111,23 @@ public class TestCompareMinMaxATFX {
 
     }
 
-    // private static String valueSeq2String(TS_ValueSeq valueSeq) {
-    // DataType dt = valueSeq.u.discriminator();
-    // if (dt == DataType.DT_BYTE) {
-    // return Arrays.toString(valueSeq.u.byteVal());
-    // } else if (dt == DataType.DT_SHORT) {
-    // return Arrays.toString(valueSeq.u.shortVal());
-    // } else if (dt == DataType.DT_LONG) {
-    // return Arrays.toString(valueSeq.u.longVal());
-    // } else if (dt == DataType.DT_DOUBLE) {
-    // return Arrays.toString(valueSeq.u.doubleVal());
-    // } else if (dt == DataType.DT_FLOAT) {
-    // return Arrays.toString(valueSeq.u.floatVal());
-    // } else if (dt == DataType.DT_STRING) {
-    // return Arrays.toString(valueSeq.u.stringVal());
-    // }
-    // return valueSeq.toString();
-    // }
+    private static String valueSeq2String(TS_ValueSeq valueSeq) {
+        DataType dt = valueSeq.u.discriminator();
+        if (dt == DataType.DT_BYTE) {
+            return Arrays.toString(valueSeq.u.byteVal());
+        } else if (dt == DataType.DT_SHORT) {
+            return Arrays.toString(valueSeq.u.shortVal());
+        } else if (dt == DataType.DT_LONG) {
+            return Arrays.toString(valueSeq.u.longVal());
+        } else if (dt == DataType.DT_DOUBLE) {
+            return Arrays.toString(valueSeq.u.doubleVal());
+        } else if (dt == DataType.DT_FLOAT) {
+            return Arrays.toString(valueSeq.u.floatVal());
+        } else if (dt == DataType.DT_STRING) {
+            return Arrays.toString(valueSeq.u.stringVal());
+        }
+        return valueSeq.toString();
+    }
 
     /**
      * Performs the calculation of min/max/avg/dev values on a value vector.

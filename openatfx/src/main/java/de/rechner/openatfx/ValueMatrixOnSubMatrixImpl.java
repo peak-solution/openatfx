@@ -631,6 +631,13 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
                 valueSeq.u.byteVal()[i] = values.value.u.byteSeq()[startPoint + i];
             }
         }
+        // DS_STRING
+        else if (rawDt == DataType.DS_STRING) {
+            valueSeq.u.stringVal(new String[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.stringVal()[i] = values.value.u.stringSeq()[startPoint + i];
+            }
+        }
         // unsupported
         else {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
