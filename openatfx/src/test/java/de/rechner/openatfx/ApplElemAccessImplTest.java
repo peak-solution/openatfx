@@ -170,7 +170,7 @@ public class ApplElemAccessImplTest {
             applElemAccess.getInstances(null, 0);
             fail("AoException expected");
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            assertEquals(ErrorCode.AO_BAD_PARAMETER, e.errCode);
         }
     }
 

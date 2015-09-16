@@ -304,6 +304,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
         // check for non supported features
+        if (aoq == null) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "'aoq' must not be null");
+        }
         if (aoq.operSeq == null || aoq.operSeq.length > 0) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "handling of 'operSeq' is not yet implemented in method 'getInstances()'");
