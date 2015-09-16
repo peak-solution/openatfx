@@ -273,11 +273,14 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             Collection<Long> otherIidsToSet = new ArrayList<Long>(instIds.length);
             for (T_LONGLONG otherIidT : instIds) {
                 long otherIid = ODSHelper.asJLong(otherIidT);
-                if (!this.atfxCache.instanceExists(otherAid, otherIid)) {
-                    String aeName = atfxCache.getApplicationElementNameById(otherAid);
+                if (!this.atfxCache.instanceExists(otherAid, otherIid)) { // throw not found error
+                    String sourceAeName = atfxCache.getApplicationElementNameById(ODSHelper.asJLong(elem.aid));
+                    String targetAeName = atfxCache.getApplicationElementNameById(otherAid);
                     throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                          "Target InstanceElement not found: ElemId [aid=" + otherAid + ",aeName="
-                                                  + aeName + ",iid=" + otherIid + "]");
+                                          "Target InstanceElement not found: Source[aid=" + ODSHelper.asJLong(elem.aid)
+                                                  + ",aeName=" + sourceAeName + ",iid=" + ODSHelper.asJLong(elem.iid)
+                                                  + "] -> Target[aid=" + otherAid + ",aeName=" + targetAeName + ",iid="
+                                                  + otherIid + "]");
                 }
                 otherIidsToSet.add(otherIid);
             }
