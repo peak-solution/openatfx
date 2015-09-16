@@ -1,0 +1,63 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>de.rechner</groupId>
+	<artifactId>openatfx-mdf4</artifactId>
+	<name>openATFX MDF4 converter</name>
+	<version>0.1.0</version>
+	<description>Open source ASAM MDF4 to ASAM ODS ATFX converter</description>
+	<url>http://sourceforge.net/projects/openatfx/</url>
+
+	<developers>
+		<developer>
+			<name>Christian Rechner</name>
+		</developer>
+	</developers>
+
+	<scm>
+		<url>https://svn.code.sf.net/p/openatfx/code/</url>
+		<connection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</connection>
+		<developerConnection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</developerConnection>
+	</scm>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<plugins>
+			<!-- compatibility with java 1.5 -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.3</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<!-- build assembly -->
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptors>
+						<descriptor>src/assembly/assembly.xml</descriptor>
+					</descriptors>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>de.rechner</groupId>
+			<artifactId>openatfx</artifactId>
+			<version>0.6.0</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+</project>
