@@ -6,16 +6,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.asam.ods.ACL;
+import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplElemAccessPOA;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.AttrResultSet;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
 import org.asam.ods.ElemResultSet;
@@ -299,7 +303,64 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstances(org.asam.ods.QueryStructure, int)
      */
     public ElemResultSet[] getInstances(QueryStructure aoq, int how_many) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        // check for non supported features
+        if (aoq.operSeq == null || aoq.operSeq.length > 0) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "handling of 'operSeq' is not yet implemented in method 'getInstances()'");
+        }
+        if (aoq.orderBy == null || aoq.orderBy.length > 0) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "handling of 'orderBy' is not yet implemented in method 'getInstances()'");
+        }
+        Set<Long> set = new HashSet<Long>();
+        for (AIDNameUnitId anui : aoq.anuSeq) {
+            set.add(ODSHelper.asJLong(anui.attr.aid));
+        }
+        if (set.size() > 1) {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Only attributes of exactly one application element may be queried (other not yet implemented)!");
+        }
+        // no data queried
+        if (aoq.anuSeq == null || aoq.anuSeq.length < 1) {
+            return new ElemResultSet[0];
+        }
+
+        // prepare result
+        ElemResultSet ers = new ElemResultSet();
+        ers.aid = aoq.anuSeq[0].attr.aid; // fetch aid from first column
+        ers.attrValues = new AttrResultSet[aoq.anuSeq.length];
+
+        // get instance ids
+        Collection<Long> iids = new LinkedHashSet<Long>(0);
+        if (aoq.relName == null || aoq.relName.length() < 1) { // all
+            iids = this.atfxCache.getInstanceIds(ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
+        } else { // filtered
+            long aid = ODSHelper.asJLong(aoq.relInst.aid);
+            long iid = ODSHelper.asJLong(aoq.relInst.iid);
+            ApplicationRelation rel = atfxCache.getApplicationRelationByName(aid, aoq.relName);
+            if (rel == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Application relation '"
+                        + aoq.relName + "' not found!");
+            }
+            iids = this.atfxCache.getRelatedInstanceIds(aid, iid, rel);
+        }
+
+        for (int i = 0; i < aoq.anuSeq.length; i++) {
+            long aid = ODSHelper.asJLong(aoq.anuSeq[i].attr.aid);
+            String attrName = aoq.anuSeq[i].attr.aaName;
+            Integer attrNo = atfxCache.getAttrNoByName(aid, attrName);
+            if (attrNo == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Attribute '" + attrName
+                        + "' not found!");
+            }
+            ers.attrValues[i] = new AttrResultSet();
+            ers.attrValues[i].attrValues = new NameValueSeqUnitId();
+            ers.attrValues[i].attrValues.unitId = aoq.anuSeq[i].unitId;
+            ers.attrValues[i].attrValues.valName = aoq.anuSeq[i].attr.aaName;
+            ers.attrValues[i].attrValues.value = atfxCache.getInstanceValues(aid, attrNo, iids);
+        }
+
+        return new ElemResultSet[] { ers };
     }
 
     /**
