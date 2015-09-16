@@ -42,6 +42,7 @@ import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
+import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_ExternalReference;
@@ -196,9 +197,21 @@ class AtfxInstanceReader {
                 // try to read flags from inline XML
                 // no other way than trying with exception could be found
                 try {
-                    System.out.println("TEXT: " + reader.getElementText());
-
-                } catch (TypedXMLStreamException e) {
+                    ApplAttr applAttr = modelCache.getApplAttr(aid, currentTagName);
+                    AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
+                    applAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    applAttrValue.attr = new AIDName();
+                    applAttrValue.attr.aid = applElem.aid;
+                    applAttrValue.attr.aaName = currentTagName;
+                    applAttrValue.values = new TS_ValueSeq();
+                    applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
+                                                                                              currentTagName,
+                                                                                              applAttr.dType,
+                                                                                              modelCache, reader));
+                    applAttrValues.add(applAttrValue);
+                }
+                // flags in external component
+                catch (TypedXMLStreamException e) {
                     if (ieExternalComponent == null) {
                         ieExternalComponent = createExtCompIe(aoSession);
                     }

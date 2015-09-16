@@ -27,6 +27,7 @@
 	
 		- Added license file for LGPL license
 		- Added interface for file system abstraction layer
+		- Fixed reading flags from either inline XML or component file
 		- Added support for value types:
 		  * dt_short_beo
 		  * dt_long_beo

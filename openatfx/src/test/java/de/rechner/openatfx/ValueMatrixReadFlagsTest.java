@@ -109,6 +109,38 @@ public class ValueMatrixReadFlagsTest {
         }
     }
 
+    @Test
+    public void readFlagsInline() {
+        try {
+            // read flags
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeSm = as.getElementsByBaseType("AoSubMatrix")[0];
+            InstanceElement ieSM = aeSm.getInstanceByName("71.iad(3)");
+            SubMatrix sm = ieSM.upcastSubMatrix();
+            ValueMatrix vm = sm.getValueMatrix();
+            Column col = vm.getColumns("51900778_7")[0];
+            TS_ValueSeq valueSeq = vm.getValueVector(col, 0, 0);
+
+            // check length
+            assertEquals(10, valueSeq.flag.length);
+
+            // check flags
+            assertEquals((short) 15, valueSeq.flag[0]);
+            assertEquals((short) 0, valueSeq.flag[1]);
+            assertEquals((short) 15, valueSeq.flag[2]);
+            assertEquals((short) 15, valueSeq.flag[3]);
+            assertEquals((short) 0, valueSeq.flag[4]);
+            assertEquals((short) 15, valueSeq.flag[5]);
+            assertEquals((short) 15, valueSeq.flag[6]);
+            assertEquals((short) 0, valueSeq.flag[7]);
+            assertEquals((short) 15, valueSeq.flag[8]);
+            assertEquals((short) 15, valueSeq.flag[9]);
+
+        } catch (AoException aoe) {
+            fail(aoe.reason);
+        }
+    }
+
     // @Test
     // public void readFlagsFromInline() {
     // try {

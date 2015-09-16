@@ -448,7 +448,7 @@
    <Id>3</Id>
    <Test>2</Test>
    <MeasurementQuantities>5 10 14 16 18 22 24</MeasurementQuantities>
-   <SubMatrices>4 20</SubMatrices>
+   <SubMatrices>4 20 26</SubMatrices>
    <instance_attributes>
     <inst_attr_asciistring name="Company"></inst_attr_asciistring>
     <inst_attr_asciistring name="SerialNumber"></inst_attr_asciistring>
@@ -791,12 +791,60 @@
      <identifier>BinaryDataFile</identifier>
      <datatype>dt_short</datatype>
      <length>300004</length>
-     <inioffset>15000200</inioffset>
+     <inioffset>12000160</inioffset>
      <valperblock>1</valperblock>
      <valoffsets>8</valoffsets>
      <blocksize>10</blocksize>
     </component>
    </Flags>
+  </LocalColumn>
+  <SubMatrix>
+   <Name>71.iad(3)</Name>
+   <Id>26</Id>
+   <NumberOfRows>10</NumberOfRows>
+   <Measurement>3</Measurement>
+   <LocalColumns>27 29</LocalColumns>
+  </SubMatrix>
+  <LocalColumn>
+   <Name>51900778_1.X</Name>
+   <Id>27</Id>
+   <GlobalFlag>15</GlobalFlag>
+   <Independent>1</Independent>
+   <MeasurementQuantity>5</MeasurementQuantity>
+   <SubMatrix>26</SubMatrix>
+   <GenerationParameters>9.48E-05 0.0002</GenerationParameters>
+   <SequenceRepresentation>implicit_linear</SequenceRepresentation>
+   <RawDataType>DT_DOUBLE</RawDataType>
+  </LocalColumn>
+  <MeasurementQuantity>
+   <Name>51900778_7</Name>
+   <Id>28</Id>
+   <Description></Description>
+   <DataType>DT_DOUBLE</DataType>
+   <Measurement>3</Measurement>
+   <LocalColumns>29</LocalColumns>
+   <Unit>13</Unit>
+  </MeasurementQuantity>
+  <LocalColumn>
+   <Name>51900778_7</Name>
+   <Id>29</Id>
+   <Independent>0</Independent>
+   <MeasurementQuantity>28</MeasurementQuantity>
+   <SubMatrix>26</SubMatrix>
+   <SequenceRepresentation>explicit</SequenceRepresentation>
+   <RawDataType>DT_DOUBLE</RawDataType>
+   <Values>
+    <component>
+     <identifier>BinaryDataFile</identifier>
+     <datatype>ieeefloat8</datatype>
+     <length>10</length>
+     <inioffset>15000200</inioffset>
+     <valperblock>1</valperblock>
+     <valoffsets>0</valoffsets>
+     <blocksize>10</blocksize>
+    </component>
+   </Values>
+   <Flags>15 0 15 15 0 15 15 0 15 15</Flags>
   </LocalColumn>
  </instance_data>
 </atfx_file>
