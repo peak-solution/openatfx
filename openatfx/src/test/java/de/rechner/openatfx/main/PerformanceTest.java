@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import junit.framework.JUnit4TestAdapter;
+
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -88,4 +90,9 @@ public class PerformanceTest {
     // }
     // }
     //
+
+    public static junit.framework.Test suite() {
+        return new JUnit4TestAdapter(PerformanceTest.class);
+    }
+
 }

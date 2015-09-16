@@ -39,7 +39,7 @@ public class ApplicationRelationImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        URL url = ApplicationAttributeImpl.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+        URL url = ApplicationAttributeImpl.class.getResource("/de/rechner/openatfx/example.atfx");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
 
         ApplicationStructure as = aoSession.getApplicationStructure();

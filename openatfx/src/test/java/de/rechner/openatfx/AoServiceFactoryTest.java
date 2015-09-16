@@ -44,7 +44,7 @@ public class AoServiceFactoryTest {
     @Test
     public void testNewAoSession() {
         try {
-            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
             AoSession aoSession = AoServiceFactory.getInstance().newAoSession(orb, new File(url.getFile()));
             assertNotNull(aoSession);
             aoSession.close();

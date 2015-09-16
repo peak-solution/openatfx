@@ -40,7 +40,7 @@ public class AoSessionImplTest {
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
-        URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+        URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
         aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
     }
 
@@ -63,7 +63,7 @@ public class AoSessionImplTest {
     @Test
     public void testGetName() {
         try {
-            assertEquals("example_atfx.xml", aoSession.getName());
+            assertEquals("example.atfx", aoSession.getName());
         } catch (AoException e) {
             fail(e.reason);
         }

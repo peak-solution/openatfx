@@ -36,7 +36,7 @@ public class AtfxReaderTest {
     @Test
     public void testCreateSessionForATFX() {
         try {
-            URL url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            URL url = AtfxReaderTest.class.getResource("/de/rechner/openatfx/example.atfx");
             AtfxReader reader = AtfxReader.getInstance();
             IFileHandler fileHandler = new LocalFileHandler();
             String path = new File(url.getFile()).getAbsolutePath();

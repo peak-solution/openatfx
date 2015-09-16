@@ -39,7 +39,7 @@ public class AtfxWriterTest {
     @Test
     public void testWriteXML() {
         try {
-            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            URL url = AoSessionImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
             aoSession = AoServiceFactory.getInstance().newAoFactory(orb)
                                         .newSession("FILENAME=" + new File(url.getFile()));
             aoSession.startTransaction();

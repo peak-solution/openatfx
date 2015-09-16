@@ -88,7 +88,7 @@ public class AoFactoryImplTest {
     @Test
     public void testNewSession() {
         try {
-            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
             AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
             assertEquals("asam31", aoSession.getType());
             aoSession.close();
@@ -104,7 +104,7 @@ public class AoFactoryImplTest {
     @Test
     public void testNewSessionNameValue() {
         try {
-            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
             NameValue[] auth = new NameValue[1];
             auth[0] = new NameValue();
             auth[0].valName = "FILENAME";

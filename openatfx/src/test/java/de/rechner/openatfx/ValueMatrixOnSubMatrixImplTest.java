@@ -40,7 +40,7 @@ public class ValueMatrixOnSubMatrixImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example_atfx.xml");
+        URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
         ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
         ApplicationElement aeSm = applicationStructure.getElementByName("sm");
