@@ -17,8 +17,12 @@ import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoFactoryHelper;
 import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.InstanceElement;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.ORBPackage.InvalidName;
 import org.omg.PortableServer.POA;
@@ -42,6 +46,13 @@ public class MDF4Converter {
 
     private static final String ATFX_TEMPLATE = "model.atfx";
 
+    /**
+     * Creates a new AoFactory that may be used to open new MDF4 files on the fly.
+     * 
+     * @param orb The ORB.
+     * @return The AoFactory instance.
+     * @throws AoException Error creating factory.
+     */
     public AoFactory newAoFactory(ORB orb) throws AoException {
         try {
             // get reference to rootpoa & activate the POAManager
@@ -90,8 +101,19 @@ public class MDF4Converter {
             AoSession aoSession = AoServiceFactory.getInstance().newAoSession(orb, tmpAtfx);
             ODSModelCache modelCache = new ODSModelCache(aoSession);
 
-            // read MDF4 file to session
+            // open MDF4 file
             sbc = Files.newByteChannel(mdfFile, StandardOpenOption.READ);
+
+            // write MDF4 file content to session
+            ApplicationElement aeEnv = modelCache.getApplicationElement("env");
+            ApplicationElement aePrj = modelCache.getApplicationElement("prj");
+            ApplicationRelation relEnvPrj = modelCache.getApplicationRelation("env", "prj", "prjs");
+            InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
+            InstanceElement iePrj = aePrj.createInstance(mdfFile.getFileName().toString());
+            ieEnv.createRelation(relEnvPrj, iePrj);
+
+            AoSessionWriter writer = new AoSessionWriter();
+            writer.writeDataToAoTest(modelCache, iePrj, sbc);
 
             return aoSession;
         } catch (IOException e) {

@@ -107,18 +107,18 @@ class AoFactoryImpl extends AoFactoryPOA {
      */
     public AoSession newSessionNameValue(NameValue[] auth) throws AoException {
         try {
-            File atfxFile = null;
+            File mdfFile = null;
             for (NameValue nv : auth) {
                 if (nv.valName.equalsIgnoreCase("FILENAME")) {
-                    atfxFile = new File(nv.value.u.stringVal());
+                    mdfFile = new File(nv.value.u.stringVal());
                 }
             }
-            if (atfxFile == null) {
+            if (mdfFile == null) {
                 throw new AoException(ErrorCode.AO_MISSING_VALUE, SeverityFlag.ERROR, 0,
                                       "Parameter 'FILENAME' not found");
             }
             MDF4Converter converter = new MDF4Converter();
-            return converter.getAoSessionForMDF4(orb, atfxFile.toPath());
+            return converter.getAoSessionForMDF4(orb, mdfFile.toPath());
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;

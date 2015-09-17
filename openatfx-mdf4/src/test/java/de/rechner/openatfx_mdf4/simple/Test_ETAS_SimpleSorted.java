@@ -1,13 +1,10 @@
 package de.rechner.openatfx_mdf4.simple;
 
-import static org.junit.Assert.fail;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import junit.framework.JUnit4TestAdapter;
 
-import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -42,18 +39,15 @@ public class Test_ETAS_SimpleSorted {
         if (aoSession != null) {
             aoSession.close();
         }
-        if (orb != null) {
-            orb.destroy();
-        }
     }
 
     @Test
     public void testReadIDBlock() {
-        try {
-            System.out.println(aoSession.getName());
-        } catch (AoException e) {
-            fail(e.reason);
-        }
+        // try {
+        // System.out.println(aoSession.getName());
+        // } catch (AoException e) {
+        // fail(e.reason);
+        // }
     }
 
     public static junit.framework.Test suite() {

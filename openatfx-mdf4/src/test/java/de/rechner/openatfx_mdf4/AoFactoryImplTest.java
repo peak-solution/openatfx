@@ -18,8 +18,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 
-import de.rechner.openatfx.AoServiceFactory;
-
 
 /**
  * Test case for <code>de.rechner.openatfx.AoFactoryImpl</code>.
@@ -33,7 +31,7 @@ public class AoFactoryImplTest {
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+        aoFactory = new MDF4Converter().newAoFactory(orb);
     }
 
     /**
@@ -78,7 +76,7 @@ public class AoFactoryImplTest {
     @Test
     public void testGetDescription() {
         try {
-            assertEquals("ATFX file driver for ASAM OO-API", aoFactory.getDescription());
+            assertEquals("MDF4 file driver for ASAM OO-API", aoFactory.getDescription());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -90,7 +88,7 @@ public class AoFactoryImplTest {
     @Test
     public void testNewSession() {
         try {
-            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
+            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx_mdf4/simple/ETAS_SimpleSorted.mf4");
             AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
             assertEquals("asam31", aoSession.getType());
             aoSession.close();
@@ -106,7 +104,7 @@ public class AoFactoryImplTest {
     @Test
     public void testNewSessionNameValue() {
         try {
-            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
+            URL url = AoFactoryImplTest.class.getResource("/de/rechner/openatfx_mdf4/simple/ETAS_SimpleSorted.mf4");
             NameValue[] auth = new NameValue[1];
             auth[0] = new NameValue();
             auth[0].valName = "FILENAME";

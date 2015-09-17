@@ -1,19 +1,16 @@
 package de.rechner.openatfx_mdf4;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.util.Properties;
+import java.nio.channels.SeekableByteChannel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
-import org.asam.ods.ApplicationStructure;
 import org.asam.ods.InstanceElement;
 
-import de.rechner.openatfx.util.ODSHelper;
+import de.rechner.openatfx_mdf4.util.ODSModelCache;
 
 
 /**
@@ -31,47 +28,37 @@ class AoSessionWriter {
     public AoSessionWriter() {}
 
     /**
-     * Appends the data of an ATFX file to
+     * Appends the content of the MDF4 file to the ASAM ODS session.
      * 
+     * @param modelCache The application model cache.
      * @param iePrj The parent 'AoTest' instance.
-     * @param atfxFile The target ATFX file.
-     * @param sourceFile THe source file.
      * @param mdfChannel The MDF read channel.
-     * @param binChannel The ATFX binary file channel to write to.
-     * @param properties External properties.
      * @return the created AoMeasurement instance element
      * @throws ConvertException Error converting.
-     * @throws IOException Error reading file content.
      */
-    public synchronized InstanceElement writeDataToAoTest(InstanceElement iePrj, File atfxFile, File sourceFile,
-            FileChannel mdfChannel, FileChannel binChannel, Properties properties) throws ConvertException, IOException {
-        try {
-            ApplicationStructure as = iePrj.getApplicationElement().getApplicationStructure();
-            ApplicationElement aePrj = as.getElementByName("prj");
-            ApplicationElement aeTst = as.getElementByName("tst");
-            ApplicationRelation relPrjTsts = as.getRelations(aePrj, aeTst)[0];
+    public synchronized InstanceElement writeDataToAoTest(ODSModelCache modelCache, InstanceElement iePrj,
+            SeekableByteChannel mdfChannel) throws AoException, IOException {
+        ApplicationElement aePrj = modelCache.getApplicationElement("prj");
+        ApplicationElement aeTst = modelCache.getApplicationElement("tst");
+        ApplicationRelation relPrjTsts = modelCache.getApplicationRelation("prj", "tst", "tsts");
 
-            // read and validate header block
-            IDBLOCK.read(mdfChannel);
+        // read and validate header block
+        IDBLOCK idBlock = IDBLOCK.read(mdfChannel);
 
-            // create "AoSubTest" instance
-            String fileName = sourceFile.getName();
-            fileName = fileName.substring(0, fileName.lastIndexOf('.'));
-            InstanceElement ieTst = aeTst.createInstance(fileName);
-            iePrj.createRelation(relPrjTsts, ieTst);
+        // // create "AoSubTest" instance
+        // String fileName = sourceFile.getName();
+        // fileName = fileName.substring(0, fileName.lastIndexOf('.'));
+        // InstanceElement ieTst = aeTst.createInstance(fileName);
+        // iePrj.createRelation(relPrjTsts, ieTst);
+        //
+        // String tplTestStepName = properties.getProperty("tpl_teststep_name", null);
+        // if (tplTestStepName != null && tplTestStepName.length() > 0) {
+        // ieTst.addInstanceAttribute(ODSHelper.createStringNVU("tpl_teststep_name", tplTestStepName));
+        // }
 
-            String tplTestStepName = properties.getProperty("tpl_teststep_name", null);
-            if (tplTestStepName != null && tplTestStepName.length() > 0) {
-                ieTst.addInstanceAttribute(ODSHelper.createStringNVU("tpl_teststep_name", tplTestStepName));
-            }
-
-            // write "AoMeasurement" instances
-            // return writeMea(ieTst, sourceFile, mdfChannel, binChannel);
-            return null;
-        } catch (AoException e) {
-            LOG.error(e.reason, e);
-            throw new ConvertException(e.reason, e);
-        }
+        // write "AoMeasurement" instances
+        // return writeMea(ieTst, sourceFile, mdfChannel, binChannel);
+        return null;
     }
 
 }
