@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
 
-import de.rechner.openatfx_mdf4.MDF4Reader;
+import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
@@ -33,7 +33,7 @@ public class Test_ETAS_SimpleSorted {
     public static void setUpBeforeClass() throws Exception {
         orb = ORB.init(new String[0], System.getProperties());
         Path path = Paths.get(ClassLoader.getSystemResource(mdfFile).toURI());
-        MDF4Reader reader = new MDF4Reader();
+        MDF4Converter reader = new MDF4Converter();
         aoSession = reader.getAoSessionForMDF4(orb, path);
     }
 
