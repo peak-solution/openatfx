@@ -37,8 +37,6 @@ class AoSessionWriter {
     public synchronized InstanceElement writeDataToAoTest(ODSModelCache modelCache, InstanceElement iePrj,
             SeekableByteChannel mdfChannel) throws AoException, IOException {
         // read and validate header block
-        IDBLOCK idBlock = IDBLOCK.read(mdfChannel);
-        System.out.println(idBlock);
 
         // // create "AoSubTest" instance
         // String fileName = sourceFile.getName();

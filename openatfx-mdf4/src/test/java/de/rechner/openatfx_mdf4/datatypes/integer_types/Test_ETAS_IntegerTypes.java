@@ -1,4 +1,4 @@
-package de.rechner.openatfx_mdf4.simple;
+package de.rechner.openatfx_mdf4.datatypes.integer_types;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -22,13 +22,13 @@ import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
- * Test case for reading the example MDF4-file <code>ETAS_SimpleSorted.mf4</code>.
+ * Test case for reading the example MDF4-file <code>ETAS_IntegerTypes.mf4</code>.
  * 
  * @author Christian Rechner
  */
-public class Test_ETAS_SimpleSorted {
+public class Test_ETAS_IntegerTypes {
 
-    private static final String mdfFile = "de/rechner/openatfx_mdf4/simple/ETAS_SimpleSorted.mf4";
+    private static final String mdfFile = "de/rechner/openatfx_mdf4/datatypes/integer_types/ETAS_IntegerTypes.mf4";
 
     private static ORB orb;
     private static AoSession aoSession;
@@ -65,7 +65,7 @@ public class Test_ETAS_SimpleSorted {
     }
 
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(Test_ETAS_SimpleSorted.class);
+        return new JUnit4TestAdapter(Test_ETAS_IntegerTypes.class);
     }
 
 }

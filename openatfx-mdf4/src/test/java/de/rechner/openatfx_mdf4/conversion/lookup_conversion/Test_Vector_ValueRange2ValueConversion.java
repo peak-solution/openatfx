@@ -1,4 +1,4 @@
-package de.rechner.openatfx_mdf4.simple;
+package de.rechner.openatfx_mdf4.conversion.lookup_conversion;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -22,13 +22,13 @@ import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
- * Test case for reading the example MDF4-file <code>ETAS_SimpleSorted.mf4</code>.
+ * Test case for reading the example MDF4-file <code>Vector_ValueRange2ValueConversion.mf4</code>.
  * 
  * @author Christian Rechner
  */
-public class Test_ETAS_SimpleSorted {
+public class Test_Vector_ValueRange2ValueConversion {
 
-    private static final String mdfFile = "de/rechner/openatfx_mdf4/simple/ETAS_SimpleSorted.mf4";
+    private static final String mdfFile = "de/rechner/openatfx_mdf4/conversion/lookup_conversion/Vector_ValueRange2ValueConversion.mf4";
 
     private static ORB orb;
     private static AoSession aoSession;
@@ -56,7 +56,7 @@ public class Test_ETAS_SimpleSorted {
             assertEquals("MDF     ", ODSHelper.getStringVal(ieTst.getValue("mdf_file_id")));
             assertEquals("4.10    ", ODSHelper.getStringVal(ieTst.getValue("mdf_version_str")));
             assertEquals(410, ODSHelper.getLongVal(ieTst.getValue("mdf_version")));
-            assertEquals("MDF_IP", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
+            assertEquals("MDF4Lib", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_unfin_flags")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_custom_unfin_flags")));
         } catch (AoException e) {
@@ -65,7 +65,7 @@ public class Test_ETAS_SimpleSorted {
     }
 
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(Test_ETAS_SimpleSorted.class);
+        return new JUnit4TestAdapter(Test_Vector_ValueRange2ValueConversion.class);
     }
 
 }

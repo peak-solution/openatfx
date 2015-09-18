@@ -21,6 +21,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 import org.omg.CORBA.ORB;
@@ -32,6 +33,7 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx_mdf4.util.ODSModelCache;
 
 
@@ -114,6 +116,18 @@ public class MDF4Converter {
             InstanceElement ieTst = aeTst.createInstance(mdfFile.getFileName().toString());
             ieEnv.createRelation(relEnvPrj, ieTst);
 
+            // read and validate id block
+            IDBLOCK idBlock = IDBLOCK.read(sbc);
+            NameValueUnit[] nvu = new NameValueUnit[6];
+            nvu[0] = ODSHelper.createStringNVU("mdf_file_id", idBlock.getIdFile());
+            nvu[1] = ODSHelper.createStringNVU("mdf_version_str", idBlock.getIdVers());
+            nvu[2] = ODSHelper.createLongNVU("mdf_version", idBlock.getIdVer());
+            nvu[3] = ODSHelper.createStringNVU("mdf_program", idBlock.getIdProg());
+            nvu[4] = ODSHelper.createLongNVU("mdf_unfin_flags", idBlock.getIdUnfinFlags());
+            nvu[5] = ODSHelper.createLongNVU("mdf_custom_unfin_flags", idBlock.getIdCustomUnfinFlags());
+            ieTst.setValueSeq(nvu);
+
+            // write data to AoTest
             AoSessionWriter writer = new AoSessionWriter();
             writer.writeDataToAoTest(modelCache, ieTst, sbc);
 
