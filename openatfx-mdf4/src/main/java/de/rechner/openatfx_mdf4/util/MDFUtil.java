@@ -1,7 +1,6 @@
 package de.rechner.openatfx_mdf4.util;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 
@@ -72,14 +71,14 @@ public abstract class MDFUtil {
      * @param bb The byte buffer.
      * @return The value.
      */
-    public static BigInteger readUInt64(ByteBuffer bb) {
+    public static long readUInt64(ByteBuffer bb) {
         byte[] data = new byte[8];
         bb.get(data);
         long l1 = (((long) data[0] & 0xff) << 0) | (((long) data[1] & 0xff) << 8) | (((long) data[2] & 0xff) << 16)
                 | (((long) data[3] & 0xff) << 24);
         long l2 = (((long) data[4] & 0xff) << 0) | (((long) data[5] & 0xff) << 8) | (((long) data[6] & 0xff) << 16)
                 | (((long) data[7] & 0xff) << 24);
-        return BigInteger.valueOf((l1 << 0) | (l2 << 32));
+        return (l1 << 0) | (l2 << 32);
     }
 
     /**

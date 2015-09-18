@@ -60,7 +60,7 @@ class IDBLOCK {
     /**
      * Constructor.
      */
-    public IDBLOCK() {}
+    private IDBLOCK() {}
 
     public String getIdFile() {
         return idFile;
