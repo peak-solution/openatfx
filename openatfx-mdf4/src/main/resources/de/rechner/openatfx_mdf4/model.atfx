@@ -20,15 +20,15 @@
 		<application_enumeration>
 			<name>time_class</name>
 			<item>
-				<name>local PC reference time</name>
+				<name>local_PC_reference_time</name>
 				<value>0</value>
 			</item>
 			<item>
-				<name>external time source</name>
+				<name>external_time_source</name>
 				<value>1</value>
 			</item>
 			<item>
-				<name>external absolute synchronized time</name>
+				<name>external_absolute_synchronized_time</name>
 				<value>2</value>
 			</item>
 		</application_enumeration>

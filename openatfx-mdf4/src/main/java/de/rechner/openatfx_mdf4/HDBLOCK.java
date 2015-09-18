@@ -13,27 +13,13 @@ import de.rechner.openatfx_mdf4.util.MDFUtil;
  * THE HEADER BLOCK <code>HDBLOCK<code>
  * </p>
  * The HDBLOCK always begins at file position 64. It contains general information about the contents of the measured
- * data file and is the root for the block hierarchy
+ * data file and is the root for the block hierarchy.
  * 
  * @author Christian Rechner
  */
-class HDBLOCK {
+class HDBLOCK extends BLOCK {
 
-    private static String BLOCK_ID = "##HD";
-
-    /** Header section */
-
-    // Block type identifier, always "##HD"
-    // CHAR 4
-    private String id;
-
-    // Length of block
-    // UINT64
-    private long length;
-
-    // Number of links
-    // UINT64
-    private long linkCount;
+    public static String BLOCK_ID = "##HD";
 
     /** Link section */
 
@@ -130,30 +116,6 @@ class HDBLOCK {
      * Constructor.
      */
     private HDBLOCK() {}
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public long getLength() {
-        return length;
-    }
-
-    public void setLength(long length) {
-        this.length = length;
-    }
-
-    public long getLinkCount() {
-        return linkCount;
-    }
-
-    public void setLinkCount(long linkCount) {
-        this.linkCount = linkCount;
-    }
 
     public long getLnkDgFirst() {
         return lnkDgFirst;
@@ -267,21 +229,32 @@ class HDBLOCK {
         this.startDistanceM = startDistanceM;
     }
 
-    // public PRBLOCK getProgramBlock(FileChannel channel) throws IOException {
-    // if (this.lnkProgramBlock > 0) {
-    // return PRBLOCK.read(channel, this.lnkProgramBlock);
-    // }
-    // return null;
-    // }
+    public BLOCK getMdCommentBlock(SeekableByteChannel channel) throws IOException {
+        if (this.lnkMdComment > 0) {
+            String blockType = getBlockType(channel, this.lnkMdComment);
+            // link points to a MDBLOCK
+            if (blockType.equals(MDBLOCK.BLOCK_ID)) {
+                return MDBLOCK.read(channel, this.lnkMdComment);
+            }
+            // links points to TXBLOCK
+            else if (blockType.equals(TXBLOCK.BLOCK_ID)) {
+                return TXBLOCK.read(channel, this.lnkMdComment);
+            }
+            // unknown
+            else {
+                throw new IOException("Unsupported block type for MdComment: " + blockType);
+            }
+        }
+        return null;
+    }
 
     @Override
     public String toString() {
-        return "HDBLOCK [id=" + id + ", length=" + length + ", linkCount=" + linkCount + ", lnkDgFirst=" + lnkDgFirst
-                + ", lnkFhFirst=" + lnkFhFirst + ", lnkChFirst=" + lnkChFirst + ", lnkAtFirst=" + lnkAtFirst
-                + ", lnkEvFirst=" + lnkEvFirst + ", lnkMdComment=" + lnkMdComment + ", startTimeNs=" + startTimeNs
-                + ", tzOffsetMin=" + tzOffsetMin + ", dstOffsetMin=" + dstOffsetMin + ", timeFlags=" + timeFlags
-                + ", timeClass=" + timeClass + ", flags=" + flags + ", startAngleRad=" + startAngleRad
-                + ", startDistanceM=" + startDistanceM + "]";
+        return "HDBLOCK [lnkDgFirst=" + lnkDgFirst + ", lnkFhFirst=" + lnkFhFirst + ", lnkChFirst=" + lnkChFirst
+                + ", lnkAtFirst=" + lnkAtFirst + ", lnkEvFirst=" + lnkEvFirst + ", lnkMdComment=" + lnkMdComment
+                + ", startTimeNs=" + startTimeNs + ", tzOffsetMin=" + tzOffsetMin + ", dstOffsetMin=" + dstOffsetMin
+                + ", timeFlags=" + timeFlags + ", timeClass=" + timeClass + ", flags=" + flags + ", startAngleRad="
+                + startAngleRad + ", startDistanceM=" + startDistanceM + "]";
     }
 
     /**
@@ -323,6 +296,7 @@ class HDBLOCK {
         hdBlock.setLnkFhFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first channel hierarchy block (CHBLOCK) (can be NIL).
+        // TODO: NOT YET SUPPORTED!
         hdBlock.setLnkChFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first attachment block (ATBLOCK) (can be NIL)
@@ -345,12 +319,21 @@ class HDBLOCK {
 
         // UINT8: Time flags
         hdBlock.setTimeFlags(MDFUtil.readUInt8(bb));
+        if (hdBlock.getTimeFlags() != 2) {
+            throw new IOException("HDBLOCK hd_time_flags!=2 not yet supported");
+        }
 
         // UINT8: Time quality class
         hdBlock.setTimeClass(MDFUtil.readUInt8(bb));
 
         // UINT8: Flags
         hdBlock.setFlags(MDFUtil.readUInt8(bb));
+        if (hdBlock.getFlags() != 0) {
+            throw new IOException("HDBLOCK hd_flags!=0 not yet supported");
+        }
+
+        // BYTE: Reserved
+        bb.get();
 
         // REAL: Start angle in radians at start of measurement (only for angle synchronous measurements)
         hdBlock.setStartAngleRad(MDFUtil.readReal(bb));
