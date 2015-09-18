@@ -121,7 +121,7 @@ class HDBLOCK extends BLOCK {
         return lnkDgFirst;
     }
 
-    public void setLnkDgFirst(long lnkDgFirst) {
+    private void setLnkDgFirst(long lnkDgFirst) {
         this.lnkDgFirst = lnkDgFirst;
     }
 
@@ -129,7 +129,7 @@ class HDBLOCK extends BLOCK {
         return lnkFhFirst;
     }
 
-    public void setLnkFhFirst(long lnkFhFirst) {
+    private void setLnkFhFirst(long lnkFhFirst) {
         this.lnkFhFirst = lnkFhFirst;
     }
 
@@ -137,7 +137,7 @@ class HDBLOCK extends BLOCK {
         return lnkChFirst;
     }
 
-    public void setLnkChFirst(long lnkChFirst) {
+    private void setLnkChFirst(long lnkChFirst) {
         this.lnkChFirst = lnkChFirst;
     }
 
@@ -145,7 +145,7 @@ class HDBLOCK extends BLOCK {
         return lnkAtFirst;
     }
 
-    public void setLnkAtFirst(long lnkAtFirst) {
+    private void setLnkAtFirst(long lnkAtFirst) {
         this.lnkAtFirst = lnkAtFirst;
     }
 
@@ -153,7 +153,7 @@ class HDBLOCK extends BLOCK {
         return lnkEvFirst;
     }
 
-    public void setLnkEvFirst(long lnkEvFirst) {
+    private void setLnkEvFirst(long lnkEvFirst) {
         this.lnkEvFirst = lnkEvFirst;
     }
 
@@ -161,7 +161,7 @@ class HDBLOCK extends BLOCK {
         return lnkMdComment;
     }
 
-    public void setLnkMdComment(long lnkMdComment) {
+    private void setLnkMdComment(long lnkMdComment) {
         this.lnkMdComment = lnkMdComment;
     }
 
@@ -169,7 +169,7 @@ class HDBLOCK extends BLOCK {
         return startTimeNs;
     }
 
-    public void setStartTimeNs(long startTimeNs) {
+    private void setStartTimeNs(long startTimeNs) {
         this.startTimeNs = startTimeNs;
     }
 
@@ -177,7 +177,7 @@ class HDBLOCK extends BLOCK {
         return tzOffsetMin;
     }
 
-    public void setTzOffsetMin(int tzOffsetMin) {
+    private void setTzOffsetMin(int tzOffsetMin) {
         this.tzOffsetMin = tzOffsetMin;
     }
 
@@ -185,7 +185,7 @@ class HDBLOCK extends BLOCK {
         return dstOffsetMin;
     }
 
-    public void setDstOffsetMin(int dstOffsetMin) {
+    private void setDstOffsetMin(int dstOffsetMin) {
         this.dstOffsetMin = dstOffsetMin;
     }
 
@@ -193,7 +193,7 @@ class HDBLOCK extends BLOCK {
         return timeFlags;
     }
 
-    public void setTimeFlags(byte timeFlags) {
+    private void setTimeFlags(byte timeFlags) {
         this.timeFlags = timeFlags;
     }
 
@@ -201,7 +201,7 @@ class HDBLOCK extends BLOCK {
         return timeClass;
     }
 
-    public void setTimeClass(byte timeClass) {
+    private void setTimeClass(byte timeClass) {
         this.timeClass = timeClass;
     }
 
@@ -209,7 +209,7 @@ class HDBLOCK extends BLOCK {
         return flags;
     }
 
-    public void setFlags(byte flags) {
+    private void setFlags(byte flags) {
         this.flags = flags;
     }
 
@@ -217,7 +217,7 @@ class HDBLOCK extends BLOCK {
         return startAngleRad;
     }
 
-    public void setStartAngleRad(double startAngleRad) {
+    private void setStartAngleRad(double startAngleRad) {
         this.startAngleRad = startAngleRad;
     }
 
@@ -225,7 +225,7 @@ class HDBLOCK extends BLOCK {
         return startDistanceM;
     }
 
-    public void setStartDistanceM(double startDistanceM) {
+    private void setStartDistanceM(double startDistanceM) {
         this.startDistanceM = startDistanceM;
     }
 

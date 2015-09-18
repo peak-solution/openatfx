@@ -33,6 +33,19 @@ class TXBLOCK extends BLOCK {
      */
     private TXBLOCK() {}
 
+    public String getTxData() {
+        return txData;
+    }
+
+    public void setTxData(String txData) {
+        this.txData = txData;
+    }
+
+    @Override
+    public String toString() {
+        return "TXBLOCK [txData=" + txData + "]";
+    }
+
     /**
      * Reads a HDBLOCK from the channel starting at current channel position.
      * 
@@ -45,7 +58,7 @@ class TXBLOCK extends BLOCK {
         TXBLOCK hdBlock = new TXBLOCK();
 
         // read block header
-        ByteBuffer bb = ByteBuffer.allocate(112);
+        ByteBuffer bb = ByteBuffer.allocate(24);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         channel.position(pos);
         channel.read(bb);
@@ -65,6 +78,16 @@ class TXBLOCK extends BLOCK {
 
         // UINT64: Number of links
         hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+
+        // read block content
+        bb = ByteBuffer.allocate((int) hdBlock.getLength() + 24);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        channel.position(pos + 24);
+        channel.read(bb);
+        bb.rewind();
+
+        // XML String
+        hdBlock.setTxData(MDFUtil.readCharsUTF8(bb, (int) (hdBlock.getLength() - 24)));
 
         return hdBlock;
     }

@@ -34,6 +34,19 @@ class MDBLOCK extends BLOCK {
      */
     private MDBLOCK() {}
 
+    public String getMdData() {
+        return mdData;
+    }
+
+    private void setMdData(String mdData) {
+        this.mdData = mdData;
+    }
+
+    @Override
+    public String toString() {
+        return "MDBLOCK [mdData=" + mdData + "]";
+    }
+
     /**
      * Reads a HDBLOCK from the channel starting at current channel position.
      * 
@@ -46,7 +59,7 @@ class MDBLOCK extends BLOCK {
         MDBLOCK hdBlock = new MDBLOCK();
 
         // read block header
-        ByteBuffer bb = ByteBuffer.allocate(112);
+        ByteBuffer bb = ByteBuffer.allocate(24);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         channel.position(pos);
         channel.read(bb);
@@ -66,6 +79,16 @@ class MDBLOCK extends BLOCK {
 
         // UINT64: Number of links
         hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+
+        // read block content
+        bb = ByteBuffer.allocate((int) hdBlock.getLength() + 24);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        channel.position(pos + 24);
+        channel.read(bb);
+        bb.rewind();
+
+        // XML String
+        hdBlock.setMdData(MDFUtil.readCharsUTF8(bb, (int) (hdBlock.getLength() - 24)));
 
         return hdBlock;
     }

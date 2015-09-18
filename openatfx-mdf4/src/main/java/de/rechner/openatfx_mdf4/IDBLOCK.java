@@ -66,7 +66,7 @@ class IDBLOCK {
         return idFile;
     }
 
-    public void setIdFile(String idFile) {
+    private void setIdFile(String idFile) {
         this.idFile = idFile;
     }
 
@@ -74,7 +74,7 @@ class IDBLOCK {
         return idVers;
     }
 
-    public void setIdVers(String idVers) {
+    private void setIdVers(String idVers) {
         this.idVers = idVers;
     }
 
@@ -82,7 +82,7 @@ class IDBLOCK {
         return idProg;
     }
 
-    public void setIdProg(String idProg) {
+    private void setIdProg(String idProg) {
         this.idProg = idProg;
     }
 
@@ -90,7 +90,7 @@ class IDBLOCK {
         return idVer;
     }
 
-    public void setIdVer(int idVer) {
+    private void setIdVer(int idVer) {
         this.idVer = idVer;
     }
 
@@ -98,7 +98,7 @@ class IDBLOCK {
         return idUnfinFlags;
     }
 
-    public void setIdUnfinFlags(int idUnfinFlags) {
+    private void setIdUnfinFlags(int idUnfinFlags) {
         this.idUnfinFlags = idUnfinFlags;
     }
 
@@ -106,7 +106,7 @@ class IDBLOCK {
         return idCustomUnfinFlags;
     }
 
-    public void setIdCustomUnfinFlags(int idCustomUnfinFlags) {
+    private void setIdCustomUnfinFlags(int idCustomUnfinFlags) {
         this.idCustomUnfinFlags = idCustomUnfinFlags;
     }
 

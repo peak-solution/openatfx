@@ -53,6 +53,11 @@ abstract class BLOCK {
         this.linkCount = linkCount;
     }
 
+    @Override
+    public String toString() {
+        return "BLOCK [id=" + id + ", length=" + length + ", linkCount=" + linkCount + "]";
+    }
+
     /**
      * Returns the block type string at given position.
      * 

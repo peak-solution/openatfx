@@ -13,7 +13,9 @@ public abstract class MDFUtil {
 
     // For the strings in the IDBLOCK and for the block identifiers, always single byte character (SBC) encoding is used
     // (standard ASCII extension ISO-8859-1 Latin character set).
-    private static final String CHARSET = "ISO-8859-1";
+    private static final String CHARSET_ISO8859 = "ISO-8859-1";
+
+    private static final String CHARSET_UTF8 = "ISO-8859-1";
 
     /**
      * Read an 8-bit unsigned integer from the byte buffer.
@@ -121,14 +123,6 @@ public abstract class MDFUtil {
         return (l1 << 0) | (l2 << 32);
     }
 
-    // public static String readChars(FileChannel channel, int length) throws IOException {
-    // ByteBuffer bb = ByteBuffer.allocate(length);
-    // bb.order(ByteOrder.LITTLE_ENDIAN);
-    // channel.read(bb);
-    // bb.rewind();
-    // return readChars(bb, bb.remaining());
-    // }
-
     public static String readCharsISO8859(ByteBuffer bb, int length) throws IOException {
         byte[] b = new byte[length];
         bb.get(b);
@@ -142,19 +136,23 @@ public abstract class MDFUtil {
             strLength++;
         }
 
-        return new String(b, 0, strLength, CHARSET);
+        return new String(b, 0, strLength, CHARSET_ISO8859);
     }
 
-    // public static double readReal(FileChannel channel) throws IOException {
-    // ByteBuffer bb = ByteBuffer.allocate(8);
-    // bb.order(ByteOrder.LITTLE_ENDIAN);
-    // channel.read(bb);
-    // bb.rewind();
-    // return bb.getDouble();
-    // }
+    public static String readCharsUTF8(ByteBuffer bb, int length) throws IOException {
+        byte[] b = new byte[length];
+        bb.get(b);
 
-    // public static boolean readBool(ByteBuffer bb) throws IOException {
-    // return bb.getShort() > 0;
-    // }
+        // lookup null character for string termination
+        int strLength = 0;
+        for (int i = 0; i < b.length; i++) {
+            if (b[i] == 0) {
+                break;
+            }
+            strLength++;
+        }
+
+        return new String(b, 0, strLength, CHARSET_UTF8);
+    }
 
 }
