@@ -38,6 +38,7 @@ class AoSessionWriter {
             SeekableByteChannel mdfChannel) throws AoException, IOException {
         // read and validate header block
         HDBLOCK hdBlock = HDBLOCK.read(mdfChannel);
+        System.out.println(hdBlock);
 
         // // create "AoSubTest" instance
         // String fileName = sourceFile.getName();
