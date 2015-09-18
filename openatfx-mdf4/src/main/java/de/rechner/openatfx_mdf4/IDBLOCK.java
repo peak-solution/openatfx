@@ -43,13 +43,19 @@ class IDBLOCK {
 
     // Version number of the MDF format, i.e. 411
     // UINT16 1
-    private int version;
+    private int idVer;
 
-    // UINT16 1 Standard Flags for unfinalized MDF
-    private int unfinalizedStandardFlags;
+    // Standard flags for unfinalized MDF.
+    // Bit combination of flags that indicate the steps required to finalize the MDF file.
+    // For a finalized MDF file, the value must be 0 (no flag set).
+    // UINT16 1
+    private int idUnfinFlags;
 
-    // UINT16 1 Custom Flags for unfinalized MDF
-    private int unfinalizedCustomFlags;
+    // Custom flags for unfinalized MDF.
+    // Bit combination of flags that indicate custom steps required to finalize the MDF file.
+    // For a finalized MDF file, the value must be 0 (no flag set).
+    // UINT16 1
+    private int idCustomUnfinFlags;
 
     /**
      * Constructor.
@@ -80,28 +86,34 @@ class IDBLOCK {
         this.idProg = idProg;
     }
 
-    public int getVersion() {
-        return version;
+    public int getIdVer() {
+        return idVer;
     }
 
-    public void setVersion(int version) {
-        this.version = version;
+    public void setIdVer(int idVer) {
+        this.idVer = idVer;
     }
 
-    public int getUnfinalizedStandardFlags() {
-        return unfinalizedStandardFlags;
+    public int getIdUnfinFlags() {
+        return idUnfinFlags;
     }
 
-    public void setUnfinalizedStandardFlags(int unfinalizedStandardFlags) {
-        this.unfinalizedStandardFlags = unfinalizedStandardFlags;
+    public void setIdUnfinFlags(int idUnfinFlags) {
+        this.idUnfinFlags = idUnfinFlags;
     }
 
-    public int getUnfinalizedCustomFlags() {
-        return unfinalizedCustomFlags;
+    public int getIdCustomUnfinFlags() {
+        return idCustomUnfinFlags;
     }
 
-    public void setUnfinalizedCustomFlags(int unfinalizedCustomFlags) {
-        this.unfinalizedCustomFlags = unfinalizedCustomFlags;
+    public void setIdCustomUnfinFlags(int idCustomUnfinFlags) {
+        this.idCustomUnfinFlags = idCustomUnfinFlags;
+    }
+
+    @Override
+    public String toString() {
+        return "IDBLOCK [idFile=" + idFile + ", idVers=" + idVers + ", idProg=" + idProg + ", idVer=" + idVer
+                + ", idUnfinFlags=" + idUnfinFlags + ", idCustomUnfinFlags=" + idCustomUnfinFlags + "]";
     }
 
     /**
@@ -122,58 +134,44 @@ class IDBLOCK {
         bb.rewind();
 
         // CHAR 8: File identifier
-        idBlock.setIdFile(MDFUtil.readChars(bb, 8));
+        idBlock.setIdFile(MDFUtil.readCharsISO8859(bb, 8));
         if (!idBlock.getIdFile().equals("MDF     ")) {
             throw new IOException("Invalid or corrupt MDF4 file: " + idBlock.getIdFile());
         }
 
         // CHAR 8: Format identifier
-        idBlock.setIdVers(MDFUtil.readChars(bb, 8));
+        idBlock.setIdVers(MDFUtil.readCharsISO8859(bb, 8));
         if (!idBlock.getIdVers().startsWith("4")) {
             throw new IOException("Unsupported MDF4 format: " + idBlock.getIdVers());
         }
 
         // CHAR 8: Program identifier
-        idBlock.setIdProg(MDFUtil.readChars(bb, 8));
+        idBlock.setIdProg(MDFUtil.readCharsISO8859(bb, 8));
 
-        // // UINT16 1 Byte order 0 = Little endian
-        // idBlock.setByteOrder(MDFUtil.readUInt16(bb));
-        // if (idBlock.getByteOrder() != 0) {
-        // throw new IOException("Only byte order 'Little endian' is currently supported, found '"
-        // + idBlock.getByteOrder() + "'");
-        // }
-        //
-        // // UINT16 1 Floating-point format used 0 = Floating-point format compliant with IEEE 754 standard
-        // idBlock.setFloatingPointFormat(MDFUtil.readUInt16(bb));
-        // if (idBlock.getFloatingPointFormat() != 0) {
-        // throw new IOException("Only floating-point format 'IEEE 754' is currently supported, found '"
-        // + idBlock.getFloatingPointFormat() + "'");
-        // }
-        //
-        // // UINT16 1 Version number of the MDF , i.e. 300 for this version
-        // idBlock.setVersion(MDFUtil.readUInt16(bb));
-        //
-        // // UINT16 1 The code page used for all strings in the MDF file except of strings in IDBLOCK and string
-        // signals
-        // idBlock.setCodePageNumber(MDFUtil.readUInt16(bb));
-        //
-        // // skip 28 reserved bytes
-        // MDFUtil.readChars(bb, 28);
-        //
-        // // UINT16 1 Standard Flags for unfinalized MDF
-        // idBlock.setUnfinalizedStandardFlags(MDFUtil.readUInt16(bb));
-        // if (idBlock.getUnfinalizedStandardFlags() != 0) {
-        // throw new IOException("Only finalized MDF3 file can be read, found unfinalized standard flag '"
-        // + idBlock.getUnfinalizedStandardFlags() + "'");
-        // }
-        //
-        // // UINT16 1 Custom Flags for unfinalized MDF
-        // idBlock.setUnfinalizedCustomFlags(MDFUtil.readUInt16(bb));
-        // if (idBlock.getUnfinalizedCustomFlags() != 0) {
-        // throw new IOException("Only finalized MDF3 file can be read, found unfinalized custom flag '"
-        // + idBlock.getUnfinalizedCustomFlags() + "'");
-        // }
+        // BYTE 4: id_reserved
+        bb.get(new byte[4]);
+
+        // UINT16: Version number
+        idBlock.setIdVer(MDFUtil.readUInt16(bb));
+        if (idBlock.getIdVer() < 400) {
+            throw new IOException("Unsupported MDF version, must be >400: " + idBlock.getIdVer());
+        }
+
+        // UINT16: Standard flags for unfinalized MDF.
+        idBlock.setIdUnfinFlags(MDFUtil.readUInt16(bb));
+        if (idBlock.getIdCustomUnfinFlags() != 0) {
+            throw new IOException("Only finalized MDF file can be read, found unfinalized standard flag '"
+                    + idBlock.getIdUnfinFlags() + "'");
+        }
+
+        // UINT16: Custom Flags for unfinalized MDF
+        idBlock.setIdCustomUnfinFlags(MDFUtil.readUInt16(bb));
+        if (idBlock.getIdCustomUnfinFlags() != 0) {
+            throw new IOException("Only finalized MDF file can be read, found unfinalized custom flag '"
+                    + idBlock.getIdCustomUnfinFlags() + "'");
+        }
 
         return idBlock;
     }
+
 }

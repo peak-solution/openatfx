@@ -103,17 +103,19 @@ public class MDF4Converter {
 
             // open MDF4 file
             sbc = Files.newByteChannel(mdfFile, StandardOpenOption.READ);
+            // TODO: check performance difference from direct channel
+            // MappedByteBuffer mbb = sbc.map(FileChannel.MapMode.READ_WRITE, 0, 100);
 
             // write MDF4 file content to session
             ApplicationElement aeEnv = modelCache.getApplicationElement("env");
-            ApplicationElement aePrj = modelCache.getApplicationElement("prj");
-            ApplicationRelation relEnvPrj = modelCache.getApplicationRelation("env", "prj", "prjs");
+            ApplicationElement aeTst = modelCache.getApplicationElement("tst");
+            ApplicationRelation relEnvPrj = modelCache.getApplicationRelation("env", "tst", "tsts");
             InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
-            InstanceElement iePrj = aePrj.createInstance(mdfFile.getFileName().toString());
-            ieEnv.createRelation(relEnvPrj, iePrj);
+            InstanceElement ieTst = aeTst.createInstance(mdfFile.getFileName().toString());
+            ieEnv.createRelation(relEnvPrj, ieTst);
 
             AoSessionWriter writer = new AoSessionWriter();
-            writer.writeDataToAoTest(modelCache, iePrj, sbc);
+            writer.writeDataToAoTest(modelCache, ieTst, sbc);
 
             return aoSession;
         } catch (IOException e) {

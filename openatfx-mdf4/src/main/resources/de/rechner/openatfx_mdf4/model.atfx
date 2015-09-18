@@ -33,14 +33,14 @@
 				<base_attribute>base_model_version</base_attribute>
 			</application_attribute>
 			<relation_attribute>
-				<name>prjs</name>
-				<ref_to>prj</ref_to>
+				<name>tsts</name>
+				<ref_to>tst</ref_to>
 				<base_relation>tests</base_relation>
 				<inverse_name>env</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
-			<name>prj</name>
+			<name>tst</name>
 			<basetype>AoTest</basetype>
 			<application_attribute>
 				<name>iid</name>
@@ -51,44 +51,40 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>attachments</name>
-				<base_attribute>external_references</base_attribute>
+				<name>mdf_file_id</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>mdf_version_str</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>mdf_version</name>
+				<datatype>DT_LONG</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>mdf_program</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>mdf_unfin_flags</name>
+				<datatype>DT_LONG</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>mdf_custom_unfin_flags</name>
+				<datatype>DT_LONG</datatype>
 			</application_attribute>
 			<relation_attribute>
 				<name>env</name>
 				<ref_to>env</ref_to>
 				<base_relation>environment</base_relation>
-				<inverse_name>prjs</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>tsts</name>
-				<ref_to>tst</ref_to>
-				<base_relation>children</base_relation>
-				<inverse_name>prj</inverse_name>
-			</relation_attribute>
-		</application_element>
-		<application_element>
-			<name>tst</name>
-			<basetype>AoSubTest</basetype>
-			<application_attribute>
-				<name>iid</name>
-				<base_attribute>id</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>iname</name>
-				<base_attribute>name</base_attribute>
-			</application_attribute>
-			<relation_attribute>
-				<name>prj</name>
-				<ref_to>prj</ref_to>
-				<base_relation>parent_test</base_relation>
 				<inverse_name>tsts</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
 				<name>meas</name>
 				<ref_to>mea</ref_to>
 				<base_relation>children</base_relation>
-				<inverse_name>tst</inverse_name>
+				<inverse_name>prj</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
@@ -103,7 +99,7 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>description</name>
+				<name>desc</name>
 				<base_attribute>description</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -123,12 +119,8 @@
 				<base_attribute>external_references</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>mimetype</name>
+				<name>mt</name>
 				<base_attribute>mime_type</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>iType</name>
-				<datatype>DT_LONG</datatype>
 			</application_attribute>
 			<application_attribute>
 				<name>origin</name>
@@ -161,8 +153,8 @@
 				<inverse_name>mea</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
-				<name>paramset</name>
-				<ref_to>paramset</ref_to>
+				<name>pas</name>
+				<ref_to>pas</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>Many</max_occurs>
 				<inverse_name>mea</inverse_name>
@@ -180,11 +172,11 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>mimetype</name>
+				<name>mt</name>
 				<base_attribute>mime_type</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>description</name>
+				<name>desc</name>
 				<base_attribute>description</base_attribute>
 			</application_attribute>
 			<relation_attribute>
@@ -236,15 +228,15 @@
 				<inverse_name>meqs</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
-				<name>paramset</name>
-				<ref_to>paramset</ref_to>
+				<name>pas</name>
+				<ref_to>pas</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>Many</max_occurs>
 				<inverse_name>meq</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
-			<name>paramset</name>
+			<name>pas</name>
 			<basetype>AoParameterSet</basetype>
 			<application_attribute>
 				<name>iid</name>
@@ -255,39 +247,39 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>iversion</name>
+				<name>ver</name>
 				<base_attribute>version</base_attribute>
 			</application_attribute>
 			<relation_attribute>
-				<name>params</name>
-				<ref_to>param</ref_to>
+				<name>par</name>
+				<ref_to>par</ref_to>
 				<base_relation>parameters</base_relation>
-				<inverse_name>paramset</inverse_name>
+				<inverse_name>pas</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
 				<name>mea</name>
 				<ref_to>mea</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>1</max_occurs>
-				<inverse_name>paramset</inverse_name>
+				<inverse_name>pas</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
 				<name>meq</name>
 				<ref_to>meq</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>1</max_occurs>
-				<inverse_name>paramset</inverse_name>
+				<inverse_name>pas</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
 				<name>sm</name>
 				<ref_to>sm</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>1</max_occurs>
-				<inverse_name>paramset</inverse_name>
+				<inverse_name>pas</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
-			<name>param</name>
+			<name>par</name>
 			<basetype>AoParameter</basetype>
 			<application_attribute>
 				<name>iid</name>
@@ -298,18 +290,18 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>value</name>
+				<name>val</name>
 				<base_attribute>pvalue</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>datatype</name>
+				<name>dt</name>
 				<base_attribute>parameter_datatype</base_attribute>
 			</application_attribute>
 			<relation_attribute>
-				<name>paramset</name>
-				<ref_to>paramset</ref_to>
+				<name>pas</name>
+				<ref_to>pas</ref_to>
 				<base_relation>parameter_set</base_relation>
-				<inverse_name>params</inverse_name>
+				<inverse_name>par</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
@@ -324,11 +316,11 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>description</name>
+				<name>desc</name>
 				<base_attribute>description</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>mimetype</name>
+				<name>mt</name>
 				<base_attribute>mime_type</base_attribute>
 			</application_attribute>
 			<relation_attribute>
@@ -338,7 +330,7 @@
 				<inverse_name>sms</inverse_name>
 			</relation_attribute>
 			<application_attribute>
-				<name>number_of_rows</name>
+				<name>rows</name>
 				<base_attribute>number_of_rows</base_attribute>
 			</application_attribute>
 			<relation_attribute>
@@ -376,19 +368,13 @@
 				<inverse_name>z-axis-for-y-axis</inverse_name>
 			</relation_attribute>
 			<relation_attribute>
-				<name>paramset</name>
-				<ref_to>paramset</ref_to>
+				<name>pas</name>
+				<ref_to>pas</ref_to>
 				<min_occurs>0</min_occurs>
 				<max_occurs>Many</max_occurs>
 				<inverse_name>sm</inverse_name>
 			</relation_attribute>
-			<!-- <relation_attribute>
-			 	<name>Describes</name>
-			 	<ref_to>lc</ref_to>
-			 	<min_occurs>0</min_occurs> 
-				<max_occurs>Many</max_occurs>
-				<inverse_name>LookupTable</inverse_name>
-			</relation_attribute> --> 
+			<!-- <relation_attribute> <name>Describes</name> <ref_to>lc</ref_to> <min_occurs>0</min_occurs> <max_occurs>Many</max_occurs> <inverse_name>LookupTable</inverse_name> </relation_attribute> -->
 		</application_element>
 		<application_element>
 			<name>lc</name>
@@ -402,7 +388,7 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>mimetype</name>
+				<name>mt</name>
 				<base_attribute>mime_type</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -418,11 +404,11 @@
 				<base_attribute>independent</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>seq_rep</name>
+				<name>seqrep</name>
 				<base_attribute>sequence_representation</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>gen_params</name>
+				<name>genpar</name>
 				<base_attribute>generation_parameters</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -438,7 +424,7 @@
 				<base_attribute>values</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>raw_datatype</name>
+				<name>raw_dt</name>
 				<base_attribute>raw_datatype</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -464,13 +450,7 @@
 				<base_relation>external_component</base_relation>
 				<inverse_name>lc</inverse_name>
 			</relation_attribute>
-		<!--	<relation_attribute>
-			 	<name>LookupTable</name>
-			 	<ref_to>sm</ref_to> 
-				<min_occurs>0</min_occurs>
-				<max_occurs>1</max_occurs>
-				<inverse_name>Describes</inverse_name> 
-			</relation_attribute> -->
+			<!-- <relation_attribute> <name>LookupTable</name> <ref_to>sm</ref_to> <min_occurs>0</min_occurs> <max_occurs>1</max_occurs> <inverse_name>Describes</inverse_name> </relation_attribute> -->
 		</application_element>
 		<application_element>
 			<name>ec</name>
@@ -484,11 +464,11 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>length</name>
+				<name>len</name>
 				<base_attribute>component_length</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>filename_url</name>
+				<name>file</name>
 				<base_attribute>filename_url</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -500,23 +480,23 @@
 				<base_attribute>start_offset</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>blocksize</name>
+				<name>bs</name>
 				<base_attribute>block_size</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>valperblock</name>
+				<name>vpb</name>
 				<base_attribute>valuesperblock</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>valoffset</name>
+				<name>vo</name>
 				<base_attribute>value_offset</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>bitcount</name>
+				<name>bc</name>
 				<base_attribute>ao_bit_count</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>bitoffset</name>
+				<name>bo</name>
 				<base_attribute>ao_bit_offset</base_attribute>
 			</application_attribute>
 			<relation_attribute>

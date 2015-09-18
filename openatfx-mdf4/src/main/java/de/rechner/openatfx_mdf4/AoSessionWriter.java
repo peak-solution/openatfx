@@ -6,8 +6,6 @@ import java.nio.channels.SeekableByteChannel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
-import org.asam.ods.ApplicationElement;
-import org.asam.ods.ApplicationRelation;
 import org.asam.ods.InstanceElement;
 
 import de.rechner.openatfx_mdf4.util.ODSModelCache;
@@ -38,12 +36,9 @@ class AoSessionWriter {
      */
     public synchronized InstanceElement writeDataToAoTest(ODSModelCache modelCache, InstanceElement iePrj,
             SeekableByteChannel mdfChannel) throws AoException, IOException {
-        ApplicationElement aePrj = modelCache.getApplicationElement("prj");
-        ApplicationElement aeTst = modelCache.getApplicationElement("tst");
-        ApplicationRelation relPrjTsts = modelCache.getApplicationRelation("prj", "tst", "tsts");
-
         // read and validate header block
         IDBLOCK idBlock = IDBLOCK.read(mdfChannel);
+        System.out.println(idBlock);
 
         // // create "AoSubTest" instance
         // String fileName = sourceFile.getName();
