@@ -31,8 +31,12 @@ class MDBLOCK extends BLOCK {
 
     /**
      * Constructor.
+     * 
+     * @param sbc The byte channel pointing to the MDF file.
      */
-    private MDBLOCK() {}
+    public MDBLOCK(SeekableByteChannel sbc) {
+        super(sbc);
+    }
 
     public String getMdData() {
         return mdData;
@@ -56,7 +60,7 @@ class MDBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static MDBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        MDBLOCK hdBlock = new MDBLOCK();
+        MDBLOCK hdBlock = new MDBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(24);

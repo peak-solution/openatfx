@@ -114,8 +114,12 @@ class HDBLOCK extends BLOCK {
 
     /**
      * Constructor.
+     * 
+     * @param sbc The byte channel pointing to the MDF file.
      */
-    private HDBLOCK() {}
+    public HDBLOCK(SeekableByteChannel sbc) {
+        super(sbc);
+    }
 
     public long getLnkDgFirst() {
         return lnkDgFirst;
@@ -229,16 +233,16 @@ class HDBLOCK extends BLOCK {
         this.startDistanceM = startDistanceM;
     }
 
-    public BLOCK getMdCommentBlock(SeekableByteChannel channel) throws IOException {
+    public BLOCK getMdCommentBlock() throws IOException {
         if (this.lnkMdComment > 0) {
-            String blockType = getBlockType(channel, this.lnkMdComment);
+            String blockType = getBlockType(this.sbc, this.lnkMdComment);
             // link points to a MDBLOCK
             if (blockType.equals(MDBLOCK.BLOCK_ID)) {
-                return MDBLOCK.read(channel, this.lnkMdComment);
+                return MDBLOCK.read(this.sbc, this.lnkMdComment);
             }
             // links points to TXBLOCK
             else if (blockType.equals(TXBLOCK.BLOCK_ID)) {
-                return TXBLOCK.read(channel, this.lnkMdComment);
+                return TXBLOCK.read(this.sbc, this.lnkMdComment);
             }
             // unknown
             else {
@@ -265,7 +269,7 @@ class HDBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static HDBLOCK read(SeekableByteChannel channel) throws IOException {
-        HDBLOCK hdBlock = new HDBLOCK();
+        HDBLOCK hdBlock = new HDBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(112);

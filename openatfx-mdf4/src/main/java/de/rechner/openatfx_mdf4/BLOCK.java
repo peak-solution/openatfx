@@ -29,6 +29,17 @@ abstract class BLOCK {
     // UINT64
     private long linkCount;
 
+    protected final SeekableByteChannel sbc;
+
+    /**
+     * Constructor.
+     * 
+     * @param sbc The byte channel pointing to the MDF file.
+     */
+    protected BLOCK(SeekableByteChannel sbc) {
+        this.sbc = sbc;
+    }
+
     public String getId() {
         return id;
     }

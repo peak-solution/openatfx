@@ -54,7 +54,7 @@ class AoSessionWriter {
         // ieTst.createRelation(relTstMea, ieMea);
 
         // meta information
-        BLOCK block = hdBlock.getMdCommentBlock(mdfChannel);
+        BLOCK block = hdBlock.getMdCommentBlock();
         if (block instanceof TXBLOCK) {
             // System.out.println(((TXBLOCK) block).getTxData());
         } else {

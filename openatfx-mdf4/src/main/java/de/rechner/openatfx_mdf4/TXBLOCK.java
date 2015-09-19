@@ -30,8 +30,12 @@ class TXBLOCK extends BLOCK {
 
     /**
      * Constructor.
+     * 
+     * @param sbc The byte channel pointing to the MDF file.
      */
-    private TXBLOCK() {}
+    public TXBLOCK(SeekableByteChannel sbc) {
+        super(sbc);
+    }
 
     public String getTxData() {
         return txData;
@@ -55,7 +59,7 @@ class TXBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static TXBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        TXBLOCK hdBlock = new TXBLOCK();
+        TXBLOCK hdBlock = new TXBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(24);
