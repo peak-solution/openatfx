@@ -102,6 +102,33 @@ public class Test_Vector_CANape {
         }
     }
 
+    @Test
+    public void testReadFHBlock() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            InstanceElementIterator iter = as.getElementByName("fh").getInstances("*");
+            assertEquals(1, iter.getCount());
+
+            InstanceElement ieFh = as.getElementByName("fh").getInstances("fh_001").nextOne();
+            assertEquals("fh_001", ODSHelper.getStringVal(ieFh.getValue("iname")));
+            assertEquals("created", ODSHelper.getStringVal(ieFh.getValue("desc")));
+            assertEquals("20110824175319", ODSHelper.getDateVal(ieFh.getValue("date")));
+            assertEquals(1314193999000000259l, ODSHelper.getLongLongVal(ieFh.getValue("start_time_ns")));
+            assertEquals(0, ODSHelper.getShortVal(ieFh.getValue("local_time")));
+            assertEquals(1, ODSHelper.getShortVal(ieFh.getValue("time_offsets_valid")));
+            assertEquals(60, ODSHelper.getShortVal(ieFh.getValue("tz_offset_min")));
+            assertEquals(60, ODSHelper.getShortVal(ieFh.getValue("dst_offset_min")));
+            assertEquals("CANape", ODSHelper.getStringVal(ieFh.getValue("tool_id")));
+            assertEquals("Vector Informatik GmbH", ODSHelper.getStringVal(ieFh.getValue("tool_vendor")));
+            assertEquals("10.0.0.30836", ODSHelper.getStringVal(ieFh.getValue("tool_version")));
+            assertEquals("", ODSHelper.getStringVal(ieFh.getValue("user_name")));
+
+            assertEquals(0, ieFh.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
     public static junit.framework.Test suite() {
         return new JUnit4TestAdapter(Test_Vector_CANape.class);
     }

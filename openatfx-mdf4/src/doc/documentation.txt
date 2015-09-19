@@ -24,6 +24,8 @@ Known bugs/missing features:
 ** CHBLOCK: not yet supported, will be ignored with warning
 ** ATBLOCK: not yet supported, will be ignored with warning
 ** EVBLOCK: not yet supported, will be ignored with warning
+** DGBLOCK
+   - dg_md_comment will be ignored with warning
 
 * XML content
 ** mdf_base.xsd
