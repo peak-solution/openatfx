@@ -92,6 +92,13 @@ public class MDF4Converter {
      * @throws IOException Error reading MDF4 file.
      */
     public AoSession getAoSessionForMDF4(ORB orb, Path mdfFile) throws ConvertException {
+        if (orb == null) {
+            throw new ConvertException("orb must not be null!");
+        }
+        if (mdfFile == null) {
+            throw new ConvertException("mdfFile must not be null!");
+        }
+
         SeekableByteChannel sbc = null;
         try {
             // copy ATFX file to temporary directory
@@ -113,10 +120,14 @@ public class MDF4Converter {
             ApplicationElement aeTst = modelCache.getApplicationElement("tst");
             ApplicationRelation relEnvPrj = modelCache.getApplicationRelation("env", "tst", "tsts");
             InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
-            InstanceElement ieTst = aeTst.createInstance(mdfFile.getFileName().toString());
+            Path fileName = mdfFile.getFileName();
+            if (fileName == null) {
+                throw new ConvertException("Unable to obtain file name!");
+            }
+            InstanceElement ieTst = aeTst.createInstance(fileName.toString());
             ieEnv.createRelation(relEnvPrj, ieTst);
 
-            // read and validate id block
+            // read and validate IDBLOCK
             IDBLOCK idBlock = IDBLOCK.read(sbc);
             NameValueUnit[] nvu = new NameValueUnit[6];
             nvu[0] = ODSHelper.createStringNVU("mdf_file_id", idBlock.getIdFile());
@@ -127,9 +138,10 @@ public class MDF4Converter {
             nvu[5] = ODSHelper.createLongNVU("mdf_custom_unfin_flags", idBlock.getIdCustomUnfinFlags());
             ieTst.setValueSeq(nvu);
 
-            // write data to AoTest
+            // read and validate HDBLOCK
+            HDBLOCK hdBlock = HDBLOCK.read(mdfFile, sbc);
             AoSessionWriter writer = new AoSessionWriter();
-            writer.writeMea(modelCache, ieTst, sbc);
+            writer.writeMea(modelCache, ieTst, hdBlock);
 
             return aoSession;
         } catch (IOException e) {

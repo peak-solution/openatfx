@@ -1,4 +1,4 @@
-package de.rechner.openatfx_mdf4.channelinfo.arrays.classification;
+package de.rechner.openatfx_mdf4.attachments.embedded;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -22,13 +22,13 @@ import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
- * Test case for reading the example MDF4-file <code>Porsche_2D_classification_result.mf4</code>.
+ * Test case for reading the example MDF4-file <code>Vector_Embedded.MF4</code>.
  * 
  * @author Christian Rechner
  */
-public class Test_Porsche_2D_classification_result {
+public class Test_Vector_Embedded {
 
-    private static final String mdfFile = "de/rechner/openatfx_mdf4/channelinfo/arrays/classification/Porsche_2D_classification_result.mf4";
+    private static final String mdfFile = "de/rechner/openatfx_mdf4/attachments/embedded/Vector_Embedded.MF4";
 
     private static ORB orb;
     private static AoSession aoSession;
@@ -56,7 +56,7 @@ public class Test_Porsche_2D_classification_result {
             assertEquals("MDF     ", ODSHelper.getStringVal(ieTst.getValue("mdf_file_id")));
             assertEquals("4.10    ", ODSHelper.getStringVal(ieTst.getValue("mdf_version_str")));
             assertEquals(410, ODSHelper.getLongVal(ieTst.getValue("mdf_version")));
-            assertEquals("PEA32", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
+            assertEquals("MCD10.00", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_unfin_flags")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_custom_unfin_flags")));
         } catch (AoException e) {
@@ -65,7 +65,7 @@ public class Test_Porsche_2D_classification_result {
     }
 
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(Test_Porsche_2D_classification_result.class);
+        return new JUnit4TestAdapter(Test_Vector_Embedded.class);
     }
 
 }

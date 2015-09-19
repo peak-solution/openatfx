@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Path;
 
 import de.rechner.openatfx_mdf4.util.MDFUtil;
 
@@ -62,13 +63,13 @@ class HDBLOCK extends BLOCK {
     // For example a value of 60 (min) means UTC+1 time zone = Central European Time
     // Only valid if "time offsets valid" flag is set in time flags.
     // INT16
-    private int tzOffsetMin;
+    private short tzOffsetMin;
 
     // Daylight saving time (DST) offset in minutes for start time stamp. During the summer months, most regions observe
     // a DST offset of 60 min (1 hour).
     // Only valid if "time offsets valid" flag is set in time flags.
     // INT16
-    private int dstOffsetMin;
+    private short dstOffsetMin;
 
     // Time flags
     // The value contains the following bit flags (Bit 0 = LSB):
@@ -112,13 +113,21 @@ class HDBLOCK extends BLOCK {
     // REAL
     private double startDistanceM;
 
+    private final Path mdfFilePath;
+
     /**
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param mdfFilePath THe path to the MDF file.
      */
-    public HDBLOCK(SeekableByteChannel sbc) {
+    public HDBLOCK(SeekableByteChannel sbc, Path mdfFilePath) {
         super(sbc);
+        this.mdfFilePath = mdfFilePath;
+    }
+
+    public Path getMdfFilePath() {
+        return mdfFilePath;
     }
 
     public long getLnkDgFirst() {
@@ -177,19 +186,19 @@ class HDBLOCK extends BLOCK {
         this.startTimeNs = startTimeNs;
     }
 
-    public int getTzOffsetMin() {
+    public short getTzOffsetMin() {
         return tzOffsetMin;
     }
 
-    private void setTzOffsetMin(int tzOffsetMin) {
+    private void setTzOffsetMin(short tzOffsetMin) {
         this.tzOffsetMin = tzOffsetMin;
     }
 
-    public int getDstOffsetMin() {
+    public short getDstOffsetMin() {
         return dstOffsetMin;
     }
 
-    private void setDstOffsetMin(int dstOffsetMin) {
+    private void setDstOffsetMin(short dstOffsetMin) {
         this.dstOffsetMin = dstOffsetMin;
     }
 
@@ -264,12 +273,13 @@ class HDBLOCK extends BLOCK {
     /**
      * Reads a HDBLOCK from the channel starting at current channel position.
      * 
+     * @param mdfFile The path to the MDF file.
      * @param channel The channel to read from.
      * @return The block data.
      * @throws IOException The exception.
      */
-    public static HDBLOCK read(SeekableByteChannel channel) throws IOException {
-        HDBLOCK hdBlock = new HDBLOCK(channel);
+    public static HDBLOCK read(Path mdfFile, SeekableByteChannel channel) throws IOException {
+        HDBLOCK hdBlock = new HDBLOCK(channel, mdfFile);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(112);

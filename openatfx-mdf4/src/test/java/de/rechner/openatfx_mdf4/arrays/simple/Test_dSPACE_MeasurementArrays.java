@@ -1,4 +1,4 @@
-package de.rechner.openatfx_mdf4.channelinfo.arrays.simple;
+package de.rechner.openatfx_mdf4.arrays.simple;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -22,13 +22,13 @@ import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
- * Test case for reading the example MDF4-file <code>Vector_MeasurementArrays.mf4</code>.
+ * Test case for reading the example MDF4-file <code>dSPACE_MeasurementArrays.mf4</code>.
  * 
  * @author Christian Rechner
  */
-public class Test_Vector_MeasurementArrays {
+public class Test_dSPACE_MeasurementArrays {
 
-    private static final String mdfFile = "de/rechner/openatfx_mdf4/channelinfo/arrays/simple/Vector_MeasurementArrays.mf4";
+    private static final String mdfFile = "de/rechner/openatfx_mdf4/arrays/simple/dSPACE_MeasurementArrays.mf4";
 
     private static ORB orb;
     private static AoSession aoSession;
@@ -56,7 +56,7 @@ public class Test_Vector_MeasurementArrays {
             assertEquals("MDF     ", ODSHelper.getStringVal(ieTst.getValue("mdf_file_id")));
             assertEquals("4.10    ", ODSHelper.getStringVal(ieTst.getValue("mdf_version_str")));
             assertEquals(410, ODSHelper.getLongVal(ieTst.getValue("mdf_version")));
-            assertEquals("MCD11.00", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
+            assertEquals("CtrlDesk", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_unfin_flags")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_custom_unfin_flags")));
         } catch (AoException e) {
@@ -65,7 +65,7 @@ public class Test_Vector_MeasurementArrays {
     }
 
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(Test_Vector_MeasurementArrays.class);
+        return new JUnit4TestAdapter(Test_dSPACE_MeasurementArrays.class);
     }
 
 }

@@ -25,6 +25,12 @@ Known bugs/missing features:
 ** CHBLOCK
   not yet supported
 
-* XML content 
-** cn_comment.xsd
-  - UNIT-SPEC will be ignored
+* XML content
+** mdf_base.xsd
+  - type 'common_properties'
+    - 'tree' will be ignored
+    - 'list' will be ignored
+    - 'elist' will be ignored
+** hd_comment.xsd
+  - 'constants' will be ignored
+  - 'UNIT-SPEC' will be ignored

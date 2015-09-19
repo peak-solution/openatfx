@@ -15,7 +15,9 @@ public abstract class MDFUtil {
     // (standard ASCII extension ISO-8859-1 Latin character set).
     private static final String CHARSET_ISO8859 = "ISO-8859-1";
 
-    private static final String CHARSET_UTF8 = "ISO-8859-1";
+    // The string encoding used in an MDF file is UTF-8 (1-4 Bytes for each character).
+    // This applies to TXBLOCK and MDBLOCK data.
+    private static final String CHARSET_UTF8 = "UTF-8";
 
     /**
      * Read an 8-bit unsigned integer from the byte buffer.
@@ -43,7 +45,7 @@ public abstract class MDFUtil {
      * @param bb The byte buffer.
      * @return The value.
      */
-    public static int readInt16(ByteBuffer bb) {
+    public static short readInt16(ByteBuffer bb) {
         return bb.getShort();
     }
 

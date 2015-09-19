@@ -18,18 +18,18 @@
 			</item>
 		</application_enumeration>
 		<application_enumeration>
-			<name>time_class</name>
+			<name>time_quality_class</name>
 			<item>
 				<name>local_PC_reference_time</name>
 				<value>0</value>
 			</item>
 			<item>
 				<name>external_time_source</name>
-				<value>1</value>
+				<value>10</value>
 			</item>
 			<item>
 				<name>external_absolute_synchronized_time</name>
-				<value>2</value>
+				<value>16</value>
 			</item>
 		</application_enumeration>
 		<application_element>
@@ -114,6 +114,10 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
+				<name>mt</name>
+				<base_attribute>mime_type</base_attribute>
+			</application_attribute>
+			<application_attribute>
 				<name>desc</name>
 				<base_attribute>description</base_attribute>
 			</application_attribute>
@@ -130,24 +134,25 @@
 				<base_attribute>measurement_end</base_attribute>
 			</application_attribute>
 			<application_attribute>
+				<name>start_time_ns</name>
+				<datatype>DT_LONGLONG</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>tz_offset_min</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>dst_offset_min</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>time_quality_class</name>
+				<datatype>DT_ENUM</datatype>
+				<enumeration_type>time_quality_class</enumeration_type>
+			</application_attribute>
+			<application_attribute>
 				<name>attachments</name>
 				<base_attribute>external_references</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>mt</name>
-				<base_attribute>mime_type</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>origin</name>
-				<datatype>DT_STRING</datatype>
-			</application_attribute>
-			<application_attribute>
-				<name>revision</name>
-				<datatype>DT_STRING</datatype>
-			</application_attribute>
-			<application_attribute>
-				<name>person</name>
-				<datatype>DT_STRING</datatype>
 			</application_attribute>
 			<relation_attribute>
 				<name>tst</name>
