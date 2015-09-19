@@ -11,7 +11,9 @@ import junit.framework.JUnit4TestAdapter;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.AttrType;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -59,6 +61,42 @@ public class Test_Vector_CANape {
             assertEquals("MCD10.00", ODSHelper.getStringVal(ieTst.getValue("mdf_program")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_unfin_flags")));
             assertEquals(0, ODSHelper.getLongVal(ieTst.getValue("mdf_custom_unfin_flags")));
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testReadHDBlock() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            InstanceElementIterator iter = as.getElementByName("mea").getInstances("*");
+            assertEquals(1, iter.getCount());
+
+            InstanceElement ieMea = as.getElementByName("mea").getInstances("Vector_CANape.MF4").nextOne();
+            assertEquals("Vector_CANape.MF4", ODSHelper.getStringVal(ieMea.getValue("iname")));
+            assertEquals("Simple MF4 file created by Vector CANape 10.0\n\nThis file shows 2 channel groups, each containing a time master channel and some value channels.",
+                         ODSHelper.getStringVal(ieMea.getValue("desc")));
+            assertEquals("20110824175319", ODSHelper.getDateVal(ieMea.getValue("date_created")));
+            assertEquals("20110824175319", ODSHelper.getDateVal(ieMea.getValue("mea_begin")));
+            assertEquals("", ODSHelper.getDateVal(ieMea.getValue("mea_end")));
+            assertEquals(1314193999000000259l, ODSHelper.getLongLongVal(ieMea.getValue("start_time_ns")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("local_time")));
+            assertEquals(1, ODSHelper.getShortVal(ieMea.getValue("time_offsets_valid")));
+            assertEquals(60, ODSHelper.getShortVal(ieMea.getValue("tz_offset_min")));
+            assertEquals(60, ODSHelper.getShortVal(ieMea.getValue("dst_offset_min")));
+            assertEquals(0, ODSHelper.getEnumVal(ieMea.getValue("time_quality_class")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_angle_valid")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_distance_valid")));
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_angle_rad")), 0.0000001);
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_distance_m")), 0.0000001);
+
+            assertEquals(4, ieMea.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+
+            assertEquals("Otmar Schneider", ODSHelper.getStringVal(ieMea.getValue("author")));
+            assertEquals("ASAM COMMON MDF 4.1 example file", ODSHelper.getStringVal(ieMea.getValue("project")));
+            assertEquals("Vector Informatik GmbH", ODSHelper.getStringVal(ieMea.getValue("department")));
+            assertEquals("XCPsim simulation", ODSHelper.getStringVal(ieMea.getValue("subject")));
         } catch (AoException e) {
             fail(e.reason);
         }

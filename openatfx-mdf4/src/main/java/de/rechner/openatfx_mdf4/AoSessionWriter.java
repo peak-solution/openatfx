@@ -2,6 +2,8 @@ package de.rechner.openatfx_mdf4;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -23,8 +25,6 @@ import de.rechner.openatfx_mdf4.xml.MDF4XMLParser;
  * @author Christian Rechner
  */
 class AoSessionWriter {
-
-    // private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
 
     private final MDF4XMLParser xmlParser;
 
@@ -86,9 +86,55 @@ class AoSessionWriter {
         nvuList.add(ODSHelper.createDoubleNVU("start_distance_m", hdBlock.getStartDistanceM()));
         ieMea.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
-        System.out.println(hdBlock.getFhFirstBlock());
-        
+        // write file history
+        writeFileHistory(modelCache, ieTst, hdBlock);
+
         return ieMea;
+    }
+
+    /**
+     * Writes the content of all FHBLOCKS (file history) to the session.
+     * 
+     * @param modelCache The application model cache.
+     * @param ieTst The parent 'AoTest' instance.
+     * @param hdBlock The HDBLOCK.
+     * @return the created AoMeasurement instance element
+     * @throws ConvertException Error converting.
+     */
+    private void writeFileHistory(ODSModelCache modelCache, InstanceElement ieTst, HDBLOCK hdBlock) throws AoException,
+            IOException {
+        ApplicationElement aeFh = modelCache.getApplicationElement("fh");
+        ApplicationRelation relTstFh = modelCache.getApplicationRelation("tst", "fh", "fh");
+        NumberFormat nf = new DecimalFormat("000");
+
+        int no = 1;
+        FHBLOCK fhBlock = hdBlock.getFhFirstBlock();
+        while (fhBlock != null) {
+            InstanceElement ieFh = aeFh.createInstance("fh_" + nf.format(no));
+            ieTst.createRelation(relTstFh, ieFh);
+
+            // meta information
+            List<NameValueUnit> nvuList = new ArrayList<NameValueUnit>();
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(hdBlock.getStartTimeNs() / 1000000);
+            if (!hdBlock.isLocalTime() && hdBlock.isTimeFlagsValid()) { // UTC time given, calc local
+                cal.add(Calendar.MINUTE, hdBlock.getTzOffsetMin());
+                cal.add(Calendar.MINUTE, hdBlock.getDstOffsetMin());
+            }
+            nvuList.add(ODSHelper.createDateNVU("date", ODSHelper.asODSDate(cal.getTime())));
+            nvuList.add(ODSHelper.createLongLongNVU("start_time_ns", hdBlock.getStartTimeNs()));
+            nvuList.add(ODSHelper.createShortNVU("local_time", hdBlock.isLocalTime() ? (short) 1 : (short) 0));
+            nvuList.add(ODSHelper.createShortNVU("time_offsets_valid", hdBlock.isTimeFlagsValid() ? (short) 1
+                    : (short) 0));
+            nvuList.add(ODSHelper.createShortNVU("tz_offset_min", hdBlock.getTzOffsetMin()));
+            nvuList.add(ODSHelper.createShortNVU("dst_offset_min", hdBlock.getDstOffsetMin()));
+            ieFh.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
+
+            this.xmlParser.writeMDCommentToFh(ieFh, fhBlock.getMdCommentBlock().getMdData());
+
+            no++;
+            fhBlock = fhBlock.getFhNextBlock();
+        }
     }
 
     /**************************************************************************************

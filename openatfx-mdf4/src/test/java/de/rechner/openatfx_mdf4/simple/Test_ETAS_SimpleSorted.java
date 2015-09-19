@@ -11,7 +11,9 @@ import junit.framework.JUnit4TestAdapter;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationStructure;
+import org.asam.ods.AttrType;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -68,7 +70,10 @@ public class Test_ETAS_SimpleSorted {
     public void testReadHDBlock() {
         try {
             ApplicationStructure as = aoSession.getApplicationStructure();
-            InstanceElement ieMea = as.getElementByName("mea").getInstances("*").nextOne();
+            InstanceElementIterator iter = as.getElementByName("mea").getInstances("*");
+            assertEquals(1, iter.getCount());
+
+            InstanceElement ieMea = as.getElementByName("mea").getInstances("ETAS_SimpleSorted.mf4").nextOne();
             assertEquals("ETAS_SimpleSorted.mf4", ODSHelper.getStringVal(ieMea.getValue("iname")));
             assertEquals("ASAM MDF 4.0 Example file created by ETAS. Contents: 2 simple channel groups containing ints and floats in little endian format.",
                          ODSHelper.getStringVal(ieMea.getValue("desc")));
@@ -85,6 +90,9 @@ public class Test_ETAS_SimpleSorted {
             assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_distance_valid")));
             assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_angle_rad")), 0.0000001);
             assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_distance_m")), 0.0000001);
+
+            assertEquals(5, ieMea.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+
             assertEquals("PC timer", ODSHelper.getStringVal(ieMea.getValue("time_source")));
             assertEquals("Tobias Langner", ODSHelper.getStringVal(ieMea.getValue("author")));
             assertEquals("ASAM Example Files", ODSHelper.getStringVal(ieMea.getValue("project")));

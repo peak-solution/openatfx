@@ -137,6 +137,20 @@ class FHBLOCK extends BLOCK {
         return BigInteger.valueOf(this.timeFlags).testBit(1);
     }
 
+    public FHBLOCK getFhNextBlock() throws IOException {
+        if (this.lnkFhNext > 0) {
+            return FHBLOCK.read(this.sbc, this.lnkFhNext);
+        }
+        return null;
+    }
+
+    public MDBLOCK getMdCommentBlock() throws IOException {
+        if (this.lnkMdComment > 0) {
+            return MDBLOCK.read(this.sbc, this.lnkMdComment);
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "FHBLOCK [lnkFhNext=" + lnkFhNext + ", lnkMdComment=" + lnkMdComment + ", startTimeNs=" + startTimeNs
