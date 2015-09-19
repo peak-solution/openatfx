@@ -21,8 +21,9 @@ Known bugs/missing features:
 ** HDBLOCK
    - hd_ch_first must be 0 (channel hierarchy not yet supported)
    - hd_flags must be 0 [bits 00] (start angle value below is invalid, start distance value below is invalid)
-** CHBLOCK
-  not yet supported
+** CHBLOCK: not yet supported, will be ignored with warning
+** ATBLOCK: not yet supported, will be ignored with warning
+** EVBLOCK: not yet supported, will be ignored with warning
 
 * XML content
 ** mdf_base.xsd

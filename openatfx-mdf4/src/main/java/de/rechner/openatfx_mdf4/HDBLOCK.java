@@ -334,7 +334,6 @@ class HDBLOCK extends BLOCK {
         hdBlock.setLnkFhFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first channel hierarchy block (CHBLOCK) (can be NIL).
-        // TODO: NOT YET SUPPORTED!
         hdBlock.setLnkChFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first attachment block (ATBLOCK) (can be NIL)

@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
@@ -25,6 +27,8 @@ import de.rechner.openatfx_mdf4.xml.MDF4XMLParser;
  * @author Christian Rechner
  */
 class AoSessionWriter {
+
+    private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
 
     private final MDF4XMLParser xmlParser;
 
@@ -86,8 +90,23 @@ class AoSessionWriter {
         nvuList.add(ODSHelper.createDoubleNVU("start_distance_m", hdBlock.getStartDistanceM()));
         ieMea.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
-        // write file history
+        // write file history (FHBLOCK)
         writeFileHistory(modelCache, ieTst, hdBlock);
+
+        // write channel hierarchy (CHBLOCK): not yet supported!
+        if (hdBlock.getLnkChFirst() > 0) {
+            LOG.warn("Found CHBLOCK, currently not yet supported!");
+        }
+
+        // write attachments: not yet supported!
+        if (hdBlock.getLnkAtFirst() > 0) {
+            LOG.warn("Found ATBLOCK, currently not yet supported!");
+        }
+
+        // write events: not yet supported!
+        if (hdBlock.getLnkEvFirst() > 0) {
+            LOG.warn("Found EVBLOCK, currently not yet supported!");
+        }
 
         return ieMea;
     }
