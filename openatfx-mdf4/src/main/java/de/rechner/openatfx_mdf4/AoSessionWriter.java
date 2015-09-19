@@ -45,7 +45,7 @@ class AoSessionWriter {
      * @param modelCache The application model cache.
      * @param ieTst The parent 'AoTest' instance.
      * @param hdBlock The HDBLOCK.
-     * @return the created AoMeasurement instance element
+     * @return The created AoMeasurement instance.
      * @throws ConvertException Error converting.
      */
     public synchronized InstanceElement writeMea(ODSModelCache modelCache, InstanceElement ieTst, HDBLOCK hdBlock)
@@ -108,6 +108,9 @@ class AoSessionWriter {
             LOG.warn("Found EVBLOCK, currently not yet supported!");
         }
 
+        // write submatrices
+        writeSm(modelCache, ieMea, hdBlock);
+
         return ieMea;
     }
 
@@ -117,8 +120,8 @@ class AoSessionWriter {
      * @param modelCache The application model cache.
      * @param ieTst The parent 'AoTest' instance.
      * @param hdBlock The HDBLOCK.
-     * @return the created AoMeasurement instance element
-     * @throws ConvertException Error converting.
+     * @throws AoException Error writing to session.
+     * @throws IOException Error reading from MDF file.
      */
     private void writeFileHistory(ODSModelCache modelCache, InstanceElement ieTst, HDBLOCK hdBlock) throws AoException,
             IOException {
@@ -153,6 +156,66 @@ class AoSessionWriter {
 
             no++;
             fhBlock = fhBlock.getFhNextBlock();
+        }
+    }
+
+    /**
+     * Write the instances of 'AoSubMatrix'.
+     * 
+     * @param modelCache The application model cache.
+     * @param ieTst The parent 'AoTest' instance.
+     * @param hdBlock The HDBLOCK.
+     * @throws AoException Error writing to session.
+     * @throws IOException Error reading from MDF file.
+     */
+    private void writeSm(ODSModelCache modelCache, InstanceElement ieMea, HDBLOCK hdBlock) throws AoException,
+            IOException {
+        NumberFormat nf = new DecimalFormat("000");
+        ApplicationElement aeSm = modelCache.getApplicationElement("sm");
+        ApplicationRelation relMeaSm = modelCache.getApplicationRelation("mea", "sm", "sms");
+
+        // iterate over data group blocks
+        int grpNo = 1;
+        DGBLOCK dgBlock = hdBlock.getDgFirstBlock();
+        while (dgBlock != null) {
+
+            // if sorted, only one channel group block is available
+            CGBLOCK cgBlock = dgBlock.getCgFirstBlock();
+            if (cgBlock.getLnkCgNext() > 0) {
+                throw new IOException(
+                                      "Currently only 'sorted' MDF4 files are supported, found 'unsorted' data! [DGBLOCK="
+                                              + dgBlock + "]");
+            }
+
+            // skip channel groups having no channels (or optionally no values)
+            if (cgBlock != null) {
+
+                // check flags (not yet supported)
+                if (cgBlock.getFlags() != 0) {
+                    throw new IOException("VLSD or bus event data currently not supported! [DGBLOCK=" + dgBlock + "]");
+                }
+                // check invalidation bits (not yet supported)
+                if (cgBlock.getInvalBytes() != 0) {
+                    throw new IOException("Invalidation bits currently not supported! [DGBLOCK=" + dgBlock + "]");
+                }
+
+                // create SubMatrix instance
+                InstanceElement ieSm = aeSm.createInstance("sm_" + nf.format(grpNo));
+                ieMea.createRelation(relMeaSm, ieSm);
+                ieSm.setValue(ODSHelper.createLongNVU("rows", (int) cgBlock.getCycleCount()));
+
+                // set channel group comment to SubMatrix description
+                // TXBLOCK channelGroupComment = cgBlock.getChannelGroupComment(mdfChannel);
+                // if (channelGroupComment != null) {
+                // ieSm.setValue(ODSHelper.createStringNVU("description", channelGroupComment.getText()));
+                // }
+
+                // write LocalColumns
+                // writeLcs(ieMea, ieSm, sourceFile, mdfChannel, binChannel, dgBlock, cgBlock, meqNames);
+            }
+
+            dgBlock = dgBlock.getDgNextBlock();
+            grpNo++;
         }
     }
 

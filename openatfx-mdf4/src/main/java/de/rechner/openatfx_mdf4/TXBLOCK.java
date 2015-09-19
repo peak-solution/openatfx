@@ -59,7 +59,7 @@ class TXBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static TXBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        TXBLOCK hdBlock = new TXBLOCK(channel);
+        TXBLOCK block = new TXBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(24);
@@ -69,31 +69,31 @@ class TXBLOCK extends BLOCK {
         bb.rewind();
 
         // CHAR 4: Block type identifier, always "##HD"
-        hdBlock.setId(MDFUtil.readCharsISO8859(bb, 4));
-        if (!hdBlock.getId().equals(BLOCK_ID)) {
-            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + hdBlock.getId() + "'");
+        block.setId(MDFUtil.readCharsISO8859(bb, 4));
+        if (!block.getId().equals(BLOCK_ID)) {
+            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
         }
 
         // BYTE 4: Reserved used for 8-Byte alignment
         bb.get(new byte[4]);
 
         // UINT64: Length of block
-        hdBlock.setLength(MDFUtil.readUInt64(bb));
+        block.setLength(MDFUtil.readUInt64(bb));
 
         // UINT64: Number of links
-        hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+        block.setLinkCount(MDFUtil.readUInt64(bb));
 
         // read block content
-        bb = ByteBuffer.allocate((int) hdBlock.getLength() + 24);
+        bb = ByteBuffer.allocate((int) block.getLength() + 24);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         channel.position(pos + 24);
         channel.read(bb);
         bb.rewind();
 
         // XML String
-        hdBlock.setTxData(MDFUtil.readCharsUTF8(bb, (int) (hdBlock.getLength() - 24)));
+        block.setTxData(MDFUtil.readCharsUTF8(bb, (int) (block.getLength() - 24)));
 
-        return hdBlock;
+        return block;
     }
 
 }

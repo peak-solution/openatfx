@@ -285,6 +285,13 @@ class HDBLOCK extends BLOCK {
         return null;
     }
 
+    public DGBLOCK getDgFirstBlock() throws IOException {
+        if (this.lnkDgFirst > 0) {
+            return DGBLOCK.read(this.sbc, this.lnkDgFirst);
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "HDBLOCK [lnkDgFirst=" + lnkDgFirst + ", lnkFhFirst=" + lnkFhFirst + ", lnkChFirst=" + lnkChFirst
@@ -303,7 +310,7 @@ class HDBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static HDBLOCK read(Path mdfFile, SeekableByteChannel channel) throws IOException {
-        HDBLOCK hdBlock = new HDBLOCK(channel, mdfFile);
+        HDBLOCK block = new HDBLOCK(channel, mdfFile);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(112);
@@ -313,56 +320,56 @@ class HDBLOCK extends BLOCK {
         bb.rewind();
 
         // CHAR 4: Block type identifier, always "##HD"
-        hdBlock.setId(MDFUtil.readCharsISO8859(bb, 4));
-        if (!hdBlock.getId().equals(BLOCK_ID)) {
-            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + hdBlock.getId() + "'");
+        block.setId(MDFUtil.readCharsISO8859(bb, 4));
+        if (!block.getId().equals(BLOCK_ID)) {
+            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
         }
 
         // BYTE 4: Reserved used for 8-Byte alignment
         bb.get(new byte[4]);
 
         // UINT64: Length of block
-        hdBlock.setLength(MDFUtil.readUInt64(bb));
+        block.setLength(MDFUtil.readUInt64(bb));
 
         // UINT64: Number of links
-        hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+        block.setLinkCount(MDFUtil.readUInt64(bb));
 
         // LINK: Pointer to the first data group block (DGBLOCK) (can be NIL)
-        hdBlock.setLnkDgFirst(MDFUtil.readLink(bb));
+        block.setLnkDgFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first file history block (FHBLOCK)
-        hdBlock.setLnkFhFirst(MDFUtil.readLink(bb));
+        block.setLnkFhFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first channel hierarchy block (CHBLOCK) (can be NIL).
-        hdBlock.setLnkChFirst(MDFUtil.readLink(bb));
+        block.setLnkChFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first attachment block (ATBLOCK) (can be NIL)
-        hdBlock.setLnkAtFirst(MDFUtil.readLink(bb));
+        block.setLnkAtFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first event block (EVBLOCK) (can be NIL)
-        hdBlock.setLnkEvFirst(MDFUtil.readLink(bb));
+        block.setLnkEvFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to the measurement file comment (TXBLOCK or MDBLOCK) (can be NIL)
-        hdBlock.setLnkMdComment(MDFUtil.readLink(bb));
+        block.setLnkMdComment(MDFUtil.readLink(bb));
 
         // UINT64: Time stamp at start of measurement in nanoseconds elapsed since 00:00:00 01.01.1970
-        hdBlock.setStartTimeNs(MDFUtil.readUInt64(bb));
+        block.setStartTimeNs(MDFUtil.readUInt64(bb));
 
         // INT16: Time zone offset in minutes.
-        hdBlock.setTzOffsetMin(MDFUtil.readInt16(bb));
+        block.setTzOffsetMin(MDFUtil.readInt16(bb));
 
         // INT16: Daylight saving time (DST) offset in minutes for start time stamp.
-        hdBlock.setDstOffsetMin(MDFUtil.readInt16(bb));
+        block.setDstOffsetMin(MDFUtil.readInt16(bb));
 
         // UINT8: Time flags
-        hdBlock.setTimeFlags(MDFUtil.readUInt8(bb));
+        block.setTimeFlags(MDFUtil.readUInt8(bb));
 
         // UINT8: Time quality class
-        hdBlock.setTimeClass(MDFUtil.readUInt8(bb));
+        block.setTimeClass(MDFUtil.readUInt8(bb));
 
         // UINT8: Flags
-        hdBlock.setFlags(MDFUtil.readUInt8(bb));
-        if (hdBlock.getFlags() != 0) {
+        block.setFlags(MDFUtil.readUInt8(bb));
+        if (block.getFlags() != 0) {
             throw new IOException("HDBLOCK hd_flags!=0 not yet supported");
         }
 
@@ -370,12 +377,12 @@ class HDBLOCK extends BLOCK {
         bb.get();
 
         // REAL: Start angle in radians at start of measurement (only for angle synchronous measurements)
-        hdBlock.setStartAngleRad(MDFUtil.readReal(bb));
+        block.setStartAngleRad(MDFUtil.readReal(bb));
 
         // REAL: Start distance in meters at start of measurement
-        hdBlock.setStartDistanceM(MDFUtil.readReal(bb));
+        block.setStartDistanceM(MDFUtil.readReal(bb));
 
-        return hdBlock;
+        return block;
     }
 
 }

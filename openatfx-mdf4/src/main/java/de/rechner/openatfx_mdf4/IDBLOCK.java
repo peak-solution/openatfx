@@ -124,7 +124,7 @@ class IDBLOCK {
      * @throws IOException The exception.
      */
     public static IDBLOCK read(SeekableByteChannel channel) throws IOException {
-        IDBLOCK idBlock = new IDBLOCK();
+        IDBLOCK block = new IDBLOCK();
 
         // read block
         ByteBuffer bb = ByteBuffer.allocate(64);
@@ -134,44 +134,44 @@ class IDBLOCK {
         bb.rewind();
 
         // CHAR 8: File identifier
-        idBlock.setIdFile(MDFUtil.readCharsISO8859(bb, 8));
-        if (!idBlock.getIdFile().equals("MDF     ")) {
-            throw new IOException("Invalid or corrupt MDF4 file: " + idBlock.getIdFile());
+        block.setIdFile(MDFUtil.readCharsISO8859(bb, 8));
+        if (!block.getIdFile().equals("MDF     ")) {
+            throw new IOException("Invalid or corrupt MDF4 file: " + block.getIdFile());
         }
 
         // CHAR 8: Format identifier
-        idBlock.setIdVers(MDFUtil.readCharsISO8859(bb, 8));
-        if (!idBlock.getIdVers().startsWith("4")) {
-            throw new IOException("Unsupported MDF4 format: " + idBlock.getIdVers());
+        block.setIdVers(MDFUtil.readCharsISO8859(bb, 8));
+        if (!block.getIdVers().startsWith("4")) {
+            throw new IOException("Unsupported MDF4 format: " + block.getIdVers());
         }
 
         // CHAR 8: Program identifier
-        idBlock.setIdProg(MDFUtil.readCharsISO8859(bb, 8));
+        block.setIdProg(MDFUtil.readCharsISO8859(bb, 8));
 
         // BYTE 4: id_reserved
         bb.get(new byte[4]);
 
         // UINT16: Version number
-        idBlock.setIdVer(MDFUtil.readUInt16(bb));
-        if (idBlock.getIdVer() < 400) {
-            throw new IOException("Unsupported MDF version, must be >400: " + idBlock.getIdVer());
+        block.setIdVer(MDFUtil.readUInt16(bb));
+        if (block.getIdVer() < 400) {
+            throw new IOException("Unsupported MDF version, must be >400: " + block.getIdVer());
         }
 
         // UINT16: Standard flags for unfinalized MDF.
-        idBlock.setIdUnfinFlags(MDFUtil.readUInt16(bb));
-        if (idBlock.getIdCustomUnfinFlags() != 0) {
+        block.setIdUnfinFlags(MDFUtil.readUInt16(bb));
+        if (block.getIdCustomUnfinFlags() != 0) {
             throw new IOException("Only finalized MDF file can be read, found unfinalized standard flag '"
-                    + idBlock.getIdUnfinFlags() + "'");
+                    + block.getIdUnfinFlags() + "'");
         }
 
         // UINT16: Custom Flags for unfinalized MDF
-        idBlock.setIdCustomUnfinFlags(MDFUtil.readUInt16(bb));
-        if (idBlock.getIdCustomUnfinFlags() != 0) {
+        block.setIdCustomUnfinFlags(MDFUtil.readUInt16(bb));
+        if (block.getIdCustomUnfinFlags() != 0) {
             throw new IOException("Only finalized MDF file can be read, found unfinalized custom flag '"
-                    + idBlock.getIdCustomUnfinFlags() + "'");
+                    + block.getIdCustomUnfinFlags() + "'");
         }
 
-        return idBlock;
+        return block;
     }
 
 }

@@ -102,6 +102,26 @@ class DGBLOCK extends BLOCK {
         this.recIdSize = recIdSize;
     }
 
+    public DGBLOCK getDgNextBlock() throws IOException {
+        if (this.lnkDgNext > 0) {
+            return DGBLOCK.read(this.sbc, this.lnkDgNext);
+        }
+        return null;
+    }
+
+    public CGBLOCK getCgFirstBlock() throws IOException {
+        if (this.lnkCgFirst > 0) {
+            return CGBLOCK.read(this.sbc, this.lnkCgFirst);
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return "DGBLOCK [lnkDgNext=" + lnkDgNext + ", lnkCgFirst=" + lnkCgFirst + ", lnkData=" + lnkData
+                + ", lnkMdComment=" + lnkMdComment + ", recIdSize=" + recIdSize + "]";
+    }
+
     /**
      * Reads a DGBLOCK from the channel starting at current channel position.
      * 
@@ -111,7 +131,7 @@ class DGBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static DGBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        DGBLOCK hdBlock = new DGBLOCK(channel);
+        DGBLOCK block = new DGBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(64);
@@ -121,37 +141,37 @@ class DGBLOCK extends BLOCK {
         bb.rewind();
 
         // CHAR 4: Block type identifier, always "##HD"
-        hdBlock.setId(MDFUtil.readCharsISO8859(bb, 4));
-        if (!hdBlock.getId().equals(BLOCK_ID)) {
-            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + hdBlock.getId() + "'");
+        block.setId(MDFUtil.readCharsISO8859(bb, 4));
+        if (!block.getId().equals(BLOCK_ID)) {
+            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
         }
 
         // BYTE 4: Reserved used for 8-Byte alignment
         bb.get(new byte[4]);
 
         // UINT64: Length of block
-        hdBlock.setLength(MDFUtil.readUInt64(bb));
+        block.setLength(MDFUtil.readUInt64(bb));
 
         // UINT64: Number of links
-        hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+        block.setLinkCount(MDFUtil.readUInt64(bb));
 
         // LINK: Pointer to next data group block (DGBLOCK) (can be NIL)
-        hdBlock.setLnkDgNext(MDFUtil.readLink(bb));
+        block.setLnkDgNext(MDFUtil.readLink(bb));
 
         // LINK: Pointer to first channel group block (CGBLOCK) (can be NIL)
-        hdBlock.setLnkCgFirst(MDFUtil.readLink(bb));
+        block.setLnkCgFirst(MDFUtil.readLink(bb));
 
         // LINK: Pointer to data block (DTBLOCK or DZBLOCK for this block type) or data list block (DLBLOCK of data
         // blocks or its HLBLOCK) (can be NIL)
-        hdBlock.setLnkData(MDFUtil.readLink(bb));
+        block.setLnkData(MDFUtil.readLink(bb));
 
         // LINK: Pointer to comment and additional information (TXBLOCK or MDBLOCK) (can be NIL)
-        hdBlock.setLnkMdComment(MDFUtil.readLink(bb));
+        block.setLnkMdComment(MDFUtil.readLink(bb));
 
         // UINT8: Number of Bytes used for record IDs in the data block.
-        hdBlock.setRecIdSize(MDFUtil.readUInt8(bb));
+        block.setRecIdSize(MDFUtil.readUInt8(bb));
 
-        return hdBlock;
+        return block;
     }
 
 }

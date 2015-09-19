@@ -166,7 +166,7 @@ class FHBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static FHBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        FHBLOCK hdBlock = new FHBLOCK(channel);
+        FHBLOCK block = new FHBLOCK(channel);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(56);
@@ -176,39 +176,39 @@ class FHBLOCK extends BLOCK {
         bb.rewind();
 
         // CHAR 4: Block type identifier, always "##HD"
-        hdBlock.setId(MDFUtil.readCharsISO8859(bb, 4));
-        if (!hdBlock.getId().equals(BLOCK_ID)) {
-            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + hdBlock.getId() + "'");
+        block.setId(MDFUtil.readCharsISO8859(bb, 4));
+        if (!block.getId().equals(BLOCK_ID)) {
+            throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
         }
 
         // BYTE 4: Reserved used for 8-Byte alignment
         bb.get(new byte[4]);
 
         // UINT64: Length of block
-        hdBlock.setLength(MDFUtil.readUInt64(bb));
+        block.setLength(MDFUtil.readUInt64(bb));
 
         // UINT64: Number of links
-        hdBlock.setLinkCount(MDFUtil.readUInt64(bb));
+        block.setLinkCount(MDFUtil.readUInt64(bb));
 
         // LINK: Link to next FHBLOCK (can be NIL if list finished)
-        hdBlock.setLnkFhNext(MDFUtil.readLink(bb));
+        block.setLnkFhNext(MDFUtil.readLink(bb));
 
         // LINK: Link to MDBLOCK containing comment about the creation or modification of the MDF file.
-        hdBlock.setLnkMdComment(MDFUtil.readLink(bb));
+        block.setLnkMdComment(MDFUtil.readLink(bb));
 
         // UINT64: Time stamp at which the file has been changed/created (first entry)
-        hdBlock.setStartTimeNs(MDFUtil.readUInt64(bb));
+        block.setStartTimeNs(MDFUtil.readUInt64(bb));
 
         // INT16: Time zone offset in minutes.
-        hdBlock.setTzOffsetMin(MDFUtil.readInt16(bb));
+        block.setTzOffsetMin(MDFUtil.readInt16(bb));
 
         // INT16: Daylight saving time (DST) offset in minutes for start time stamp.
-        hdBlock.setDstOffsetMin(MDFUtil.readInt16(bb));
+        block.setDstOffsetMin(MDFUtil.readInt16(bb));
 
         // UINT8: Time flags
-        hdBlock.setTimeFlags(MDFUtil.readUInt8(bb));
+        block.setTimeFlags(MDFUtil.readUInt8(bb));
 
-        return hdBlock;
+        return block;
     }
 
 }
