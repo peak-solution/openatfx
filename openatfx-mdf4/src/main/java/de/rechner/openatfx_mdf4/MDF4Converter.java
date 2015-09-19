@@ -129,7 +129,7 @@ public class MDF4Converter {
 
             // write data to AoTest
             AoSessionWriter writer = new AoSessionWriter();
-            writer.writeDataToAoTest(modelCache, ieTst, sbc);
+            writer.writeMea(modelCache, ieTst, sbc);
 
             return aoSession;
         } catch (IOException e) {

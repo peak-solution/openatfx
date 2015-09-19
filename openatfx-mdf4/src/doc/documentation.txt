@@ -14,12 +14,17 @@ TODO
 
 Known bugs/missing features:
 ----------------------------
-* IDBLOCK
-  - id_unfin_flags must be 0
-  - id_custom_unfin_flags must be 0
-* HDBLOCK
-  - hd_ch_first must be 0 (channel hierarchy not yet supported)
-  - hd_time_flags must be 2 [bits 10] (UTC time , the time zone and DST offsets are valid)
-  - hd_flags must be 0 [bits 00] (start angle value below is invalid, start distance value below is invalid)
-* CHBLOCK
+* BLOCKs
+** IDBLOCK
+   - id_unfin_flags must be 0
+   - id_custom_unfin_flags must be 0
+** HDBLOCK
+   - hd_ch_first must be 0 (channel hierarchy not yet supported)
+   - hd_time_flags must be 2 [bits 10] (UTC time , the time zone and DST offsets are valid)
+   - hd_flags must be 0 [bits 00] (start angle value below is invalid, start distance value below is invalid)
+** CHBLOCK
   not yet supported
+
+* XML content 
+** cn_comment.xsd
+  - UNIT-SPEC will be ignored

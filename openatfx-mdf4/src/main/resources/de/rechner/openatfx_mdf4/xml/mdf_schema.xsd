@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://www.asam.net/mdf/schema" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.asam.net/mdf/schema" elementFormDefault="qualified">
+	<xs:annotation>
+		<xs:documentation>This Schema defines meta tags to be used in the actual schematas to specify the format of MDBLOCK contents</xs:documentation>
+	</xs:annotation>
+	<xs:element name="schema_info">
+		<xs:annotation>
+			<xs:documentation>Used to map MDBLOCK schemas to the corresponding field in the parent block.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="mdf_version" type="version_pattern" default="4.0">
+				<xs:annotation>
+					<xs:documentation>version number of MDF specification</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="block_name" type="block_id_pattern" use="required">
+				<xs:annotation>
+					<xs:documentation>id of parent block of MDBLOCK that is parsed, e.g. "##FH"</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="element_name" type="xs:token" use="required">
+				<xs:annotation>
+					<xs:documentation>name of element in parent block that references the MDBLOCK, e.g. "fh_md_comment"</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:anyAttribute/>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="block_id_pattern">
+		<xs:annotation>
+			<xs:documentation>block_id_pattern is a string pattern. The block id starts with ## followed by two upper case chars (A-Z), e.g. "##FH" for the file histroy block</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="##[A-Z][A-Z]"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="version_pattern">
+		<xs:annotation>
+			<xs:documentation>version_pattern is a string pattern. It is used for the "version" attribute.
+			Valid values are "1", "1.0", "0.123.3", "0001.00" and "0.0.0.0.0.0.0".
+			Invalid values are ".0", "0.", "0..2", "Abc" and "-1".</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="([0-9])+([.]([0-9])+)*"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.asam.net/mdf/v4" xmlns:ho="http://www.asam.net/xml" targetNamespace="http://www.asam.net/mdf/v4" elementFormDefault="qualified">
+	<xs:include schemaLocation="mdf_base.xsd"/>
+	<xs:import namespace="http://www.asam.net/xml" schemaLocation="harmonizedObjects.xsd"/>
+	<xs:element name="HDcomment">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="text_elements"/>
+				<xs:element name="time_source" type="base_name" minOccurs="0"/>
+				<xs:element name="constants" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Contstant definitions to be used in formulas.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="const" type="const_type" maxOccurs="unbounded"/>
+						</xs:sequence>
+						<xs:attributeGroup ref="root_attributes"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="ho:UNIT-SPEC" minOccurs="0"/>
+				<xs:group ref="user_defined"/>
+			</xs:sequence>
+			<xs:attributeGroup ref="root_attributes"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- ============== referenced types (complexTypes) ======================= -->
+	<xs:complexType name="const_type">
+		<xs:simpleContent>
+			<xs:extension base="base_string">
+				<xs:attribute name="name" type="id_name_pattern" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:annotation>
+		<xs:appinfo>
+			<schema_info xmlns="http://www.asam.net/mdf/v4/schema" block_name="##HD" element_name="hd_md_comment"/>
+		</xs:appinfo>
+	</xs:annotation>
+</xs:schema>

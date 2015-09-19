@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.asam.net/mdf/v4" targetNamespace="http://www.asam.net/mdf/v4" elementFormDefault="qualified">
+	<xs:include schemaLocation="mdf_base.xsd"/>
+	<xs:element name="CNcomment">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="text_elements"/>
+				<xs:element name="names" type="names_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Alternative names and descriptions of channel.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="linker_name" type="linker_name_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Linker (i.e. source code) name of object. See SymbolName for ASAP2 V1.6 keyword SYMBOL_LINK.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="linker_address" type="address_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Base address of symbol in corresponding linker map file as hex number.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="axis_monotony" type="axis_monotony_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Information about axis monotony for an axis channel. See ASAP2 V1.6 keyword MONOTONY.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="raster" type="raster_quality_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Information about raster quality.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="formula" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Formula describing how the data for this CNBLOCK was calculated from other signals.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="address" type="address_type" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Base address used for reading the value from ECU as hex number (may not be equal to value specified in linker_address tag)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:group ref="user_defined"/>
+			</xs:sequence>
+			<xs:attributeGroup ref="root_attributes"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- ============== referenced types (complexTypes) ======================= -->
+	<xs:complexType name="linker_name_type">
+		<xs:annotation>
+			<xs:documentation>Linker (i.e. source code) name of object. See SymbolName for ASAP2 V1.6 keyword SYMBOL_LINK.</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="xs:normalizedString">
+				<xs:attribute name="offset" type="xs:integer" use="optional" default="0">
+					<xs:annotation>
+						<xs:documentation>Offset of the Symbol relative to the base address in the linker map file (i.e. value in linker_address tag). See Offset for ASAP2 V1.6 keyword SYMBOL_LINK.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attributeGroup ref="base_attributes"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="address_type">
+		<xs:annotation>
+			<xs:documentation>Base address as hex number.</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="hex_0x_pattern">
+				<xs:attribute name="byte_count" type="xs:integer" use="optional" default="8">
+					<xs:annotation>
+						<xs:documentation>Number of bytes to read.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="bit_mask" type="hex_0x_pattern" use="optional" default="0xFFFFFFFFFFFFFFFF">
+					<xs:annotation>
+						<xs:documentation>Bit mask as hex number</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attribute name="byte_order" type="byte_order_pattern" use="optional" default="LE">
+					<xs:annotation>
+						<xs:documentation>Byte order LE or BE.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+				<xs:attributeGroup ref="base_attributes"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="axis_monotony_type">
+		<xs:annotation>
+			<xs:documentation>Information about axis monotony for an axis channel. See ASAP2 V1.6 keyword MONOTONY.</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="monotony_enum">
+				<xs:attributeGroup ref="base_attributes"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+	<xs:complexType name="raster_quality_type">
+		<xs:complexContent>
+			<xs:extension base="base_number">
+				<xs:attribute name="min" type="xs:decimal" use="optional"/>
+				<xs:attribute name="max" type="xs:decimal" use="optional"/>
+				<xs:attribute name="average" type="xs:decimal" use="optional"/>
+				<xs:attributeGroup ref="unit_attributes"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- ============== patterns (simpleType) ======================= -->
+	<xs:simpleType name="monotony_enum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="MON_DECREASE"/>
+			<xs:enumeration value="MON_INCREASE"/>
+			<xs:enumeration value="STRICT_DECREASE"/>
+			<xs:enumeration value="STRICT_INCREASE"/>
+			<xs:enumeration value="MONOTONOUS"/>
+			<xs:enumeration value="STRICT_MON"/>
+			<xs:enumeration value="NOT_MON"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="byte_order_pattern">
+		<xs:annotation>
+			<xs:documentation>Byte order of value in memory of source (not in MDF file)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="LE"/>
+			<xs:enumeration value="BE"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:annotation>
+		<xs:appinfo>
+			<schema_info xmlns="http://www.asam.net/mdf/v4/schema" block_name="##CN" element_name="cn_md_comment"/>
+		</xs:appinfo>
+	</xs:annotation>
+</xs:schema>
