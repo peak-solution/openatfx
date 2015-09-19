@@ -1,6 +1,7 @@
 package de.rechner.openatfx_mdf4;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
@@ -242,6 +243,22 @@ class HDBLOCK extends BLOCK {
         this.startDistanceM = startDistanceM;
     }
 
+    public boolean isLocalTime() {
+        return BigInteger.valueOf(this.timeFlags).testBit(0);
+    }
+
+    public boolean isTimeFlagsValid() {
+        return BigInteger.valueOf(this.timeFlags).testBit(1);
+    }
+
+    public boolean isStartAngleValid() {
+        return BigInteger.valueOf(this.flags).testBit(0);
+    }
+
+    public boolean isStartDistanceValid() {
+        return BigInteger.valueOf(this.flags).testBit(1);
+    }
+
     public BLOCK getMdCommentBlock() throws IOException {
         if (this.lnkMdComment > 0) {
             String blockType = getBlockType(this.sbc, this.lnkMdComment);
@@ -257,6 +274,13 @@ class HDBLOCK extends BLOCK {
             else {
                 throw new IOException("Unsupported block type for MdComment: " + blockType);
             }
+        }
+        return null;
+    }
+
+    public FHBLOCK getFhFirstBlock() throws IOException {
+        if (this.lnkMdComment > 0) {
+            return FHBLOCK.read(this.sbc, this.lnkFhFirst);
         }
         return null;
     }
@@ -333,9 +357,6 @@ class HDBLOCK extends BLOCK {
 
         // UINT8: Time flags
         hdBlock.setTimeFlags(MDFUtil.readUInt8(bb));
-        if (hdBlock.getTimeFlags() != 2) {
-            throw new IOException("HDBLOCK hd_time_flags!=2 not yet supported");
-        }
 
         // UINT8: Time quality class
         hdBlock.setTimeClass(MDFUtil.readUInt8(bb));

@@ -3,7 +3,7 @@ package de.rechner.openatfx_mdf4;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 
 import org.asam.ods.AoException;
@@ -65,16 +65,29 @@ class AoSessionWriter {
         } else {
             this.xmlParser.writeMDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
         }
-        Date date = new Date(hdBlock.getStartTimeNs() / 1000000); // convert from ns to ms
-        nvuList.add(ODSHelper.createDateNVU("date_created", ODSHelper.asODSDate(date)));
-        nvuList.add(ODSHelper.createDateNVU("mea_begin", ODSHelper.asODSDate(date)));
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(hdBlock.getStartTimeNs() / 1000000);
+        if (!hdBlock.isLocalTime() && hdBlock.isTimeFlagsValid()) { // UTC time given, calc local
+            cal.add(Calendar.MINUTE, hdBlock.getTzOffsetMin());
+            cal.add(Calendar.MINUTE, hdBlock.getDstOffsetMin());
+        }
+        nvuList.add(ODSHelper.createDateNVU("date_created", ODSHelper.asODSDate(cal.getTime())));
+        nvuList.add(ODSHelper.createDateNVU("mea_begin", ODSHelper.asODSDate(cal.getTime())));
         nvuList.add(ODSHelper.createLongLongNVU("start_time_ns", hdBlock.getStartTimeNs()));
+        nvuList.add(ODSHelper.createShortNVU("local_time", hdBlock.isLocalTime() ? (short) 1 : (short) 0));
+        nvuList.add(ODSHelper.createShortNVU("time_offsets_valid", hdBlock.isTimeFlagsValid() ? (short) 1 : (short) 0));
         nvuList.add(ODSHelper.createShortNVU("tz_offset_min", hdBlock.getTzOffsetMin()));
         nvuList.add(ODSHelper.createShortNVU("dst_offset_min", hdBlock.getDstOffsetMin()));
         nvuList.add(ODSHelper.createEnumNVU("time_quality_class", hdBlock.getTimeClass()));
-
+        nvuList.add(ODSHelper.createShortNVU("start_angle_valid", hdBlock.isStartAngleValid() ? (short) 1 : (short) 0));
+        nvuList.add(ODSHelper.createShortNVU("start_distance_valid", hdBlock.isStartDistanceValid() ? (short) 1
+                : (short) 0));
+        nvuList.add(ODSHelper.createDoubleNVU("start_angle_rad", hdBlock.getStartAngleRad()));
+        nvuList.add(ODSHelper.createDoubleNVU("start_distance_m", hdBlock.getStartDistanceM()));
         ieMea.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
+        System.out.println(hdBlock.getFhFirstBlock());
+        
         return ieMea;
     }
 

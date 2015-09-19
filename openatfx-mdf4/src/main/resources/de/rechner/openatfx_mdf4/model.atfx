@@ -101,6 +101,76 @@
 				<base_relation>children</base_relation>
 				<inverse_name>prj</inverse_name>
 			</relation_attribute>
+			<relation_attribute>
+				<name>fh</name>
+				<ref_to>fh</ref_to>
+				<min_occurs>0</min_occurs>
+				<max_occurs>Many</max_occurs>
+				<inverse_name>mea</inverse_name>
+			</relation_attribute>
+		</application_element>
+		<application_element>
+			<name>fh</name>
+			<basetype>AoAny</basetype>
+			<application_attribute>
+				<name>iid</name>
+				<base_attribute>id</base_attribute>
+			</application_attribute>
+			<application_attribute>
+				<name>iname</name>
+				<base_attribute>name</base_attribute>
+			</application_attribute>
+			<application_attribute>
+				<name>date</name>
+				<base_attribute>version_date</base_attribute>
+			</application_attribute>
+			<application_attribute>
+				<name>start_time_ns</name>
+				<datatype>DT_LONGLONG</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>local_time</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>time_offsets_valid</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>tz_offset_min</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>dst_offset_min</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>desc</name>
+				<base_attribute>description</base_attribute>
+			</application_attribute>
+			<application_attribute>
+				<name>tool_id</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>tool_vendor</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>tool_version</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>user_name</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<relation_attribute>
+				<name>tst</name>
+				<ref_to>tst</ref_to>
+				<min_occurs>1</min_occurs>
+				<max_occurs>1</max_occurs>
+				<inverse_name>fh</inverse_name>
+			</relation_attribute>
 		</application_element>
 		<application_element>
 			<name>mea</name>
@@ -138,6 +208,14 @@
 				<datatype>DT_LONGLONG</datatype>
 			</application_attribute>
 			<application_attribute>
+				<name>local_time</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>time_offsets_valid</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
 				<name>tz_offset_min</name>
 				<datatype>DT_SHORT</datatype>
 			</application_attribute>
@@ -149,6 +227,22 @@
 				<name>time_quality_class</name>
 				<datatype>DT_ENUM</datatype>
 				<enumeration_type>time_quality_class</enumeration_type>
+			</application_attribute>
+			<application_attribute>
+				<name>start_angle_valid</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>start_distance_valid</name>
+				<datatype>DT_SHORT</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>start_angle_rad</name>
+				<datatype>DT_DOUBLE</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>start_distance_m</name>
+				<datatype>DT_DOUBLE</datatype>
 			</application_attribute>
 			<application_attribute>
 				<name>attachments</name>

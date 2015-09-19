@@ -64,6 +64,32 @@ public class Test_dSPACE_MeasurementArrays {
         }
     }
 
+    @Test
+    public void testReadHDBlock() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            InstanceElement ieMea = as.getElementByName("mea").getInstances("*").nextOne();
+            assertEquals("dSPACE_MeasurementArrays.mf4", ODSHelper.getStringVal(ieMea.getValue("iname")));
+            assertEquals("ASAM COMMON MDF 4.1 sample file created by dSPACE. Contents: signals with measurement array types",
+                         ODSHelper.getStringVal(ieMea.getValue("desc")));
+            assertEquals("20121107121603", ODSHelper.getDateVal(ieMea.getValue("date_created")));
+            assertEquals("20121107121603", ODSHelper.getDateVal(ieMea.getValue("mea_begin")));
+            assertEquals("", ODSHelper.getDateVal(ieMea.getValue("mea_end")));
+            assertEquals(1352283363000000000l, ODSHelper.getLongLongVal(ieMea.getValue("start_time_ns")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("local_time")));
+            assertEquals(1, ODSHelper.getShortVal(ieMea.getValue("time_offsets_valid")));
+            assertEquals(60, ODSHelper.getShortVal(ieMea.getValue("tz_offset_min")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("dst_offset_min")));
+            assertEquals(0, ODSHelper.getEnumVal(ieMea.getValue("time_quality_class")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_angle_valid")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_distance_valid")));
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_angle_rad")), 0.0000001);
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_distance_m")), 0.0000001);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
     public static junit.framework.Test suite() {
         return new JUnit4TestAdapter(Test_dSPACE_MeasurementArrays.class);
     }

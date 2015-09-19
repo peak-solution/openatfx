@@ -64,6 +64,35 @@ public class Test_Porsche_2D_classification_result {
         }
     }
 
+    @Test
+    public void testReadHDBlock() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            InstanceElement ieMea = as.getElementByName("mea").getInstances("*").nextOne();
+            assertEquals("Porsche_2D_classification_result.mf4", ODSHelper.getStringVal(ieMea.getValue("iname")));
+            assertEquals("demodata of a 2D classification result.\r\n", ODSHelper.getStringVal(ieMea.getValue("desc")));
+            assertEquals("20121017145436", ODSHelper.getDateVal(ieMea.getValue("date_created")));
+            assertEquals("20121017145436", ODSHelper.getDateVal(ieMea.getValue("mea_begin")));
+            assertEquals("", ODSHelper.getDateVal(ieMea.getValue("mea_end")));
+            assertEquals(1350471276000000000l, ODSHelper.getLongLongVal(ieMea.getValue("start_time_ns")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("local_time")));
+            assertEquals(1, ODSHelper.getShortVal(ieMea.getValue("time_offsets_valid")));
+            assertEquals(60, ODSHelper.getShortVal(ieMea.getValue("tz_offset_min")));
+            assertEquals(60, ODSHelper.getShortVal(ieMea.getValue("dst_offset_min")));
+            assertEquals(0, ODSHelper.getEnumVal(ieMea.getValue("time_quality_class")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_angle_valid")));
+            assertEquals(0, ODSHelper.getShortVal(ieMea.getValue("start_distance_valid")));
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_angle_rad")), 0.0000001);
+            assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_distance_m")), 0.0000001);
+            assertEquals("Ralf Kemle/Michael Jörger", ODSHelper.getStringVal(ieMea.getValue("author")));
+            assertEquals("ASAM", ODSHelper.getStringVal(ieMea.getValue("project")));
+            assertEquals("", ODSHelper.getStringVal(ieMea.getValue("department")));
+            assertEquals("MDF4.1", ODSHelper.getStringVal(ieMea.getValue("subject")));
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
     public static junit.framework.Test suite() {
         return new JUnit4TestAdapter(Test_Porsche_2D_classification_result.class);
     }
