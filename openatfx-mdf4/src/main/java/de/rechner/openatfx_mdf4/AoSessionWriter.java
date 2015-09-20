@@ -30,6 +30,7 @@ class AoSessionWriter {
 
     private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
 
+    private final NumberFormat countFormat;
     private final MDF4XMLParser xmlParser;
 
     /**
@@ -37,6 +38,7 @@ class AoSessionWriter {
      */
     public AoSessionWriter() {
         this.xmlParser = new MDF4XMLParser();
+        this.countFormat = new DecimalFormat("0000");
     }
 
     /**
@@ -66,7 +68,7 @@ class AoSessionWriter {
         List<NameValueUnit> nvuList = new ArrayList<NameValueUnit>();
         if (block instanceof TXBLOCK) {
             nvuList.add(ODSHelper.createStringNVU("desc", ((TXBLOCK) block).getTxData()));
-        } else {
+        } else if (block instanceof MDBLOCK) {
             this.xmlParser.writeMDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
         }
         Calendar cal = Calendar.getInstance();
@@ -98,12 +100,12 @@ class AoSessionWriter {
             LOG.warn("Found CHBLOCK, currently not yet supported!");
         }
 
-        // write attachments: not yet supported!
+        // write attachments (ATBLOCK): not yet supported!
         if (hdBlock.getLnkAtFirst() > 0) {
             LOG.warn("Found ATBLOCK, currently not yet supported!");
         }
 
-        // write events: not yet supported!
+        // write events (EVBLOCK): not yet supported!
         if (hdBlock.getLnkEvFirst() > 0) {
             LOG.warn("Found EVBLOCK, currently not yet supported!");
         }
@@ -127,12 +129,11 @@ class AoSessionWriter {
             IOException {
         ApplicationElement aeFh = modelCache.getApplicationElement("fh");
         ApplicationRelation relTstFh = modelCache.getApplicationRelation("tst", "fh", "fh");
-        NumberFormat nf = new DecimalFormat("000");
 
         int no = 1;
         FHBLOCK fhBlock = hdBlock.getFhFirstBlock();
         while (fhBlock != null) {
-            InstanceElement ieFh = aeFh.createInstance("fh_" + nf.format(no));
+            InstanceElement ieFh = aeFh.createInstance("fh_" + countFormat.format(no));
             ieTst.createRelation(relTstFh, ieFh);
 
             // meta information
@@ -170,7 +171,6 @@ class AoSessionWriter {
      */
     private void writeSm(ODSModelCache modelCache, InstanceElement ieMea, HDBLOCK hdBlock) throws AoException,
             IOException {
-        NumberFormat nf = new DecimalFormat("000");
         ApplicationElement aeSm = modelCache.getApplicationElement("sm");
         ApplicationRelation relMeaSm = modelCache.getApplicationRelation("mea", "sm", "sms");
 
@@ -200,15 +200,26 @@ class AoSessionWriter {
                 }
 
                 // create SubMatrix instance
-                InstanceElement ieSm = aeSm.createInstance("sm_" + nf.format(grpNo));
+                InstanceElement ieSm = aeSm.createInstance("sm_" + countFormat.format(grpNo));
+                List<NameValueUnit> nvuList = new ArrayList<>();
+                TXBLOCK txAcqName = cgBlock.getTxAcqNameBlock();
+                if (txAcqName != null) {
+                    nvuList.add(ODSHelper.createStringNVU("acq_name", txAcqName.getTxData()));
+                }
+                SIBLOCK siAcqSource = cgBlock.getSiAcqSourceBlock();
+                if (siAcqSource != null) {
+                    System.out.println(siAcqSource);
+                }
+                BLOCK block = cgBlock.getMdCommentBlock();
+                if (block instanceof TXBLOCK) {
+                    nvuList.add(ODSHelper.createStringNVU("desc", ((TXBLOCK) block).getTxData()));
+                } else if (block instanceof MDBLOCK) {
+                    System.out.println("MEHR! " + block);
+                    // this.xmlParser.writeMDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
+                }
+                nvuList.add(ODSHelper.createLongNVU("rows", (int) cgBlock.getCycleCount()));
+                ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
                 ieMea.createRelation(relMeaSm, ieSm);
-                ieSm.setValue(ODSHelper.createLongNVU("rows", (int) cgBlock.getCycleCount()));
-
-                // set channel group comment to SubMatrix description
-                // TXBLOCK channelGroupComment = cgBlock.getChannelGroupComment(mdfChannel);
-                // if (channelGroupComment != null) {
-                // ieSm.setValue(ODSHelper.createStringNVU("description", channelGroupComment.getText()));
-                // }
 
                 // write LocalColumns
                 // writeLcs(ieMea, ieSm, sourceFile, mdfChannel, binChannel, dgBlock, cgBlock, meqNames);

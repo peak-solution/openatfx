@@ -109,8 +109,8 @@ public class Test_Vector_CANape {
             InstanceElementIterator iter = as.getElementByName("fh").getInstances("*");
             assertEquals(1, iter.getCount());
 
-            InstanceElement ieFh = as.getElementByName("fh").getInstances("fh_001").nextOne();
-            assertEquals("fh_001", ODSHelper.getStringVal(ieFh.getValue("iname")));
+            InstanceElement ieFh = as.getElementByName("fh").getInstances("fh_0001").nextOne();
+            assertEquals("fh_0001", ODSHelper.getStringVal(ieFh.getValue("iname")));
             assertEquals("created", ODSHelper.getStringVal(ieFh.getValue("desc")));
             assertEquals("20110824175319", ODSHelper.getDateVal(ieFh.getValue("date")));
             assertEquals(1314193999000000259l, ODSHelper.getLongLongVal(ieFh.getValue("start_time_ns")));
@@ -124,6 +124,31 @@ public class Test_Vector_CANape {
             assertEquals("", ODSHelper.getStringVal(ieFh.getValue("user_name")));
 
             assertEquals(0, ieFh.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testReadCGBlock() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            InstanceElementIterator iter = as.getElementByName("sm").getInstances("*");
+            assertEquals(2, iter.getCount());
+
+            InstanceElement ieSm = as.getElementByName("sm").getInstances("sm_0001").nextOne();
+            assertEquals("sm_0001", ODSHelper.getStringVal(ieSm.getValue("iname")));
+            assertEquals("100ms", ODSHelper.getStringVal(ieSm.getValue("desc")));
+            assertEquals("100ms", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals(102, ODSHelper.getLongVal(ieSm.getValue("rows")));
+            assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+
+            ieSm = as.getElementByName("sm").getInstances("sm_0002").nextOne();
+            assertEquals("sm_0002", ODSHelper.getStringVal(ieSm.getValue("iname")));
+            assertEquals("10 ms", ODSHelper.getStringVal(ieSm.getValue("desc")));
+            assertEquals("10 ms", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals(1019, ODSHelper.getLongVal(ieSm.getValue("rows")));
+            assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
         } catch (AoException e) {
             fail(e.reason);
         }

@@ -34,6 +34,7 @@ import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.util.ODSHelper;
+import de.rechner.openatfx_mdf4.util.FileUtil;
 import de.rechner.openatfx_mdf4.util.ODSModelCache;
 
 
@@ -112,8 +113,6 @@ public class MDF4Converter {
 
             // open MDF4 file
             sbc = Files.newByteChannel(mdfFile, StandardOpenOption.READ);
-            // TODO: check performance difference from direct channel
-            // MappedByteBuffer mbb = sbc.map(FileChannel.MapMode.READ_WRITE, 0, 100);
 
             // write MDF4 file content to session
             ApplicationElement aeEnv = modelCache.getApplicationElement("env");
@@ -124,7 +123,7 @@ public class MDF4Converter {
             if (fileName == null) {
                 throw new ConvertException("Unable to obtain file name!");
             }
-            InstanceElement ieTst = aeTst.createInstance(fileName.toString());
+            InstanceElement ieTst = aeTst.createInstance(FileUtil.stripExtension(fileName.toString()));
             ieEnv.createRelation(relEnvPrj, ieTst);
 
             // read and validate IDBLOCK

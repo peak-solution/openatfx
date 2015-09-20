@@ -32,6 +32,72 @@
 				<value>16</value>
 			</item>
 		</application_enumeration>
+		<application_enumeration>
+			<name>source_type</name>
+			<item>
+				<name>OTHER</name>
+				<value>0</value>
+			</item>
+			<item>
+				<name>ECU</name>
+				<value>1</value>
+			</item>
+			<item>
+				<name>BUS</name>
+				<value>2</value>
+			</item>
+			<item>
+				<name>IO</name>
+				<value>3</value>
+			</item>
+			<item>
+				<name>TOOL</name>
+				<value>4</value>
+			</item>
+			<item>
+				<name>USER</name>
+				<value>5</value>
+			</item>
+		</application_enumeration>
+		<application_enumeration>
+			<name>bus_type</name>
+			<item>
+				<name>NONE</name>
+				<value>0</value>
+			</item>
+			<item>
+				<name>OTHER</name>
+				<value>1</value>
+			</item>
+			<item>
+				<name>CAN</name>
+				<value>2</value>
+			</item>
+			<item>
+				<name>LIN</name>
+				<value>3</value>
+			</item>
+			<item>
+				<name>MOST</name>
+				<value>4</value>
+			</item>
+			<item>
+				<name>FLEXRAY</name>
+				<value>5</value>
+			</item>
+			<item>
+				<name>K_LINE</name>
+				<value>6</value>
+			</item>
+			<item>
+				<name>ETHERNET</name>
+				<value>7</value>
+			</item>
+			<item>
+				<name>USB</name>
+				<value>8</value>
+			</item>
+		</application_enumeration>
 		<application_element>
 			<name>env</name>
 			<basetype>AoEnvironment</basetype>
@@ -430,12 +496,42 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
+				<name>mt</name>
+				<base_attribute>mime_type</base_attribute>
+			</application_attribute>
+			<application_attribute>
 				<name>desc</name>
 				<base_attribute>description</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>mt</name>
-				<base_attribute>mime_type</base_attribute>
+				<name>acq_name</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>source_name</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>source_path</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>source_comment</name>
+				<datatype>DT_STRING</datatype>
+			</application_attribute>
+			<application_attribute>
+				<name>source_type</name>
+				<datatype>DT_ENUM</datatype>
+				<enumeration_type>source_type</enumeration_type>
+			</application_attribute>
+			<application_attribute>
+				<name>source_bus</name>
+				<datatype>DT_ENUM</datatype>
+				<enumeration_type>bus_type</enumeration_type>
+			</application_attribute>
+			<application_attribute>
+				<name>source_simulated</name>
+				<datatype>DT_SHORT</datatype>
 			</application_attribute>
 			<relation_attribute>
 				<name>mea</name>

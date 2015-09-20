@@ -198,6 +198,27 @@ class CGBLOCK extends BLOCK {
         this.invalBytes = invalBytes;
     }
 
+    public CGBLOCK getCgNextBlock() throws IOException {
+        if (this.lnkCgNext > 0) {
+            return CGBLOCK.read(this.sbc, this.lnkCgNext);
+        }
+        return null;
+    }
+
+    public TXBLOCK getTxAcqNameBlock() throws IOException {
+        if (this.lnkTxAcqName > 0) {
+            return TXBLOCK.read(this.sbc, this.lnkTxAcqName);
+        }
+        return null;
+    }
+
+    public SIBLOCK getSiAcqSourceBlock() throws IOException {
+        if (this.lnkSiAcqSource > 0) {
+            return SIBLOCK.read(this.sbc, this.lnkSiAcqSource);
+        }
+        return null;
+    }
+
     public BLOCK getMdCommentBlock() throws IOException {
         if (this.lnkMdComment > 0) {
             String blockType = getBlockType(this.sbc, this.lnkMdComment);
