@@ -30,7 +30,10 @@ class AoSessionWriter {
 
     private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
 
+    /** The number format having 4 digits used for count formatting */
     private final NumberFormat countFormat;
+
+    /** The XML parser object used for parsing the embedded XML contents */
     private final MDF4XMLParser xmlParser;
 
     /**
@@ -181,7 +184,7 @@ class AoSessionWriter {
 
             // if sorted, only one channel group block is available
             CGBLOCK cgBlock = dgBlock.getCgFirstBlock();
-            if (cgBlock.getLnkCgNext() > 0) {
+            if (cgBlock != null && cgBlock.getLnkCgNext() > 0) {
                 throw new IOException("Only 'sorted' MDF4 files are supported, found 'unsorted' data! [DGBLOCK="
                         + dgBlock + "]");
             }
@@ -219,12 +222,157 @@ class AoSessionWriter {
                 ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
                 ieMea.createRelation(relMeaSm, ieSm);
 
-                // write LocalColumns
-                // writeLcs(ieMea, ieSm, sourceFile, mdfChannel, binChannel, dgBlock, cgBlock, meqNames);
+                // write instances of AoMeasurementQuantity,AoLocalColumn,AoExternalReference
+                writeLcs(modelCache, ieMea, ieSm, dgBlock, cgBlock);
             }
 
             dgBlock = dgBlock.getDgNextBlock();
             grpNo++;
+        }
+    }
+
+    /**
+     * Write the instances of 'AoLocalColumn' and 'AoMeasurementQuantity'.
+     * 
+     * @param modelCache The application model cache.
+     * @param ieMea The parent 'AoMeasurement' instance.
+     * @param ieSm The parent 'AoSubMatrix' instance.
+     * @param dgBlock The DGBLOCK.
+     * @param cgBlock The CGBLOCK.
+     * @throws AoException Error writing to session.
+     * @throws IOException Error reading from MDF file.
+     */
+    private void writeLcs(ODSModelCache modelCache, InstanceElement ieMea, InstanceElement ieSm, DGBLOCK dgBlock,
+            CGBLOCK cgBlock) throws AoException, IOException {
+        // ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
+        // ApplicationElement aeLc = modelCache.getApplicationElement("lc");
+        // ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
+        // ApplicationRelation relMeaMeq = modelCache.getApplicationRelation("mea", "meq", "meqs");
+        // ApplicationRelation relLcMeq = modelCache.getApplicationRelation("lc", "meq", "meq");
+
+        // iterate over channel blocks
+        CNBLOCK cnBlock = cgBlock.getCnFirstBlock();
+        while (cnBlock != null) {
+
+            // // build signal name - parse the device info
+            // String meqName = readMeqName(cnBlock, mdfChannel);
+            // String device = null;
+            // String[] str = meqName.split("\\\\");
+            // if (str.length > 0) {
+            // meqName = str[0].trim();
+            // }
+            // if (str.length > 1) {
+            // device = str[1].trim();
+            // }
+
+            // check for duplicate signal names and add suffix (except time channel)
+            // if (cnBlock.getChannelType() == 0) {
+            // Integer noChannels = meqNames.get(meqName);
+            // if (noChannels == null) {
+            // noChannels = 0;
+            // }
+            // noChannels++;
+            // meqNames.put(meqName, noChannels);
+            // if (noChannels > 1) {
+            // meqName = meqName + "_" + noChannels;
+            // }
+            // }
+
+            // // create 'AoLocalColumn' instance
+            // CCBLOCK ccBlock = cnBlock.getCcblock(mdfChannel);
+            // InstanceElement ieLc = aeLc.createInstance(meqName);
+            // ieSm.createRelation(relSmLc, ieLc);
+            // // sequence_representation
+            // int seqRep = getSeqRep(ccBlock, meqName);
+            // if (cnBlock.getNumberOfBits() == 1) { // bit will be stored as bytes
+            // seqRep = 7;
+            // }
+            // ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", seqRep));
+            // // independent flag
+            // short idp = cnBlock.getChannelType() > 0 ? (short) 1 : (short) 0;
+            // ieLc.setValue(ODSHelper.createShortNVU("idp", idp));
+            // // global flag
+            // ieLc.setValue(ODSHelper.createShortNVU("global", (short) 15));
+            // // generation parameters
+            // double[] genParams = getGenerationParameters(ccBlock);
+            // if (genParams != null && genParams.length > 0) {
+            // ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", genParams));
+            // }
+            // // raw_datatype
+            // int valueType = getValueType(cnBlock);
+            // DataType rawDataType = getRawDataTypeForValueType(valueType, cnBlock);
+            // ieLc.setValue(ODSHelper.createEnumNVU("raw_datatype", ODSHelper.datatype2enum(rawDataType)));
+            // // axistype
+            // int axistype = cnBlock.getChannelType() == 0 ? 1 : 0;
+            // ieLc.setValue(ODSHelper.createEnumNVU("axistype", axistype));
+            // // minimum
+            // if (cnBlock.isKnownImplValue()) {
+            // ieLc.setValue(ODSHelper.createDoubleNVU("min", cnBlock.getMinImplValue()));
+            // ieLc.setValue(ODSHelper.createDoubleNVU("max", cnBlock.getMaxImplValue()));
+            // }
+            //
+            // // create 'AoExternalComponent' instance
+            // writeExtCompHeader(ieLc, mbb, sourceFile, binChannel, dgBlock, cgBlock, cnBlock);
+            //
+            // // create 'AoMeasurementQuantity' instance if not yet existing
+            // InstanceElementIterator iter = ieMea.getRelatedInstances(relMeaMeq, meqName);
+            // InstanceElement ieMeq = null;
+            // if (iter.getCount() > 0) {
+            // ieMeq = iter.nextOne();
+            // } else {
+            // ieMeq = aeMeq.createInstance(meqName);
+            // ieMeq.setValue(ODSHelper.createStringNVU("description", cnBlock.getSignalDescription().trim()));
+            // ieMeq.setValue(ODSHelper.createEnumNVU("dt", ODSHelper.datatype2enum(getDataType(cnBlock,
+            // ccBlock))));
+            // if (ccBlock != null && ccBlock.isKnownPhysValue()) {
+            // ieMeq.setValue(ODSHelper.createDoubleNVU("min", ccBlock.getMinPhysValue()));
+            // ieMeq.setValue(ODSHelper.createDoubleNVU("max", ccBlock.getMaxPhysValue()));
+            // }
+            // if (device != null && device.length() > 0) {
+            // ieMeq.setValue(ODSHelper.createStringNVU("Device", device));
+            // }
+            // // CEBLOCK (extension block) info
+            // CEBLOCK ceBlock = cnBlock.getCeblock(mdfChannel);
+            // if (ceBlock != null && ceBlock.getCeBlockDim() != null) {
+            // CEBLOCK_DIM ext = ceBlock.getCeBlockDim();
+            // ieMeq.addInstanceAttribute(ODSHelper.createLongNVU("NumberOfModule", ext.getNumberOfModule()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("Address", ext.getAddress()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("DIMDescription", ext.getDescription()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("ECUIdent", ext.getEcuIdent()));
+            // } else if (ceBlock != null && ceBlock.getCeBlockVectorCAN() != null) {
+            // CEBLOCK_VectorCAN ext = ceBlock.getCeBlockVectorCAN();
+            // ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("CANIndex", ext.getCanIndex()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("MessageId", ext.getMessageId()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("MessageName", ext.getMessageName()));
+            // ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("SenderName", ext.getSenderName()));
+            // }
+            // }
+            // iter.destroy();
+            // ieMea.createRelation(relMeaMeq, ieMeq);
+            // ieLc.createRelation(relLcMeq, ieMeq);
+            //
+            // // create 'AoUnit' instance if not yet existing
+            // writeUnit(ieMeq, ccBlock);
+            //
+            // // special handling for formula 11 'ASAM-MCD2 Text Table, (COMPU_VTAB)': create lookup table
+            // if ((ccBlock != null) && (ccBlock.getFormulaIdent() == 11)) {
+            // LookupTableHelper.createMCD2TextTableMeasurement(ieMea, ieLc, cnBlock, ccBlock, sourceFile,
+            // binChannel, DATA_FILENAME);
+            // if (this.createMCD2textChannels) {
+            // LookupTableHelper.createMCD2TextTableMeaQuantities(ieMea, ieSm, mbb, binChannel, meqName,
+            // dgBlock, cgBlock, cnBlock, ccBlock,
+            // DATA_FILENAME);
+            // }
+            // }
+            // // special handling for formula 12 'ASAM-MCD2 Text Range Table (COMPU_VTAB_RANGE)': create lookup
+            // table
+            // else if ((ccBlock != null) && (ccBlock.getFormulaIdent() == 12)) {
+            // LookupTableHelper.createMCD2TextRangeTableMeasurement(ieMea, ieLc, cnBlock, ccBlock, sourceFile,
+            // binChannel, DATA_FILENAME);
+            // }
+
+            // jump to next channel
+            cnBlock = cnBlock.getCnNextBlock();
         }
     }
 

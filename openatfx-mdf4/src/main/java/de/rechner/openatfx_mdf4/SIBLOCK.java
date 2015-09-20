@@ -184,7 +184,7 @@ class SIBLOCK extends BLOCK {
         channel.read(bb);
         bb.rewind();
 
-        // CHAR 4: Block type identifier, always "##HD"
+        // CHAR 4: Block type identifier
         block.setId(MDFUtil.readCharsISO8859(bb, 4));
         if (!block.getId().equals(BLOCK_ID)) {
             throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");

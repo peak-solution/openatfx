@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
+import java.util.Arrays;
 
 import de.rechner.openatfx_mdf4.util.MDFUtil;
 
@@ -90,7 +91,7 @@ class CNBLOCK extends BLOCK {
     // UINT8
     private byte channelType;
 
-    // cn_sync_type UINT8 1 Sync type:
+    // Sync type:
     // 0 = None (to be used for normal data channels)
     // 1 = Time (physical values must be seconds)
     // 2 = Angle (physical values must be radians)
@@ -150,6 +151,55 @@ class CNBLOCK extends BLOCK {
     // UINT32
     private long flags;
 
+    // Position of invalidation bit.
+    // The invalidation bit can be used to specify if the signal value in the current record is valid or not.
+    // Note: the invalidation bit is optional and can only be used if the "invalidation bit valid" flag (bit 1) is set.
+    // UINT32
+    private long invalBitPos;
+
+    // Precision for display of floating point values.
+    // 0xFF means unrestricted precision (infinite).
+    // Any other value specifies the number of decimal places to use for display of floating point values.
+    // Only valid if "precision valid" flag (bit 2) is set
+    // UINT8
+    private byte precision;
+
+    // Length N of cn_at_reference list, i.e. number of attachments for this channel. Can be zero.
+    // UINT16
+    private int attachmentCount;
+
+    // Minimum signal value that occurred for this signal (raw value)
+    // Only valid if "value range valid" flag (bit 3) is set.
+    // REAL
+    private double valRangeMin;
+
+    // Maximum signal value that occurred for this signal (raw value)
+    // Only valid if "value range valid" flag (bit 3) is set.
+    // REAL
+    private double valRangeMax;
+
+    // Lower limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+    // Only valid if "limit range valid" flag (bit 4) is set.
+    // REAL
+    private double limitMin;
+
+    // Upper limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+    // Only valid if "limit range valid" flag (bit 4) is set.
+    // REAL
+    private double limitMax;
+
+    // Lower extended limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+    // Only valid if "extended limit range valid" flag (bit 5) is set.
+    // If cn_limit_min is valid, cn_limit_min must be larger or equal to cn_limit_ext_min.
+    // REAL
+    private double limitExtMin;
+
+    // Upper extended limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+    // Only valid if "extended limit range valid" flag (bit 5) is set.
+    // If cn_limit_max is valid, cn_limit_max must be less or equal to cn_limit_ext_max.
+    // REAL
+    private double limitExtMax;
+
     /**
      * Constructor.
      * 
@@ -159,23 +209,232 @@ class CNBLOCK extends BLOCK {
         super(sbc);
     }
 
-    public BLOCK getMdCommentBlock() throws IOException {
-        if (this.lnkMdComment > 0) {
-            String blockType = getBlockType(this.sbc, this.lnkMdComment);
-            // link points to a MDBLOCK
-            if (blockType.equals(MDBLOCK.BLOCK_ID)) {
-                return MDBLOCK.read(this.sbc, this.lnkMdComment);
-            }
-            // links points to TXBLOCK
-            else if (blockType.equals(TXBLOCK.BLOCK_ID)) {
-                return TXBLOCK.read(this.sbc, this.lnkMdComment);
-            }
-            // unknown
-            else {
-                throw new IOException("Unsupported block type for MdComment: " + blockType);
-            }
+    public long getLnkCnNext() {
+        return lnkCnNext;
+    }
+
+    public long getLnkComposition() {
+        return lnkComposition;
+    }
+
+    public long getLnkTxName() {
+        return lnkTxName;
+    }
+
+    public long getLnkSiSource() {
+        return lnkSiSource;
+    }
+
+    public long getLnkCcConversion() {
+        return lnkCcConversion;
+    }
+
+    public long getLnkData() {
+        return lnkData;
+    }
+
+    public long getLnkMdUnit() {
+        return lnkMdUnit;
+    }
+
+    public long getLnkMdComment() {
+        return lnkMdComment;
+    }
+
+    public long[] getLnkAtReference() {
+        return lnkAtReference;
+    }
+
+    public long[] getLnkDefaultX() {
+        return lnkDefaultX;
+    }
+
+    public byte getChannelType() {
+        return channelType;
+    }
+
+    public byte getSyncType() {
+        return syncType;
+    }
+
+    public byte getDataType() {
+        return dataType;
+    }
+
+    public byte getBitOffset() {
+        return bitOffset;
+    }
+
+    public long getByteOffset() {
+        return byteOffset;
+    }
+
+    public long getBitCount() {
+        return bitCount;
+    }
+
+    public long getFlags() {
+        return flags;
+    }
+
+    public long getInvalBitPos() {
+        return invalBitPos;
+    }
+
+    public byte getPrecision() {
+        return precision;
+    }
+
+    public int getAttachmentCount() {
+        return attachmentCount;
+    }
+
+    public double getValRangeMin() {
+        return valRangeMin;
+    }
+
+    public double getValRangeMax() {
+        return valRangeMax;
+    }
+
+    public double getLimitMin() {
+        return limitMin;
+    }
+
+    public double getLimitMax() {
+        return limitMax;
+    }
+
+    public double getLimitExtMin() {
+        return limitExtMin;
+    }
+
+    public double getLimitExtMax() {
+        return limitExtMax;
+    }
+
+    private void setLnkCnNext(long lnkCnNext) {
+        this.lnkCnNext = lnkCnNext;
+    }
+
+    private void setLnkComposition(long lnkComposition) {
+        this.lnkComposition = lnkComposition;
+    }
+
+    private void setLnkTxName(long lnkTxName) {
+        this.lnkTxName = lnkTxName;
+    }
+
+    private void setLnkSiSource(long lnkSiSource) {
+        this.lnkSiSource = lnkSiSource;
+    }
+
+    private void setLnkCcConversion(long lnkCcConversion) {
+        this.lnkCcConversion = lnkCcConversion;
+    }
+
+    private void setLnkData(long lnkData) {
+        this.lnkData = lnkData;
+    }
+
+    private void setLnkMdUnit(long lnkMdUnit) {
+        this.lnkMdUnit = lnkMdUnit;
+    }
+
+    private void setLnkMdComment(long lnkMdComment) {
+        this.lnkMdComment = lnkMdComment;
+    }
+
+    private void setLnkAtReference(long[] lnkAtReference) {
+        this.lnkAtReference = lnkAtReference;
+    }
+
+    private void setLnkDefaultX(long[] lnkDefaultX) {
+        this.lnkDefaultX = lnkDefaultX;
+    }
+
+    private void setChannelType(byte channelType) {
+        this.channelType = channelType;
+    }
+
+    private void setSyncType(byte syncType) {
+        this.syncType = syncType;
+    }
+
+    private void setDataType(byte dataType) {
+        this.dataType = dataType;
+    }
+
+    private void setBitOffset(byte bitOffset) {
+        this.bitOffset = bitOffset;
+    }
+
+    private void setByteOffset(long byteOffset) {
+        this.byteOffset = byteOffset;
+    }
+
+    private void setBitCount(long bitCount) {
+        this.bitCount = bitCount;
+    }
+
+    private void setFlags(long flags) {
+        this.flags = flags;
+    }
+
+    private void setInvalBitPos(long invalBitPos) {
+        this.invalBitPos = invalBitPos;
+    }
+
+    private void setPrecision(byte precision) {
+        this.precision = precision;
+    }
+
+    private void setAttachmentCount(int attachmentCount) {
+        this.attachmentCount = attachmentCount;
+    }
+
+    private void setValRangeMin(double valRangeMin) {
+        this.valRangeMin = valRangeMin;
+    }
+
+    private void setValRangeMax(double valRangeMax) {
+        this.valRangeMax = valRangeMax;
+    }
+
+    private void setLimitMin(double limitMin) {
+        this.limitMin = limitMin;
+    }
+
+    private void setLimitMax(double limitMax) {
+        this.limitMax = limitMax;
+    }
+
+    private void setLimitExtMin(double limitExtMin) {
+        this.limitExtMin = limitExtMin;
+    }
+
+    private void setLimitExtMax(double limitExtMax) {
+        this.limitExtMax = limitExtMax;
+    }
+
+    public CNBLOCK getCnNextBlock() throws IOException {
+        if (this.lnkCnNext > 0) {
+            return CNBLOCK.read(this.sbc, this.lnkCnNext);
         }
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "CNBLOCK [lnkCnNext=" + lnkCnNext + ", lnkComposition=" + lnkComposition + ", lnkTxName=" + lnkTxName
+                + ", lnkSiSource=" + lnkSiSource + ", lnkCcConversion=" + lnkCcConversion + ", lnkData=" + lnkData
+                + ", lnkMdUnit=" + lnkMdUnit + ", lnkMdComment=" + lnkMdComment + ", lnkAtReference="
+                + Arrays.toString(lnkAtReference) + ", lnkDefaultX=" + Arrays.toString(lnkDefaultX) + ", channelType="
+                + channelType + ", syncType=" + syncType + ", dataType=" + dataType + ", bitOffset=" + bitOffset
+                + ", byteOffset=" + byteOffset + ", bitCount=" + bitCount + ", flags=" + flags + ", invalBitPos="
+                + invalBitPos + ", precision=" + precision + ", attachmentCount=" + attachmentCount + ", valRangeMin="
+                + valRangeMin + ", valRangeMax=" + valRangeMax + ", limitMin=" + limitMin + ", limitMax=" + limitMax
+                + ", limitExtMin=" + limitExtMin + ", limitExtMax=" + limitExtMax + "]";
     }
 
     /**
@@ -190,13 +449,13 @@ class CNBLOCK extends BLOCK {
         CNBLOCK block = new CNBLOCK(channel);
 
         // read block header
-        ByteBuffer bb = ByteBuffer.allocate(104);
+        ByteBuffer bb = ByteBuffer.allocate(24);
         bb.order(ByteOrder.LITTLE_ENDIAN);
         channel.position(pos);
         channel.read(bb);
         bb.rewind();
 
-        // CHAR 4: Block type identifier, always "##HD"
+        // CHAR 4: Block type identifier
         block.setId(MDFUtil.readCharsISO8859(bb, 4));
         if (!block.getId().equals(BLOCK_ID)) {
             throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
@@ -210,6 +469,94 @@ class CNBLOCK extends BLOCK {
 
         // UINT64: Number of links
         block.setLinkCount(MDFUtil.readUInt64(bb));
+
+        // read block data
+        bb = ByteBuffer.allocate((int) block.getLength() - 24);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        channel.position(pos + 24);
+        channel.read(bb);
+        bb.rewind();
+
+        // read links
+        long[] lnks = new long[(int) block.getLinkCount()];
+        for (int i = 0; i < lnks.length; i++) {
+            lnks[i] = MDFUtil.readLink(bb);
+        }
+
+        // read data
+
+        // UINT8: Channel type
+        block.setChannelType(MDFUtil.readUInt8(bb));
+
+        // UINT8: Sync type
+        block.setSyncType(MDFUtil.readUInt8(bb));
+
+        // UINT8: Channel data type of raw signal value
+        block.setDataType(MDFUtil.readUInt8(bb));
+
+        // UINT8: Bit offset (0-7)
+        block.setBitOffset(MDFUtil.readUInt8(bb));
+
+        // UINT32: Offset to first Byte in the data record that contains bits of the signal value.
+        block.setByteOffset(MDFUtil.readUInt32(bb));
+
+        // UINT32: Number of bits for signal value in record.
+        block.setBitCount(MDFUtil.readUInt32(bb));
+
+        // UINT32: Flags
+        block.setFlags(MDFUtil.readUInt32(bb));
+
+        // UINT32: Position of invalidation bit.
+        block.setInvalBitPos(MDFUtil.readUInt32(bb));
+
+        // UINT8: Precision for display of floating point values.
+        block.setPrecision(MDFUtil.readUInt8(bb));
+
+        // BYTE: Reserved
+        bb.get();
+
+        // UINT16: Length N of cn_at_reference list, i.e. number of attachments for this channel. Can be zero.
+        block.setAttachmentCount(MDFUtil.readUInt16(bb));
+
+        // REAL: Minimum signal value that occurred for this signal (raw value)
+        block.setValRangeMin(MDFUtil.readReal(bb));
+
+        // REAL: Maximum signal value that occurred for this signal (raw value)
+        block.setValRangeMax(MDFUtil.readReal(bb));
+
+        // REAL: Lower limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+        block.setLimitMin(MDFUtil.readReal(bb));
+
+        // REAL: Upper limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+        block.setLimitMax(MDFUtil.readReal(bb));
+
+        // REAL: Lower extended limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+        block.setLimitExtMin(MDFUtil.readReal(bb));
+
+        // REAL: Upper extended limit for this signal (physical value for numeric conversion rule, otherwise raw value)
+        block.setLimitExtMax(MDFUtil.readReal(bb));
+
+        // extract links after reading data (then we know how many attachments)
+        block.setLnkCnNext(lnks[0]);
+        block.setLnkComposition(lnks[1]);
+        block.setLnkTxName(lnks[2]);
+        block.setLnkSiSource(lnks[3]);
+        block.setLnkCcConversion(lnks[4]);
+        block.setLnkData(lnks[5]);
+        block.setLnkMdUnit(lnks[6]);
+        block.setLnkMdComment(lnks[7]);
+        long[] lnkAtRef = new long[block.getAttachmentCount()];
+        for (int i = 0; i < block.getAttachmentCount(); i++) {
+            lnkAtRef[i] = lnks[i + 8];
+        }
+        block.setLnkAtReference(lnkAtRef);
+        long[] lnkDefX = new long[3];
+        if (lnks.length > (block.getAttachmentCount() + 8)) {
+            lnkDefX[0] = lnks[block.getAttachmentCount() + 8];
+            lnkDefX[1] = lnks[block.getAttachmentCount() + 9];
+            lnkDefX[2] = lnks[block.getAttachmentCount() + 10];
+        }
+        block.setLnkDefaultX(lnkDefX);
 
         return block;
     }

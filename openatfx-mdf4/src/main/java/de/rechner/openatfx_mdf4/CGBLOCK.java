@@ -219,6 +219,13 @@ class CGBLOCK extends BLOCK {
         return null;
     }
 
+    public CNBLOCK getCnFirstBlock() throws IOException {
+        if (this.lnkCnFirst > 0) {
+            return CNBLOCK.read(this.sbc, this.lnkCnFirst);
+        }
+        return null;
+    }
+
     public BLOCK getMdCommentBlock() throws IOException {
         if (this.lnkMdComment > 0) {
             String blockType = getBlockType(this.sbc, this.lnkMdComment);
@@ -264,7 +271,7 @@ class CGBLOCK extends BLOCK {
         channel.read(bb);
         bb.rewind();
 
-        // CHAR 4: Block type identifier, always "##HD"
+        // CHAR 4: Block type identifier
         block.setId(MDFUtil.readCharsISO8859(bb, 4));
         if (!block.getId().equals(BLOCK_ID)) {
             throw new IOException("Wrong block type - expected '" + BLOCK_ID + "', found '" + block.getId() + "'");
