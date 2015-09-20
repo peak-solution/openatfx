@@ -135,6 +135,12 @@ public class Test_Vector_MinimumFile {
             assertEquals("sm_0001", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(102, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
@@ -142,6 +148,12 @@ public class Test_Vector_MinimumFile {
             assertEquals("sm_0002", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(1019, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
         } catch (AoException e) {

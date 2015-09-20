@@ -140,6 +140,12 @@ public class Test_Vector_CANape {
             assertEquals("sm_0001", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("100ms", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("100ms", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("XCPsim", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(1, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(2, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(102, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
@@ -147,6 +153,12 @@ public class Test_Vector_CANape {
             assertEquals("sm_0002", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("10 ms", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("10 ms", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("XCPsim", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(1, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(2, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(1019, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
         } catch (AoException e) {

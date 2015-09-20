@@ -508,29 +508,29 @@
 				<datatype>DT_STRING</datatype>
 			</application_attribute>
 			<application_attribute>
-				<name>source_name</name>
+				<name>src_name</name>
 				<datatype>DT_STRING</datatype>
 			</application_attribute>
 			<application_attribute>
-				<name>source_path</name>
+				<name>src_path</name>
 				<datatype>DT_STRING</datatype>
 			</application_attribute>
 			<application_attribute>
-				<name>source_comment</name>
+				<name>src_cmt</name>
 				<datatype>DT_STRING</datatype>
 			</application_attribute>
 			<application_attribute>
-				<name>source_type</name>
+				<name>src_type</name>
 				<datatype>DT_ENUM</datatype>
 				<enumeration_type>source_type</enumeration_type>
 			</application_attribute>
 			<application_attribute>
-				<name>source_bus</name>
+				<name>src_bus</name>
 				<datatype>DT_ENUM</datatype>
 				<enumeration_type>bus_type</enumeration_type>
 			</application_attribute>
 			<application_attribute>
-				<name>source_simulated</name>
+				<name>src_sim</name>
 				<datatype>DT_SHORT</datatype>
 			</application_attribute>
 			<relation_attribute>

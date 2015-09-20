@@ -141,6 +141,12 @@ public class Test_ETAS_SimpleSorted {
             assertEquals("sm_0001", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("Integer Types", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(10000, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
@@ -148,6 +154,12 @@ public class Test_ETAS_SimpleSorted {
             assertEquals("sm_0002", ODSHelper.getStringVal(ieSm.getValue("iname")));
             assertEquals("Float Types", ODSHelper.getStringVal(ieSm.getValue("desc")));
             assertEquals("", ODSHelper.getStringVal(ieSm.getValue("acq_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_name")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_path")));
+            assertEquals("", ODSHelper.getStringVal(ieSm.getValue("src_cmt")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_type")));
+            assertEquals(0, ODSHelper.getEnumVal(ieSm.getValue("src_bus")));
+            assertEquals(0, ODSHelper.getShortVal(ieSm.getValue("src_sim")));
             assertEquals(10000, ODSHelper.getLongVal(ieSm.getValue("rows")));
             assertEquals(0, ieSm.listAttributes("*", AttrType.INSTATTR_ONLY).length);
         } catch (AoException e) {

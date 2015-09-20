@@ -208,7 +208,7 @@ class AoSessionWriter {
                 }
                 SIBLOCK siAcqSource = cgBlock.getSiAcqSourceBlock();
                 if (siAcqSource != null) {
-                    System.out.println(siAcqSource);
+                    writeSiBlock(modelCache, ieSm, siAcqSource);
                 }
                 BLOCK block = cgBlock.getMdCommentBlock();
                 if (block instanceof TXBLOCK) {
@@ -228,6 +228,50 @@ class AoSessionWriter {
             dgBlock = dgBlock.getDgNextBlock();
             grpNo++;
         }
+    }
+
+    /**************************************************************************************
+     * helper methods
+     **************************************************************************************/
+
+    /**
+     * Writes the content of all FHBLOCKS (file history) to the session.
+     * 
+     * @param modelCache The application model cache.
+     * @param ie The instance.
+     * @param siBlock The SIBLOCK.
+     * @throws AoException Error writing to session.
+     * @throws IOException Error reading from MDF file.
+     */
+    private void writeSiBlock(ODSModelCache modelCache, InstanceElement ie, SIBLOCK siBlock) throws AoException,
+            IOException {
+        List<NameValueUnit> nvuList = new ArrayList<>();
+
+        // si_tx_name
+        TXBLOCK txName = siBlock.getTxNameBlock();
+        if (txName != null) {
+            nvuList.add(ODSHelper.createStringNVU("src_name", txName.getTxData()));
+        }
+        // si_tx_path
+        TXBLOCK txPath = siBlock.getTxPath();
+        if (txPath != null) {
+            nvuList.add(ODSHelper.createStringNVU("src_path", txPath.getTxData()));
+        }
+        // si_md_comment
+        BLOCK block = siBlock.getMdCommentBlock();
+        if (block instanceof TXBLOCK) {
+            nvuList.add(ODSHelper.createStringNVU("src_cmt", ((TXBLOCK) block).getTxData()));
+        } else if (block instanceof MDBLOCK) {
+            System.out.println("MEHR! " + block);
+        }
+        // si_type
+        nvuList.add(ODSHelper.createEnumNVU("src_type", siBlock.getSourceType()));
+        // si_bus_type
+        nvuList.add(ODSHelper.createEnumNVU("src_bus", siBlock.getBusType()));
+        // si_flags
+        nvuList.add(ODSHelper.createShortNVU("src_sim", siBlock.getFlags() > 0 ? (short) 1 : (short) 0));
+
+        ie.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
     }
 
     /**************************************************************************************
