@@ -2,11 +2,12 @@ package de.rechner.openatfx_mdf4.xml;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -31,17 +32,21 @@ public class MDF4XMLParser {
     private static final Log LOG = LogFactory.getLog(MDF4XMLParser.class);
 
     private final XMLInputFactory xmlInputFactory;
+    private final DateFormat xmlDateTimeFormat;
 
     /**
      * Constructor.
      */
     public MDF4XMLParser() {
         this.xmlInputFactory = XMLInputFactory.newInstance();
+        this.xmlDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss"); // e.g. 2012-11-07T10:16:03
     }
 
     /**
-     * @param ieMea
-     * @param mdCommentXML
+     * Writes the content of the meta data block of a header block to the instance element attributes
+     * 
+     * @param ieMea The measurement instance element.
+     * @param mdCommentXML The XML string to parse.
      * @throws IOException
      * @throws AoException
      */
@@ -69,9 +74,7 @@ public class MDF4XMLParser {
                 }
                 // common_properties
                 else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {
-                    for (Entry<String, String> entry : readCommonProperties(reader).entrySet()) {
-                        ieMea.addInstanceAttribute(ODSHelper.createStringNVU(entry.getKey(), entry.getValue()));
-                    }
+                    writeCommonProperties(ieMea, reader);
                 }
             }
         } catch (XMLStreamException e) {
@@ -90,10 +93,10 @@ public class MDF4XMLParser {
     }
 
     /**
-     * Writes the content of the meta data block of file history to the instance element attributes
+     * Writes the content of the meta data block of a file history block to the instance element attributes
      * 
-     * @param ieFh The file history instance element
-     * @param mdCommentXML
+     * @param ieFh The file history instance element.
+     * @param mdCommentXML The XML string to parse.
      * @throws IOException
      * @throws AoException
      */
@@ -126,9 +129,7 @@ public class MDF4XMLParser {
                 }
                 // common_properties
                 else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {
-                    for (Entry<String, String> entry : readCommonProperties(reader).entrySet()) {
-                        ieFh.addInstanceAttribute(ODSHelper.createStringNVU(entry.getKey(), entry.getValue()));
-                    }
+                    writeCommonProperties(ieFh, reader);
                 }
             }
             if (list.size() > 0) {
@@ -150,19 +151,96 @@ public class MDF4XMLParser {
     }
 
     /**
-     * Reads the content of 'common_properties' from the XML stream reader.
+     * Writes the content of the meta data block of a channel group block to the instance element attributes
      * 
+     * @param ieCg The channel group instance element.
+     * @param mdCommentXML The XML string to parse.
+     * @throws IOException
+     * @throws AoException
+     */
+    public void writeMDCommentToCg(InstanceElement ieCg, String mdCommentXML) throws IOException, AoException {
+        
+        System.out.println("MEHR! " + mdCommentXML);
+        
+        
+        XMLStreamReader reader = null;
+        try {
+            reader = this.xmlInputFactory.createXMLStreamReader(new StringReader(mdCommentXML));
+            List<NameValueUnit> list = new ArrayList<NameValueUnit>();
+            while (reader.hasNext()) {
+                reader.next();
+                // TX
+                if (reader.isStartElement() && reader.getLocalName().equals("TX")) {
+                    list.add(ODSHelper.createStringNVU("desc", reader.getElementText()));
+                }
+                // names
+                else if (reader.isStartElement() && reader.getLocalName().equals("names")) {
+                    LOG.warn("'names' in XML content 'MDComment' is not yet supported!");
+                }
+                // common_properties
+                else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {
+                    writeCommonProperties(ieCg, reader);
+                }
+            }
+            if (list.size() > 0) {
+                ieCg.setValueSeq(list.toArray(new NameValueUnit[0]));
+            }
+        } catch (XMLStreamException e) {
+            LOG.error(e.getMessage(), e);
+            throw new IOException(e.getMessage(), e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (XMLStreamException e) {
+                    LOG.error(e.getMessage(), e);
+                    throw new IOException(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the content of 'common_properties' from the XML stream reader as ASAM ODS instance attributes.
+     * 
+     * @param ie THe instance to write to.
      * @param reader The XML stream reader.
      * @return The content.
      * @throws XMLStreamException Error reading XML content.
+     * @throws AoException
+     * @throws NumberFormatException
      */
-    private Map<String, String> readCommonProperties(XMLStreamReader reader) throws XMLStreamException {
+    private void writeCommonProperties(InstanceElement ie, XMLStreamReader reader) throws XMLStreamException,
+            NumberFormatException, AoException {
         reader.nextTag();
-        Map<String, String> map = new HashMap<String, String>();
         while (!(reader.isEndElement() && reader.getLocalName().equals("common_properties"))) {
             // e
             if (reader.isStartElement() && reader.getLocalName().equals("e")) {
-                map.put(reader.getAttributeValue(null, "name"), reader.getElementText());
+                String name = reader.getAttributeValue(null, "name");
+                String type = reader.getAttributeValue(null, "type");
+                String value = reader.getElementText();
+                if (type == null || type.length() < 1 || type.equalsIgnoreCase("string")) {
+                    ie.addInstanceAttribute(ODSHelper.createStringNVU(name, value));
+                } else if (type.equalsIgnoreCase("decimal")) {
+                    ie.addInstanceAttribute(ODSHelper.createDoubleNVU(name, Double.valueOf(value)));
+                } else if (type.equalsIgnoreCase("integer")) {
+                    ie.addInstanceAttribute(ODSHelper.createLongNVU(name, Integer.valueOf(value)));
+                } else if (type.equalsIgnoreCase("float")) {
+                    ie.addInstanceAttribute(ODSHelper.createFloatNVU(name, Float.valueOf(value)));
+                } else if (type.equalsIgnoreCase("boolean")) {
+                    short s = Boolean.valueOf(value) ? (short) 1 : (short) 0;
+                    ie.addInstanceAttribute(ODSHelper.createShortNVU(name, s));
+                } else if (type.equalsIgnoreCase("datetime")) {
+                    try {
+                        Date date = this.xmlDateTimeFormat.parse(value);
+                        ie.addInstanceAttribute(ODSHelper.createDateNVU(name, ODSHelper.asODSDate(date)));
+                    } catch (ParseException e) {
+                        LOG.warn(e.getMessage(), e);
+                        ie.addInstanceAttribute(ODSHelper.createStringNVU(name, value));
+                    }
+                } else {
+                    ie.addInstanceAttribute(ODSHelper.createStringNVU(name, value));
+                }
             }
             // tree
             else if (reader.isStartElement() && reader.getLocalName().equals("tree")) {
@@ -178,7 +256,6 @@ public class MDF4XMLParser {
             }
             reader.next();
         }
-        return map;
     }
 
 }

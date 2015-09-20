@@ -182,9 +182,8 @@ class AoSessionWriter {
             // if sorted, only one channel group block is available
             CGBLOCK cgBlock = dgBlock.getCgFirstBlock();
             if (cgBlock.getLnkCgNext() > 0) {
-                throw new IOException(
-                                      "Currently only 'sorted' MDF4 files are supported, found 'unsorted' data! [DGBLOCK="
-                                              + dgBlock + "]");
+                throw new IOException("Only 'sorted' MDF4 files are supported, found 'unsorted' data! [DGBLOCK="
+                        + dgBlock + "]");
             }
 
             // skip channel groups having no channels (or optionally no values)
@@ -214,8 +213,7 @@ class AoSessionWriter {
                 if (block instanceof TXBLOCK) {
                     nvuList.add(ODSHelper.createStringNVU("desc", ((TXBLOCK) block).getTxData()));
                 } else if (block instanceof MDBLOCK) {
-                    System.out.println("MEHR! " + block);
-                    // this.xmlParser.writeMDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
+                    this.xmlParser.writeMDCommentToCg(ieSm, ((MDBLOCK) block).getMdData());
                 }
                 nvuList.add(ODSHelper.createLongNVU("rows", (int) cgBlock.getCycleCount()));
                 ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
