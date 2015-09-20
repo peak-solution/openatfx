@@ -69,7 +69,7 @@ class AoSessionWriter {
         if (block instanceof TXBLOCK) {
             nvuList.add(ODSHelper.createStringNVU("desc", ((TXBLOCK) block).getTxData()));
         } else if (block instanceof MDBLOCK) {
-            this.xmlParser.writeMDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
+            this.xmlParser.writeHDCommentToMea(ieMea, ((MDBLOCK) block).getMdData());
         }
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(hdBlock.getStartTimeNs() / 1000000);
@@ -153,7 +153,7 @@ class AoSessionWriter {
             nvuList.add(ODSHelper.createShortNVU("dst_offset_min", hdBlock.getDstOffsetMin()));
             ieFh.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
-            this.xmlParser.writeMDCommentToFh(ieFh, fhBlock.getMdCommentBlock().getMdData());
+            this.xmlParser.writeFHCommentToFh(ieFh, fhBlock.getMdCommentBlock().getMdData());
 
             no++;
             fhBlock = fhBlock.getFhNextBlock();
@@ -213,7 +213,7 @@ class AoSessionWriter {
                 if (block instanceof TXBLOCK) {
                     nvuList.add(ODSHelper.createStringNVU("desc", ((TXBLOCK) block).getTxData()));
                 } else if (block instanceof MDBLOCK) {
-                    this.xmlParser.writeMDCommentToCg(ieSm, ((MDBLOCK) block).getMdData());
+                    this.xmlParser.writeCGCommentToCg(ieSm, ((MDBLOCK) block).getMdData());
                 }
                 nvuList.add(ODSHelper.createLongNVU("rows", (int) cgBlock.getCycleCount()));
                 ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
@@ -260,7 +260,7 @@ class AoSessionWriter {
         if (block instanceof TXBLOCK) {
             nvuList.add(ODSHelper.createStringNVU("src_cmt", ((TXBLOCK) block).getTxData()));
         } else if (block instanceof MDBLOCK) {
-            System.out.println("MEHR! " + block);
+            this.xmlParser.writeSICommentToCg(ie, ((MDBLOCK) block).getMdData());
         }
         // si_type
         nvuList.add(ODSHelper.createEnumNVU("src_type", siBlock.getSourceType()));

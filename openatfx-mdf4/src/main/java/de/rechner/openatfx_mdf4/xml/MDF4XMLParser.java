@@ -50,7 +50,7 @@ public class MDF4XMLParser {
      * @throws IOException
      * @throws AoException
      */
-    public void writeMDCommentToMea(InstanceElement ieMea, String mdCommentXML) throws IOException, AoException {
+    public void writeHDCommentToMea(InstanceElement ieMea, String mdCommentXML) throws IOException, AoException {
         XMLStreamReader reader = null;
         try {
             reader = this.xmlInputFactory.createXMLStreamReader(new StringReader(mdCommentXML));
@@ -66,11 +66,11 @@ public class MDF4XMLParser {
                 }
                 // constants
                 else if (reader.isStartElement() && reader.getLocalName().equals("constants")) {
-                    LOG.warn("'constants' in XML content 'MDComment' is not yet supported!");
+                    LOG.warn("'constants' in XML content 'HDcomment' is not yet supported!");
                 }
                 // UNITSPEC
                 else if (reader.isStartElement() && reader.getLocalName().equals("UNITSPEC")) {
-                    LOG.warn("UNITSPEC in XML content 'MDComment' is not yet supported!");
+                    LOG.warn("UNITSPEC in XML content 'HDcomment' is not yet supported!");
                 }
                 // common_properties
                 else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {
@@ -100,7 +100,7 @@ public class MDF4XMLParser {
      * @throws IOException
      * @throws AoException
      */
-    public void writeMDCommentToFh(InstanceElement ieFh, String mdCommentXML) throws IOException, AoException {
+    public void writeFHCommentToFh(InstanceElement ieFh, String mdCommentXML) throws IOException, AoException {
         XMLStreamReader reader = null;
         try {
             reader = this.xmlInputFactory.createXMLStreamReader(new StringReader(mdCommentXML));
@@ -158,11 +158,7 @@ public class MDF4XMLParser {
      * @throws IOException
      * @throws AoException
      */
-    public void writeMDCommentToCg(InstanceElement ieCg, String mdCommentXML) throws IOException, AoException {
-        
-        System.out.println("MEHR! " + mdCommentXML);
-        
-        
+    public void writeCGCommentToCg(InstanceElement ieCg, String mdCommentXML) throws IOException, AoException {
         XMLStreamReader reader = null;
         try {
             reader = this.xmlInputFactory.createXMLStreamReader(new StringReader(mdCommentXML));
@@ -175,7 +171,65 @@ public class MDF4XMLParser {
                 }
                 // names
                 else if (reader.isStartElement() && reader.getLocalName().equals("names")) {
-                    LOG.warn("'names' in XML content 'MDComment' is not yet supported!");
+                    LOG.warn("'names' in XML content 'CGcomment' is not yet supported!");
+                }
+                // common_properties
+                else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {
+                    writeCommonProperties(ieCg, reader);
+                }
+            }
+            if (list.size() > 0) {
+                ieCg.setValueSeq(list.toArray(new NameValueUnit[0]));
+            }
+        } catch (XMLStreamException e) {
+            LOG.error(e.getMessage(), e);
+            throw new IOException(e.getMessage(), e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (XMLStreamException e) {
+                    LOG.error(e.getMessage(), e);
+                    throw new IOException(e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Writes the content of the meta data block of a channel group block to the instance element attributes
+     * 
+     * @param ieCg The channel group instance element.
+     * @param mdCommentXML The XML string to parse.
+     * @throws IOException
+     * @throws AoException
+     */
+    public void writeSICommentToCg(InstanceElement ieCg, String mdCommentXML) throws IOException, AoException {
+        XMLStreamReader reader = null;
+        try {
+            reader = this.xmlInputFactory.createXMLStreamReader(new StringReader(mdCommentXML));
+            List<NameValueUnit> list = new ArrayList<NameValueUnit>();
+            while (reader.hasNext()) {
+                reader.next();
+                // TX
+                if (reader.isStartElement() && reader.getLocalName().equals("TX")) {
+                    list.add(ODSHelper.createStringNVU("desc", reader.getElementText()));
+                }
+                // names
+                else if (reader.isStartElement() && reader.getLocalName().equals("names")) {
+                    LOG.warn("'names' in XML content 'SIcomment' is not yet supported!");
+                }
+                // path
+                else if (reader.isStartElement() && reader.getLocalName().equals("path")) {
+                    LOG.warn("'path' in XML content 'SIcomment' is not yet supported!");
+                }
+                // bus
+                else if (reader.isStartElement() && reader.getLocalName().equals("bus")) {
+                    LOG.warn("'bus' in XML content 'SIcomment' is not yet supported!");
+                }
+                // protocol
+                else if (reader.isStartElement() && reader.getLocalName().equals("bus")) {
+                    LOG.warn("'protocol' in XML content 'SIcomment' is not yet supported!");
                 }
                 // common_properties
                 else if (reader.isStartElement() && reader.getLocalName().equals("common_properties")) {

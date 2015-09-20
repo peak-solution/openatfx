@@ -43,8 +43,10 @@ XML content
 * hd_comment.xsd
   - 'constants' will be ignored with warning
   - 'UNIT-SPEC' will be ignored with warning
-* hd_comment.xsd
-  - 'constants' will be ignored with warning
-  - 'UNIT-SPEC' will be ignored with warning 
 * cg_comment.xsd
   - 'names' will be ignored with warning
+* si_comment.xsd
+  - 'names' will be ignored with warning
+  - 'path' will be ignored with warning
+  - 'bus' will be ignored with warning
+  - 'protocol' will be ignored with warning
