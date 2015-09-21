@@ -31,7 +31,10 @@ BLOCKs
 * CGBLOCK
   - cg_flags must be null (VLSD and bus events not supported), otherwise an exception is thrown
   - cg_inval_bytes must be null (invalidation bits not supported), otherwise an exception is thrown
-
+  
+* CNBLOCK
+  - cn_composition must be null (composition not supported), otherwise an exception is thrown
+  - cn_at_reference: not yet supported, will be ignored with warning
 
 XML content
 -----------

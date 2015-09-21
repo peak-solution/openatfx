@@ -182,8 +182,6 @@ class AoSessionWriter {
         DGBLOCK dgBlock = hdBlock.getDgFirstBlock();
         while (dgBlock != null) {
 
-            System.out.println(dgBlock.getDataBlock());
-            
             // if sorted, only one channel group block is available
             CGBLOCK cgBlock = dgBlock.getCgFirstBlock();
             if (cgBlock != null && cgBlock.getLnkCgNext() > 0) {
@@ -247,14 +245,51 @@ class AoSessionWriter {
     private void writeLcs(ODSModelCache modelCache, InstanceElement ieMea, InstanceElement ieSm, DGBLOCK dgBlock,
             CGBLOCK cgBlock) throws AoException, IOException {
         // ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
-        // ApplicationElement aeLc = modelCache.getApplicationElement("lc");
-        // ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
+        ApplicationElement aeLc = modelCache.getApplicationElement("lc");
+        ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
         // ApplicationRelation relMeaMeq = modelCache.getApplicationRelation("mea", "meq", "meqs");
         // ApplicationRelation relLcMeq = modelCache.getApplicationRelation("lc", "meq", "meq");
 
         // iterate over channel blocks
         CNBLOCK cnBlock = cgBlock.getCnFirstBlock();
         while (cnBlock != null) {
+
+            // check invalidation bits (not yet supported)
+            if (cnBlock.getLnkComposition() != 0) {
+                LOG.warn("Composition of channels supported! [CNBLOCK=" + cnBlock + "]");
+                // throw new IOException("Composition of channels supported! [CNBLOCK=" + cnBlock + "]");
+            }
+
+            List<NameValueUnit> nvuLcList = new ArrayList<>();
+            // cn_tx_name: signal name
+            TXBLOCK txBlock = cnBlock.getCnTxNameBlock();
+            String signalName = txBlock.getTxData();
+
+            // cn_si_source
+            SIBLOCK siBlock = cnBlock.getSiSourceBlock();
+            if (siBlock != null) {
+                // System.out.println(siBlock);
+            }
+            // cn_md_comment: channel description
+            BLOCK mdCommentBlock = cnBlock.getMdCommentBlock();
+            if (mdCommentBlock instanceof TXBLOCK) {
+                // System.out.println(mdCommentBlock);
+            } else if (mdCommentBlock instanceof MDBLOCK) {
+                // System.out.println(mdCommentBlock);
+            }
+            // cn_at_reference: attachments
+            if (cnBlock.getLnkAtReference().length > 0) {
+                LOG.warn("Found channel 'cn_at_reference'>0, not yet supported ");
+            }
+            // cn_default_x
+
+            // create instance of 'AoLocalColumn'
+            InstanceElement ieLc = aeLc.createInstance(signalName);
+            ieSm.createRelation(relSmLc, ieLc);
+
+            // create instance of 'AoMeasurementQuantity' (if not yet existing)
+
+            // System.out.println("-------------------------------");
 
             // // build signal name - parse the device info
             // String meqName = readMeqName(cnBlock, mdfChannel);
