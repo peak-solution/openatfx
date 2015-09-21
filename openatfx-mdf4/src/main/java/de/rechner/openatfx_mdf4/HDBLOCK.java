@@ -123,7 +123,7 @@ class HDBLOCK extends BLOCK {
      * @param mdfFilePath THe path to the MDF file.
      */
     public HDBLOCK(SeekableByteChannel sbc, Path mdfFilePath) {
-        super(sbc);
+        super(sbc, 64);
         this.mdfFilePath = mdfFilePath;
     }
 
@@ -281,6 +281,13 @@ class HDBLOCK extends BLOCK {
     public FHBLOCK getFhFirstBlock() throws IOException {
         if (this.lnkMdComment > 0) {
             return FHBLOCK.read(this.sbc, this.lnkFhFirst);
+        }
+        return null;
+    }
+
+    public CHBLOCK getChFirstBlock() throws IOException {
+        if (this.lnkChFirst > 0) {
+            return CHBLOCK.read(this.sbc, this.lnkChFirst);
         }
         return null;
     }

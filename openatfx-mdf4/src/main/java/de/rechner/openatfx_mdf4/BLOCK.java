@@ -15,6 +15,9 @@ import de.rechner.openatfx_mdf4.util.MDFUtil;
  */
 abstract class BLOCK {
 
+    // the position of the block within the MDF file
+    private final long pos;
+
     /** Header section */
 
     // Block type identifier, always "##HD"
@@ -35,16 +38,18 @@ abstract class BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    protected BLOCK(SeekableByteChannel sbc) {
+    protected BLOCK(SeekableByteChannel sbc, long pos) {
         this.sbc = sbc;
+        this.pos = pos;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    protected void setId(String id) {
         this.id = id;
     }
 
@@ -52,7 +57,7 @@ abstract class BLOCK {
         return length;
     }
 
-    public void setLength(long length) {
+    protected void setLength(long length) {
         this.length = length;
     }
 
@@ -60,13 +65,50 @@ abstract class BLOCK {
         return linkCount;
     }
 
-    public void setLinkCount(long linkCount) {
+    protected void setLinkCount(long linkCount) {
         this.linkCount = linkCount;
     }
 
+    /**
+     * {@inheritDoc}
+     * 
+     * @see java.lang.Object#toString()
+     */
     @Override
     public String toString() {
-        return "BLOCK [id=" + id + ", length=" + length + ", linkCount=" + linkCount + "]";
+        return "BLOCK [pos=" + pos + ", id=" + id + ", length=" + length + ", linkCount=" + linkCount + "]";
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (int) (pos ^ (pos >>> 32));
+        return result;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BLOCK other = (BLOCK) obj;
+        if (pos != other.pos)
+            return false;
+        return true;
     }
 
     /**

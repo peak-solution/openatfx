@@ -97,9 +97,10 @@ class CGBLOCK extends BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    public CGBLOCK(SeekableByteChannel sbc) {
-        super(sbc);
+    private CGBLOCK(SeekableByteChannel sbc, long pos) {
+        super(sbc, pos);
     }
 
     public long getLnkCgNext() {
@@ -262,7 +263,7 @@ class CGBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static CGBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        CGBLOCK block = new CGBLOCK(channel);
+        CGBLOCK block = new CGBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(104);

@@ -57,9 +57,10 @@ class DGBLOCK extends BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    public DGBLOCK(SeekableByteChannel sbc) {
-        super(sbc);
+    private DGBLOCK(SeekableByteChannel sbc, long pos) {
+        super(sbc, pos);
     }
 
     public long getLnkDgNext() {
@@ -131,7 +132,7 @@ class DGBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static DGBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        DGBLOCK block = new DGBLOCK(channel);
+        DGBLOCK block = new DGBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(64);

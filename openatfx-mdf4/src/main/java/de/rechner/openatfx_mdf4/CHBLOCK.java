@@ -10,24 +10,22 @@ import de.rechner.openatfx_mdf4.util.MDFUtil;
 
 /**
  * <p>
- * THE META DATA BLOCK <code>MDBLOCK</code>
+ * THE CHANNEL HIERARCHY BLOCK <code>CHBLOCK</code>
  * </p>
- * The MDBLOCK contains information encoded as XML string. For example this can be comments for the measured data file,
- * file history information or the identification of a channel. This information is ruled by the parent block and
- * follows specific XML schemas definitions.
+ * The CHBLOCKs describe a logical ordering of the channels in a tree-like structure. This only serves to structure the
+ * channels and is totally independent to the data group and channel group structuring. A channel even may not be
+ * referenced at all or more than one time.<br/>
+ * Each CHBLOCK can be seen as a node in a tree which has a number of channels as leafs and which has a reference to its
+ * next sibling and its first child node (both CHBLOCKs). The reference to a channel is always a triple link to the
+ * CNBLOCK of the channel and its parent CGBLOCK and DGBLOCK. Each CHBLOCK can have a name.
  * 
  * @author Christian Rechner
  */
-class MDBLOCK extends BLOCK {
+class CHBLOCK extends BLOCK {
 
-    public static String BLOCK_ID = "##MD";
+    public static String BLOCK_ID = "##CH";
 
     /** Data section */
-
-    // XML string
-    // UTF-8 encoded, zero terminated, new line indicated by CR and LF.
-    // CHAR
-    private String mdData;
 
     /**
      * Constructor.
@@ -35,33 +33,40 @@ class MDBLOCK extends BLOCK {
      * @param sbc The byte channel pointing to the MDF file.
      * @param pos The position of the block within the MDF file.
      */
-    private MDBLOCK(SeekableByteChannel sbc, long pos) {
+    private CHBLOCK(SeekableByteChannel sbc, long pos) {
         super(sbc, pos);
     }
 
-    public String getMdData() {
-        return mdData;
-    }
+    /** Link section */
 
-    private void setMdData(String mdData) {
-        this.mdData = mdData;
-    }
-
-    @Override
-    public String toString() {
-        return "MDBLOCK [mdData=" + mdData + "]";
-    }
+    // // Link to next sibling CHBLOCK (can be NIL)
+    // // LINK
+    // private long lnkChNext;
+    //
+    // // Link to first child CHBLOCK (can be NIL, must be NIL for ch_type = 3 ("map list")).
+    // // LINK
+    // private long lnkChFirst;
+    //
+    // // Link to TXBLOCK with the name of the hierarchy level. Must be NIL for ch_type ≥ 4, must not be NIL for all
+    // other
+    // // types.
+    // // LINK
+    // private long lnkTxName;
+    //
+    // // Link to TXBLOCK or MDBLOCK with comment and other information for the hierarchy level (can be NIL)
+    // // LINK
+    // private long lnkMdComment;
 
     /**
      * Reads a HDBLOCK from the channel starting at current channel position.
      * 
      * @param channel The channel to read from.
-     * @param pos The position within the channel.
+     * @param pos The position
      * @return The block data.
      * @throws IOException The exception.
      */
-    public static MDBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        MDBLOCK block = new MDBLOCK(channel, pos);
+    public static CHBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
+        CHBLOCK block = new CHBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(24);
@@ -92,8 +97,7 @@ class MDBLOCK extends BLOCK {
         channel.read(bb);
         bb.rewind();
 
-        // XML String
-        block.setMdData(MDFUtil.readCharsUTF8(bb, (int) (block.getLength() - 24)));
+        // TODO: implement reading
 
         return block;
     }

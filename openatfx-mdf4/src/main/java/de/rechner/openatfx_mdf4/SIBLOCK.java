@@ -74,9 +74,10 @@ class SIBLOCK extends BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    public SIBLOCK(SeekableByteChannel sbc) {
-        super(sbc);
+    private SIBLOCK(SeekableByteChannel sbc, long pos) {
+        super(sbc, pos);
     }
 
     private void setLnkTxName(long lnkTxName) {
@@ -175,7 +176,7 @@ class SIBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static SIBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        SIBLOCK block = new SIBLOCK(channel);
+        SIBLOCK block = new SIBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(56);

@@ -76,9 +76,10 @@ class FHBLOCK extends BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    public FHBLOCK(SeekableByteChannel sbc) {
-        super(sbc);
+    private FHBLOCK(SeekableByteChannel sbc, long pos) {
+        super(sbc, pos);
     }
 
     private void setLnkFhNext(long lnkFhNext) {
@@ -166,7 +167,7 @@ class FHBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static FHBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        FHBLOCK block = new FHBLOCK(channel);
+        FHBLOCK block = new FHBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(56);

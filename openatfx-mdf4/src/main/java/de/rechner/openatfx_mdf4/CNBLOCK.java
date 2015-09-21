@@ -204,9 +204,10 @@ class CNBLOCK extends BLOCK {
      * Constructor.
      * 
      * @param sbc The byte channel pointing to the MDF file.
+     * @param pos The position of the block within the MDF file.
      */
-    public CNBLOCK(SeekableByteChannel sbc) {
-        super(sbc);
+    private CNBLOCK(SeekableByteChannel sbc, long pos) {
+        super(sbc, pos);
     }
 
     public long getLnkCnNext() {
@@ -446,7 +447,7 @@ class CNBLOCK extends BLOCK {
      * @throws IOException The exception.
      */
     public static CNBLOCK read(SeekableByteChannel channel, long pos) throws IOException {
-        CNBLOCK block = new CNBLOCK(channel);
+        CNBLOCK block = new CNBLOCK(channel, pos);
 
         // read block header
         ByteBuffer bb = ByteBuffer.allocate(24);
