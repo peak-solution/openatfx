@@ -295,7 +295,7 @@ class CCBLOCK extends BLOCK {
     }
 
     /**
-     * Reads a HDBLOCK from the channel starting at current channel position.
+     * Reads a CCBLOCK from the channel starting at current channel position.
      * 
      * @param channel The channel to read from.
      * @param pos The position

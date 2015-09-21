@@ -182,6 +182,8 @@ class AoSessionWriter {
         DGBLOCK dgBlock = hdBlock.getDgFirstBlock();
         while (dgBlock != null) {
 
+            System.out.println(dgBlock.getDataBlock());
+            
             // if sorted, only one channel group block is available
             CGBLOCK cgBlock = dgBlock.getCgFirstBlock();
             if (cgBlock != null && cgBlock.getLnkCgNext() > 0) {

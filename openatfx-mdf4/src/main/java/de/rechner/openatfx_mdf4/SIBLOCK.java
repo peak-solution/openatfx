@@ -168,7 +168,7 @@ class SIBLOCK extends BLOCK {
     }
 
     /**
-     * Reads a CGBLOCK from the channel starting at current channel position.
+     * Reads a SIBLOCK from the channel starting at current channel position.
      * 
      * @param channel The channel to read from.
      * @param pos The position within the channel.

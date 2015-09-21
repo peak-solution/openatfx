@@ -117,6 +117,41 @@ class DGBLOCK extends BLOCK {
         return null;
     }
 
+    public BLOCK getDataBlock() throws IOException {
+        if (this.lnkData > 0) {
+            String blockType = getBlockType(this.sbc, this.lnkData);
+            // link points to a DTBLOCK
+            if (blockType.equals("##DT")) {
+                // TODO: implement
+                return null;
+            }
+            // link points to a DZBLOCK
+            else if (blockType.equals("##DZ")) {
+                // TODO: implement
+                return null;
+            }
+            // link points to a DLBLOCK
+            else if (blockType.equals(DLBLOCK.BLOCK_ID)) {
+                return DLBLOCK.read(this.sbc, this.lnkData);
+            }
+            // link points to a HLBLOCK
+            else if (blockType.equals("##HL")) {
+                // TODO: implement
+                return null;
+            }
+            // unknown
+            else {
+                throw new IOException("Unsupported block type for data: " + blockType);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see de.rechner.openatfx_mdf4.BLOCK#toString()
+     */
     @Override
     public String toString() {
         return "DGBLOCK [lnkDgNext=" + lnkDgNext + ", lnkCgFirst=" + lnkCgFirst + ", lnkData=" + lnkData

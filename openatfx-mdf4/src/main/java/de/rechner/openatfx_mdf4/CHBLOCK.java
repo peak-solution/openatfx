@@ -56,7 +56,7 @@ class CHBLOCK extends BLOCK {
     // private long lnkMdComment;
 
     /**
-     * Reads a HDBLOCK from the channel starting at current channel position.
+     * Reads a CHBLOCK from the channel starting at current channel position.
      * 
      * @param channel The channel to read from.
      * @param pos The position
