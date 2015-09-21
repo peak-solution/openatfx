@@ -25,8 +25,6 @@ class CHBLOCK extends BLOCK {
 
     public static String BLOCK_ID = "##CH";
 
-    /** Data section */
-
     /**
      * Constructor.
      * 

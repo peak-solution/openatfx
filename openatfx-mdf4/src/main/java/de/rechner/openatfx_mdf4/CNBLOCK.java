@@ -425,6 +425,65 @@ class CNBLOCK extends BLOCK {
         return null;
     }
 
+    public TXBLOCK getCnTxNameBlock() throws IOException {
+        if (this.lnkTxName > 0) {
+            return TXBLOCK.read(this.sbc, this.lnkTxName);
+        }
+        return null;
+    }
+
+    public SIBLOCK getSiSourceBlock() throws IOException {
+        if (this.lnkSiSource > 0) {
+            return SIBLOCK.read(this.sbc, this.lnkSiSource);
+        }
+        return null;
+    }
+
+    public CCBLOCK getCcConversionBlock() throws IOException {
+        if (this.lnkCcConversion > 0) {
+            return CCBLOCK.read(this.sbc, this.lnkCcConversion);
+        }
+        return null;
+    }
+
+    public BLOCK getMdUnitBlock() throws IOException {
+        if (this.lnkMdUnit > 0) {
+            String blockType = getBlockType(this.sbc, this.lnkMdUnit);
+            // link points to a MDBLOCK
+            if (blockType.equals(MDBLOCK.BLOCK_ID)) {
+                return MDBLOCK.read(this.sbc, this.lnkMdUnit);
+            }
+            // links points to TXBLOCK
+            else if (blockType.equals(TXBLOCK.BLOCK_ID)) {
+                return TXBLOCK.read(this.sbc, this.lnkMdUnit);
+            }
+            // unknown
+            else {
+                throw new IOException("Unsupported block type for MdUnit: " + blockType);
+            }
+        }
+        return null;
+    }
+
+    public BLOCK getMdCommentBlock() throws IOException {
+        if (this.lnkMdComment > 0) {
+            String blockType = getBlockType(this.sbc, this.lnkMdComment);
+            // link points to a MDBLOCK
+            if (blockType.equals(MDBLOCK.BLOCK_ID)) {
+                return MDBLOCK.read(this.sbc, this.lnkMdComment);
+            }
+            // links points to TXBLOCK
+            else if (blockType.equals(TXBLOCK.BLOCK_ID)) {
+                return TXBLOCK.read(this.sbc, this.lnkMdComment);
+            }
+            // unknown
+            else {
+                throw new IOException("Unsupported block type for MdComment: " + blockType);
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "CNBLOCK [lnkCnNext=" + lnkCnNext + ", lnkComposition=" + lnkComposition + ", lnkTxName=" + lnkTxName

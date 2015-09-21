@@ -22,13 +22,13 @@ import de.rechner.openatfx_mdf4.MDF4Converter;
 
 
 /**
- * Test case for reading the example MDF4-file <code>Vector_PartialConversionLinearIdentityAlgebraic.mf4</code>.
+ * Test case for reading the example MDF4-file <code>Vector_RationalConversionIntParams.mf4</code>.
  * 
  * @author Christian Rechner
  */
 public class Test_Vector_RationalConversionIntParams {
 
-    private static final String mdfFile = "de/rechner/openatfx_mdf4/conversion/partial_conversion/Vector_PartialConversionLinearIdentityAlgebraic.mf4";
+    private static final String mdfFile = "de/rechner/openatfx_mdf4/conversion/rational_conversion/Vector_RationalConversionIntParams.mf4";
 
     private static ORB orb;
     private static AoSession aoSession;
