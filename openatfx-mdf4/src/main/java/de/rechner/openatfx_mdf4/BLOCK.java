@@ -45,6 +45,10 @@ abstract class BLOCK {
         this.pos = pos;
     }
 
+    public long getPos() {
+        return pos;
+    }
+
     public String getId() {
         return id;
     }

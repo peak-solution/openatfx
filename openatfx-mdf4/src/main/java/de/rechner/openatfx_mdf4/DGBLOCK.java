@@ -122,8 +122,7 @@ class DGBLOCK extends BLOCK {
             String blockType = getBlockType(this.sbc, this.lnkData);
             // link points to a DTBLOCK
             if (blockType.equals("##DT")) {
-                // TODO: implement
-                return null;
+                return DTBLOCK.read(this.sbc, this.lnkData);
             }
             // link points to a DZBLOCK
             else if (blockType.equals("##DZ")) {

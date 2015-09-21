@@ -1,6 +1,7 @@
 package de.rechner.openatfx_mdf4;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SeekableByteChannel;
@@ -53,7 +54,7 @@ class DLBLOCK extends BLOCK {
     // Only present if "equal length" flag (bit 0 in dl_flags) is not set.
     // Start offset (in Bytes) for the data section of each referenced block.
     // UINT64
-    private long offset;
+    private long[] offset;
 
     /**
      * Constructor.
@@ -85,7 +86,7 @@ class DLBLOCK extends BLOCK {
         return equalLength;
     }
 
-    public long getOffset() {
+    public long[] getOffset() {
         return offset;
     }
 
@@ -109,14 +110,23 @@ class DLBLOCK extends BLOCK {
         this.equalLength = equalLength;
     }
 
-    private void setOffset(long offset) {
+    private void setOffset(long[] offset) {
         this.offset = offset;
     }
 
+    private boolean isEqualLengthFlag() {
+        return BigInteger.valueOf(this.flags).testBit(0);
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see de.rechner.openatfx_mdf4.BLOCK#toString()
+     */
     @Override
     public String toString() {
         return "DLBLOCK [lnkDlNext=" + lnkDlNext + ", lnkDlData=" + Arrays.toString(lnkDlData) + ", flags=" + flags
-                + ", count=" + count + ", equalLength=" + equalLength + ", offset=" + offset + "]";
+                + ", count=" + count + ", equalLength=" + equalLength + ", offset=" + Arrays.toString(offset) + "]";
     }
 
     /**
@@ -158,6 +168,45 @@ class DLBLOCK extends BLOCK {
         channel.position(pos + 24);
         channel.read(bb);
         bb.rewind();
+
+        // read links
+        long[] lnks = new long[(int) block.getLinkCount()];
+        for (int i = 0; i < lnks.length; i++) {
+            lnks[i] = MDFUtil.readLink(bb);
+        }
+
+        // read data
+
+        // UINT8: Flags
+        block.setFlags(MDFUtil.readUInt8(bb));
+
+        // BYTE 3: Reserved
+        bb.get(new byte[3]);
+
+        // UINT32: Number of referenced blocks
+        block.setCount(MDFUtil.readUInt32(bb));
+
+        // UINT64: Equal data section length.
+        // !!! Only present if "equal length" flag (bit 0 in dl_flags) is set. !!!
+        if (block.isEqualLengthFlag()) {
+            block.setEqualLength(MDFUtil.readUInt64(bb));
+        }
+
+        // UINT64 N: Start offset (in Bytes) for the data section of each referenced block.
+        long[] offset = new long[(int) block.getCount()];
+        for (int i = 0; i < offset.length; i++) {
+            offset[i] = MDFUtil.readUInt64(bb);
+        }
+        block.setOffset(offset);
+
+        // extract links after reading data (then we know how many attachments)
+        block.setLnkDlNext(lnks[0]);
+
+        long[] lnkDlData = new long[(int) block.getCount()];
+        for (int i = 0; i < lnkDlData.length; i++) {
+            lnkDlData[i] = lnks[i + 1];
+        }
+        block.setLnkDlData(lnkDlData);
 
         return block;
     }
