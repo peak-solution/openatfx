@@ -295,7 +295,7 @@ public class AoSessionWriter {
                 // throw new IOException("Composition of channels supported! [CNBLOCK=" + cnBlock + "]");
             }
 
-            List<NameValueUnit> nvuLcList = new ArrayList<>();
+            // List<NameValueUnit> nvuLcList = new ArrayList<>();
             // cn_tx_name: signal name
             TXBLOCK txBlock = cnBlock.getCnTxNameBlock();
             String signalName = txBlock.getTxData();

@@ -616,11 +616,11 @@
 				<base_attribute>mime_type</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>flags</name>
+				<name>flg</name>
 				<base_attribute>flags</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>global</name>
+				<name>glb</name>
 				<base_attribute>global_flag</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -628,11 +628,11 @@
 				<base_attribute>independent</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>seqrep</name>
+				<name>srp</name>
 				<base_attribute>sequence_representation</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>genpar</name>
+				<name>par</name>
 				<base_attribute>generation_parameters</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -644,11 +644,11 @@
 				<base_attribute>maximum</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>values</name>
+				<name>val</name>
 				<base_attribute>values</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>raw_dt</name>
+				<name>rdt</name>
 				<base_attribute>raw_datatype</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -688,19 +688,19 @@
 				<base_attribute>name</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>len</name>
+				<name>cl</name>
 				<base_attribute>component_length</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>file</name>
+				<name>fl</name>
 				<base_attribute>filename_url</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>type</name>
+				<name>vt</name>
 				<base_attribute>value_type</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>sofs</name>
+				<name>so</name>
 				<base_attribute>start_offset</base_attribute>
 			</application_attribute>
 			<application_attribute>
@@ -708,7 +708,7 @@
 				<base_attribute>block_size</base_attribute>
 			</application_attribute>
 			<application_attribute>
-				<name>vpb</name>
+				<name>vb</name>
 				<base_attribute>valuesperblock</base_attribute>
 			</application_attribute>
 			<application_attribute>

@@ -7,8 +7,10 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,29 +88,29 @@ public class AoSessionWriter {
         ieTst.setValueSeq(nvu);
 
         // write 'AoMeasurement' instance
-        writeMea(ieTst, idBlock);
+        writeMea(modelCache, ieTst, idBlock);
     }
 
     /**
      * Write the instance of 'AoMeasurement'.
      * 
+     * @param modelCache The application model cache.
      * @param ieTst The parent 'AoTest' instance.
      * @param idBlock The IDBLOCK.
      * @return the created AoMeasurement instance element
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private InstanceElement writeMea(InstanceElement ieTst, IDBLOCK idBlock) throws AoException, IOException {
+    private InstanceElement writeMea(ODSModelCache modelCache, InstanceElement ieTst, IDBLOCK idBlock)
+            throws AoException, IOException {
         Path fileName = idBlock.getMdfFilePath().getFileName();
         if (fileName == null) {
             throw new IOException("Unable to obtain file name!");
         }
 
         // create "AoMeasurement" instance
-        ApplicationStructure as = ieTst.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeTst = as.getElementByName("tst");
-        ApplicationElement aeMea = as.getElementByName("mea");
-        ApplicationRelation relTstMea = as.getRelations(aeTst, aeMea)[0];
+        ApplicationElement aeMea = modelCache.getApplicationElement("mea");
+        ApplicationRelation relTstMea = modelCache.getApplicationRelation("tst", "mea", "meas");
 
         // create "AoMeasurement" instance and write descriptive data to instance attributes
         InstanceElement ieMea = aeMea.createInstance(FileUtil.getResultName(fileName.toString(), null));
@@ -118,7 +120,7 @@ public class AoSessionWriter {
         HDBLOCK hdBlock = idBlock.getHDBlock();
         TXBLOCK fileComment = hdBlock.getFileCommentTxt();
         if (fileComment != null) {
-            ieMea.setValue(ODSHelper.createStringNVU("description", fileComment.getText().trim()));
+            ieMea.setValue(ODSHelper.createStringNVU("desc", fileComment.getText().trim()));
         }
 
         // default date/time handling
@@ -138,7 +140,6 @@ public class AoSessionWriter {
         // special date/time handling
         handleCLExportDate(ieMea, hdBlock, fileComment);
 
-        ieMea.setValue(ODSHelper.createLongNVU("iType", 1));
         ieMea.addInstanceAttribute(ODSHelper.createStringNVU("author", hdBlock.getAuthor().trim()));
         ieMea.addInstanceAttribute(ODSHelper.createStringNVU("organization", hdBlock.getDepartment().trim()));
         ieMea.addInstanceAttribute(ODSHelper.createStringNVU("project", hdBlock.getProjectName().trim()));
@@ -148,7 +149,7 @@ public class AoSessionWriter {
         Map<String, Integer> meqNames = new HashMap<String, Integer>();
 
         // write 'AoSubMatrix' instances
-        writeSm(ieMea, idBlock, hdBlock, meqNames);
+        writeSm(modelCache, ieMea, idBlock, hdBlock, meqNames);
 
         return ieMea;
     }
@@ -156,18 +157,17 @@ public class AoSessionWriter {
     /**
      * Write the instances of 'AoSubMatrix'.
      * 
+     * @param modelCache The application model cache.
      * @param ieMea The instance of 'AoMeasurement'.
      * @param hdBlock The HDBLOCK.
      * @param meqNames
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private void writeSm(InstanceElement ieMea, IDBLOCK idBlock, HDBLOCK hdBlock, Map<String, Integer> meqNames)
-            throws AoException, IOException {
-        ApplicationStructure as = ieMea.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeMea = as.getElementByName("mea");
-        ApplicationElement aeSm = as.getElementByName("sm");
-        ApplicationRelation relMeaSm = as.getRelations(aeMea, aeSm)[0];
+    private void writeSm(ODSModelCache modelCache, InstanceElement ieMea, IDBLOCK idBlock, HDBLOCK hdBlock,
+            Map<String, Integer> meqNames) throws AoException, IOException {
+        ApplicationElement aeSm = modelCache.getApplicationElement("sm");
+        ApplicationRelation relMeaSm = modelCache.getApplicationRelation("mea", "sm", "sms");
 
         // iterate over data group blocks
         int grpNo = 1;
@@ -190,16 +190,18 @@ public class AoSessionWriter {
                 // create SubMatrix instance
                 InstanceElement ieSm = aeSm.createInstance("sm_" + countFormat.format(grpNo));
                 ieMea.createRelation(relMeaSm, ieSm);
-                ieSm.setValue(ODSHelper.createLongNVU("number_of_rows", (int) cgBlock.getNoOfRecords()));
 
-                // set channel group comment to SubMatrix description
+                List<NameValueUnit> nvuList = new ArrayList<NameValueUnit>(3);
+                nvuList.add(ODSHelper.createLongNVU("rows", (int) cgBlock.getNoOfRecords()));
+                // TODO: parse name: DATA_SysOpmHvES.SysOpmHvES_wElMinDrv_C_VW\ETKC:1\SingleShotGroup
                 TXBLOCK channelGroupComment = cgBlock.getChannelGroupComment();
                 if (channelGroupComment != null) {
-                    ieSm.setValue(ODSHelper.createStringNVU("description", channelGroupComment.getText()));
+                    nvuList.add(ODSHelper.createStringNVU("desc", channelGroupComment.getText()));
                 }
+                ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
                 // write LocalColumns
-                writeLc(ieMea, ieSm, idBlock, dgBlock, cgBlock, meqNames);
+                writeLc(modelCache, ieMea, ieSm, idBlock, dgBlock, cgBlock, meqNames);
             }
 
             dgBlock = dgBlock.getNextDgBlock();
@@ -210,6 +212,7 @@ public class AoSessionWriter {
     /**
      * Write the instances of 'AoLocalColumn'.
      * 
+     * @param modelCache The application model cache.
      * @param ieMea The instance of 'AoMeasurement'.
      * @param ieSm The instance of 'AoSubMatrix'.
      * @param dgBlock The MDF data group block.
@@ -217,23 +220,13 @@ public class AoSessionWriter {
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private void writeLc(InstanceElement ieMea, InstanceElement ieSm, IDBLOCK idBlock, DGBLOCK dgBlock,
-            CGBLOCK cgBlock, Map<String, Integer> meqNames) throws AoException, IOException {
-        ApplicationStructure as = ieSm.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeMea = as.getElementByName("mea");
-        ApplicationElement aeMeq = as.getElementByName("meq");
-        ApplicationElement aeSm = as.getElementByName("sm");
-        ApplicationElement aeLc = as.getElementByName("lc");
-        // many relation from AoLocalColumn to AoSubMatrix may exist
-        ApplicationRelation relSmLc = null;
-        for (ApplicationRelation r : as.getRelations(aeSm, aeLc)) {
-            if (r.getBaseRelation().getRelationName().equals("local_columns")) {
-                relSmLc = r;
-                break;
-            }
-        }
-        ApplicationRelation relMeaMeq = as.getRelations(aeMea, aeMeq)[0];
-        ApplicationRelation relLcMeq = as.getRelations(aeLc, aeMeq)[0];
+    private void writeLc(ODSModelCache modelCache, InstanceElement ieMea, InstanceElement ieSm, IDBLOCK idBlock,
+            DGBLOCK dgBlock, CGBLOCK cgBlock, Map<String, Integer> meqNames) throws AoException, IOException {
+        ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
+        ApplicationElement aeLc = modelCache.getApplicationElement("lc");
+        ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
+        ApplicationRelation relMeaMeq = modelCache.getApplicationRelation("mea", "meq", "meqs");
+        ApplicationRelation relLcMeq = modelCache.getApplicationRelation("lc", "meq", "meq");
 
         // iterate over channel blocks
         CNBLOCK cnBlock = cgBlock.getFirstCnBlock();
@@ -267,37 +260,40 @@ public class AoSessionWriter {
             CCBLOCK ccBlock = cnBlock.getCcBlock();
             InstanceElement ieLc = aeLc.createInstance(meqName);
             ieSm.createRelation(relSmLc, ieLc);
+
+            List<NameValueUnit> nvuLcList = new ArrayList<NameValueUnit>(8);
             // sequence_representation
             int seqRep = getSeqRep(ccBlock, meqName);
             if (cnBlock.getNumberOfBits() == 1) { // bit will be stored as bytes
                 seqRep = 7;
             }
-            ieLc.setValue(ODSHelper.createEnumNVU("seq_rep", seqRep));
+            nvuLcList.add(ODSHelper.createEnumNVU("srp", seqRep));
             // independent flag
             short idp = cnBlock.getChannelType() > 0 ? (short) 1 : (short) 0;
-            ieLc.setValue(ODSHelper.createShortNVU("idp", idp));
+            nvuLcList.add(ODSHelper.createShortNVU("idp", idp));
             // global flag
-            ieLc.setValue(ODSHelper.createShortNVU("global", (short) 15));
+            nvuLcList.add(ODSHelper.createShortNVU("glb", (short) 15));
             // generation parameters
             double[] genParams = getGenerationParameters(ccBlock);
             if (genParams != null && genParams.length > 0) {
-                ieLc.setValue(ODSHelper.createDoubleSeqNVU("gen_params", genParams));
+                nvuLcList.add(ODSHelper.createDoubleSeqNVU("par", genParams));
             }
             // raw_datatype
             int valueType = getValueType(cnBlock);
             int rawDataType = getRawDataTypeForValueType(valueType, cnBlock);
-            ieLc.setValue(ODSHelper.createEnumNVU("raw_datatype", rawDataType));
+            nvuLcList.add(ODSHelper.createEnumNVU("rdt", rawDataType));
             // axistype
             int axistype = cnBlock.getChannelType() == 0 ? 1 : 0;
-            ieLc.setValue(ODSHelper.createEnumNVU("axistype", axistype));
+            nvuLcList.add(ODSHelper.createEnumNVU("axistype", axistype));
             // minimum
             if (cnBlock.isKnownImplValue()) {
-                ieLc.setValue(ODSHelper.createDoubleNVU("min", cnBlock.getMinImplValue()));
-                ieLc.setValue(ODSHelper.createDoubleNVU("max", cnBlock.getMaxImplValue()));
+                nvuLcList.add(ODSHelper.createDoubleNVU("min", cnBlock.getMinImplValue()));
+                nvuLcList.add(ODSHelper.createDoubleNVU("max", cnBlock.getMaxImplValue()));
             }
+            ieLc.setValueSeq(nvuLcList.toArray(new NameValueUnit[0]));
 
             // create 'AoExternalComponent' instance
-            writeEc(ieLc, idBlock, dgBlock, cgBlock, cnBlock);
+            writeEc(modelCache, ieLc, idBlock, dgBlock, cgBlock, cnBlock);
 
             // create 'AoMeasurementQuantity' instance if not yet existing
             InstanceElementIterator iter = ieMea.getRelatedInstances(relMeaMeq, meqName);
@@ -306,14 +302,14 @@ public class AoSessionWriter {
                 ieMeq = iter.nextOne();
             } else {
                 ieMeq = aeMeq.createInstance(meqName);
-                ieMeq.setValue(ODSHelper.createStringNVU("description", cnBlock.getSignalDescription().trim()));
+                ieMeq.setValue(ODSHelper.createStringNVU("desc", cnBlock.getSignalDescription().trim()));
                 ieMeq.setValue(ODSHelper.createEnumNVU("dt", getDataType(cnBlock, ccBlock)));
                 if (ccBlock != null && ccBlock.isKnownPhysValue()) {
                     ieMeq.setValue(ODSHelper.createDoubleNVU("min", ccBlock.getMinPhysValue()));
                     ieMeq.setValue(ODSHelper.createDoubleNVU("max", ccBlock.getMaxPhysValue()));
                 }
                 if (device != null && device.length() > 0) {
-                    ieMeq.setValue(ODSHelper.createStringNVU("Device", device));
+                    ieMeq.setValue(ODSHelper.createStringNVU("src_path", device));
                 }
                 // CEBLOCK (extension block) info
                 CEBLOCK ceBlock = cnBlock.getCeblock();
@@ -402,37 +398,50 @@ public class AoSessionWriter {
         }
     }
 
-    private InstanceElement writeEc(InstanceElement ieLc, IDBLOCK idBlock, DGBLOCK dgBlock, CGBLOCK cgBlock,
-            CNBLOCK cnBlock) throws AoException, IOException {
+    /**
+     * Write the instances of 'AoExternalComponent'.
+     * 
+     * @param modelCache The application model cache.
+     * @param ieLc The instance of 'AoLocalColumn'.
+     * @param dgBlock The MDF data group block.
+     * @param cgBlock The MDF channel group block.
+     * @param cnBlock The MDF channel block.
+     * @throws AoException Error writing to session.
+     * @throws IOException Error reading from MDF file.
+     */
+    private InstanceElement writeEc(ODSModelCache modelCache, InstanceElement ieLc, IDBLOCK idBlock, DGBLOCK dgBlock,
+            CGBLOCK cgBlock, CNBLOCK cnBlock) throws AoException, IOException {
         // write data to own file if data cannot be referenced:
         // * data type = dt_string
         if (cnBlock.getSignalDataType() == 7) {
-            throw new IOException("Unable to reference into MDF3, writing values to own file: " + cnBlock);
+            // throw new IOException("Unable to reference into MDF3, writing values to own file: " + cnBlock);
+            LOG.warn("Unable to reference into MDF3, writing values to own file.");
         }
 
-        ApplicationStructure as = ieLc.getApplicationElement().getApplicationStructure();
-        ApplicationElement aeLc = as.getElementByName("lc");
-        ApplicationElement aeEc = as.getElementByName("ec");
-        ApplicationRelation relLcEc = as.getRelations(aeLc, aeEc)[0];
-        InstanceElement ieEc = aeEc.createInstance("extcomp");
-        Path mdfFilePath = idBlock.getMdfFilePath();
+        ApplicationElement aeEc = modelCache.getApplicationElement("ec");
+        ApplicationRelation relLcEc = modelCache.getApplicationRelation("lc", "ec", "ecs");
+        InstanceElement ieEc = aeEc.createInstance("ec_" + this.countFormat.format(1));
+
+        List<NameValueUnit> nvuEcList = new ArrayList<>();
+        Path mdfFilePath = idBlock.getMdfFilePath().getFileName();
         if (mdfFilePath == null) {
             throw new IOException("mdfFilePath must not be null");
         }
-        ieEc.setValue(ODSHelper.createStringNVU("filename_url", mdfFilePath.getFileName().toString()));
-        ieEc.setValue(ODSHelper.createEnumNVU("type", getValueType(cnBlock)));
-        ieEc.setValue(ODSHelper.createLongLongNVU("sofs", dgBlock.getLnkDataRecords()));
-        ieEc.setValue(ODSHelper.createLongNVU("length", (int) cgBlock.getNoOfRecords()));
-        ieEc.setValue(ODSHelper.createLongNVU("valperblock", 1));
+        nvuEcList.add(ODSHelper.createStringNVU("fl", mdfFilePath.toString()));
+        nvuEcList.add(ODSHelper.createEnumNVU("vt", getValueType(cnBlock)));
+        nvuEcList.add(ODSHelper.createLongLongNVU("so", dgBlock.getLnkDataRecords()));
+        nvuEcList.add(ODSHelper.createLongNVU("cl", (int) cgBlock.getNoOfRecords()));
+        nvuEcList.add(ODSHelper.createLongNVU("vb", 1));
         int recordIdOffset = (dgBlock.getNoRecordIds() > 0) ? 1 : 0;
-        ieEc.setValue(ODSHelper.createLongNVU("blocksize", cgBlock.getDataRecordSize() + recordIdOffset));
+        nvuEcList.add(ODSHelper.createLongNVU("bs", cgBlock.getDataRecordSize() + recordIdOffset));
         int valOffset = recordIdOffset + cnBlock.getByteOffset() + (cnBlock.getNumberOfFirstBits() / 8);
-        ieEc.setValue(ODSHelper.createLongNVU("valoffset", valOffset));
+        nvuEcList.add(ODSHelper.createLongNVU("vo", valOffset));
         short bitOffset = (short) (cnBlock.getNumberOfFirstBits() % 8);
         if ((bitOffset != 0) || ((cnBlock.getNumberOfBits() % 8) != 0) || (cnBlock.getNumberOfBits() == 24)) {
-            ieEc.setValue(ODSHelper.createShortNVU("bitoffset", bitOffset));
-            ieEc.setValue(ODSHelper.createShortNVU("bitcount", (short) cnBlock.getNumberOfBits()));
+            nvuEcList.add(ODSHelper.createShortNVU("bo", bitOffset));
+            nvuEcList.add(ODSHelper.createShortNVU("bc", (short) cnBlock.getNumberOfBits()));
         }
+        ieEc.setValueSeq(nvuEcList.toArray(new NameValueUnit[0]));
         ieLc.createRelation(relLcEc, ieEc);
         return ieEc;
     }

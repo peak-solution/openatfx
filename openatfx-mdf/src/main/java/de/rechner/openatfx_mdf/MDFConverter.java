@@ -95,6 +95,7 @@ public class MDFConverter {
             throw new ConvertException("mdfFile must not be null!");
         }
 
+        long start = System.currentTimeMillis();
         SeekableByteChannel sbc = null;
         try {
             // copy ATFX file to temporary directory
@@ -123,6 +124,7 @@ public class MDFConverter {
                 writer.writeTst(modelCache, idBlock);
             }
 
+            LOG.info("Read MDF header in " + (System.currentTimeMillis() - start) + "ms");
             return aoSession;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
