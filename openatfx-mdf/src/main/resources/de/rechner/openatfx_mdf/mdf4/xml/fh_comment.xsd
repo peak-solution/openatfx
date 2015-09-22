@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.asam.net/mdf/v4" targetNamespace="http://www.asam.net/mdf/v4" elementFormDefault="qualified">
+	<xs:include schemaLocation="mdf_base.xsd"/>
+	<xs:element name="FHcomment">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="text_elements"/>
+				<xs:element name="tool_id" type="base_name">
+					<xs:annotation>
+						<xs:documentation>Name/identification of the tool that has written this log entry.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="tool_vendor" type="base_name">
+					<xs:annotation>
+						<xs:documentation>Name of the vendor/author of the tool.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="tool_version" type="base_version">
+					<xs:annotation>
+						<xs:documentation>Version info about the tool that has written this log entry.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="user_name" type="base_name" minOccurs="0">
+					<xs:annotation>
+						<xs:documentation>Name/identification of the user who has written this log entry</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:group ref="user_defined"/>
+			</xs:sequence>
+			<xs:attributeGroup ref="root_attributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:annotation>
+		<xs:appinfo>
+			<schema_info xmlns="http://www.asam.net/mdf/v4/schema" block_name="##FH" element_name="fh_md_comment"/>
+		</xs:appinfo>
+	</xs:annotation>
+</xs:schema>

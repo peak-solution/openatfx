@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.asam.net/mdf/v4" targetNamespace="http://www.asam.net/mdf/v4" elementFormDefault="qualified">
+	<xs:include schemaLocation="mdf_base.xsd"/>
+	<xs:element name="CCunit">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="text_elements"/>
+				<xs:group ref="unit_elements"/>
+				<xs:group ref="user_defined"/>
+			</xs:sequence>
+			<xs:attributeGroup ref="root_attributes"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:annotation>
+		<xs:appinfo>
+			<schema_info xmlns="http://www.asam.net/mdf/v4/schema" block_name="##CC" element_name="cc_md_unit"/>
+		</xs:appinfo>
+	</xs:annotation>
+</xs:schema>

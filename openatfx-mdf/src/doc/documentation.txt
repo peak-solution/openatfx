@@ -1,0 +1,60 @@
+openATFX MDF4 driver
+====================
+
+Description
+============================
+TODO
+
+
+Java code example for opening a ASAM ODS session on an ATFX file:
+=================================================================
+
+TODO
+
+
+Known bugs/missing features:
+============================
+BLOCKs
+------
+* IDBLOCK
+  - id_unfin_flags must be 0
+  - id_custom_unfin_flags must be 0
+* HDBLOCK
+  - hd_ch_first must be 0 (channel hierarchy not yet supported)
+  - hd_flags must be 0 [bits 00] (start angle value below is invalid, start distance value below is invalid)
+* CHBLOCK: not yet supported, will be ignored with warning
+* ATBLOCK: not yet supported, will be ignored with warning
+* EVBLOCK: not yet supported, will be ignored with warning
+* DGBLOCK
+  - may contain only ONE channel group (sorted MDF), otherwise an exception is thrown
+  - dg_md_comment will be ignored with warning
+* CGBLOCK
+  - cg_flags must be null (VLSD and bus events not supported), otherwise an exception is thrown
+  - cg_inval_bytes must be null (invalidation bits not supported), otherwise an exception is thrown
+  
+* CNBLOCK
+  - cn_composition must be null (composition not supported), otherwise an exception is thrown
+  - cn_at_reference: not yet supported, will be ignored with warning
+  - cn_limit_min: not yet supported, will be ignored with warning
+  - cn_limit_max: not yet supported, will be ignored with warning
+  - cn_limit_ext_min: not yet supported, will be ignored with warning
+  - cn_limit_ext_max: not yet supported, will be ignored with warning
+
+
+XML content
+-----------
+* mdf_base.xsd
+  - type 'common_properties'
+   - 'tree' will be ignored with warning
+   - 'list' will be ignored with warning
+   - 'elist' will be ignored with warning
+* hd_comment.xsd
+  - 'constants' will be ignored with warning
+  - 'UNIT-SPEC' will be ignored with warning
+* cg_comment.xsd
+  - 'names' will be ignored with warning
+* si_comment.xsd
+  - 'names' will be ignored with warning
+  - 'path' will be ignored with warning
+  - 'bus' will be ignored with warning
+  - 'protocol' will be ignored with warning
