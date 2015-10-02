@@ -518,6 +518,11 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             valueSeq.u.byteVal(new byte[count]);
             Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
         }
+        // DS_STRING
+        else if (targetDt == DataType.DS_STRING) {
+            valueSeq.u.stringVal(new String[count]);
+
+        }
         // unsupported
         else {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,

@@ -568,6 +568,7 @@ public class AoSessionImpl extends AoSessionPOA {
         }
         this.modelPOA.destroy(false, false);
         LOG.info("Closed ATFX AoSession");
+        System.gc();
     }
 
     /**

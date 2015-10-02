@@ -23,6 +23,13 @@
 
 1. Changes
 
+	0.6.1 (Christian Rechner)
+	
+		- Call garbage collector on session close
+		- Improved method 'AppElemAccess->getInstances()'
+		- Added support for sequence_representation=implicit_linear of type DT_STRING
+
+
 	0.6.0 (Christian Rechner)
 	
 		- Added license file for LGPL license

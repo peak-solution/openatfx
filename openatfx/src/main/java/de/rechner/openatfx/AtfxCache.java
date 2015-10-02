@@ -786,6 +786,11 @@ class AtfxCache {
                 int genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
                 if (this.instanceValueMap.get(aid).get(iid).get(genParamsAttrNo) == null) {
                     int valuesAttrNo = getAttrNoByBaName(aid, "values");
+                    TS_Value val = getInstanceValue(aid, valuesAttrNo, iid);
+                    // generation parameters for 'implicit_constant' may be datatype DT_STRING
+                    if (val.u.discriminator() == DataType.DS_STRING) {
+                        return ODSHelper.createEmptyTS_Value(DataType.DS_DOUBLE);
+                    }
                     return ODSHelper.convertTsValue(getInstanceValue(aid, valuesAttrNo, iid), DataType.DS_DOUBLE);
                 }
             }

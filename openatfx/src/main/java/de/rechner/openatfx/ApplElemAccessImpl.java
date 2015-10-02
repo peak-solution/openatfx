@@ -338,15 +338,21 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
         // get instance ids
         Collection<Long> iids = new LinkedHashSet<Long>(0);
-        if (aoq.relName == null || aoq.relName.length() < 1) { // all
+        if (aoq.relName == null || aoq.relName.length() < 1) { // all of application element
             iids = this.atfxCache.getInstanceIds(ODSHelper.asJLong(aoq.anuSeq[0].attr.aid));
         } else { // filtered
             long aid = ODSHelper.asJLong(aoq.relInst.aid);
             long iid = ODSHelper.asJLong(aoq.relInst.iid);
             ApplicationRelation rel = atfxCache.getApplicationRelationByName(aid, aoq.relName);
+            // dirty hack for dirty clients: lookup inverse relation
             if (rel == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Application relation '"
-                        + aoq.relName + "' not found!");
+                rel = atfxCache.getApplicationRelationByName(ODSHelper.asJLong(aoq.anuSeq[0].attr.aid), aoq.relName);
+                rel = this.atfxCache.getInverseRelation(rel);
+            }
+            if (rel == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Application relation [aid=" + aid
+                        + ",aeName=" + this.atfxCache.getApplicationElementNameById(aid) + ",relName=" + aoq.relName
+                        + "] not found!");
             }
             iids = this.atfxCache.getRelatedInstanceIds(aid, iid, rel);
         }
@@ -365,7 +371,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             ers.attrValues[i].attrValues.valName = aoq.anuSeq[i].attr.aaName;
             ers.attrValues[i].attrValues.value = atfxCache.getInstanceValues(aid, attrNo, iids);
         }
-
         return new ElemResultSet[] { ers };
     }
 
