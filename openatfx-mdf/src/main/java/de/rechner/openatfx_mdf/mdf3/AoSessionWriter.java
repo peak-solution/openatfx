@@ -30,6 +30,7 @@ import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx_mdf.ConvertException;
 import de.rechner.openatfx_mdf.util.FileUtil;
+import de.rechner.openatfx_mdf.util.LookupTableHelper;
 import de.rechner.openatfx_mdf.util.ODSHelper;
 import de.rechner.openatfx_mdf.util.ODSModelCache;
 
@@ -44,10 +45,12 @@ public class AoSessionWriter {
     private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
     private static final String MDF_DATEFORMAT = "dd:MM:yyyy HH:mm:ss";
 
-    /** The number format having 4 digits used for count formatting */
+    /** The number format having 5 digits used for count formatting */
     private final NumberFormat countFormat;
 
     private final DateFormat mdfDateFormat;
+
+    private final LookupTableHelper lookupTableHelper;
 
     /**
      * Constructor.
@@ -55,6 +58,7 @@ public class AoSessionWriter {
     public AoSessionWriter() {
         this.mdfDateFormat = new SimpleDateFormat(MDF_DATEFORMAT);
         this.countFormat = new DecimalFormat("00000");
+        this.lookupTableHelper = new LookupTableHelper();
     }
 
     /**
@@ -336,13 +340,18 @@ public class AoSessionWriter {
 
             // special handling for formula 11 'ASAM-MCD2 Text Table, (COMPU_VTAB)': create lookup table
             if ((ccBlock != null) && (ccBlock.getFormulaIdent() == 11)) {
-                LOG.warn("Implement 'createMCD2TextTableMeasurement'");
-                // LookupTableHelper.createMCD2TextTableMeasurement(ieMea, ieLc, cnBlock, ccBlock);
+                double[] keys = ccBlock.getKeysForTextTable();
+                String[] values = ccBlock.getValuesForTextTable();
+                this.lookupTableHelper.createMCD2TextTableMeasurement(modelCache, ieMea, ieLc, keys, values);
             }
             // special handling for formula 12 'ASAM-MCD2 Text Range Table (COMPU_VTAB_RANGE)': create lookup table
             else if ((ccBlock != null) && (ccBlock.getFormulaIdent() == 12)) {
-                LOG.warn("Implement 'createMCD2TextTableMeasurement'");
-                // LookupTableHelper.createMCD2TextRangeTableMeasurement(ieMea, ieLc, cnBlock, ccBlock);
+                double[] keysMin = ccBlock.getLowerRangeKeysForTextRangeTable();
+                double[] keysMax = ccBlock.getUpperRangeKeysForTextRangeTable();
+                String[] values = ccBlock.getValuesForTextRangeTable();
+                String defaultValue = ccBlock.getDefaultTextForTextRangeTable();
+                this.lookupTableHelper.createMCD2TextRangeTableMeasurement(modelCache, ieMea, ieLc, keysMin, keysMax,
+                                                                           values, defaultValue);
             }
 
             // jump to next channel

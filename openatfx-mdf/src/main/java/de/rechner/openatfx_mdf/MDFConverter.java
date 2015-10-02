@@ -30,6 +30,8 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.IFileHandler;
+import de.rechner.openatfx_mdf.util.FileUtil;
 import de.rechner.openatfx_mdf.util.ODSModelCache;
 
 
@@ -79,48 +81,121 @@ public class MDFConverter {
     }
 
     /**
-     * Opens an MDF file and gives full access to all its contents via the ASAM ODS OO-API interface.
+     * Writes the ATFX header file for given ATFX.<br/>
+     * The file will get the same file name as the MDF file with suffix '.atfx'.<br/>
+     * If the file already exists
      * 
      * @param orb The ORB.
-     * @param mdfFilePath The source file, may point to a MDF3 or MDF4 file.
-     * @return The ASAM ODS session object.
-     * @throws AoException Error creating ASAM ODS session.
-     * @throws IOException Error reading MDF file.
+     * @param mdfPath The source file, may point to a MDF3 or MDF4 file.
+     * @throws ConvertException
      */
-    public AoSession getAoSessionForMDF(ORB orb, Path mdfFilePath) throws ConvertException {
+    public void writeATFXHeader(ORB orb, Path mdfPath) throws ConvertException {
         if (orb == null) {
             throw new ConvertException("orb must not be null!");
         }
-        if (mdfFilePath == null) {
+        if (mdfPath == null) {
+            throw new ConvertException("mdfFile must not be null!");
+        }
+
+        long start = System.currentTimeMillis();
+        AoSession aoSession = null;
+        SeekableByteChannel sbc = null;
+        try {
+            // obtain target file name, overwrite if existing
+            File mdfFile = mdfPath.toFile();
+            String fileName = FileUtil.getFileNameWithoutExtension(mdfFile.getName()) + ".atfx";
+            File targetAtfxFile = new File(mdfFile.getParentFile(), fileName);
+            copyATFXfromTemplate(targetAtfxFile);
+
+            // create new AoSession
+            aoSession = AoServiceFactory.getInstance().newAoSession(orb, targetAtfxFile);
+            aoSession.setContextString("WRITE_EXTERNALCOMPONENTS", "TRUE");
+            aoSession.setContextString("write_mode", "database");
+            ODSModelCache modelCache = new ODSModelCache(aoSession);
+            aoSession.startTransaction();
+
+            // open MDF file
+            sbc = Files.newByteChannel(mdfPath, StandardOpenOption.READ);
+
+            // check whether MDF3 or MDF4 and write MDF content to session
+            String version = readMDFVersion(sbc);
+            if (version.startsWith("3")) {
+                de.rechner.openatfx_mdf.mdf3.AoSessionWriter writer = new de.rechner.openatfx_mdf.mdf3.AoSessionWriter();
+                de.rechner.openatfx_mdf.mdf3.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf3.IDBLOCK.read(mdfPath, sbc);
+                writer.writeTst(modelCache, idBlock);
+            } else if (version.startsWith("4")) {
+                de.rechner.openatfx_mdf.mdf4.AoSessionWriter writer = new de.rechner.openatfx_mdf.mdf4.AoSessionWriter();
+                de.rechner.openatfx_mdf.mdf4.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf4.IDBLOCK.read(mdfPath, sbc);
+                writer.writeTst(modelCache, idBlock);
+            }
+
+            aoSession.commitTransaction();
+
+            LOG.info("Wrote ATFX header '" + targetAtfxFile + "' in " + (System.currentTimeMillis() - start) + "ms");
+        } catch (IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new ConvertException(e.getMessage(), e);
+        } catch (AoException e) {
+            LOG.error(e.reason, e);
+            throw new ConvertException(e.reason, e);
+        } finally {
+            if (sbc != null) {
+                try {
+                    sbc.close();
+                } catch (IOException e) {
+                    LOG.error(e.getMessage(), e);
+                    throw new ConvertException(e.getMessage(), e);
+                }
+            }
+            if (aoSession != null) {
+                try {
+                    aoSession.close();
+                } catch (AoException e) {
+                    LOG.error(e.reason, e);
+                    throw new ConvertException(e.reason, e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Opens an MDF file and gives full access to all its contents via the ASAM ODS OO-API interface.
+     * 
+     * @param orb The ORB.
+     * @param mdfPath The source file, may point to a MDF3 or MDF4 file.
+     * @return The ASAM ODS session object.
+     * @throws ConvertException Error opening the session.
+     */
+    public AoSession getAoSessionForMDF(ORB orb, Path mdfPath) throws ConvertException {
+        if (orb == null) {
+            throw new ConvertException("orb must not be null!");
+        }
+        if (mdfPath == null) {
             throw new ConvertException("mdfFile must not be null!");
         }
 
         long start = System.currentTimeMillis();
         SeekableByteChannel sbc = null;
         try {
-            // copy ATFX file to temporary directory
-            File tmpAtfx = File.createTempFile("openatfx-mdf-", ".atfx");
-            tmpAtfx.deleteOnExit();
-            copyATFXfromTemplate(tmpAtfx);
-
             // create new AoSession
-            AoSession aoSession = AoServiceFactory.getInstance().newAoSession(orb, tmpAtfx);
+            IFileHandler fileHandler = new TmpFileHandler();
+            AoSession aoSession = AoServiceFactory.getInstance().newAoSession(orb, fileHandler, mdfPath.toString());
             ODSModelCache modelCache = new ODSModelCache(aoSession);
+            aoSession.setContextString("WRITE_EXTERNALCOMPONENTS", "TRUE");
+            aoSession.setContextString("write_mode", "database");
 
-            // open MDF4 file
-            sbc = Files.newByteChannel(mdfFilePath, StandardOpenOption.READ);
+            // open MDF file
+            sbc = Files.newByteChannel(mdfPath, StandardOpenOption.READ);
 
             // check whether MDF3 or MDF4
             String version = readMDFVersion(sbc);
             if (version.startsWith("3")) {
                 de.rechner.openatfx_mdf.mdf3.AoSessionWriter writer = new de.rechner.openatfx_mdf.mdf3.AoSessionWriter();
-                de.rechner.openatfx_mdf.mdf3.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf3.IDBLOCK.read(mdfFilePath,
-                                                                                                         sbc);
+                de.rechner.openatfx_mdf.mdf3.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf3.IDBLOCK.read(mdfPath, sbc);
                 writer.writeTst(modelCache, idBlock);
             } else if (version.startsWith("4")) {
                 de.rechner.openatfx_mdf.mdf4.AoSessionWriter writer = new de.rechner.openatfx_mdf.mdf4.AoSessionWriter();
-                de.rechner.openatfx_mdf.mdf4.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf4.IDBLOCK.read(mdfFilePath,
-                                                                                                         sbc);
+                de.rechner.openatfx_mdf.mdf4.IDBLOCK idBlock = de.rechner.openatfx_mdf.mdf4.IDBLOCK.read(mdfPath, sbc);
                 writer.writeTst(modelCache, idBlock);
             }
 
@@ -175,7 +250,7 @@ public class MDFConverter {
 
     /**
      * Copies the ATFX template file from the classpath to the target file.
-     * 
+     *
      * @param targetAtfxFile The target file.
      * @throws IOException Error copying file.
      */

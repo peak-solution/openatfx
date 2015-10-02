@@ -332,13 +332,6 @@
 				<base_relation>submatrices</base_relation>
 				<inverse_name>mea</inverse_name>
 			</relation_attribute>
-			<relation_attribute>
-				<name>pas</name>
-				<ref_to>pas</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>Many</max_occurs>
-				<inverse_name>mea</inverse_name>
-			</relation_attribute>
 		</application_element>
 		<application_element>
 			<name>meq</name>
@@ -420,82 +413,6 @@
 				<ref_to>qua</ref_to>
 				<base_relation>quantity</base_relation>
 				<inverse_name>meqs</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>pas</name>
-				<ref_to>pas</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>Many</max_occurs>
-				<inverse_name>meq</inverse_name>
-			</relation_attribute>
-		</application_element>
-		<application_element>
-			<name>pas</name>
-			<basetype>AoParameterSet</basetype>
-			<application_attribute>
-				<name>iid</name>
-				<base_attribute>id</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>iname</name>
-				<base_attribute>name</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>ver</name>
-				<base_attribute>version</base_attribute>
-			</application_attribute>
-			<relation_attribute>
-				<name>par</name>
-				<ref_to>par</ref_to>
-				<base_relation>parameters</base_relation>
-				<inverse_name>pas</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>mea</name>
-				<ref_to>mea</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>1</max_occurs>
-				<inverse_name>pas</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>meq</name>
-				<ref_to>meq</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>1</max_occurs>
-				<inverse_name>pas</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>sm</name>
-				<ref_to>sm</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>1</max_occurs>
-				<inverse_name>pas</inverse_name>
-			</relation_attribute>
-		</application_element>
-		<application_element>
-			<name>par</name>
-			<basetype>AoParameter</basetype>
-			<application_attribute>
-				<name>iid</name>
-				<base_attribute>id</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>iname</name>
-				<base_attribute>name</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>val</name>
-				<base_attribute>pvalue</base_attribute>
-			</application_attribute>
-			<application_attribute>
-				<name>dt</name>
-				<base_attribute>parameter_datatype</base_attribute>
-			</application_attribute>
-			<relation_attribute>
-				<name>pas</name>
-				<ref_to>pas</ref_to>
-				<base_relation>parameter_set</base_relation>
-				<inverse_name>par</inverse_name>
 			</relation_attribute>
 		</application_element>
 		<application_element>
@@ -590,13 +507,6 @@
 				<min_occurs>0</min_occurs>
 				<max_occurs>Many</max_occurs>
 				<inverse_name>z-axis-for-y-axis</inverse_name>
-			</relation_attribute>
-			<relation_attribute>
-				<name>pas</name>
-				<ref_to>pas</ref_to>
-				<min_occurs>0</min_occurs>
-				<max_occurs>Many</max_occurs>
-				<inverse_name>sm</inverse_name>
 			</relation_attribute>
 			<!-- <relation_attribute> <name>Describes</name> <ref_to>lc</ref_to> <min_occurs>0</min_occurs> <max_occurs>Many</max_occurs> <inverse_name>LookupTable</inverse_name> </relation_attribute> -->
 		</application_element>

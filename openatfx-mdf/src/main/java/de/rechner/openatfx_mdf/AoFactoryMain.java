@@ -14,9 +14,9 @@ import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 
-public class Main {
+public class AoFactoryMain {
 
-    private static final Log LOG = LogFactory.getLog(Main.class);
+    private static final Log LOG = LogFactory.getLog(AoFactoryMain.class);
 
     public static void main(String[] args) {
         try {

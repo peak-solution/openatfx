@@ -31,7 +31,7 @@ public class AoSessionWriter {
 
     private static final Log LOG = LogFactory.getLog(AoSessionWriter.class);
 
-    /** The number format having 4 digits used for count formatting */
+    /** The number format having 5 digits used for count formatting */
     private final NumberFormat countFormat;
 
     /** The XML parser object used for parsing the embedded XML contents */

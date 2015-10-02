@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>de.rechner</groupId>
 			<artifactId>openatfx</artifactId>
-			<version>0.6.0</version>
+			<version>0.6.1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
