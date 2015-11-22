@@ -28,11 +28,10 @@
 		- Call garbage collector on session close
 		- Improved method 'AppElemAccess->getInstances()'
 		- Added support for sequence_representation=implicit_linear of type DT_STRING
-
+		- Added license file for Apache2 license
 
 	0.6.0 (Christian Rechner)
 	
-		- Added license file for LGPL license
 		- Added interface for file system abstraction layer
 		- Fixed reading flags from either inline XML or component file
 		- Added support for value types:
