@@ -31,11 +31,11 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-public class ReadValuesTest {
+public class ReadValuesFromExampleTest {
 
     private static AoSession aoSession;
-    private static ValueMatrix vmStorage;
-    private static ValueMatrix vmCalculated;
+    private static ValueMatrix vmStorageExample;
+    private static ValueMatrix vmCalculatedExample;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -45,8 +45,8 @@ public class ReadValuesTest {
         ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
         ApplicationElement aeSm = applicationStructure.getElementByName("sm");
         SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
-        vmStorage = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
-        vmCalculated = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
+        vmStorageExample = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+        vmCalculatedExample = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
     }
 
     @AfterClass
@@ -57,8 +57,8 @@ public class ReadValuesTest {
     @Test
     public void testGetMode() {
         try {
-            assertEquals(ValueMatrixMode.STORAGE, vmStorage.getMode());
-            assertEquals(ValueMatrixMode.CALCULATED, vmCalculated.getMode());
+            assertEquals(ValueMatrixMode.STORAGE, vmStorageExample.getMode());
+            assertEquals(ValueMatrixMode.CALCULATED, vmCalculatedExample.getMode());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -67,8 +67,8 @@ public class ReadValuesTest {
     @Test
     public void testGetColumnCount() {
         try {
-            assertEquals(3, vmStorage.getColumnCount());
-            assertEquals(3, vmCalculated.getColumnCount());
+            assertEquals(3, vmStorageExample.getColumnCount());
+            assertEquals(3, vmCalculatedExample.getColumnCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -77,8 +77,8 @@ public class ReadValuesTest {
     @Test
     public void testGetRowCount() {
         try {
-            assertEquals(167, vmStorage.getRowCount());
-            assertEquals(167, vmCalculated.getRowCount());
+            assertEquals(167, vmStorageExample.getRowCount());
+            assertEquals(167, vmCalculatedExample.getRowCount());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -87,11 +87,11 @@ public class ReadValuesTest {
     @Test
     public void testListColumns() {
         try {
-            String[] cols = vmCalculated.listColumns("*");
+            String[] cols = vmCalculatedExample.listColumns("*");
             assertEquals(3, cols.length);
             assertArrayEquals(new String[] { "LS.Right Side", "Time", "LS.Left Side" }, cols);
 
-            cols = vmStorage.listColumns("?ime");
+            cols = vmStorageExample.listColumns("?ime");
             assertEquals(1, cols.length);
             assertArrayEquals(new String[] { "Time" }, cols);
         } catch (AoException e) {
@@ -102,15 +102,15 @@ public class ReadValuesTest {
     @Test
     public void testListIndependentColumns() {
         try {
-            String[] cols = vmCalculated.listIndependentColumns("*");
+            String[] cols = vmCalculatedExample.listIndependentColumns("*");
             assertEquals(1, cols.length);
             assertArrayEquals(new String[] { "Time" }, cols);
 
-            cols = vmStorage.listIndependentColumns("?ime");
+            cols = vmStorageExample.listIndependentColumns("?ime");
             assertEquals(1, cols.length);
             assertArrayEquals(new String[] { "Time" }, cols);
 
-            cols = vmStorage.listIndependentColumns("Left Side");
+            cols = vmStorageExample.listIndependentColumns("Left Side");
             assertEquals(0, cols.length);
         } catch (AoException e) {
             fail(e.reason);
@@ -120,10 +120,10 @@ public class ReadValuesTest {
     @Test
     public void testGetColumns() {
         try {
-            Column[] cols = vmCalculated.getColumns("*");
+            Column[] cols = vmCalculatedExample.getColumns("*");
             assertEquals(3, cols.length);
 
-            cols = vmStorage.getColumns("?ime");
+            cols = vmStorageExample.getColumns("?ime");
             assertEquals(1, cols.length);
         } catch (AoException e) {
             fail(e.reason);
@@ -133,13 +133,13 @@ public class ReadValuesTest {
     @Test
     public void testGetIndependentColumns() {
         try {
-            Column[] cols = vmCalculated.getIndependentColumns("*");
+            Column[] cols = vmCalculatedExample.getIndependentColumns("*");
             assertEquals(1, cols.length);
 
-            cols = vmStorage.getIndependentColumns("?ime");
+            cols = vmStorageExample.getIndependentColumns("?ime");
             assertEquals(1, cols.length);
 
-            cols = vmStorage.getIndependentColumns("Left Side");
+            cols = vmStorageExample.getIndependentColumns("Left Side");
             assertEquals(0, cols.length);
         } catch (AoException e) {
             fail(e.reason);
@@ -149,88 +149,21 @@ public class ReadValuesTest {
     @Test
     public void testGetValueVector() {
         try {
-            Column[] cols = vmCalculated.getColumns("*");
+            Column[] cols = vmCalculatedExample.getColumns("*");
             // whole array
-            TS_ValueSeq seq = vmCalculated.getValueVector(cols[0], 0, 0);
+            TS_ValueSeq seq = vmCalculatedExample.getValueVector(cols[0], 0, 0);
             assertEquals(167, seq.flag.length);
             assertEquals(167, seq.u.floatVal().length);
 
             // part array
-            seq = vmCalculated.getValueVector(cols[0], 100, 3);
+            seq = vmCalculatedExample.getValueVector(cols[0], 100, 3);
             assertEquals(3, seq.flag.length);
             assertEquals(3, seq.u.floatVal().length);
 
             // part array with count overflow
-            seq = vmCalculated.getValueVector(cols[0], 100, 100);
+            seq = vmCalculatedExample.getValueVector(cols[0], 100, 100);
             assertEquals(67, seq.flag.length);
             assertEquals(67, seq.u.floatVal().length);
-
-            // TODO: implicit_constant, numeric datatype
-
-            // TODO: implicit_constant, string datatype
-
-            // TODO: impicit_linear, numeric datatype
-
-        } catch (AoException e) {
-            fail(e.reason);
-        }
-    }
-
-    @Test
-    public void testGetValueVectorImplicitLinear() {
-        try {
-            Column[] cols = vmCalculated.getColumns("*");
-            // whole array
-            TS_ValueSeq seq = vmCalculated.getValueVector(cols[0], 0, 0);
-            assertEquals(167, seq.flag.length);
-            assertEquals(167, seq.u.floatVal().length);
-
-            // part array
-            seq = vmCalculated.getValueVector(cols[0], 100, 3);
-            assertEquals(3, seq.flag.length);
-            assertEquals(3, seq.u.floatVal().length);
-
-            // part array with count overflow
-            seq = vmCalculated.getValueVector(cols[0], 100, 100);
-            assertEquals(67, seq.flag.length);
-            assertEquals(67, seq.u.floatVal().length);
-
-            // TODO: implicit_constant, numeric datatype
-
-            // TODO: implicit_constant, string datatype
-
-            // TODO: impicit_linear, numeric datatype
-
-        } catch (AoException e) {
-            fail(e.reason);
-        }
-    }
-
-    @Test
-    public void testGetValueVectorImplicitConstant() {
-        try {
-            Column[] cols = vmCalculated.getColumns("*");
-            // whole array
-            TS_ValueSeq seq = vmCalculated.getValueVector(cols[0], 0, 0);
-            assertEquals(167, seq.flag.length);
-            assertEquals(167, seq.u.floatVal().length);
-
-            // part array
-            seq = vmCalculated.getValueVector(cols[0], 100, 3);
-            assertEquals(3, seq.flag.length);
-            assertEquals(3, seq.u.floatVal().length);
-
-            // part array with count overflow
-            seq = vmCalculated.getValueVector(cols[0], 100, 100);
-            assertEquals(67, seq.flag.length);
-            assertEquals(67, seq.u.floatVal().length);
-
-            // TODO: implicit_constant, numeric datatype
-
-            // TODO: implicit_constant, string datatype
-
-            // TODO: impicit_linear, numeric datatype
-
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -257,7 +190,7 @@ public class ReadValuesTest {
     }
 
     public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ReadValuesTest.class);
+        return new JUnit4TestAdapter(ReadValuesFromExampleTest.class);
     }
 
 }

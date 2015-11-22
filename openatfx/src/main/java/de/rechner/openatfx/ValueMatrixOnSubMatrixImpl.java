@@ -349,8 +349,24 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
 
         // implicit_constant (=1)
         else if (seqReq == 1) {
-            NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
-            handleValuesImplicitConstant(genParams.value.u.doubleSeq(), valueSeq, targetDt, count);
+            double[] genParams = new double[0];
+            // read generation parameters from base attribute 'generation_parameters'
+            NameValueUnit genParamsNvu = ieLc.getValueByBaseName("generation_parameters");
+            if (genParamsNvu != null && genParamsNvu.value.flag == 15) {
+                genParams = genParamsNvu.value.u.doubleSeq();
+            }
+            // read generation parameters from values if base attribute empty (e.g. for datatype DT_STRING)
+            else {
+                genParamsNvu = ieLc.getValueByBaseName("values");
+            }
+
+            // special case: implicit_constant may be DT_STRING
+            if (targetDt == DataType.DT_STRING) {
+                valueSeq.u.stringVal(new String[count]);
+                Arrays.fill(valueSeq.u.stringVal(), genParamsNvu.value.u.stringSeq()[0]);
+            } else {
+                handleValuesImplicitConstant(genParams, valueSeq, targetDt, count);
+            }
         }
 
         // implicit_linear (=2)
@@ -517,11 +533,6 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         else if (targetDt == DataType.DS_BYTE) {
             valueSeq.u.byteVal(new byte[count]);
             Arrays.fill(valueSeq.u.byteVal(), genParam.byteValue());
-        }
-        // DS_STRING
-        else if (targetDt == DataType.DS_STRING) {
-            valueSeq.u.stringVal(new String[count]);
-
         }
         // unsupported
         else {

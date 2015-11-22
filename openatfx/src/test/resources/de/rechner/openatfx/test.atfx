@@ -475,11 +475,10 @@
 			<Maximum>3.800000e+01</Maximum>
 			<Average>1.900000e+01</Average>
 		</Measurementquantity>
-
 		<Measurementquantity>
 			<Id>6</Id>
 			<Name>implicit_linear</Name>
-			<DataType>DT_DOUBLE</DataType>
+			<DataType>DT_FLOAT</DataType>
 			<Measurement>1</Measurement>
 			<LocalColumns>6</LocalColumns>
 			<Quantity>2</Quantity>
@@ -487,7 +486,7 @@
 		<Measurementquantity>
 			<Id>7</Id>
 			<Name>implicit_constant</Name>
-			<DataType>DT_DOUBLE</DataType>
+			<DataType>DT_FLOAT</DataType>
 			<Measurement>1</Measurement>
 			<LocalColumns>7</LocalColumns>
 			<Quantity>2</Quantity>
@@ -590,7 +589,7 @@
 			<MeasurementQuantity>8</MeasurementQuantity>
 			<Values>
 				<A_UTF8STRING>
-					<s>{LINEAR_CONV "1*{X}+0"}</s>
+					<s>const</s>
 				</A_UTF8STRING>
 			</Values>
 		</Localcolumn>
