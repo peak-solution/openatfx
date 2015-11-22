@@ -1,3 +1,5 @@
+openATFX
+
 Copyright 2015 Christian Rechner
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,3 +13,13 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. 
+
+The place of jurisdiction for this software is Ingolstadt, Germany.
+
+Following dependencies are needed to run this library:
+- commons-logging: Apache 2 license
+- commons-math: Apache 2 license
+- Log4j: Apache 2 license
+- JUnit: Eclipse Public License 1.0
+- Woodstox: LGPL
+- StAX API: BSD License

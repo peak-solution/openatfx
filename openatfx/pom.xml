@@ -13,10 +13,18 @@
 		</developer>
 	</developers>
 
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
+
 	<scm>
-		<url>https://svn.code.sf.net/p/openatfx/code/</url>
-		<connection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</connection>
-		<developerConnection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/</developerConnection>
+		<url>https://svn.code.sf.net/p/openatfx/code/trunk/openatfx/</url>
+		<connection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/openatfx/</connection>
+		<developerConnection>scm:svn:https://svn.code.sf.net/p/openatfx/code/trunk/openatfx/</developerConnection>
 	</scm>
 
 	<properties>
@@ -65,7 +73,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
