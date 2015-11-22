@@ -3,7 +3,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx-mdf</artifactId>
 	<name>openATFX MDF3/MDF4 converter</name>
-	<version>0.1.0</version>
+	<version>0.6.1</version>
 	<description>Open source ASAM MDF4 to ASAM ODS ATFX converter</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 
