@@ -3,7 +3,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.6.1</version>
+	<version>0.6.2</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 
@@ -40,6 +40,19 @@
 				<configuration>
 					<source>1.6</source>
 					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<!-- executable jar -->
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<index>true</index>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<mainClass>de.rechner.openatfx.main.Main</mainClass>
+						</manifest>
+					</archive>
 				</configuration>
 			</plugin>
 			<!-- build assembly -->

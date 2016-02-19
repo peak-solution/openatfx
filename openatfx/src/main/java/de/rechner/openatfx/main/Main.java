@@ -19,6 +19,7 @@ import de.rechner.openatfx.AoServiceFactory;
 public class Main {
 
     private static final Log LOG = LogFactory.getLog(Main.class);
+    private static final String DEFAULT_NAME = "ATFX.ASAM-ODS";
 
     public static void main(String[] args) {
         try {
@@ -27,16 +28,17 @@ public class Main {
             // configure ORB
             ORB orb = ORB.init(new String[0], System.getProperties());
             AoFactory aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+            LOG.info("ATFX Server started");
 
             // get the root naming context
             org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
 
             // bind the Object Reference in Naming
-            NameComponent path[] = ncRef.to_name("ATFX.ASAM-ODS");
+            NameComponent path[] = ncRef.to_name(DEFAULT_NAME);
             ncRef.rebind(path, aoFactory);
+            LOG.info("Registered AoFactory at NameService with name '" + DEFAULT_NAME + "'");
 
-            LOG.info("ATFX Server started");
             orb.run();
         } catch (InvalidName e) {
             System.err.println(e.getMessage());

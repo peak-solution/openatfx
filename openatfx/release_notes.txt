@@ -23,6 +23,10 @@
 
 1. Changes
 
+	0.6.2 (Christian Rechner)
+	
+		- Added ability to start as CORBA server from command line.
+
 	0.6.1 (Christian Rechner)
 	
 		- Call garbage collector on session close
