@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.asam.ods.AIDName;
+import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
 import org.asam.ods.Blob;
 import org.asam.ods.DataType;
@@ -20,6 +22,7 @@ import org.asam.ods.NameValue;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
+import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
@@ -3084,6 +3087,65 @@ public abstract class ODSHelper {
             return RelationType.INHERITANCE;
         }
         throw new IllegalArgumentException("Unknown RelationType: " + str);
+    }
+
+    public static String anuSeq2string(SelAIDNameUnitId[] nvu) throws AoException {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        for (int i = 0; i < nvu.length; i++) {
+            builder.append(selAIDNameUnitId2string(nvu[i]));
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+
+    public static String selAIDNameUnitId2string(SelAIDNameUnitId sanui) throws AoException {
+        StringBuilder builder = new StringBuilder();
+        builder.append("SelAIDNameUnitId [aid=");
+        builder.append(ODSHelper.asJLong(sanui.attr.aid));
+        builder.append(",aaName=");
+        builder.append(sanui.attr.aaName);
+        builder.append(",unitId=");
+        builder.append(ODSHelper.asJLong(sanui.unitId));
+        builder.append(",aggregate=");
+        builder.append(aggrFunc2String(sanui.aggregate));
+        builder.append("]");
+        return builder.toString();
+    }
+
+    public static String aidName2String(AIDName aidName) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("AIDName[aid=");
+        builder.append(ODSHelper.asJLong(aidName.aid));
+        builder.append(",aaName=");
+        builder.append(aidName.aaName);
+        builder.append("]");
+        return builder.toString();
+    }
+
+    public static String aggrFunc2String(AggrFunc aggrFunc) {
+        if (aggrFunc == AggrFunc.AVG) {
+            return "AVG";
+        } else if (aggrFunc == AggrFunc.COUNT) {
+            return "COUNT";
+        } else if (aggrFunc == AggrFunc.DCOUNT) {
+            return "DCOUNT";
+        } else if (aggrFunc == AggrFunc.DISTINCT) {
+            return "DISTINCT";
+        } else if (aggrFunc == AggrFunc.MAX) {
+            return "MAX";
+        } else if (aggrFunc == AggrFunc.MIN) {
+            return "MIN";
+        } else if (aggrFunc == AggrFunc.NONE) {
+            return "NONE";
+        } else if (aggrFunc == AggrFunc.POINT) {
+            return "POINT";
+        } else if (aggrFunc == AggrFunc.STDDEV) {
+            return "STDDEV";
+        } else if (aggrFunc == AggrFunc.SUM) {
+            return "SUM";
+        }
+        return "";
     }
 
     /**

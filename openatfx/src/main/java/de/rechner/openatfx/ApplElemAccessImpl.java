@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
@@ -58,6 +60,8 @@ import de.rechner.openatfx.util.PatternUtil;
  * @author Christian Rechner
  */
 class ApplElemAccessImpl extends ApplElemAccessPOA {
+
+    private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
 
     private final POA instancePOA;
     private final AtfxCache atfxCache;
@@ -380,6 +384,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#getInstancesExt(org.asam.ods.QueryStructureExt, int)
      */
     public ResultSetExt[] getInstancesExt(QueryStructureExt aoq, int how_many) throws AoException {
+        if (aoq == null) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "QueryStructureExt must not be null");
+        }
+        LOG.debug("Query: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
         SelValueExt condition = null;
         // this method does only process a certain kind of query:
         // - selects from only one application element
@@ -390,10 +399,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // - only one or no DT_STRING or DS_LONGLONG condition
         // - allowed condition selOpCodes: SelOpCode.EQ, SelOpcode.CI_EQ, SelOpCode.LIKE, SelOpcode.CI_LIKE
 
-        if (aoq == null) {
-            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt must not be null");
-        }
         // query must contain at least one select statement. otherwise just return an empty result set
         if (aoq.anuSeq == null || aoq.anuSeq.length < 1) {
             return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[0], null) };
@@ -536,7 +541,17 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             erse.values[col].valName = aoq.anuSeq[col].attr.aaName;
             erse.values[col].value = new TS_ValueSeq();
             erse.values[col].value = atfxCache.getInstanceValues(aid, attrNo, filteredIids);
+            erse.values[col].unitId = new T_LONGLONG(0, 0);
+
+            if (col == 0) {
+                T_LONGLONG[] l = atfxCache.getInstanceValues(aid, attrNo, filteredIids).u.longlongVal();
+                for (T_LONGLONG t : l) {
+                    System.out.println(t.high + " - " + t.low);
+                }
+            }
         }
+
+        System.out.println("EMPTY");
 
         return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[] { erse }, null) };
     }
