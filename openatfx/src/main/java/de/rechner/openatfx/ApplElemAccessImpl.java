@@ -388,7 +388,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt must not be null");
         }
-        LOG.debug("Query: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
+        LOG.debug("getInstancesExt: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
         SelValueExt condition = null;
         // this method does only process a certain kind of query:
         // - selects from only one application element
@@ -470,16 +470,17 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             condition = cond.value();
         }
 
-        // only allow conditions of type DT_STRING or DS_LONGLONG
+        // only allow conditions of type DT_STRING, DT_LONGLONG or DS_LONGLONG
         if ((condition != null) && (condition.value.u.discriminator() != DataType.DT_STRING)
+                && (condition.value.u.discriminator() != DataType.DT_LONGLONG)
                 && (condition.value.u.discriminator() != DataType.DS_LONGLONG)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Condition DataType '"
                     + ODSHelper.dataType2String(condition.value.u.discriminator()) + "' not supported.");
         }
 
-        // only allow CI_EQ, CI_LIKE or INSET
-        if (condition != null && (condition.oper != SelOpcode.CI_EQ) && (condition.oper != SelOpcode.CI_LIKE)
-                && (condition.oper != SelOpcode.INSET)) {
+        // only allow EQ, CI_EQ, CI_LIKE or INSET
+        if (condition != null && (condition.oper != SelOpcode.EQ) && (condition.oper != SelOpcode.CI_EQ)
+                && (condition.oper != SelOpcode.CI_LIKE) && (condition.oper != SelOpcode.INSET)) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt not supported: Condition '" + condition.oper
                                           + "' not yet supported.");
@@ -518,6 +519,14 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                         filteredIids.add(iid);
                     }
                 }
+            } else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
+                Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                if ((value != null) && (value.u != null) && (value.u.longlongVal() != null)) {
+                    if (ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(condition.value.u.longlongVal())) {
+                        filteredIids.add(iid);
+                    }
+                }
             } else if ((condition.value.u.discriminator() == DataType.DS_LONGLONG)
                     && (condition.oper == SelOpcode.INSET)) {
                 Integer attrNo = this.atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
@@ -542,17 +551,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             erse.values[col].value = new TS_ValueSeq();
             erse.values[col].value = atfxCache.getInstanceValues(aid, attrNo, filteredIids);
             erse.values[col].unitId = new T_LONGLONG(0, 0);
-
-            if (col == 0) {
-                T_LONGLONG[] l = atfxCache.getInstanceValues(aid, attrNo, filteredIids).u.longlongVal();
-                for (T_LONGLONG t : l) {
-                    System.out.println(t.high + " - " + t.low);
-                }
-            }
         }
-
-        System.out.println("EMPTY");
-
         return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[] { erse }, null) };
     }
 
