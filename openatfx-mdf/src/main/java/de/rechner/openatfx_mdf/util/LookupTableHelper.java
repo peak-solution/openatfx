@@ -57,13 +57,14 @@ public class LookupTableHelper {
         ieSm.createRelation(relSmMea, this.lookupMeaIe);
 
         // create 'AoLocalColumn' instance for key
-        NameValueUnit[] nvuLcKey = new NameValueUnit[6];
+        NameValueUnit[] nvuLcKey = new NameValueUnit[7];
         nvuLcKey[0] = ODSHelper.createStringNVU("mt", "application/x-asam.aolocalcolumn.lookup.key");
-        nvuLcKey[1] = ODSHelper.createEnumNVU("srp", 0);
-        nvuLcKey[2] = ODSHelper.createShortNVU("idp", (short) 0);
-        nvuLcKey[3] = ODSHelper.createShortNVU("glb", (short) 15);
-        nvuLcKey[4] = ODSHelper.createEnumNVU("axistype", 0);
-        nvuLcKey[5] = ODSHelper.createDoubleSeqNVU("val", keys);
+        nvuLcKey[1] = ieLc.getValue("srp");
+        nvuLcKey[2] = ieLc.getValue("par");
+        nvuLcKey[3] = ODSHelper.createShortNVU("idp", (short) 0);
+        nvuLcKey[4] = ODSHelper.createShortNVU("glb", (short) 15);
+        nvuLcKey[5] = ODSHelper.createEnumNVU("axistype", 0);
+        nvuLcKey[6] = ODSHelper.createDoubleSeqNVU("val", keys);
         InstanceElement ieLcKey = aeLc.createInstance(lcName + "_key");
         ieLcKey.setValueSeq(nvuLcKey);
         ieSm.createRelation(relSmLc, ieLcKey);
@@ -132,13 +133,14 @@ public class LookupTableHelper {
         ieSm.createRelation(relSmMea, this.lookupMeaIe);
 
         // create 'AoLocalColumn' instance for key min
-        NameValueUnit[] nvuLcKeyMin = new NameValueUnit[6];
+        NameValueUnit[] nvuLcKeyMin = new NameValueUnit[7];
         nvuLcKeyMin[0] = ODSHelper.createStringNVU("mt", "application/x-asam.aolocalcolumn.lookup.key_min");
-        nvuLcKeyMin[1] = ODSHelper.createEnumNVU("srp", 0);
-        nvuLcKeyMin[2] = ODSHelper.createShortNVU("idp", (short) 0);
-        nvuLcKeyMin[3] = ODSHelper.createShortNVU("glb", (short) 15);
-        nvuLcKeyMin[4] = ODSHelper.createEnumNVU("axistype", 0);
-        nvuLcKeyMin[5] = ODSHelper.createDoubleSeqNVU("val", keysMin);
+        nvuLcKeyMin[1] = ieLc.getValue("srp");
+        nvuLcKeyMin[2] = ieLc.getValue("par");
+        nvuLcKeyMin[3] = ODSHelper.createShortNVU("idp", (short) 0);
+        nvuLcKeyMin[4] = ODSHelper.createShortNVU("glb", (short) 15);
+        nvuLcKeyMin[5] = ODSHelper.createEnumNVU("axistype", 0);
+        nvuLcKeyMin[6] = ODSHelper.createDoubleSeqNVU("val", keysMin);
         InstanceElement ieLcKeyMin = aeLc.createInstance(lcName + "_key_min");
         ieLcKeyMin.setValueSeq(nvuLcKeyMin);
         ieSm.createRelation(relSmLc, ieLcKeyMin);
@@ -151,13 +153,14 @@ public class LookupTableHelper {
         ieLcKeyMin.createRelation(relLcMeq, ieMeqKeyMin);
 
         // create 'AoLocalColumn' instance for key max
-        NameValueUnit[] nvuLcKeyMax = new NameValueUnit[6];
+        NameValueUnit[] nvuLcKeyMax = new NameValueUnit[7];
         nvuLcKeyMax[0] = ODSHelper.createStringNVU("mt", "application/x-asam.aolocalcolumn.lookup.key_max");
-        nvuLcKeyMax[1] = ODSHelper.createEnumNVU("srp", 0);
-        nvuLcKeyMax[2] = ODSHelper.createShortNVU("idp", (short) 0);
-        nvuLcKeyMax[3] = ODSHelper.createShortNVU("glb", (short) 15);
-        nvuLcKeyMax[4] = ODSHelper.createEnumNVU("axistype", 0);
-        nvuLcKeyMax[5] = ODSHelper.createDoubleSeqNVU("val", keysMax);
+        nvuLcKeyMax[1] = ieLc.getValue("srp");
+        nvuLcKeyMax[2] = ieLc.getValue("par");
+        nvuLcKeyMax[3] = ODSHelper.createShortNVU("idp", (short) 0);
+        nvuLcKeyMax[4] = ODSHelper.createShortNVU("glb", (short) 15);
+        nvuLcKeyMax[5] = ODSHelper.createEnumNVU("axistype", 0);
+        nvuLcKeyMax[6] = ODSHelper.createDoubleSeqNVU("val", keysMax);
         InstanceElement ieLcKeyMax = aeLc.createInstance(lcName + "_key_max");
         ieLcKeyMax.setValueSeq(nvuLcKeyMax);
         ieSm.createRelation(relSmLc, ieLcKeyMax);
