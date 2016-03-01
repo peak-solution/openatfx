@@ -279,8 +279,10 @@ public class AoSessionWriter {
             nvuLcList.add(ODSHelper.createShortNVU("glb", (short) 15));
             // generation parameters
             double[] genParams = getGenerationParameters(ccBlock);
+            boolean expandDataType = false;
             if (genParams != null && genParams.length > 0) {
                 nvuLcList.add(ODSHelper.createDoubleSeqNVU("par", genParams));
+                expandDataType = seqRep != 0 && seqRep != 7;
             }
             // raw_datatype
             int valueType = getValueType(cnBlock);
@@ -307,7 +309,7 @@ public class AoSessionWriter {
             } else {
                 ieMeq = aeMeq.createInstance(meqName);
                 ieMeq.setValue(ODSHelper.createStringNVU("desc", cnBlock.getSignalDescription().trim()));
-                ieMeq.setValue(ODSHelper.createEnumNVU("dt", getDataType(cnBlock, ccBlock)));
+                ieMeq.setValue(ODSHelper.createEnumNVU("dt", getDataType(expandDataType, cnBlock, ccBlock)));
                 if (ccBlock != null && ccBlock.isKnownPhysValue()) {
                     ieMeq.setValue(ODSHelper.createDoubleNVU("min", ccBlock.getMinPhysValue()));
                     ieMeq.setValue(ODSHelper.createDoubleNVU("max", ccBlock.getMaxPhysValue()));
@@ -670,12 +672,13 @@ public class AoSessionWriter {
      * Returns the target ASAM ODS measurement quantity data type for a MDF3 channel description.<br/>
      * The data type is determined by the formula, the signal data type and the number of bits.
      * 
+     * @param expandDataType Indicates whether to expand data type or not.
      * @param cnBlock The MDF CNBLOCK.
      * @param ccBlock The MDF CCBLOCK.
      * @return The ASAM ODS data type.
      * @throws IOException Unable to determine data type.
      */
-    private static int getDataType(CNBLOCK cnBlock, CCBLOCK ccBlock) throws IOException {
+    private static int getDataType(boolean expandDataType, CNBLOCK cnBlock, CCBLOCK ccBlock) throws IOException {
         // CCBLOCK may be null
         int formula = 65535;
         if (ccBlock != null) {
@@ -712,21 +715,21 @@ public class AoSessionWriter {
             if (dt == 8) {
                 return 11; // DT_BYTESTR
             } else if ((dt == 0 || dt == 9 || dt == 13) && (nb >= 1 && nb <= 8)) { // dt_byte
-                return 5; // DT_BYTE
+                return expandDataType ? 3 : 5; // [DT_FLOAT] DT_BYTE
             } else if ((dt == 1 || dt == 10 || dt == 14) && (nb >= 1 && nb <= 8)) { // dt_sbyte
-                return 2; // DT_SHORT
+                return expandDataType ? 3 : 2; // [DT_FLOAT] DT_SHORT
             } else if ((dt == 0 || dt == 9 || dt == 13) && (nb >= 9 && nb <= 16)) { // dt_ushort, dt_ushort_beo
-                return 6; // DT_LONG
+                return expandDataType ? 3 : 6; // [DT_FLOAT] DT_LONG
             } else if ((dt == 1 || dt == 10 || dt == 14) && (nb >= 9 && nb <= 16)) { // dt_short, dt_short_beo
-                return 2; // DT_SHORT
+                return expandDataType ? 3 : 2; // [DT_FLOAT] DT_SHORT
             } else if ((dt == 0 || dt == 9 || dt == 13) && (nb >= 17 && nb <= 32)) { // dt_ulong, dt_ulong_beo
-                return 8; // DT_LONGLONG
+                return expandDataType ? 7 : 8; // [DT_DOUBLE] DT_LONGLONG
             } else if ((dt == 1 || dt == 10 || dt == 14) && (nb >= 17 && nb <= 32)) { // dt_long, dt_long_beo
-                return 6; // DT_LONG
+                return expandDataType ? 3 : 6; // [DT_FLOAT] DT_LONG
             } else if ((dt == 0 || dt == 9 || dt == 13) && (nb >= 33)) { // unsigned int >32 bit
-                return 8; // DT_LONGLONG
+                return expandDataType ? 7 : 8; // [DT_DOUBLE] DT_LONGLONG
             } else if ((dt == 1 || dt == 10 || dt == 14) && (nb >= 33 && nb <= 64)) { // dt_longlong, dt_longlong_beo
-                return 8; // DT_LONGLONG
+                return expandDataType ? 7 : 8; // [DT_DOUBLE] DT_LONGLONG
             } else if ((dt == 2 || dt == 3 || dt == 11 || dt == 12 || dt == 15 || dt == 16) && (nb == 32)) { // ieeefloat4,
                                                                                                              // ieeefloat4_beo
                 return 3; // DT_FLOAT
