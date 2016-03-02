@@ -1,6 +1,8 @@
 package de.rechner.openatfx_mdf.mdf3;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -420,13 +422,15 @@ public class AoSessionWriter {
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private InstanceElement writeEc(ODSModelCache modelCache, InstanceElement ieLc, IDBLOCK idBlock, DGBLOCK dgBlock,
+    private void writeEc(ODSModelCache modelCache, InstanceElement ieLc, IDBLOCK idBlock, DGBLOCK dgBlock,
             CGBLOCK cgBlock, CNBLOCK cnBlock) throws AoException, IOException {
-        // write data to own file if data cannot be referenced:
-        // * data type = dt_string
+        // string channel cannot be referenced in ASAM ODS: read and write external
         if (cnBlock.getSignalDataType() == 7) {
-            // throw new IOException("Unable to reference into MDF3, writing values to own file: " + cnBlock);
-            LOG.warn("Unable to reference into MDF3, writing values to own file.");
+            String[] str = readStringDataValues(dgBlock, cgBlock, cnBlock);
+            ieLc.setValue(ODSHelper.createEnumNVU("srp", 0));
+            ieLc.setValue(ODSHelper.createStringSeqNVU("val", str));
+            LOG.info("Unable to reference into MDF3, extracting string values. [Channel=" + ieLc.getName() + "]");
+            return;
         }
 
         ApplicationElement aeEc = modelCache.getApplicationElement("ec");
@@ -454,7 +458,6 @@ public class AoSessionWriter {
         }
         ieEc.setValueSeq(nvuEcList.toArray(new NameValueUnit[0]));
         ieLc.createRelation(relLcEc, ieEc);
-        return ieEc;
     }
 
     /**
@@ -876,7 +879,8 @@ public class AoSessionWriter {
      * @param fileComment The MDF3 file comment.
      * @throws AoException error setting date to instance.
      */
-    private void handleCLExportDate(InstanceElement ieMea, HDBLOCK hdBlock, TXBLOCK fileComment) throws AoException {
+    private static void handleCLExportDate(InstanceElement ieMea, HDBLOCK hdBlock, TXBLOCK fileComment)
+            throws AoException {
         if (hdBlock.getDateStarted() != null && !hdBlock.getDateStarted().equals("01:01:1980")) {
             return;
         }
@@ -902,6 +906,38 @@ public class AoSessionWriter {
                 LOG.warn(e.getMessage(), e);
             }
         }
+    }
+
+    private static String[] readStringDataValues(DGBLOCK dgBlock, CGBLOCK cgBlock, CNBLOCK cnBlock) throws IOException {
+        List<String> list = new ArrayList<String>();
+
+        SeekableByteChannel sbc = dgBlock.sbc;
+        int recordIdOffset = (dgBlock.getNoRecordIds() > 0) ? 1 : 0;
+        long mapStart = dgBlock.getLnkDataRecords();
+        long mapSize = (cgBlock.getDataRecordSize() + recordIdOffset) * cgBlock.getNoOfRecords();
+        ByteBuffer bb = ByteBuffer.allocate((int) mapSize);
+        sbc.position(mapStart);
+        sbc.read(bb);
+        bb.rewind();
+
+        // iterate over records
+        for (int i = 0; i < cgBlock.getNoOfRecords(); i++) {
+
+            // read record
+            byte[] record = new byte[cgBlock.getDataRecordSize() + recordIdOffset];
+            bb.get(record);
+
+            // skip first bits and read value
+            BitInputStream bis = new BitInputStream(record);
+            int skipBits = (recordIdOffset * 8) + (cnBlock.getByteOffset() * 8) + cnBlock.getNumberOfFirstBits();
+            bis.skip(skipBits);
+            byte[] b = bis.readByteArray(cnBlock.getNumberOfBits());
+
+            // build string value and append
+            list.add(Mdf3Util.readChars(ByteBuffer.wrap(b), b.length));
+        }
+
+        return list.toArray(new String[0]);
     }
 
 }

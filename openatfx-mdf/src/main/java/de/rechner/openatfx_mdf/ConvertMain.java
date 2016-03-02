@@ -13,7 +13,7 @@ public class ConvertMain {
         try {
             BasicConfigurator.configure();
             ORB orb = ORB.init(new String[0], System.getProperties());
-            Path mdfFile = Paths.get("D:/PUBLIC/test/test.mdf");
+            Path mdfFile = Paths.get("D:/PUBLIC/test/Wimmerversuch.mdf");
 
             MDFConverter converter = new MDFConverter();
             converter.writeATFXHeader(orb, mdfFile);

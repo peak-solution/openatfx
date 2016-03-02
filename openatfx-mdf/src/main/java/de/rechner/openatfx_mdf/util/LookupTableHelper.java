@@ -192,16 +192,16 @@ public class LookupTableHelper {
         ieLcValues.createRelation(relLcMeq, ieMeqValues);
 
         // create 'AoLocalColumn' instance for default value
-        NameValueUnit[] nvuLcDefValue = new NameValueUnit[6];
-        nvuLcDefValue[0] = ODSHelper.createStringNVU("mt", "application/x-asam.aolocalcolumn.lookup.default_value");
-        nvuLcDefValue[1] = ODSHelper.createEnumNVU("srp", 1);
-        nvuLcDefValue[2] = ODSHelper.createShortNVU("idp", (short) 0);
-        nvuLcDefValue[3] = ODSHelper.createShortNVU("glb", (short) 15);
-        nvuLcDefValue[4] = ODSHelper.createEnumNVU("axistype", 1);
-        nvuLcDefValue[5] = ODSHelper.createStringSeqNVU("val", new String[] { defaultValue });
-        InstanceElement ieLcDefValue = aeLc.createInstance(lcName + "_default_value");
-        ieLcDefValue.setValueSeq(nvuLcDefValue);
-        ieSm.createRelation(relSmLc, ieLcDefValue);
+//        NameValueUnit[] nvuLcDefValue = new NameValueUnit[6];
+//        nvuLcDefValue[0] = ODSHelper.createStringNVU("mt", "application/x-asam.aolocalcolumn.lookup.default_value");
+//        nvuLcDefValue[1] = ODSHelper.createEnumNVU("srp", 1);
+//        nvuLcDefValue[2] = ODSHelper.createShortNVU("idp", (short) 0);
+//        nvuLcDefValue[3] = ODSHelper.createShortNVU("glb", (short) 15);
+//        nvuLcDefValue[4] = ODSHelper.createEnumNVU("axistype", 1);
+//        nvuLcDefValue[5] = ODSHelper.createStringSeqNVU("val", new String[] { defaultValue });
+//        InstanceElement ieLcDefValue = aeLc.createInstance(lcName + "_default_value");
+//        ieLcDefValue.setValueSeq(nvuLcDefValue);
+//        ieSm.createRelation(relSmLc, ieLcDefValue);
 
         // create 'AoMeasurementQuantity' instance for default value
         InstanceElement ieMeqDefValue = aeMeq.createInstance(lcName + "_default_value");
@@ -209,7 +209,7 @@ public class LookupTableHelper {
                                                          "application/x-asam.aomeasurementquantity.lookup.default_value"));
         ieMeqDefValue.setValue(ODSHelper.createEnumNVU("dt", 1));
         this.lookupMeaIe.createRelation(relMeaMeq, ieMeqDefValue);
-        ieLcDefValue.createRelation(relLcMeq, ieMeqDefValue);
+//        ieLcDefValue.createRelation(relLcMeq, ieMeqDefValue);
     }
 
 }
