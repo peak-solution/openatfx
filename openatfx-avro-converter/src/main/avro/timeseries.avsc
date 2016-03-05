@@ -1,0 +1,27 @@
+[{"namespace": "de.rechner.openatfx_avro",
+ "type": "record",
+ "name": "TimeSeriesValue",
+ "fields": [
+     {"name": "timestamp", "type": "long"},
+     {"name": "relTime", "type": "long"},
+     {"name": "numVal",  "type": "double"},
+     {"name": "txtVal", "type": "string"}
+ ]
+},
+{"namespace": "de.rechner.openatfx_avro",
+ "type": "record",
+ "name": "TimeSeries",
+ "fields": [
+     {"name": "name", "type": "string"},
+     {"name": "mimetype",  "type": ["string", "null"]},
+     {"name": "unit", "type": ["string", "null"]},
+     {"name": "quantity", "type": ["string", "null"]},
+     {
+            "name": "values",
+            "type": {
+                "type": "array",
+                "items": "de.rechner.openatfx_avro.TimeSeriesValue"
+            }
+        }
+ ]
+}]
