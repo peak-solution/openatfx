@@ -1,10 +1,15 @@
 package de.rechner.openatfx.avro.converter;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
@@ -27,16 +32,28 @@ import de.rechner.openatfx_mdf.util.ODSHelper;
 
 public class TestMdfToAvro {
 
+    private static final String SOURCE = "D:/PUBLIC/test/drivingprofile2.mdf";
+    private static final String TARGET = "D:/PUBLIC/test/test.avro";
+
     public static void main(String[] args) {
+        DatumWriter<TimeSeries> timeSeriesWriter = new SpecificDatumWriter<TimeSeries>(TimeSeries.class);
+        DataFileWriter<TimeSeries> dataFileWriter = null;
+
         AoSession aoSession = null;
         try {
             BasicConfigurator.configure();
             ORB orb = ORB.init(new String[0], System.getProperties());
-            Path mdfFile = Paths.get("D:/PUBLIC/test/test.MDF");
+            Path mdfFile = Paths.get(SOURCE);
 
+            // open source file
             MDFConverter converter = new MDFConverter();
             aoSession = converter.getAoSessionForMDF(orb, mdfFile);
 
+            // open target file
+            dataFileWriter = new DataFileWriter<TimeSeries>(timeSeriesWriter);
+            dataFileWriter.create(TimeSeries.getClassSchema(), new File(TARGET));
+
+            // read data from source
             ApplicationElement aeSm = aoSession.getApplicationStructure().getElementsByBaseType("AoSubMatrix")[0];
             InstanceElementIterator iter = aeSm.getInstances("*");
             for (int i = 0; i < iter.getCount(); i++) {
@@ -60,12 +77,18 @@ public class TestMdfToAvro {
 
                 // read other values
                 for (Column col : vm.getColumns("*")) {
+                    if (col.isIndependent()) { // skip time channels
+                        continue;
+                    }
+
                     TimeSeries timeSeries = new TimeSeries();
                     timeSeries.setName(col.getName());
                     timeSeries.setUnit(col.getUnit());
                     TS_ValueSeq valueSeq = vm.getValueVector(col, 0, 0);
                     List<TimeSeriesValue> tsvList = tsValueSeq2TimeSeriesValues(valueSeq);
-                    timeSeries.setValues(tsvList);
+                    timeSeries.setVals(tsvList);
+                    dataFileWriter.append(timeSeries);
+
                     col.destroy();
                 }
             }
@@ -74,6 +97,15 @@ public class TestMdfToAvro {
             System.err.println(e.getMessage());
         } catch (AoException e) {
             System.err.println(e.reason);
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                dataFileWriter.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -82,6 +114,7 @@ public class TestMdfToAvro {
         DataType dt = valuesSeq.u.discriminator();
         for (int i = 0; i < valuesSeq.flag.length; i++) {
             TimeSeriesValue tsv = new TimeSeriesValue();
+            tsv.setRelTime((long) i);
             if (dt == DataType.DT_BOOLEAN) {
                 tsv.setNumVal((double) (valuesSeq.u.booleanVal()[i] ? 1 : 0));
             } else if (dt == DataType.DT_BYTE) {
@@ -99,7 +132,7 @@ public class TestMdfToAvro {
             }
             list.add(tsv);
         }
+
         return list;
     }
-
 }

@@ -31,7 +31,7 @@ public class Test {
             value.setTimestamp(new Date().getTime() + i);
             values.add(value);
         }
-        ts.setValues(values);
+        ts.setVals(values);
 
         // ParquetWriter<Object> writer;
         // try {
