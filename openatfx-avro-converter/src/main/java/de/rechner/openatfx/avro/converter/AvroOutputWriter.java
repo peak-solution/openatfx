@@ -1,7 +1,7 @@
 package de.rechner.openatfx.avro.converter;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.BasicConfigurator;
@@ -29,6 +30,7 @@ import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrix;
 import org.omg.CORBA.ORB;
 
+import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.avro.TimeSeries;
 import de.rechner.openatfx.avro.TimeSeriesValue;
 import de.rechner.openatfx_mdf.ConvertException;
@@ -39,61 +41,56 @@ import de.rechner.openatfx_mdf.util.ODSHelper;
 public class AvroOutputWriter {
 
     private static final Log LOG = LogFactory.getLog(AvroOutputWriter.class);
-    private static final String SOURCE = "D:/PUBLIC/test/drivingprofile1.mdf";
-    private static final String TARGET = "D:/PUBLIC/test/test1.avro";
+    private static final String DIR = "D:/PUBLIC/test";
 
-    public static void main(String[] args) {
-        DatumWriter<TimeSeries> timeSeriesWriter = new SpecificDatumWriter<TimeSeries>(TimeSeries.class);
-        DataFileWriter<TimeSeries> dataFileWriter = null;
+    public static void main(String[] args) throws IOException {
+        BasicConfigurator.configure();
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        for (Path inputFile : Files.newDirectoryStream(Paths.get(DIR))) {
+            String baseName = FilenameUtils.getExtension(inputFile.toString());
+            Path outputFile = Paths.get(baseName + ".avro");
+            try {
+                convertFile2Avro(orb, inputFile, outputFile);
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }
 
+    public static void convertFile2Avro(ORB orb, Path inputFile, Path outputFile) throws IOException {
         AoSession aoSession = null;
         try {
-            BasicConfigurator.configure();
-            ORB orb = ORB.init(new String[0], System.getProperties());
-            Path mdfFile = Paths.get(SOURCE);
-
-            // open source file
-            MDFConverter converter = new MDFConverter();
-            aoSession = converter.getAoSessionForMDF(orb, mdfFile);
-
-            // open target file
-            dataFileWriter = new DataFileWriter<TimeSeries>(timeSeriesWriter);
-            dataFileWriter.create(TimeSeries.getClassSchema(), new File(TARGET));
-
-            // read data from source
-            ApplicationElement aeSm = aoSession.getApplicationStructure().getElementsByBaseType("AoSubMatrix")[0];
-            InstanceElementIterator iter = aeSm.getInstances("*");
-            for (int i = 0; i < iter.getCount(); i++) {
-                InstanceElement ieSm = iter.nextOne();
-
-                // skip lookup tables
-                String mimeType = ieSm.getValueByBaseName("mime_type").value.u.stringVal();
-                if (mimeType.startsWith("application/x-asam.aosubmatrix.lookup")) {
-                    continue;
-                }
-
-                SubMatrix sm = ieSm.upcastSubMatrix();
-                ValueMatrix vm = sm.getValueMatrix();
-
-                // get time channel
-                Column[] timeColumns = vm.getIndependentColumns("*");
-                if (timeColumns.length != 1) {
-                    throw new ConvertException("None or multiple independent channels found: " + sm.getAsamPath());
-                }
+            String filename = inputFile.toString().toLowerCase();
+            // input is ATFX file
+            if (filename.endsWith(".atfx")) {
+                aoSession = AoServiceFactory.getInstance().newAoSession(orb, inputFile.toFile());
+            }
+            // input is MDF3 or MDF4 file
+            else if (filename.endsWith(".dat") || filename.endsWith(".mdf") || filename.endsWith(".mf4")) {
+                aoSession = new MDFConverter().getAoSessionForMDF(orb, inputFile);
+            } else {
+                return;
             }
 
+            // get AoMeasurement instances
+            ApplicationElement aeMea = aoSession.getApplicationStructure().getElementsByBaseType("AoMeasurement")[0];
+            InstanceElementIterator iter = aeMea.getInstances("*");
+            for (int i = 0; i < iter.getCount(); i++) {
+                convertTimeSeries2Avro(iter.nextOne(), outputFile);
+            }
         } catch (ConvertException e) {
-            System.err.println(e.getMessage());
+            LOG.error(e.getMessage(), e);
+            throw new IOException(e.getMessage());
         } catch (AoException e) {
-            System.err.println(e.reason);
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
+            LOG.error(e.reason, e);
+            throw new IOException(e.reason);
         } finally {
-            try {
-                dataFileWriter.close();
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            if (aoSession != null) {
+                try {
+                    aoSession.close();
+                } catch (AoException e) {
+                    LOG.fatal(e.getMessage(), e);
+                }
             }
         }
     }
@@ -104,7 +101,9 @@ public class AvroOutputWriter {
         try {
             // check input
             if (!ieMea.getApplicationElement().getBaseElement().getType().equalsIgnoreCase("AoMeasurement")) {
-                // TODO
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Only instances of type 'AoMeasurement' are allowed as input: "
+                                              + ieMea.getAsamPath());
             }
 
             // open target file
@@ -159,7 +158,9 @@ public class AvroOutputWriter {
             throw e;
         } finally {
             try {
-                dataFileWriter.close();
+                if (dataFileWriter != null) {
+                    dataFileWriter.close();
+                }
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
             }
