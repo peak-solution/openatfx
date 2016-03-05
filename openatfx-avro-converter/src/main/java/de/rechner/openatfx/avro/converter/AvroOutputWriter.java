@@ -11,19 +11,18 @@ import java.util.List;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationRelation;
 import org.asam.ods.Column;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
-import org.asam.ods.Relationship;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.TS_ValueSeq;
@@ -47,8 +46,7 @@ public class AvroOutputWriter {
         BasicConfigurator.configure();
         ORB orb = ORB.init(new String[0], System.getProperties());
         for (Path inputFile : Files.newDirectoryStream(Paths.get(DIR))) {
-            String baseName = FilenameUtils.getExtension(inputFile.toString());
-            Path outputFile = Paths.get(baseName + ".avro");
+            Path outputFile = Paths.get(inputFile + ".avro");
             try {
                 convertFile2Avro(orb, inputFile, outputFile);
             } catch (IOException e) {
@@ -78,6 +76,7 @@ public class AvroOutputWriter {
             for (int i = 0; i < iter.getCount(); i++) {
                 convertTimeSeries2Avro(iter.nextOne(), outputFile);
             }
+
         } catch (ConvertException e) {
             LOG.error(e.getMessage(), e);
             throw new IOException(e.getMessage());
@@ -111,7 +110,8 @@ public class AvroOutputWriter {
             dataFileWriter.create(TimeSeries.getClassSchema(), outputFile.toFile());
 
             // read data from source
-            InstanceElementIterator iter = ieMea.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+            ApplicationRelation rel = ieMea.getApplicationElement().getRelationsByBaseName("submatrices")[0];
+            InstanceElementIterator iter = ieMea.getRelatedInstances(rel, "*");
             for (int i = 0; i < iter.getCount(); i++) {
                 InstanceElement ieSm = iter.nextOne();
 
