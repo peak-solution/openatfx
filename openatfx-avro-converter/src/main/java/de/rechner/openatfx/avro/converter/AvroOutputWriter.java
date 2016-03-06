@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.BasicConfigurator;
@@ -41,21 +42,25 @@ public class AvroOutputWriter {
 
     private static final Log LOG = LogFactory.getLog(AvroOutputWriter.class);
     private static final String DIR = "D:/PUBLIC/test";
+    static DatumWriter<TimeSeries> timeSeriesWriter = new SpecificDatumWriter<TimeSeries>(TimeSeries.class);
 
     public static void main(String[] args) throws IOException {
         BasicConfigurator.configure();
         ORB orb = ORB.init(new String[0], System.getProperties());
         for (Path inputFile : Files.newDirectoryStream(Paths.get(DIR))) {
-            Path outputFile = Paths.get(inputFile + ".avro");
-            try {
-                convertFile2Avro(orb, inputFile, outputFile);
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
+            String filename = inputFile.toString().toLowerCase();
+            if (filename.endsWith(".atfx") || filename.endsWith(".dat") || filename.endsWith(".mdf")
+                    || filename.endsWith(".mf4")) {
+                try {
+                    convertFile2Avro(orb, inputFile, inputFile.getParent());
+                } catch (IOException e) {
+                    System.err.println(e.getMessage());
+                }
             }
         }
     }
 
-    public static void convertFile2Avro(ORB orb, Path inputFile, Path outputFile) throws IOException {
+    public static void convertFile2Avro(ORB orb, Path inputFile, Path targetDir) throws IOException {
         AoSession aoSession = null;
         try {
             String filename = inputFile.toString().toLowerCase();
@@ -74,7 +79,11 @@ public class AvroOutputWriter {
             ApplicationElement aeMea = aoSession.getApplicationStructure().getElementsByBaseType("AoMeasurement")[0];
             InstanceElementIterator iter = aeMea.getInstances("*");
             for (int i = 0; i < iter.getCount(); i++) {
-                convertTimeSeries2Avro(iter.nextOne(), outputFile);
+                InstanceElement ieMea = iter.nextOne();
+                String targetFilename = FilenameUtils.getBaseName(inputFile.toString()) + "_"
+                        + ODSHelper.asJLong(ieMea.getId()) + ".avro";
+                Path outputFile = Paths.get(targetDir.toString(), targetFilename);
+                convertTimeSeries2Avro(ieMea, outputFile);
             }
 
         } catch (ConvertException e) {
@@ -95,7 +104,6 @@ public class AvroOutputWriter {
     }
 
     public static void convertTimeSeries2Avro(InstanceElement ieMea, Path outputFile) throws AoException, IOException {
-        DatumWriter<TimeSeries> timeSeriesWriter = new SpecificDatumWriter<TimeSeries>(TimeSeries.class);
         DataFileWriter<TimeSeries> dataFileWriter = null;
         try {
             // check input
