@@ -90,7 +90,7 @@ public class AtfxReader {
      * Returns the ASAM ODS aoSession object for a ATFX file.
      * 
      * @param orb The ORB.
-     * @param in The ATFX file input stream.
+     * @param fileHandler THe file handler for file system abstraction.
      * @return The aoSession object.
      * @throws AoException Error getting aoSession.
      */

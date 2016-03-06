@@ -9,6 +9,10 @@
 			<outputDirectory>/doc</outputDirectory>
 		</fileSet>
 		<fileSet>
+			<directory>${project.basedir}/target/apidocs</directory>
+			<outputDirectory>/apidocs</outputDirectory>
+		</fileSet>
+		<fileSet>
 			<outputDirectory>/</outputDirectory>
 			<includes>
 				<include>LICENSE</include>
