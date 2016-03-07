@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.6.3 (Christian Rechner
+	
+		- Improved method 'ApplElemAccess->insertInstances()':
+		  Support for 1:n relations and instance attributes.
+
 	0.6.2 (Christian Rechner)
 	
 		- Added ability to start as CORBA server from command line.

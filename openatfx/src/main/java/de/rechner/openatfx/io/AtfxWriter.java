@@ -241,7 +241,7 @@ public class AtfxWriter {
      * 
      * @param streamWriter The XML stream writer.
      * @param aoSession The session.
-     * @return
+     * @return Map of component files.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading base model version.
      */
