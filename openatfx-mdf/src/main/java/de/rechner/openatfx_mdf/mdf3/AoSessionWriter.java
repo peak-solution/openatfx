@@ -34,6 +34,7 @@ import de.rechner.openatfx_mdf.ConvertException;
 import de.rechner.openatfx_mdf.util.FileUtil;
 import de.rechner.openatfx_mdf.util.LookupTableHelper;
 import de.rechner.openatfx_mdf.util.ODSHelper;
+import de.rechner.openatfx_mdf.util.ODSInsertStatement;
 import de.rechner.openatfx_mdf.util.ODSModelCache;
 
 
@@ -73,60 +74,55 @@ public class AoSessionWriter {
      */
     public void writeTst(ODSModelCache modelCache, IDBLOCK idBlock) throws AoException, IOException {
         ApplicationElement aeEnv = modelCache.getApplicationElement("env");
-        ApplicationElement aeTst = modelCache.getApplicationElement("tst");
-        ApplicationRelation relEnvPrj = modelCache.getApplicationRelation("env", "tst", "tsts");
         InstanceElement ieEnv = aeEnv.getInstanceById(new T_LONGLONG(0, 1));
         Path fileName = idBlock.getMdfFilePath().getFileName();
         if (fileName == null) {
             throw new IOException("Unable to obtain file name!");
         }
-        InstanceElement ieTst = aeTst.createInstance(FileUtil.stripExtension(fileName.toString()));
-        ieEnv.createRelation(relEnvPrj, ieTst);
 
         // read and validate IDBLOCK
-        NameValueUnit[] nvu = new NameValueUnit[6];
-        nvu[0] = ODSHelper.createStringNVU("mdf_file_id", idBlock.getIdFile());
-        nvu[1] = ODSHelper.createStringNVU("mdf_version_str", idBlock.getIdVers());
-        nvu[2] = ODSHelper.createLongNVU("mdf_version", idBlock.getIdVer());
-        nvu[3] = ODSHelper.createStringNVU("mdf_program", idBlock.getIdProg());
-        nvu[4] = ODSHelper.createLongNVU("mdf_unfin_flags", idBlock.getIdUnfinFlags());
-        nvu[5] = ODSHelper.createLongNVU("mdf_custom_unfin_flags", idBlock.getIdCustomUnfinFlags());
-        ieTst.setValueSeq(nvu);
+        ODSInsertStatement ins = new ODSInsertStatement(modelCache, "tst");
+        ins.setStringVal("iname", FileUtil.stripExtension(fileName.toString()));
+        ins.setStringVal("mdf_file_id", idBlock.getIdFile());
+        ins.setStringVal("mdf_version_str", idBlock.getIdVers());
+        ins.setLongVal("mdf_version", idBlock.getIdVer());
+        ins.setStringVal("mdf_program", idBlock.getIdProg());
+        ins.setLongVal("mdf_unfin_flags", idBlock.getIdUnfinFlags());
+        ins.setLongVal("mdf_custom_unfin_flags", idBlock.getIdCustomUnfinFlags());
+        ins.setLongLongVal("env", ieEnv.getId());
+        long iidTst = ins.execute();
 
         // write 'AoMeasurement' instance
-        writeMea(modelCache, ieTst, idBlock);
+        writeMea(modelCache, iidTst, idBlock);
     }
 
     /**
      * Write the instance of 'AoMeasurement'.
      * 
      * @param modelCache The application model cache.
-     * @param ieTst The parent 'AoTest' instance.
+     * @param iidTst The instance if of the parent 'AoTest' instance.
      * @param idBlock The IDBLOCK.
-     * @return the created AoMeasurement instance element
+     * @return the instance id of the created 'AoMeasurement' instance.
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private InstanceElement writeMea(ODSModelCache modelCache, InstanceElement ieTst, IDBLOCK idBlock)
-            throws AoException, IOException {
+    private long writeMea(ODSModelCache modelCache, long iidTst, IDBLOCK idBlock) throws AoException, IOException {
         Path fileName = idBlock.getMdfFilePath().getFileName();
         if (fileName == null) {
             throw new IOException("Unable to obtain file name!");
         }
 
-        // create "AoMeasurement" instance
-        ApplicationElement aeMea = modelCache.getApplicationElement("mea");
-        ApplicationRelation relTstMea = modelCache.getApplicationRelation("tst", "mea", "meas");
-
         // create "AoMeasurement" instance and write descriptive data to instance attributes
-        InstanceElement ieMea = aeMea.createInstance(FileUtil.getResultName(fileName.toString(), null));
-        ieTst.createRelation(relTstMea, ieMea);
+        ODSInsertStatement ins = new ODSInsertStatement(modelCache, "mea");
+        ins.setStringVal("iname", FileUtil.getResultName(fileName.toString(), null));
+        ins.setStringVal("mt", "application/x-asam.aomeasurement.timeseries");
+        ins.setLongLongVal("tst", iidTst);
 
         // write header attributes
         HDBLOCK hdBlock = idBlock.getHDBlock();
         TXBLOCK fileComment = hdBlock.getFileCommentTxt();
         if (fileComment != null) {
-            ieMea.setValue(ODSHelper.createStringNVU("desc", fileComment.getText().trim()));
+            ins.setStringVal("desc", fileComment.getText().trim());
         }
 
         // default date/time handling
@@ -140,48 +136,46 @@ public class AoSessionWriter {
         } else {
             throw new IOException("No date information found in MDF file!");
         }
-        ieMea.setValue(ODSHelper.createDateNVU("date_created", ODSHelper.asODSDate(date)));
-        ieMea.setValue(ODSHelper.createDateNVU("mea_begin", ODSHelper.asODSDate(date)));
+        ins.setDateVal("date_created", ODSHelper.asODSDate(date));
+        ins.setDateVal("mea_begin", ODSHelper.asODSDate(date));
 
         // special date/time handling
-        handleCLExportDate(ieMea, hdBlock, fileComment);
+        handleCLExportDate(ins, hdBlock, fileComment);
 
-        ieMea.addInstanceAttribute(ODSHelper.createStringNVU("author", hdBlock.getAuthor().trim()));
-        ieMea.addInstanceAttribute(ODSHelper.createStringNVU("organization", hdBlock.getDepartment().trim()));
-        ieMea.addInstanceAttribute(ODSHelper.createStringNVU("project", hdBlock.getProjectName().trim()));
-        ieMea.addInstanceAttribute(ODSHelper.createStringNVU("meaObject", hdBlock.getMeaObject().trim()));
+        ins.setStringVal("author", hdBlock.getAuthor().trim());
+        ins.setStringVal("organization", hdBlock.getDepartment().trim());
+        ins.setStringVal("project", hdBlock.getProjectName().trim());
+        ins.setStringVal("meaObject", hdBlock.getMeaObject().trim());
+
+        long meaIid = ins.execute();
 
         // remember channel names to avoid duplicates (key=channelName,value=number of)
         Map<String, Integer> meqNames = new HashMap<String, Integer>();
 
         // write 'AoSubMatrix' instances
-        writeSm(modelCache, ieMea, idBlock, hdBlock, meqNames);
+        writeSm(modelCache, meaIid, idBlock, hdBlock, meqNames);
 
-        return ieMea;
+        return meaIid;
     }
 
     /**
      * Write the instances of 'AoSubMatrix'.
      * 
      * @param modelCache The application model cache.
-     * @param ieMea The instance of 'AoMeasurement'.
+     * @param iidMea The instance id of the parent 'AoMeasurement' instance.
      * @param hdBlock The HDBLOCK.
      * @param meqNames
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private void writeSm(ODSModelCache modelCache, InstanceElement ieMea, IDBLOCK idBlock, HDBLOCK hdBlock,
+    private void writeSm(ODSModelCache modelCache, long iidMea, IDBLOCK idBlock, HDBLOCK hdBlock,
             Map<String, Integer> meqNames) throws AoException, IOException {
-        ApplicationElement aeSm = modelCache.getApplicationElement("sm");
-        ApplicationRelation relMeaSm = modelCache.getApplicationRelation("mea", "sm", "sms");
-
         // iterate over data group blocks
         int grpNo = 1;
         DGBLOCK dgBlock = hdBlock.getFirstFileGroup();
         Map<String, InstanceElement> meqInstances = new HashMap<String, InstanceElement>();
 
         while (dgBlock != null) {
-
             // ONLY SORTED MDF files can be converted - check this!
             if (dgBlock.getNoChannelGroups() > 1) {
                 throw new IOException(
@@ -196,20 +190,19 @@ public class AoSessionWriter {
             if (cgBlock != null) {
 
                 // create SubMatrix instance
-                InstanceElement ieSm = aeSm.createInstance("sm_" + countFormat.format(grpNo));
-                ieMea.createRelation(relMeaSm, ieSm);
-
-                List<NameValueUnit> nvuList = new ArrayList<NameValueUnit>(3);
-                nvuList.add(ODSHelper.createLongNVU("rows", (int) cgBlock.getNoOfRecords()));
+                ODSInsertStatement ins = new ODSInsertStatement(modelCache, "sm");
+                ins.setStringVal("iname", "sm_" + countFormat.format(grpNo));
+                ins.setLongLongVal("mea", iidMea);
+                ins.setLongVal("rows", (int) cgBlock.getNoOfRecords());
                 // TODO: parse name: DATA_SysOpmHvES.SysOpmHvES_wElMinDrv_C_VW\ETKC:1\SingleShotGroup
                 TXBLOCK channelGroupComment = cgBlock.getChannelGroupComment();
                 if (channelGroupComment != null) {
-                    nvuList.add(ODSHelper.createStringNVU("desc", channelGroupComment.getText()));
+                    ins.setStringVal("desc", channelGroupComment.getText());
                 }
-                ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
+                long iidSm = ins.execute();
 
                 // write LocalColumns
-                writeLc(modelCache, ieMea, ieSm, idBlock, dgBlock, cgBlock, meqNames, meqInstances);
+                writeLc(modelCache, iidMea, iidSm, idBlock, dgBlock, cgBlock, meqNames, meqInstances);
             }
 
             dgBlock = dgBlock.getNextDgBlock();
@@ -221,8 +214,8 @@ public class AoSessionWriter {
      * Write the instances of 'AoLocalColumn'.
      * 
      * @param modelCache The application model cache.
-     * @param ieMea The instance of 'AoMeasurement'.
-     * @param ieSm The instance of 'AoSubMatrix'.
+     * @param iidMea The instance id of 'AoMeasurement'.
+     * @param iidSm The instance idof 'AoSubMatrix'.
      * @param dgBlock The MDF data group block.
      * @param cgBlock The MDF channel group block.
      * @param meqNames
@@ -230,14 +223,18 @@ public class AoSessionWriter {
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private void writeLc(ODSModelCache modelCache, InstanceElement ieMea, InstanceElement ieSm, IDBLOCK idBlock,
-            DGBLOCK dgBlock, CGBLOCK cgBlock, Map<String, Integer> meqNames, Map<String, InstanceElement> meqInstances)
+    private void writeLc(ODSModelCache modelCache, long iidMea, long iidSm, IDBLOCK idBlock, DGBLOCK dgBlock,
+            CGBLOCK cgBlock, Map<String, Integer> meqNames, Map<String, InstanceElement> meqInstances)
             throws AoException, IOException {
         ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
         ApplicationElement aeLc = modelCache.getApplicationElement("lc");
+        ApplicationElement aeSm = modelCache.getApplicationElement("sm");
+        ApplicationElement aeMea = modelCache.getApplicationElement("mea");
         ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
         ApplicationRelation relMeaMeq = modelCache.getApplicationRelation("mea", "meq", "meqs");
         ApplicationRelation relLcMeq = modelCache.getApplicationRelation("lc", "meq", "meq");
+        InstanceElement ieMea = aeMea.getInstanceById(ODSHelper.asODSLongLong(iidMea));
+        InstanceElement ieSm = aeSm.getInstanceById(ODSHelper.asODSLongLong(iidSm));
 
         // iterate over channel blocks
         CNBLOCK cnBlock = cgBlock.getFirstCnBlock();
@@ -882,7 +879,7 @@ public class AoSessionWriter {
      * @param fileComment The MDF3 file comment.
      * @throws AoException error setting date to instance.
      */
-    private static void handleCLExportDate(InstanceElement ieMea, HDBLOCK hdBlock, TXBLOCK fileComment)
+    private static void handleCLExportDate(ODSInsertStatement ins, HDBLOCK hdBlock, TXBLOCK fileComment)
             throws AoException {
         if (hdBlock.getDateStarted() != null && !hdBlock.getDateStarted().equals("01:01:1980")) {
             return;
@@ -901,9 +898,9 @@ public class AoSessionWriter {
             try {
                 DateFormat clDateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
                 Date date = clDateFormat.parse(matcher.group(1));
-                ieMea.setValue(ODSHelper.createDateNVU("date_created", ODSHelper.asODSDate(date)));
-                ieMea.setValue(ODSHelper.createDateNVU("mea_begin", (Date) null));
-                ieMea.setValue(ODSHelper.createDateNVU("mea_end", ODSHelper.asODSDate(date)));
+                ins.setDateVal("date_created", ODSHelper.asODSDate(date));
+                ins.setDateVal("mea_begin", null);
+                ins.setDateVal("mea_end", ODSHelper.asODSDate(date));
                 LOG.info("Found special CLExport date format in comment: " + matcher.group(1));
             } catch (ParseException e) {
                 LOG.warn(e.getMessage(), e);
