@@ -49,9 +49,9 @@ public class AoSessionWriter {
 
     /** The number format having 5 digits used for count formatting */
     private final NumberFormat countFormat;
-
+    /** The date format in the MDF file */
     private final DateFormat mdfDateFormat;
-
+    /** helper class for lookup tables */
     private final LookupTableHelper lookupTableHelper;
 
     /**
@@ -178,6 +178,8 @@ public class AoSessionWriter {
         // iterate over data group blocks
         int grpNo = 1;
         DGBLOCK dgBlock = hdBlock.getFirstFileGroup();
+        Map<String, InstanceElement> meqInstances = new HashMap<String, InstanceElement>();
+
         while (dgBlock != null) {
 
             // ONLY SORTED MDF files can be converted - check this!
@@ -207,7 +209,7 @@ public class AoSessionWriter {
                 ieSm.setValueSeq(nvuList.toArray(new NameValueUnit[0]));
 
                 // write LocalColumns
-                writeLc(modelCache, ieMea, ieSm, idBlock, dgBlock, cgBlock, meqNames);
+                writeLc(modelCache, ieMea, ieSm, idBlock, dgBlock, cgBlock, meqNames, meqInstances);
             }
 
             dgBlock = dgBlock.getNextDgBlock();
@@ -223,11 +225,14 @@ public class AoSessionWriter {
      * @param ieSm The instance of 'AoSubMatrix'.
      * @param dgBlock The MDF data group block.
      * @param cgBlock The MDF channel group block.
+     * @param meqNames
+     * @param meqTime
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
     private void writeLc(ODSModelCache modelCache, InstanceElement ieMea, InstanceElement ieSm, IDBLOCK idBlock,
-            DGBLOCK dgBlock, CGBLOCK cgBlock, Map<String, Integer> meqNames) throws AoException, IOException {
+            DGBLOCK dgBlock, CGBLOCK cgBlock, Map<String, Integer> meqNames, Map<String, InstanceElement> meqInstances)
+            throws AoException, IOException {
         ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
         ApplicationElement aeLc = modelCache.getApplicationElement("lc");
         ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
@@ -304,11 +309,8 @@ public class AoSessionWriter {
             writeEc(modelCache, ieLc, idBlock, dgBlock, cgBlock, cnBlock);
 
             // create 'AoMeasurementQuantity' instance if not yet existing
-            InstanceElementIterator iter = ieMea.getRelatedInstances(relMeaMeq, meqName);
-            InstanceElement ieMeq = null;
-            if (iter.getCount() > 0) {
-                ieMeq = iter.nextOne();
-            } else {
+            InstanceElement ieMeq = meqInstances.get(meqName);
+            if (ieMeq == null) {
                 ieMeq = aeMeq.createInstance(meqName);
                 ieMeq.setValue(ODSHelper.createStringNVU("desc", cnBlock.getSignalDescription().trim()));
                 ieMeq.setValue(ODSHelper.createEnumNVU("dt", getDataType(expandDataType, cnBlock, ccBlock)));
@@ -334,9 +336,10 @@ public class AoSessionWriter {
                     ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("MessageName", ext.getMessageName()));
                     ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("SenderName", ext.getSenderName()));
                 }
+                ieMea.createRelation(relMeaMeq, ieMeq);
+                meqInstances.put(meqName, ieMeq);
             }
-            iter.destroy();
-            ieMea.createRelation(relMeaMeq, ieMeq);
+            // iter.destroy();
             ieLc.createRelation(relLcMeq, ieMeq);
 
             // create 'AoUnit' instance if not yet existing
