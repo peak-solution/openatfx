@@ -91,12 +91,9 @@ public class Test_NI_RealTypes {
             assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_angle_rad")), 0.0000001);
             assertEquals(0, ODSHelper.getDoubleVal(ieMea.getValue("start_distance_m")), 0.0000001);
 
-            assertEquals(4, ieMea.listAttributes("*", AttrType.INSTATTR_ONLY).length);
+            assertEquals(1, ieMea.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
             assertEquals("National Instruments", ODSHelper.getStringVal(ieMea.getValue("author")));
-            assertEquals("", ODSHelper.getDateVal(ieMea.getValue("organization")));
-            assertEquals("", ODSHelper.getStringVal(ieMea.getValue("project")));
-            assertEquals("", ODSHelper.getStringVal(ieMea.getValue("meaObject")));
         } catch (AoException e) {
             fail(e.reason);
         }

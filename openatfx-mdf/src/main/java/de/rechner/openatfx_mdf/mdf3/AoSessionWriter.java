@@ -26,7 +26,6 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
-import org.asam.ods.NameValueUnit;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
 
@@ -173,7 +172,7 @@ public class AoSessionWriter {
         // iterate over data group blocks
         int grpNo = 1;
         DGBLOCK dgBlock = hdBlock.getFirstFileGroup();
-        Map<String, InstanceElement> meqInstances = new HashMap<String, InstanceElement>();
+        Map<String, Long> meqInstances = new HashMap<String, Long>();
 
         while (dgBlock != null) {
             // ONLY SORTED MDF files can be converted - check this!
@@ -224,17 +223,11 @@ public class AoSessionWriter {
      * @throws IOException Error reading from MDF file.
      */
     private void writeLc(ODSModelCache modelCache, long iidMea, long iidSm, IDBLOCK idBlock, DGBLOCK dgBlock,
-            CGBLOCK cgBlock, Map<String, Integer> meqNames, Map<String, InstanceElement> meqInstances)
-            throws AoException, IOException {
+            CGBLOCK cgBlock, Map<String, Integer> meqNames, Map<String, Long> meqInstances) throws AoException,
+            IOException {
         ApplicationElement aeMeq = modelCache.getApplicationElement("meq");
         ApplicationElement aeLc = modelCache.getApplicationElement("lc");
-        ApplicationElement aeSm = modelCache.getApplicationElement("sm");
         ApplicationElement aeMea = modelCache.getApplicationElement("mea");
-        ApplicationRelation relSmLc = modelCache.getApplicationRelation("sm", "lc", "lcs");
-        ApplicationRelation relMeaMeq = modelCache.getApplicationRelation("mea", "meq", "meqs");
-        ApplicationRelation relLcMeq = modelCache.getApplicationRelation("lc", "meq", "meq");
-        InstanceElement ieMea = aeMea.getInstanceById(ODSHelper.asODSLongLong(iidMea));
-        InstanceElement ieSm = aeSm.getInstanceById(ODSHelper.asODSLongLong(iidSm));
 
         // iterate over channel blocks
         CNBLOCK cnBlock = cgBlock.getFirstCnBlock();
@@ -264,85 +257,102 @@ public class AoSessionWriter {
                 }
             }
 
-            // create 'AoLocalColumn' instance
+            // sequence representation
             CCBLOCK ccBlock = cnBlock.getCcBlock();
-            InstanceElement ieLc = aeLc.createInstance(meqName);
-            ieSm.createRelation(relSmLc, ieLc);
-
-            List<NameValueUnit> nvuLcList = new ArrayList<NameValueUnit>(8);
-            // sequence_representation
             int seqRep = getSeqRep(ccBlock, meqName);
             if (cnBlock.getNumberOfBits() == 1) { // bit will be stored as bytes
                 seqRep = 7;
             }
-            nvuLcList.add(ODSHelper.createEnumNVU("srp", seqRep));
-            // independent flag
-            short idp = cnBlock.getChannelType() > 0 ? (short) 1 : (short) 0;
-            nvuLcList.add(ODSHelper.createShortNVU("idp", idp));
-            // global flag
-            nvuLcList.add(ODSHelper.createShortNVU("glb", (short) 15));
-            // generation parameters
-            double[] genParams = getGenerationParameters(ccBlock);
-            boolean expandDataType = false;
-            if (genParams != null && genParams.length > 0) {
-                nvuLcList.add(ODSHelper.createDoubleSeqNVU("par", genParams));
-                expandDataType = seqRep != 0 && seqRep != 7;
-            }
-            // raw_datatype
-            int valueType = getValueType(cnBlock);
-            int rawDataType = getRawDataTypeForValueType(valueType, cnBlock);
-            nvuLcList.add(ODSHelper.createEnumNVU("rdt", rawDataType));
-            // axistype
-            int axistype = cnBlock.getChannelType() == 0 ? 1 : 0;
-            nvuLcList.add(ODSHelper.createEnumNVU("axistype", axistype));
-            // minimum
-            if (cnBlock.isKnownImplValue()) {
-                nvuLcList.add(ODSHelper.createDoubleNVU("min", cnBlock.getMinImplValue()));
-                nvuLcList.add(ODSHelper.createDoubleNVU("max", cnBlock.getMaxImplValue()));
-            }
-            ieLc.setValueSeq(nvuLcList.toArray(new NameValueUnit[0]));
-
-            // create 'AoExternalComponent' instance
-            writeEc(modelCache, ieLc, idBlock, dgBlock, cgBlock, cnBlock);
 
             // create 'AoMeasurementQuantity' instance if not yet existing
-            InstanceElement ieMeq = meqInstances.get(meqName);
-            if (ieMeq == null) {
-                ieMeq = aeMeq.createInstance(meqName);
-                ieMeq.setValue(ODSHelper.createStringNVU("desc", cnBlock.getSignalDescription().trim()));
-                ieMeq.setValue(ODSHelper.createEnumNVU("dt", getDataType(expandDataType, cnBlock, ccBlock)));
+            Long iidMeq = meqInstances.get(meqName);
+            double[] genParams = getGenerationParameters(ccBlock);
+
+            if (iidMeq == null) {
+                ODSInsertStatement ins = new ODSInsertStatement(modelCache, "meq");
+                ins.setStringVal("iname", meqName);
+                ins.setStringVal("desc", cnBlock.getSignalDescription().trim());
+                boolean expandDataType = (genParams != null) && (genParams.length > 0) && (seqRep != 0)
+                        && (seqRep != 7);
+                ins.setEnumVal("dt", getDataType(expandDataType, cnBlock, ccBlock));
                 if (ccBlock != null && ccBlock.isKnownPhysValue()) {
-                    ieMeq.setValue(ODSHelper.createDoubleNVU("min", ccBlock.getMinPhysValue()));
-                    ieMeq.setValue(ODSHelper.createDoubleNVU("max", ccBlock.getMaxPhysValue()));
+                    ins.setDoubleVal("min", ccBlock.getMinPhysValue());
+                    ins.setDoubleVal("max", ccBlock.getMaxPhysValue());
                 }
                 if (device != null && device.length() > 0) {
-                    ieMeq.setValue(ODSHelper.createStringNVU("src_path", device));
+                    ins.setStringVal("src_path", device);
                 }
                 // CEBLOCK (extension block) info
                 CEBLOCK ceBlock = cnBlock.getCeblock();
                 if (ceBlock != null && ceBlock.getCeBlockDim() != null) {
                     CEBLOCK_DIM ext = ceBlock.getCeBlockDim();
-                    ieMeq.addInstanceAttribute(ODSHelper.createLongNVU("NumberOfModule", ext.getNumberOfModule()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("Address", ext.getAddress()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("DIMDescription", ext.getDescription()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("ECUIdent", ext.getEcuIdent()));
+                    ins.setLongVal("NumberOfModule", ext.getNumberOfModule());
+                    ins.setLongLongVal("Address", ext.getAddress());
+                    ins.setStringVal("DIMDescription", ext.getDescription());
+                    ins.setStringVal("ECUIdent", ext.getEcuIdent());
                 } else if (ceBlock != null && ceBlock.getCeBlockVectorCAN() != null) {
                     CEBLOCK_VectorCAN ext = ceBlock.getCeBlockVectorCAN();
-                    ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("CANIndex", ext.getCanIndex()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createLongLongNVU("MessageId", ext.getMessageId()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("MessageName", ext.getMessageName()));
-                    ieMeq.addInstanceAttribute(ODSHelper.createStringNVU("SenderName", ext.getSenderName()));
+                    ins.setLongLongVal("CANIndex", ext.getCanIndex());
+                    ins.setLongLongVal("MessageId", ext.getMessageId());
+                    ins.setStringVal("MessageName", ext.getMessageName());
+                    ins.setStringVal("SenderName", ext.getSenderName());
                 }
-                ieMea.createRelation(relMeaMeq, ieMeq);
-                meqInstances.put(meqName, ieMeq);
+                ins.setLongLongVal("mea", iidMea);
+                iidMeq = ins.execute();
+                meqInstances.put(meqName, iidMeq);
             }
-            // iter.destroy();
-            ieLc.createRelation(relLcMeq, ieMeq);
+
+            // create 'AoLocalColumn' instance
+            ODSInsertStatement ins = new ODSInsertStatement(modelCache, "lc");
+            ins.setStringVal("iname", meqName);
+            ins.setLongLongVal("sm", iidSm);
+            // sequence_representation: string channel cannot be referenced in ASAM ODS: read and write external
+            if (cnBlock.getSignalDataType() == 7) {
+                String[] stringDataValues = readStringDataValues(dgBlock, cgBlock, cnBlock);
+                ins.setEnumVal("srp", 0);
+                ins.setNameValueUnit(ODSHelper.createStringSeqNVU("val", stringDataValues));
+                LOG.info("Unable to reference into MDF3, extracting string values. [Channel=" + meqName + "]");
+            } else {
+                ins.setEnumVal("srp", seqRep);
+            }
+            // independent flag
+            short idp = cnBlock.getChannelType() > 0 ? (short) 1 : (short) 0;
+            ins.setShortVal("idp", idp);
+            // global flag
+            ins.setShortVal("glb", (short) 15);
+            // generation parameters
+            ins.setDoubleSeq("par", genParams);
+            // raw_datatype
+            int valueType = getValueType(cnBlock);
+            int rawDataType = getRawDataTypeForValueType(valueType, cnBlock);
+            ins.setEnumVal("rdt", rawDataType);
+            // axistype
+            int axistype = cnBlock.getChannelType() == 0 ? 1 : 0;
+            ins.setEnumVal("axistype", axistype);
+            // minimum/maximum
+            if (cnBlock.isKnownImplValue()) {
+                ins.setDoubleVal("min", cnBlock.getMinImplValue());
+                ins.setDoubleVal("max", cnBlock.getMaxImplValue());
+            }
+
+            // relation to submatrix
+            ins.setLongLongVal("sm", iidSm);
+            ins.setLongLongVal("meq", iidMeq);
+
+            long iidLc = ins.execute();
+
+            // create 'AoExternalComponent' instance
+            if (cnBlock.getSignalDataType() != 7) {
+                writeEc(modelCache, iidLc, idBlock, dgBlock, cgBlock, cnBlock);
+            }
 
             // create 'AoUnit' instance if not yet existing
+            InstanceElement ieMeq = aeMeq.getInstanceById(ODSHelper.asODSLongLong(iidMeq));
             writeUnit(ieMeq, ccBlock);
 
             // special handling for formula 11 'ASAM-MCD2 Text Table, (COMPU_VTAB)': create lookup table
+            InstanceElement ieMea = aeMea.getInstanceById(ODSHelper.asODSLongLong(iidMea));
+            InstanceElement ieLc = aeLc.getInstanceById(ODSHelper.asODSLongLong(iidLc));
             if ((ccBlock != null) && (ccBlock.getFormulaIdent() == 11)) {
                 double[] keys = ccBlock.getKeysForTextTable();
                 String[] values = ccBlock.getValuesForTextTable();
@@ -415,49 +425,37 @@ public class AoSessionWriter {
      * Write the instances of 'AoExternalComponent'.
      * 
      * @param modelCache The application model cache.
-     * @param ieLc The instance of 'AoLocalColumn'.
+     * @param iidLc The instance id of the 'AoLocalColumn' instance.
      * @param dgBlock The MDF data group block.
      * @param cgBlock The MDF channel group block.
      * @param cnBlock The MDF channel block.
      * @throws AoException Error writing to session.
      * @throws IOException Error reading from MDF file.
      */
-    private void writeEc(ODSModelCache modelCache, InstanceElement ieLc, IDBLOCK idBlock, DGBLOCK dgBlock,
-            CGBLOCK cgBlock, CNBLOCK cnBlock) throws AoException, IOException {
-        // string channel cannot be referenced in ASAM ODS: read and write external
-        if (cnBlock.getSignalDataType() == 7) {
-            String[] str = readStringDataValues(dgBlock, cgBlock, cnBlock);
-            ieLc.setValue(ODSHelper.createEnumNVU("srp", 0));
-            ieLc.setValue(ODSHelper.createStringSeqNVU("val", str));
-            LOG.info("Unable to reference into MDF3, extracting string values. [Channel=" + ieLc.getName() + "]");
-            return;
-        }
-
-        ApplicationElement aeEc = modelCache.getApplicationElement("ec");
-        ApplicationRelation relLcEc = modelCache.getApplicationRelation("lc", "ec", "ecs");
-        InstanceElement ieEc = aeEc.createInstance("ec_" + this.countFormat.format(1));
-
-        List<NameValueUnit> nvuEcList = new ArrayList<>();
+    private void writeEc(ODSModelCache modelCache, long iidLc, IDBLOCK idBlock, DGBLOCK dgBlock, CGBLOCK cgBlock,
+            CNBLOCK cnBlock) throws AoException, IOException {
+        ODSInsertStatement ins = new ODSInsertStatement(modelCache, "ec");
+        ins.setStringVal("iname", "ec_" + this.countFormat.format(1));
         Path mdfFilePath = idBlock.getMdfFilePath().getFileName();
         if (mdfFilePath == null) {
             throw new IOException("mdfFilePath must not be null");
         }
-        nvuEcList.add(ODSHelper.createStringNVU("fl", mdfFilePath.toString()));
-        nvuEcList.add(ODSHelper.createEnumNVU("vt", getValueType(cnBlock)));
-        nvuEcList.add(ODSHelper.createLongLongNVU("so", dgBlock.getLnkDataRecords()));
-        nvuEcList.add(ODSHelper.createLongNVU("cl", (int) cgBlock.getNoOfRecords()));
-        nvuEcList.add(ODSHelper.createLongNVU("vb", 1));
+        ins.setStringVal("fl", mdfFilePath.toString());
+        ins.setEnumVal("vt", getValueType(cnBlock));
+        ins.setLongLongVal("so", dgBlock.getLnkDataRecords());
+        ins.setLongVal("cl", (int) cgBlock.getNoOfRecords());
+        ins.setLongVal("vb", 1);
         int recordIdOffset = (dgBlock.getNoRecordIds() > 0) ? 1 : 0;
-        nvuEcList.add(ODSHelper.createLongNVU("bs", cgBlock.getDataRecordSize() + recordIdOffset));
+        ins.setLongVal("bs", cgBlock.getDataRecordSize() + recordIdOffset);
         int valOffset = recordIdOffset + cnBlock.getByteOffset() + (cnBlock.getNumberOfFirstBits() / 8);
-        nvuEcList.add(ODSHelper.createLongNVU("vo", valOffset));
+        ins.setLongVal("vo", valOffset);
         short bitOffset = (short) (cnBlock.getNumberOfFirstBits() % 8);
         if ((bitOffset != 0) || ((cnBlock.getNumberOfBits() % 8) != 0) || (cnBlock.getNumberOfBits() == 24)) {
-            nvuEcList.add(ODSHelper.createShortNVU("bo", bitOffset));
-            nvuEcList.add(ODSHelper.createShortNVU("bc", (short) cnBlock.getNumberOfBits()));
+            ins.setShortVal("bo", bitOffset);
+            ins.setShortVal("bc", (short) cnBlock.getNumberOfBits());
         }
-        ieEc.setValueSeq(nvuEcList.toArray(new NameValueUnit[0]));
-        ieLc.createRelation(relLcEc, ieEc);
+        ins.setLongLongVal("lc", iidLc);
+        ins.execute();
     }
 
     /**

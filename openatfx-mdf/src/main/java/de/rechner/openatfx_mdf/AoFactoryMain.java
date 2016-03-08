@@ -35,7 +35,7 @@ public class AoFactoryMain {
             NameComponent path[] = ncRef.to_name("MDF.ASAM-ODS");
             ncRef.rebind(path, aoFactory);
 
-            LOG.info("ATFX Server started");
+            LOG.info("MDF Server started");
             orb.run();
         } catch (InvalidName e) {
             System.err.println(e.getMessage());
