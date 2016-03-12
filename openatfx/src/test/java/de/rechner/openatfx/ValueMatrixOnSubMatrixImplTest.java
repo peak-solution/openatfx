@@ -181,12 +181,6 @@ public class ValueMatrixOnSubMatrixImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-
-        try {
-            vm.getMode();
-            fail("Exception expected");
-        } catch (Throwable e) {
-        }
     }
 
     public static junit.framework.Test suite() {

@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
@@ -29,6 +31,7 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.omg.PortableServer.POA;
+import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -39,6 +42,8 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
+
+    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
 
     /** the file handler */
     private final IFileHandler fileHandler;
@@ -553,14 +558,20 @@ class AtfxCache {
             InstanceElement ie = this.instanceElementCache.get(aid).get(iid);
             if (ie == null) {
                 byte[] oid = toByta(new long[] { 0, aid, iid }); // 0=InstanceElement
-                org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
+                org.omg.CORBA.Object obj;
+                try {
+                    obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
+                } catch (WrongPolicy e) {
+                    LOG.error(e.getMessage(), e);
+                    throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+                }
                 ie = InstanceElementHelper.unchecked_narrow(obj);
                 this.instanceElementCache.get(aid).put(iid, ie);
             }
             return ie;
         }
-        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
-                + iid + "]");
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                              "Instance not found [aid=" + aid + ",iid=" + iid + "]");
     }
 
     public static byte[] toByta(long[] data) {
@@ -1068,8 +1079,8 @@ class AtfxCache {
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         ApplicationElement elem1 = invApplRel.getElem1();
         if (elem1 == null) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Elem1 not set for relation: "
-                    + invApplRel.getRelationName());
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                  "Elem1 not set for relation: " + invApplRel.getRelationName());
         }
 
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
@@ -1128,7 +1139,13 @@ class AtfxCache {
         this.instanceIteratorPointerCache.put(nextInstanceIteratorId, 0);
 
         byte[] oid = toByta(new long[] { 3, nextInstanceIteratorId, 0 }); // 3=InstanceElementIterator
-        org.omg.CORBA.Object obj = instancePOA.create_reference_with_id(oid, InstanceElementIteratorHelper.id());
+        org.omg.CORBA.Object obj;
+        try {
+            obj = instancePOA.create_reference_with_id(oid, InstanceElementIteratorHelper.id());
+        } catch (WrongPolicy e) {
+           LOG.error(e.getMessage(), e);
+           throw new AoException(ErrorCode.AO_UNKNOWN_ERROR,SeverityFlag.ERROR,0, e.getMessage());
+        }
         return InstanceElementIteratorHelper.unchecked_narrow(obj);
     }
 

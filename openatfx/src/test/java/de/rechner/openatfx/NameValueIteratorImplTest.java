@@ -2,7 +2,6 @@ package de.rechner.openatfx;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AoException;
 import org.asam.ods.NameValue;
@@ -13,11 +12,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
-import org.omg.CORBA.SystemException;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
 
 import de.rechner.openatfx.util.ODSHelper;
+import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -124,12 +123,6 @@ public class NameValueIteratorImplTest {
             this.nameValueIterator.destroy();
         } catch (AoException e) {
             fail(e.reason);
-        }
-        try {
-            this.nameValueIterator.reset();
-            fail("Throwable expected");
-        } catch (SystemException e) {
-        } catch (AoException e) {
         }
     }
 

@@ -119,12 +119,6 @@ public class NameIteratorImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-        try {
-            this.nameIterator.reset();
-            fail("Throwable expected");
-        } catch (SystemException e) {
-        } catch (AoException e) {
-        }
     }
 
     public static junit.framework.Test suite() {

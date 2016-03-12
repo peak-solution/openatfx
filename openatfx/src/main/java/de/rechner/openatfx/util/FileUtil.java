@@ -26,18 +26,28 @@ public class FileUtil {
             destFile.createNewFile();
         }
 
-        FileChannel source = null;
-        FileChannel destination = null;
+        FileInputStream sourceFis = null;
+        FileChannel sourceChannel = null;
+        FileOutputStream destFos = null;
+        FileChannel destChannel = null;
         try {
-            source = new FileInputStream(sourceFile).getChannel();
-            destination = new FileOutputStream(destFile).getChannel();
-            destination.transferFrom(source, 0, source.size());
+            sourceFis = new FileInputStream(sourceFile);
+            sourceChannel = sourceFis.getChannel();
+            destFos = new FileOutputStream(destFile);
+            destChannel = destFos.getChannel();
+            destChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
         } finally {
-            if (source != null) {
-                source.close();
+            if (sourceFis != null) {
+                sourceFis.close();
             }
-            if (destination != null) {
-                destination.close();
+            if (sourceChannel != null) {
+                sourceChannel.close();
+            }
+            if (destFos != null) {
+                destFos.close();
+            }
+            if (destChannel != null) {
+                destChannel.close();
             }
         }
     }

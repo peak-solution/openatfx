@@ -158,12 +158,6 @@ public class ColumnImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
-
-        try {
-            col.getDataType();
-            fail("Exception expected");
-        } catch (Throwable e) {
-        }
     }
 
     public static junit.framework.Test suite() {

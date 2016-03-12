@@ -7,8 +7,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.Blob;
@@ -17,7 +15,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
-import org.omg.CORBA.SystemException;
+
+import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -163,12 +162,6 @@ public class BlobImplTest {
             this.blob.destroy();
         } catch (AoException e) {
             fail(e.reason);
-        }
-        try {
-            this.blob.getHeader();
-            fail("Throwable expected");
-        } catch (SystemException e) {
-        } catch (AoException e) {
         }
     }
 
