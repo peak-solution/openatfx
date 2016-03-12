@@ -129,6 +129,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                     public int compare(AIDNameValueSeqUnitId o1, AIDNameValueSeqUnitId o2) {
                         Integer i1 = atfxCache.getAttrNoByName(aid, o2.attr.aaName);
                         Integer i2 = atfxCache.getAttrNoByBaName(aid, "sequence_representation");
+                        if (i1 == null || i2 == null) { // in case of relation or instance attribute
+                           return -1;
+                        }
                         boolean isSeqRepVal = i1.equals(i2);
                         return isSeqRepVal ? 1 : 0;
                     }
