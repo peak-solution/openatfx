@@ -41,13 +41,16 @@ import de.rechner.openatfx_mdf.util.ODSHelper;
 public class AvroOutputWriter {
 
     private static final Log LOG = LogFactory.getLog(AvroOutputWriter.class);
-    private static final String DIR = "D:/PUBLIC/test";
     static DatumWriter<TimeSeries> timeSeriesWriter = new SpecificDatumWriter<TimeSeries>(TimeSeries.class);
 
     public static void main(String[] args) throws IOException {
         BasicConfigurator.configure();
+        String directory = args[0];
+        if (directory == null) {
+            throw new IOException("Parameter directory must be set!");
+        }
         ORB orb = ORB.init(new String[0], System.getProperties());
-        for (Path inputFile : Files.newDirectoryStream(Paths.get(DIR))) {
+        for (Path inputFile : Files.newDirectoryStream(Paths.get(args[0]))) {
             String filename = inputFile.toString().toLowerCase();
             if (filename.endsWith(".atfx") || filename.endsWith(".dat") || filename.endsWith(".mdf")
                     || filename.endsWith(".mf4")) {
