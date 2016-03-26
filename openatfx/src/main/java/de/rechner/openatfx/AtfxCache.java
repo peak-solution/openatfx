@@ -31,7 +31,6 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -561,7 +560,7 @@ class AtfxCache {
                 org.omg.CORBA.Object obj;
                 try {
                     obj = instancePOA.create_reference_with_id(oid, InstanceElementHelper.id());
-                } catch (WrongPolicy e) {
+                } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
                     LOG.error(e.getMessage(), e);
                     throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
                 }
@@ -570,8 +569,8 @@ class AtfxCache {
             }
             return ie;
         }
-        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                              "Instance not found [aid=" + aid + ",iid=" + iid + "]");
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
+                + iid + "]");
     }
 
     public static byte[] toByta(long[] data) {
@@ -1079,8 +1078,8 @@ class AtfxCache {
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         ApplicationElement elem1 = invApplRel.getElem1();
         if (elem1 == null) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                                  "Elem1 not set for relation: " + invApplRel.getRelationName());
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Elem1 not set for relation: "
+                    + invApplRel.getRelationName());
         }
 
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
@@ -1142,9 +1141,9 @@ class AtfxCache {
         org.omg.CORBA.Object obj;
         try {
             obj = instancePOA.create_reference_with_id(oid, InstanceElementIteratorHelper.id());
-        } catch (WrongPolicy e) {
-           LOG.error(e.getMessage(), e);
-           throw new AoException(ErrorCode.AO_UNKNOWN_ERROR,SeverityFlag.ERROR,0, e.getMessage());
+        } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
         return InstanceElementIteratorHelper.unchecked_narrow(obj);
     }

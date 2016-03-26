@@ -27,6 +27,7 @@
 	
 		- Improved method 'ApplElemAccess->insertInstances()':
 		  Support for 1:n relations and instance attributes.
+		- Added base model 'asam31'
 
 	0.6.2 (Christian Rechner)
 	

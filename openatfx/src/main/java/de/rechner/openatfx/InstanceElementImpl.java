@@ -206,8 +206,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         // get attr number
         Integer attrNo = this.atfxCache.getAttrNoByName(aid, aaName);
         if (attrNo == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "ApplicationAttribute '" + aaName + "' not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + aaName
+                    + "' not found");
         }
 
         // no instance attribute, read application attribute
@@ -274,8 +274,8 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // application attribute exists?
         else if (attrNo == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "ApplicationAttribute '" + nvu.valName + "' not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationAttribute '" + nvu.valName
+                    + "' not found");
         }
 
         // check if id has been updated, not allowed!
@@ -357,8 +357,8 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public void removeInstanceAttribute(String attrName) throws AoException {
         if (this.atfxCache.getInstanceAttributeValue(aid, iid, attrName) == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "InstanceAttribute '" + attrName + "' not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceAttribute '" + attrName
+                    + "' not found");
         }
         this.atfxCache.removeInstanceAttribute(aid, iid, attrName);
     }
@@ -371,8 +371,8 @@ class InstanceElementImpl extends InstanceElementPOA {
     public void renameInstanceAttribute(String oldName, String newName) throws AoException {
         // check if attribute exists
         if (this.atfxCache.getInstanceAttributeValue(aid, iid, oldName) == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "InstanceAttribute '" + oldName + "' not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceAttribute '" + oldName
+                    + "' not found");
         }
         // check for empty name
         if (newName == null || newName.length() < 1) {
@@ -442,8 +442,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @return Array of instance elements.
      * @throws AoException Error fetching related instances.
      */
-    private InstanceElement[] collectRelatedInstances(ApplicationRelation applRel, String iePattern)
-            throws AoException {
+    private InstanceElement[] collectRelatedInstances(ApplicationRelation applRel, String iePattern) throws AoException {
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
         Collection<Long> otherIids = this.atfxCache.getRelatedInstanceIds(this.aid, this.iid, applRel);
 
@@ -502,8 +501,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public InstanceElementIterator getRelatedInstancesByRelationship(Relationship ieRelationship, String iePattern)
             throws AoException {
-        InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship,
-                                                                       iePattern).toArray(new InstanceElement[0]);
+        InstanceElement[] ieAr = collectRelatedInstancesByRelationship(ieRelationship, iePattern).toArray(new InstanceElement[0]);
         return atfxCache.newInstanceElementIterator(instancePOA, ieAr);
     }
 
@@ -544,18 +542,15 @@ class InstanceElementImpl extends InstanceElementPOA {
     public void createRelation(ApplicationRelation applRel, InstanceElement instElem) throws AoException {
         // check if relation belongs to instance application element
         if (aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                                  "ApplicationRelation '" + applRel.getRelationName()
-                                          + "' is not defined at application element '"
-                                          + getApplicationElement().getName() + "'");
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getRelationName() + "' is not defined at application element '"
+                    + getApplicationElement().getName() + "'");
         }
         // check if inverse relation belongs to other instance application element
-        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2()
-                                                                                                    .getId())) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                                  "ApplicationRelation '" + applRel.getInverseRelationName()
-                                          + "' is not defined at application element '"
-                                          + instElem.getApplicationElement().getName() + "'");
+        if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2().getId())) {
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getInverseRelationName() + "' is not defined at application element '"
+                    + instElem.getApplicationElement().getName() + "'");
         }
         // create relation
         List<Long> otherIids = new ArrayList<Long>();
@@ -572,10 +567,9 @@ class InstanceElementImpl extends InstanceElementPOA {
     public void removeRelation(ApplicationRelation applRel, InstanceElement instElem) throws AoException {
         // check if relation belongs to instance application element
         if (this.aid != ODSHelper.asJLong(applRel.getElem1().getId())) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                                  "ApplicationRelation '" + applRel.getRelationName()
-                                          + "' is not defined at application element '"
-                                          + getApplicationElement().getName() + "'");
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                    + applRel.getRelationName() + "' is not defined at application element '"
+                    + getApplicationElement().getName() + "'");
         }
         // remove all other relation
         if (instElem == null) {
@@ -588,10 +582,9 @@ class InstanceElementImpl extends InstanceElementPOA {
             // element
             if (ODSHelper.asJLong(instElem.getApplicationElement().getId()) != ODSHelper.asJLong(applRel.getElem2()
                                                                                                         .getId())) {
-                throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                                      "ApplicationRelation '" + applRel.getInverseRelationName()
-                                              + "' is not defined at application element '"
-                                              + instElem.getApplicationElement().getName() + "'");
+                throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "ApplicationRelation '"
+                        + applRel.getInverseRelationName() + "' is not defined at application element '"
+                        + instElem.getApplicationElement().getName() + "'");
             }
             List<Long> l = new ArrayList<Long>();
             l.add(ODSHelper.asJLong(instElem.getId()));
@@ -629,8 +622,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             partSb.append(buildAsamPathPart(currentIe));
 
             // navigate to father
-            InstanceElementIterator fatherIeIter = currentIe.getRelatedInstancesByRelationship(Relationship.FATHER,
-                                                                                               "*");
+            InstanceElementIterator fatherIeIter = currentIe.getRelatedInstancesByRelationship(Relationship.FATHER, "*");
             currentIe = (fatherIeIter.getCount() > 0) ? fatherIeIter.nextOne() : null;
             fatherIeIter.destroy();
 
@@ -723,7 +715,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         org.omg.CORBA.Object obj;
         try {
             obj = instancePOA.create_reference_with_id(oid, MeasurementHelper.id());
-        } catch (WrongPolicy e) {
+        } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -747,7 +739,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         org.omg.CORBA.Object obj;
         try {
             obj = instancePOA.create_reference_with_id(oid, SubMatrixHelper.id());
-        } catch (WrongPolicy e) {
+        } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         }
@@ -776,8 +768,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getRights()
      */
     public ACL[] getRights() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getRights' not implemented");
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Method 'getRights' not implemented");
     }
 
     /**
@@ -786,8 +777,7 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#setRights(org.asam.ods.InstanceElement, int, org.asam.ods.RightsSet)
      */
     public void setRights(InstanceElement usergroup, int rights, RightsSet set) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'setRights' not implemented");
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Method 'setRights' not implemented");
     }
 
     /**
