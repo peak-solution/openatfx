@@ -1078,7 +1078,7 @@ public abstract class ODSHelper {
      * Converts an ASAM ODS value <code>org.asam.ods.TS_Union</code> to a <code>org.asam.ods.TS_UnionSeq</code> having
      * exactly one row.
      * 
-     * @param value The input value.
+     * @param u The input value.
      * @return The output value.
      * @throws AoException Error converting value.
      */
@@ -1838,14 +1838,35 @@ public abstract class ODSHelper {
      * Methods for string conversions.
      ******************************************************************************************************************/
 
+    /**
+     * Converts the value of a <code>org.asam.ods.NameValueUnit</code> the a string representation.
+     * 
+     * @param nvu The value.
+     * @return The string representation.
+     * @throws AoException Error converting.
+     */
     public static String nameValueUnit2string(NameValueUnit nvu) throws AoException {
         return tsValue2string(nvu.value);
     }
 
+    /**
+     * Converts the value of a <code>org.asam.ods.NameValue</code> the a string representation.
+     * 
+     * @param nv The value.
+     * @return The string representation.
+     * @throws AoException Error converting.
+     */
     public static String nameValue2string(NameValue nv) throws AoException {
         return tsValue2string(nv.value);
     }
 
+    /**
+     * Converts the value of a <code>org.asam.ods.TS_Value</code> the a string representation.
+     * 
+     * @param value The value.
+     * @return The string representation.
+     * @throws AoException Error converting.
+     */
     public static String tsValue2string(TS_Value value) throws AoException {
         if (value.flag != 15) {
             return "";
@@ -1853,6 +1874,13 @@ public abstract class ODSHelper {
         return tsUnion2String(value.u);
     }
 
+    /**
+     * Converts the value of a <code>org.asam.ods.TS_Union</code> the a string representation.
+     * 
+     * @param u The value.
+     * @return The string representation.
+     * @throws AoException Error converting.
+     */
     public static String tsUnion2String(TS_Union u) throws AoException {
         DataType dt = u.discriminator();
         // DS_BOOLEAN
@@ -2955,6 +2983,7 @@ public abstract class ODSHelper {
      * same DataType.
      * 
      * @param tsValues the array of TS_Value
+     * @param dt The data type.
      * @return the created TS_ValueSeq
      * @throws AoException if one or more of the array elements are null or one or more of the elements have a different
      *             DataType than the rest.

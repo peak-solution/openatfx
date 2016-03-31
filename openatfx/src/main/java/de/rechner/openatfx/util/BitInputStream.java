@@ -32,6 +32,8 @@ public class BitInputStream {
 
     /**
      * Return the number of bit still available for reading.
+     * 
+     * @return The number of available bits.
      */
     public int available() {
         return mEnd - mPos;
@@ -43,6 +45,7 @@ public class BitInputStream {
      * 
      * @param bits the amount of data to read (gte 0, lte 8)
      * @return byte of read data (possibly partially filled, from lsb)
+     * @throws IOException Error reading from stream.
      */
     public int read(int bits) throws IOException {
         int index = mPos >>> 3;
@@ -65,6 +68,7 @@ public class BitInputStream {
      * 
      * @param bits the amount of data to read
      * @return newly allocated byte array of read data
+     * @throws IOException Error reading from stream.
      */
     public byte[] readByteArray(int bits) throws IOException {
         int bytes = (bits >>> 3) + ((bits & 0x07) > 0 ? 1 : 0); // &7==%8
@@ -80,6 +84,7 @@ public class BitInputStream {
      * Increment the current position and ignore contained data.
      * 
      * @param bits the amount by which to increment the position
+     * @throws IOException End of stream is reached.
      */
     public void skip(int bits) throws IOException {
         if ((mPos + bits) > mEnd) {
