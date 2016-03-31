@@ -115,7 +115,7 @@ public class AoSessionImpl extends AoSessionPOA {
      * @param fileHandler The file handler.
      * @param path The path to the ATFX file.
      * @param baseStructure The base structure.
-     * @throws IOException
+     * @throws IOException Unable to instantiate session object.
      */
     public AoSessionImpl(POA modelPOA, IFileHandler fileHandler, String path, BaseStructure baseStructure)
             throws IOException {

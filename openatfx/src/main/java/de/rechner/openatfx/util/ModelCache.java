@@ -42,11 +42,14 @@ public class ModelCache {
     private String lcFlagsAaName;
 
     /**
-     * @param asv
-     * @param easAr
-     * @param esAr
+     * Instantiates a new ASAM ODS application model cache object.
+     * 
+     * @param asv The ASAM ODS ApplicationStructureValue.
+     * @param easAr The ASAM ODS EnumerationAttributeStructure.
+     * @param esAr The ASAM ODS EnumerationStructure.
      */
-    public ModelCache(ApplicationStructureValue asv, EnumerationAttributeStructure[] easAr, EnumerationStructure[] esAr) {
+    public ModelCache(ApplicationStructureValue asv, EnumerationAttributeStructure[] easAr,
+            EnumerationStructure[] esAr) {
         this.asv = asv;
         this.esAr = esAr;
         this.aid2applElemMap = new HashMap<Long, ApplElem>();

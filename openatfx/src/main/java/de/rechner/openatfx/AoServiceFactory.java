@@ -92,6 +92,7 @@ public class AoServiceFactory {
      * Creates a new <code>org.asam.ods.AoFactory</code> object.
      * 
      * @param orb The ORB.
+     * @param fileHandler The file handler, must not be null.
      * @return The AoFactory object.
      * @throws AoException Error creating AoFactory.
      */

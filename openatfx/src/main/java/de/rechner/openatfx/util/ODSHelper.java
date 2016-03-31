@@ -4,7 +4,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -1057,247 +1056,17 @@ public abstract class ODSHelper {
     }
 
     /*******************************************************************************************************************
-     * methods for checking equality
-     ******************************************************************************************************************/
-
-    public static boolean nvEquals(NameValue nv1, NameValue nv2) {
-        if (nv1 == null && nv2 == null)
-            return true;
-        if (nv1 == null || nv2 == null)
-            return false;
-        if (nv1.equals(nv2))
-            return true;
-        if (!nv1.valName.endsWith(nv2.valName))
-            return false;
-        return tsValueEquals(nv1.value, nv2.value);
-    }
-
-    public static boolean nvuEquals(NameValueUnit nvu1, NameValueUnit nvu2) {
-        if (nvu1 == null && nvu2 == null)
-            return true;
-        if (nvu1 == null || nvu2 == null)
-            return false;
-        if (nvu1.equals(nvu2))
-            return true;
-        if (!nvu1.valName.equals(nvu2.valName))
-            return false;
-        if (!nvu1.unit.equals(nvu2.unit))
-            return false;
-        return tsValueEquals(nvu1.value, nvu2.value);
-    }
-
-    public static boolean tsValueEquals(TS_Value v1, TS_Value v2) {
-        if (v1 == null && v2 == null)
-            return true;
-        if (v1 == null || v2 == null)
-            return false;
-        if (v1.equals(v2))
-            return true;
-        if (v1.flag != v2.flag)
-            return false;
-        return tsUnionEquals(v1.u, v2.u);
-    }
-
-    public static boolean tsUnionEquals(TS_Union u1, TS_Union u2) {
-        if (u1 == null && u2 == null)
-            return true;
-        if (u1 == null || u2 == null)
-            return false;
-        if (u1.equals(u2))
-            return true;
-        if (u1.discriminator() != u2.discriminator())
-            return false;
-
-        DataType dt = u1.discriminator();
-        // DS_BOOLEAN
-        if (dt == DataType.DS_BOOLEAN) {
-            return Arrays.equals(u1.booleanSeq(), u2.booleanSeq());
-        }
-        // DS_BYTE
-        else if (dt == DataType.DS_BYTE) {
-            return Arrays.equals(u1.byteSeq(), u2.byteSeq());
-        }
-        // DS_BYTESTR
-        else if (dt == DataType.DS_BYTESTR) {
-            return Arrays.deepEquals(u1.bytestrSeq(), u2.bytestrSeq());
-        }
-        // DS_COMPLEX
-        else if (dt == DataType.DS_COMPLEX) {
-            if (u1.complexSeq().length != u2.complexSeq().length)
-                return false;
-            for (int i = 0; i < u1.complexSeq().length; i++) {
-                if (!T_COMPLEX_equals(u1.complexSeq()[i], u2.complexSeq()[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // DS_DATE
-        else if (dt == DataType.DS_DATE) {
-            return Arrays.equals(u1.dateSeq(), u2.dateSeq());
-        }
-        // DS_DCOMPLEX
-        else if (dt == DataType.DS_DCOMPLEX) {
-            if (u1.dcomplexSeq().length != u2.dcomplexSeq().length)
-                return false;
-            for (int i = 0; i < u1.dcomplexSeq().length; i++) {
-                if (!T_DCOMPLEX_equals(u1.dcomplexSeq()[i], u2.dcomplexSeq()[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // DS_DOUBLE
-        else if (dt == DataType.DS_DOUBLE) {
-            return Arrays.equals(u1.doubleSeq(), u2.doubleSeq());
-        }
-        // DS_ENUM
-        else if (dt == DataType.DS_ENUM) {
-            return Arrays.equals(u1.enumSeq(), u2.enumSeq());
-        }
-        // DS_EXTERNALREFERENCE
-        else if (dt == DataType.DS_EXTERNALREFERENCE) {
-            if (u1.extRefSeq().length != u2.extRefSeq().length)
-                return false;
-            for (int i = 0; i < u1.extRefSeq().length; i++) {
-                if (!T_ExternalReference_equals(u1.extRefSeq()[i], u2.extRefSeq()[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // DS_FLOAT
-        else if (dt == DataType.DS_FLOAT) {
-            return Arrays.equals(u1.floatSeq(), u2.floatSeq());
-        }
-        // DS_LONG
-        else if (dt == DataType.DS_LONG) {
-            return Arrays.equals(u1.longSeq(), u2.longSeq());
-        }
-        // DS_LONGLONG
-        else if (dt == DataType.DS_LONGLONG) {
-            if (u1.longlongSeq().length != u2.longlongSeq().length)
-                return false;
-            for (int i = 0; i < u1.longlongSeq().length; i++) {
-                if (!T_LONGLONG_equals(u1.longlongSeq()[i], u2.longlongSeq()[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // DS_SHORT
-        else if (dt == DataType.DS_SHORT) {
-            return Arrays.equals(u1.shortSeq(), u2.shortSeq());
-        }
-        // DS_STRING
-        else if (dt == DataType.DS_STRING) {
-            return Arrays.equals(u1.stringSeq(), u2.stringSeq());
-        }
-        // DT_BOOLEAN
-        else if (dt == DataType.DT_BOOLEAN) {
-            return u1.booleanVal() == u2.booleanVal();
-        }
-        // DT_BYTE
-        else if (dt == DataType.DT_BYTE) {
-            return u1.byteVal() == u2.byteVal();
-        }
-        // DT_BYTESTR
-        else if (dt == DataType.DT_BYTESTR) {
-            return Arrays.equals(u1.bytestrVal(), u2.bytestrVal());
-        }
-        // DT_COMPLEX
-        else if (dt == DataType.DT_COMPLEX) {
-            return T_COMPLEX_equals(u1.complexVal(), u2.complexVal());
-        }
-        // DT_DATE
-        else if (dt == DataType.DT_DATE) {
-            return u1.dateVal().equals(u2.dateVal());
-        }
-        // DT_DCOMPLEX
-        else if (dt == DataType.DT_DCOMPLEX) {
-            return T_DCOMPLEX_equals(u1.dcomplexVal(), u2.dcomplexVal());
-        }
-        // DT_DOUBLE
-        else if (dt == DataType.DT_DOUBLE) {
-            return u1.doubleVal() == u2.doubleVal();
-        }
-        // DT_ENUM
-        else if (dt == DataType.DT_ENUM) {
-            return u1.enumVal() == u2.enumVal();
-        }
-        // DT_EXTERNALREFERENCE
-        else if (dt == DataType.DT_EXTERNALREFERENCE) {
-            return T_ExternalReference_equals(u1.extRefVal(), u2.extRefVal());
-        }
-        // DT_FLOAT
-        else if (dt == DataType.DT_FLOAT) {
-            return u1.floatVal() == u2.floatVal();
-        }
-        // DT_LONG
-        else if (dt == DataType.DT_LONG) {
-            return u1.longVal() == u2.longVal();
-        }
-        // DT_LONGLONG
-        else if (dt == DataType.DT_LONGLONG) {
-            return T_LONGLONG_equals(u1.longlongVal(), u2.longlongVal());
-        }
-        // DT_SHORT
-        else if (dt == DataType.DT_SHORT) {
-            return u1.shortVal() == u2.shortVal();
-        }
-        // DT_STRING
-        else if (dt == DataType.DT_STRING) {
-            return u1.stringVal().equals(u2.stringVal());
-        }
-        return false;
-    }
-
-    private static final boolean T_LONGLONG_equals(T_LONGLONG l1, T_LONGLONG l2) {
-        if (l1.equals(l2))
-            return true;
-        if (l1.low != l2.low)
-            return false;
-        if (l1.high != l2.high)
-            return false;
-        return true;
-    }
-
-    private static final boolean T_ExternalReference_equals(T_ExternalReference e1, T_ExternalReference e2) {
-        if (e1.equals(e2))
-            return true;
-        if (!e1.description.equals(e2.description))
-            return false;
-        if (!e1.mimeType.equals(e2.mimeType))
-            return false;
-        if (!e1.location.equals(e2.description))
-            return false;
-        return true;
-    }
-
-    private static final boolean T_COMPLEX_equals(T_COMPLEX c1, T_COMPLEX c2) {
-        if (c1.equals(c2))
-            return true;
-        if (c1.i != c2.i)
-            return false;
-        if (c1.r != c2.r)
-            return false;
-        return true;
-    }
-
-    private static final boolean T_DCOMPLEX_equals(T_DCOMPLEX c1, T_DCOMPLEX c2) {
-        if (c1.equals(c2))
-            return true;
-        if (c1.i != c2.i)
-            return false;
-        if (c1.r != c2.r)
-            return false;
-        return true;
-    }
-
-    /*******************************************************************************************************************
      * Methods for datatype conversions.
      ******************************************************************************************************************/
 
+    /**
+     * Converts an ASAM ODS value <code>org.asam.ods.TS_Value</code> to a <code>org.asam.ods.TS_ValueSeq</code> having
+     * exactly one row.
+     * 
+     * @param value The input value.
+     * @return The output value.
+     * @throws AoException Error converting value.
+     */
     public static TS_ValueSeq tsValue2tsValueSeq(TS_Value value) throws AoException {
         TS_ValueSeq valueSeq = new TS_ValueSeq();
         valueSeq.flag = new short[] { value.flag };
@@ -1305,6 +1074,14 @@ public abstract class ODSHelper {
         return valueSeq;
     }
 
+    /**
+     * Converts an ASAM ODS value <code>org.asam.ods.TS_Union</code> to a <code>org.asam.ods.TS_UnionSeq</code> having
+     * exactly one row.
+     * 
+     * @param value The input value.
+     * @return The output value.
+     * @throws AoException Error converting value.
+     */
     public static TS_UnionSeq tsUnion2tsUnionSeq(TS_Union u) throws AoException {
         TS_UnionSeq uSeq = new TS_UnionSeq();
         DataType dt = u.discriminator();
@@ -1426,8 +1203,8 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: "
-                    + dt.value());
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                  "Unknown DataType: " + dt.value());
         }
         return uSeq;
     }
@@ -1563,8 +1340,8 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
-                    + dataType2String(dt));
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                  "Unsupported DataType: " + dataType2String(dt));
         }
     }
 
@@ -1695,8 +1472,8 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
-                    + dataType2String(dt));
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                  "Unsupported DataType: " + dataType2String(dt));
         }
         return value;
     }
@@ -1878,8 +1655,8 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unsupported DataType: "
-                    + ODSHelper.dataType2String(dt));
+            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                                  "Unsupported DataType: " + ODSHelper.dataType2String(dt));
         }
         return u;
     }
@@ -1890,7 +1667,7 @@ public abstract class ODSHelper {
      * @param valName The attribute name.
      * @param dt The datatype.
      * @return TS_Value The TS_Value object.
-     * @throws AoException
+     * @throws AoException Error creating object.
      */
     public static NameValueUnit createEmptyNVU(String valName, DataType dt) throws AoException {
         NameValueUnit nvu = new NameValueUnit();
@@ -1905,7 +1682,7 @@ public abstract class ODSHelper {
      * 
      * @param dt The datatype.
      * @return TS_Value The TS_Value object.
-     * @throws AoException
+     * @throws AoException Error creating object.
      */
     public static TS_Value createEmptyTS_Value(DataType dt) throws AoException {
         TS_Value value = new TS_Value();
@@ -1919,7 +1696,7 @@ public abstract class ODSHelper {
      * 
      * @param dt The datatype.
      * @return The TS_Union object.
-     * @throws AoException
+     * @throws AoException Error creating object.
      */
     public static TS_Union createEmptyTS_Union(DataType dt) throws AoException {
         TS_Union u = new TS_Union();
@@ -2051,8 +1828,8 @@ public abstract class ODSHelper {
         }
         // unknown
         else {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported datatype: "
-                    + dataType2String(dt));
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype: " + dataType2String(dt));
         }
         return u;
     }
@@ -2352,8 +2129,8 @@ public abstract class ODSHelper {
             return u.stringVal();
         }
         // unknown datatype
-        throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0, "Unknown DataType: "
-                + dataType2String(dt));
+        throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+                              "Unknown DataType: " + dataType2String(dt));
     }
 
     public static NameValueUnit string2NameValueUnit(DataType dt, String value, String valName, String unit)
@@ -3430,8 +3207,8 @@ public abstract class ODSHelper {
         }
         // Cannot process given DataType
         else {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unsupported DataType '"
-                    + ODSHelper.dataType2String(dt) + "'");
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Unsupported DataType '" + ODSHelper.dataType2String(dt) + "'");
         }
 
         short[] flags = new short[ODSHelper.tsUnionSeqLength(seq)];
