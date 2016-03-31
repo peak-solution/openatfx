@@ -23,11 +23,13 @@
 
 1. Changes
 
-	0.6.3 (Christian Rechner
+	0.6.3 (Christian Rechner, Markus Renner)
 	
 		- Improved method 'ApplElemAccess->insertInstances()':
 		  Support for 1:n relations and instance attributes.
-		- Added base model 'asam31'
+		- Added base model 'asam32'
+		- Now supports DS_BYTESTR datatype for external component file writing
+		- Bytestreams are split when EXT_COMP_SEGSIZE is reached
 
 	0.6.2 (Christian Rechner)
 	

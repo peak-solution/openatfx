@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.ACL;
 import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
@@ -61,7 +59,7 @@ import de.rechner.openatfx.util.PatternUtil;
  */
 class ApplElemAccessImpl extends ApplElemAccessPOA {
 
-    private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
+    // private static final Log LOG = LogFactory.getLog(ApplElemAccessImpl.class);
 
     private final POA instancePOA;
     private final AtfxCache atfxCache;
@@ -130,7 +128,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                         Integer i1 = atfxCache.getAttrNoByName(aid, o2.attr.aaName);
                         Integer i2 = atfxCache.getAttrNoByBaName(aid, "sequence_representation");
                         if (i1 == null || i2 == null) { // in case of relation or instance attribute
-                           return -1;
+                            return -1;
                         }
                         boolean isSeqRepVal = i1.equals(i2);
                         return isSeqRepVal ? 1 : 0;
@@ -399,7 +397,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt must not be null");
         }
-        LOG.debug("getInstancesExt: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
+        // LOG.debug("getInstancesExt: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
         SelValueExt condition = null;
         // this method does only process a certain kind of query:
         // - selects from only one application element

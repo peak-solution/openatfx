@@ -738,7 +738,7 @@ class AtfxCache {
 
             // ***************************************************
             // write mode 'file', then write to external component
-            else if (writeMode.equals("file")) {
+            else if (writeMode.equalsIgnoreCase("file")) {
                 seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRep);
                 ExtCompWriter.getInstance().writeValues(this, iid, value);
                 setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
@@ -747,7 +747,7 @@ class AtfxCache {
 
             // ***************************************************
             // write mode 'database', then write to XML (memory)
-            else if (writeMode.equals("database")) {
+            else if (writeMode.equalsIgnoreCase("database")) {
                 seqRep = ODSHelper.seqRepExtComp2seqRepComp(seqRep);
                 setInstanceValue(aid, iid, seqRepAttrNo, ODSHelper.createEnumNV("", seqRep).value);
             }

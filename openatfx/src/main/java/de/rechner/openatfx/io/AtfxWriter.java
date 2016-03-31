@@ -566,11 +566,11 @@ public class AtfxWriter {
                 ieExtComps.destroy();
 
                 if (!writeExtComps && !multipleExtComps) { // write 'components'
-                    writeLCValuesComponent(streamWriter, modelCache, ie, componentFiles);
-                    writeLCFlagsComponent(streamWriter, modelCache, ie, componentFiles);
+                    writeLCValuesComponent(streamWriter, modelCache, ie, componentFiles); // values
+                    writeLCFlagsComponent(streamWriter, modelCache, ie, componentFiles); // flags
                     seqRepEnum = ODSHelper.seqRepExtComp2seqRepComp(seqRepEnum);
                     writeApplAttrValue(streamWriter, modelCache, aid,
-                                       ODSHelper.createEnumNVU(applAttrSeqRep, seqRepEnum));
+                                       ODSHelper.createEnumNVU(applAttrSeqRep, seqRepEnum)); // sequence_representation
                 } else { // write 'AoExternalComponent' instances
                     writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 }
