@@ -19,11 +19,12 @@ import org.omg.CORBA.ORB;
  */
 public class BaseStructureImplTest {
 
+    private static ORB orb;
     private static BaseStructure baseStructure;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
-        ORB orb = ORB.init(new String[0], System.getProperties());
+        orb = ORB.init(new String[0], System.getProperties());
         baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, "asam31");
     }
 
@@ -146,6 +147,18 @@ public class BaseStructureImplTest {
             BaseElement be2 = baseStructure.getElementByType("AOMeasurementQUANTITY");
             assertEquals(1, baseStructure.getRelations(be1, be2).length);
             assertEquals("measurement_quantities", baseStructure.getRelations(be1, be2)[0].getRelationName());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    public void testGetAllSupportedVersions() {
+        try {
+            assertEquals("asam29", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam29").getVersion());
+            assertEquals("asam30", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam30").getVersion());
+            assertEquals("asam31", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam31").getVersion());
+            assertEquals("asam32", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam32").getVersion());
         } catch (AoException e) {
             fail(e.reason);
         }
