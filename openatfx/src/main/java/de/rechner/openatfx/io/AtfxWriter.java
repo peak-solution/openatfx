@@ -508,8 +508,8 @@ public class AtfxWriter {
             for (InstanceElement ie : iter.nextN(iter.getCount())) {
                 ApplElem applElem = modelCache.getApplElem(aid);
 
-                // skip instances of 'AoExternalComponent' if components should be written
-                if (!writeExtComps && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
+                // skip instances of 'AoExternalComponent', they have to be handled special
+                if (applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
                     continue;
                 }
 
@@ -544,6 +544,7 @@ public class AtfxWriter {
                                                        Arrays.asList(modelCache.getApplAttrNames(ODSHelper.asJLong(applElem.aid))));
 
         // special handling: LocalColumn; do not write external component values
+        InstanceElement[] externalComponentChilds = null; // is not null if ApplElem=AoLocalColumn
         if ((modelCache.getLcAeName() != null) && (modelCache.getLcAeName().equals(applElem.aeName))) {
             String applAttrValues = modelCache.getApplAttrByBaseName(aid, "values").aaName;
             // flags is optional
@@ -561,19 +562,23 @@ public class AtfxWriter {
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
             // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
             if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
-                InstanceElementIterator ieExtComps = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
-                boolean multipleExtComps = ieExtComps.getCount() > 1;
-                ieExtComps.destroy();
+                InstanceElementIterator iterIeExtComps = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
+                externalComponentChilds = iterIeExtComps.nextN(iterIeExtComps.getCount());
+                iterIeExtComps.destroy();
 
-                if (!writeExtComps && !multipleExtComps) { // write 'components'
+                // write 'components'
+                if (!writeExtComps && (externalComponentChilds.length == 1)) {
                     writeLCValuesComponent(streamWriter, modelCache, ie, componentFiles); // values
                     writeLCFlagsComponent(streamWriter, modelCache, ie, componentFiles); // flags
                     seqRepEnum = ODSHelper.seqRepExtComp2seqRepComp(seqRepEnum);
                     writeApplAttrValue(streamWriter, modelCache, aid,
                                        ODSHelper.createEnumNVU(applAttrSeqRep, seqRepEnum)); // sequence_representation
-                } else { // write 'AoExternalComponent' instances
+                }
+                // write 'AoExternalComponent' instances
+                else {
                     writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 }
+
             } else { // write values to to XML (inline)
                 writeApplAttrValue(streamWriter, modelCache, aid, ie.getValue(applAttrSeqRep));
                 if (applAttrFlagsAttr != null) {
@@ -602,7 +607,8 @@ public class AtfxWriter {
         ElemId elemId = new ElemId(applElem.aid, ie.getId());
         for (ApplRel applRel : modelCache.getApplRels(aid)) {
             // skip reference to 'AoExternalComponent'
-            if (!writeExtComps && applRel.brName.equalsIgnoreCase("external_component")) {
+            if (applRel.brName.equalsIgnoreCase("external_component") && !writeExtComps
+                    && (externalComponentChilds != null) && (externalComponentChilds.length == 1)) {
                 continue;
             }
 
@@ -613,6 +619,15 @@ public class AtfxWriter {
         }
 
         streamWriter.writeEndElement();
+
+        // write external component instances if necessary
+        if ((externalComponentChilds != null) && (writeExtComps || externalComponentChilds.length > 1)) {
+            for (InstanceElement ieExtComp : externalComponentChilds) {
+                ApplElem applElemExtComp = modelCache.getApplElemByBaseName("AoExternalComponent");
+                writeInstanceElement(streamWriter, applElemExtComp, modelCache, aea, ieExtComp, writeExtComps,
+                                     componentFiles);
+            }
+        }
     }
 
     private void writeLCValuesComponent(XMLStreamWriter streamWriter, ModelCache modelCache,
