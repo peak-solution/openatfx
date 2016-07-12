@@ -56,7 +56,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes.put("number_of_rows", Arrays.asList(new String[] { "AoSubmatrix" }));
         obligatoryAttributes.put("independent", Arrays.asList(new String[] { "AoLocalColumn" }));
         obligatoryAttributes.put("component_length", Arrays.asList(new String[] { "AoExternalComponent" }));
-        obligatoryAttributes.put("filename_url", Arrays.asList(new String[] { "AoExternalComponent" }));
         obligatoryAttributes.put("value_type", Arrays.asList(new String[] { "AoExternalComponent" }));
         obligatoryAttributes.put("password", Arrays.asList(new String[] { "AoUser" }));
         obligatoryAttributes.put("superuser_flag", Arrays.asList(new String[] { "AoUserGroup" }));
@@ -315,9 +314,11 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
     public void setIsObligatory(boolean aaIsObligatory) throws AoException {
         // obligatory flag of obligatory base attribute is not reducable
         boolean mustBeObligatory = false;
+        String baseAttributeName = null;
+        String baseElementName = null;
         if (this.baseAttribute != null) {
-            String baseAttributeName = this.baseAttribute.getName();
-            String baseElementName = this.baseAttribute.getBaseElement().getType();
+            baseAttributeName = this.baseAttribute.getName();
+            baseElementName = this.baseAttribute.getBaseElement().getType();
             if (obligatoryAttributes.containsKey(baseAttributeName)) {
                 if (obligatoryAttributes.get(baseAttributeName) == null) {
                     // attribute is obligatory in every application element
@@ -330,7 +331,9 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         }
         if (mustBeObligatory && !aaIsObligatory) {
             throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
-                                  "Unable to set obligatory flag to 'false' for application attribute derived from an obligatory base attribute.");
+                                  "Unable to set obligatory flag to 'false' for application attribute derived"
+                                  + " from the obligatory base attribute '" + baseAttributeName + "' of base element"
+                                  + " '" + baseElementName + "'.");
         }
         this.obligatory = aaIsObligatory;
     }

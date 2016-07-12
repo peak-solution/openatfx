@@ -441,7 +441,7 @@
 		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="ordinal_number" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="component_length" obligatory="true" unique="false" />
-		<BaseAttribute dataType="DT_STRING" name="filename_url" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="filename_url" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="typespec_enum" name="value_type" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONGLONG" name="start_offset" obligatory="true" unique="false" />
 		<BaseAttribute dataType="DT_LONG" name="block_size" obligatory="true" unique="false" />
