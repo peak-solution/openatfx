@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.6.4 (Christian Rechner)
+	
+		- Added implicit creation of 'AoExternalComponent->ordinal_number' if not existing in
+		  application model
+
 	0.6.3 (Christian Rechner, Markus Renner)
 	
 		- Improved method 'ApplElemAccess->insertInstances()':

@@ -195,7 +195,8 @@ public class AtfxReader {
         try {
             String poaName = "AoSession.ModelPOA." + UUID.randomUUID().toString();
             POA rootPOA = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
-            POA poa = rootPOA.create_POA(poaName, null,
+            POA poa = rootPOA.create_POA(poaName,
+                                         null,
                                          new Policy[] {
                                                  rootPOA.create_id_assignment_policy(IdAssignmentPolicyValue.SYSTEM_ID),
                                                  rootPOA.create_lifespan_policy(LifespanPolicyValue.TRANSIENT),
@@ -303,8 +304,8 @@ public class AtfxReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing application structure.
      */
-    private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader)
-            throws XMLStreamException, AoException {
+    private void parseApplicationModel(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         long start = System.currentTimeMillis();
 
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL))) {
@@ -378,8 +379,8 @@ public class AtfxReader {
                 return baseRel;
             }
         }
-        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
-                              "BaseRelation not found for name='" + bRelName + "',targetBaseType='" + bType + "'");
+        throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "BaseRelation not found for name='"
+                + bRelName + "',targetBaseType='" + bType + "'");
     }
 
     /**
@@ -491,6 +492,12 @@ public class AtfxReader {
             aa.setName("flags_start_offset");
             aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("flags_start_offset")[0]);
         }
+        // ordinal_number
+        if (!existingBaNames.contains("ordinal_number")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("ordinal_number");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("ordinal_number")[0]);
+        }
         // ao_bit_count, only for asam31 models
         if ((baseModelVersioNo > 30) && !existingBaNames.contains("ao_bit_count")) {
             ApplicationAttribute aa = aeExtComp.createAttribute();
@@ -513,8 +520,8 @@ public class AtfxReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing application structure.
      */
-    private void parseEnumerationDefinition(ApplicationStructure as, XMLStreamReader reader)
-            throws XMLStreamException, AoException {
+    private void parseEnumerationDefinition(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         // 'name'
         reader.nextTag();
         if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_NAME)) {
@@ -539,8 +546,8 @@ public class AtfxReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to enumeration definition.
      */
-    private void parseEnumerationItem(EnumerationDefinition enumDef, XMLStreamReader reader)
-            throws XMLStreamException, AoException {
+    private void parseEnumerationItem(EnumerationDefinition enumDef, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_ITEM))) {
             // 'name'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ENUM_NAME)) {
@@ -558,8 +565,8 @@ public class AtfxReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private void parseApplicationElement(ApplicationStructure as, XMLStreamReader reader)
-            throws XMLStreamException, AoException {
+    private void parseApplicationElement(ApplicationStructure as, XMLStreamReader reader) throws XMLStreamException,
+            AoException {
         // 'name'
         reader.nextTag();
         if (!reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM_NAME)) {
@@ -675,8 +682,8 @@ public class AtfxReader {
         if (baseAttrStr != null && baseAttrStr.length() > 0) {
             baseAttr = baseAttrMap.get(baseAttrStr);
             if (baseAttr == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "Base attribute '" + baseAttrStr + "' not found");
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Base attribute '" + baseAttrStr
+                        + "' not found");
             }
             if (baseAttr.isObligatory()) {
                 aa = applElem.getAttributeByBaseName(baseAttrStr);
@@ -790,8 +797,8 @@ public class AtfxReader {
             if (brName != null && brName.length() > 0) {
                 BaseRelation baseRel = baseRelMap.get(brName.toLowerCase());
                 if (baseRel == null) {
-                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                          "BaseRelation '" + brName + "' not found'");
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "BaseRelation '" + brName
+                            + "' not found'");
                 }
                 rel.setBaseRelation(baseRel);
             }
