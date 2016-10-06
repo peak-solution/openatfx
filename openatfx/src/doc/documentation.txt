@@ -10,7 +10,7 @@ Example to start a ASAM service on an ATFX file
 -----------------------------------------------
 1. A CORBA Naming service has to be started, e.g. the Oracle Java with the command "orbd.exe"
 2. Start the CORBA server with command
-   java -jar openatfx-0.6.3.jar
+   java -jar openatfx-0.6.4.jar
 
 
 Java code example for opening a ASAM ODS session on an ATFX file:
