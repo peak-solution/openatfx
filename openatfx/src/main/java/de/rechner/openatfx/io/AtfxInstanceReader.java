@@ -371,23 +371,24 @@ class AtfxInstanceReader {
             }
             // 'length'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_LENGTH))) {
-                length = AtfxParseUtil.parseLong(reader.getElementText());
+                length = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_LENGTH);
             }
             // 'inioffset'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-                inioffset = AtfxParseUtil.parseLong(reader.getElementText());
+                inioffset = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
             }
             // 'blocksize'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
-                blockSize = AtfxParseUtil.parseLong(reader.getElementText());
+                blockSize = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_BLOCKSIZE);
             }
             // 'valperblock'
-            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
-                valPerBlock = AtfxParseUtil.parseLong(reader.getElementText());
+            else if (reader.isStartElement()
+                    && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
+                valPerBlock = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_VALPERBLOCK);
             }
             // 'valoffsets'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALOFFSETS))) {
-                valOffsets = AtfxParseUtil.parseLong(reader.getElementText());
+                valOffsets = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_VALOFFSETS);
             }
             // 'bitcount'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BITCOUNT))) {
@@ -519,23 +520,24 @@ class AtfxInstanceReader {
             }
             // 'length'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_LENGTH))) {
-                length = AtfxParseUtil.parseLong(reader.getElementText());
+                length = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_LENGTH);
             }
             // 'inioffset'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-                inioffset = AtfxParseUtil.parseLong(reader.getElementText());
+                inioffset = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
             }
             // 'blocksize'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
-                blockSize = AtfxParseUtil.parseLong(reader.getElementText());
+                blockSize = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_BLOCKSIZE);
             }
             // 'valperblock'
-            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
-                valPerBlock = AtfxParseUtil.parseLong(reader.getElementText());
+            else if (reader.isStartElement()
+                    && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALPERBLOCK))) {
+                valPerBlock = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_VALPERBLOCK);
             }
             // 'valoffsets'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_VALOFFSETS))) {
-                valOffsets = AtfxParseUtil.parseLong(reader.getElementText());
+                valOffsets = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_VALOFFSETS);
             }
 
             reader.next();
@@ -1185,6 +1187,35 @@ class AtfxInstanceReader {
             instance = new AtfxInstanceReader();
         }
         return instance;
+    }
+    
+    
+    /**
+     * returns the given string length value as integer value (parses string to integer)
+     * 
+     * @param lengthValue string length value read from the ATFX file
+     * @param attributeName name of the external component attribute
+     * @return the parsed integer value
+     * @throws AoException if an error occurs during the parse operation 
+     * (e.g. lengthValue to parse > Integer.MAX_VALUE) 
+     */
+    private int parseFileLength(String lengthValue, String attributeName) throws AoException {
+
+        try {
+            if (lengthValue == null || lengthValue.trim().length() <= 0) {
+                String reason = "empty string not allowed (value of external component with " + "attribute name '"
+                        + attributeName + "')";
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
+            }
+            return Integer.parseInt(lengthValue.trim());
+
+        } catch (NumberFormatException e) {
+            double sizeGB = (((double) Integer.MAX_VALUE) / ((double) 1073741824.0));
+            String reason = "The string value '" + lengthValue + "' of the data file specific external "
+                    + "component attribute '" + attributeName + "' is not parsable to an integer (DT_LONG) value or "
+                    + "exceeds the maximal allowed range of '" + Integer.MAX_VALUE + "' byte (" + sizeGB + " GB)!";
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
+        }
     }
 
 }

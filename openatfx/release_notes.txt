@@ -23,6 +23,13 @@
 
 1. Changes
 
+
+	0.6.5 (Gigatronik Ingolstadt GmbH)
+	
+		- Escape '+' in patterns
+		- Change messages in bin-file-related errors
+		- Support LocalColumn-inline-flags
+
 	0.6.4 (Christian Rechner)
 	
 		- Added implicit creation of 'AoExternalComponent->ordinal_number' if not existing in

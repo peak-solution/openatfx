@@ -83,6 +83,7 @@ public abstract class PatternUtil {
                 case '{':
                 case '}':
                 case '|':
+                case '+':
                 case '\\':
                     s.append("\\");
                     s.append(c);

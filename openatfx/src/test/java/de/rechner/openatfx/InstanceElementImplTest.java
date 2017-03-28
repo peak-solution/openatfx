@@ -42,6 +42,7 @@ public class InstanceElementImplTest {
     private static AoSession aoSession;
     private static InstanceElement ieDts;
     private static InstanceElement ieSm;
+    private static InstanceElement iePrj;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -53,6 +54,8 @@ public class InstanceElementImplTest {
         ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
         ApplicationElement aeSm = applicationStructure.getElementByName("sm");
         ieSm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33));
+        ApplicationElement aePrj = applicationStructure.getElementByName("prj");
+        iePrj = aePrj.getInstanceById(ODSHelper.asODSLongLong(1));
     }
 
     @AfterClass
@@ -501,10 +504,16 @@ public class InstanceElementImplTest {
         try {
             ApplicationStructure as = aoSession.getApplicationStructure();
 
+            // prj->tstser
+            ApplicationElement aePrj = as.getElementByName("prj");
+            ApplicationElement aeTstser = as.getElementByName("tstser");
+            ApplicationRelation applRel = as.getRelations(aePrj, aeTstser)[0];
+            assertEquals(1, iePrj.getRelatedInstances(applRel, "Test_+empty+*").getCount());
+            
             // dts->pas
             ApplicationElement aeDts = as.getElementByName("dts");
             ApplicationElement aePas = as.getElementByName("pas");
-            ApplicationRelation applRel = as.getRelations(aeDts, aePas)[0];
+            applRel = as.getRelations(aeDts, aePas)[0];
             assertEquals(1, ieDts.getRelatedInstances(applRel, "bas*").getCount());
             // pas->dts
             InstanceElement iePas = aePas.getInstanceById(ODSHelper.asODSLongLong(48));
