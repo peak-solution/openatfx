@@ -115,10 +115,10 @@ class InstanceElementIteratorImpl extends InstanceElementIteratorPOA {
 
     private int getPointer() throws AoException {
         Integer pointer = this.atfxCache.getIteratorPointer(this.id);
-        if (pointer == null) {
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                  "Invalid InstanceElementIterator reference");
-        }
+//        if (pointer == null) {
+//            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+//                                  "Invalid InstanceElementIterator reference");
+//        }
         return pointer;
     }
 

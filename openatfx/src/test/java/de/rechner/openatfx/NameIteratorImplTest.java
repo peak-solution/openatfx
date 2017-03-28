@@ -12,7 +12,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
-import org.omg.CORBA.SystemException;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
 
