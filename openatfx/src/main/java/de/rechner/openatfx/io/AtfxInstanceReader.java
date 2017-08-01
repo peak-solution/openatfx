@@ -96,8 +96,8 @@ class AtfxInstanceReader {
         File flagsFile = getFlagsTmpFile(aoSession);
         if (flagsFile.isFile() && flagsFile.exists() && flagsFile.length() > 0 && flagsFile.canWrite()) {
             if (!flagsFile.delete()) {
-                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, "Unable to delete file '"
-                        + flagsFile + "'");
+                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                      "Unable to delete file '" + flagsFile + "'");
             }
             LOG.info("Deleted existing flag file: " + flagsFile.getName());
         }
@@ -146,8 +146,8 @@ class AtfxInstanceReader {
         String aeName = reader.getLocalName();
         ApplElem applElem = modelCache.getApplElem(aeName);
         if (applElem == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationElement '" + aeName
-                    + "' not found");
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "ApplicationElement '" + aeName + "' not found");
         }
         Long aid = ODSHelper.asJLong(applElem.aid);
 
@@ -634,8 +634,8 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error parsing values.
      */
-    private TS_Value parseLocalColumnValues(ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException,
-            AoException {
+    private TS_Value parseLocalColumnValues(ModelCache modelCache, XMLStreamReader reader)
+            throws XMLStreamException, AoException {
         TS_Value value = new TS_Value();
         value.flag = (short) 15;
         value.u = new TS_Union();
@@ -662,8 +662,12 @@ class AtfxInstanceReader {
                     && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE)) {
                 value.u.extRefSeq(parseExtRefs(AtfxTagConstants.VALUES_ATTR_EXTERNALREFERENCE, reader));
             }
-            // DS_BYTE
+            // DS_BYTESTR
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BYTEFIELD)) {
+                value.u.bytestrSeq(parseBytestrSeq(AtfxTagConstants.VALUES_ATTR_BYTEFIELD, reader));
+            }
+            // DS_BYTE
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_INT8)) {
                 value.u.byteSeq(AtfxParseUtil.parseByteSeq(reader.getElementText()));
             }
             // DS_SHORT
@@ -849,10 +853,10 @@ class AtfxInstanceReader {
         }
         // DT_BYTESTR
         else if (dataType == DataType.DT_BYTESTR) {
-            String txt = reader.getElementText().trim();
-            if (txt.length() > 0) {
-                tsValue.u.bytestrVal(AtfxParseUtil.parseByteSeq(txt));
-                tsValue.flag = tsValue.u.bytestrVal().length > 0 ? 15 : (short) 0;
+            byte[] bytes = parseBytestr(aaName, reader);
+            if (bytes.length > 0) {
+                tsValue.u.bytestrVal(bytes);
+                tsValue.flag = 15;
             }
         }
         // DT_COMPLEX
@@ -971,8 +975,11 @@ class AtfxInstanceReader {
         }
         // DS_BYTESTR
         else if (dataType == DataType.DS_BYTESTR) {
-            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
-                                  "DataType 'DS_BYTESTR' not supported for application attribute");
+            byte[][] seq = parseBytestrSeq(aaName, reader);
+            if (seq.length > 0) {
+                tsValue.u.bytestrSeq(seq);
+                tsValue.flag = 15;
+            }
         }
         // DS_COMPLEX
         else if (dataType == DataType.DS_COMPLEX) {
@@ -1077,8 +1084,8 @@ class AtfxInstanceReader {
         }
         // unsupported data type
         else {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType " + dataType.value()
-                    + " not yet implemented");
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "DataType " + dataType.value() + " not yet implemented");
         }
         return tsValue;
     }
@@ -1093,8 +1100,8 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Blob parseBlob(AoSession aoSession, String attrName, XMLStreamReader reader) throws XMLStreamException,
-            AoException {
+    private Blob parseBlob(AoSession aoSession, String attrName, XMLStreamReader reader)
+            throws XMLStreamException, AoException {
         Blob blob = aoSession.createBlob();
         while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
             // 'text'
@@ -1108,6 +1115,43 @@ class AtfxInstanceReader {
             reader.next();
         }
         return blob;
+    }
+
+    private byte[][] parseBytestrSeq(String attrName, XMLStreamReader reader) throws XMLStreamException, AoException {
+        List<byte[]> list = new ArrayList<byte[]>();
+        while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
+            // 'length'
+            if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_LENGTH)) {
+                // int length = Integer.parseInt(reader.getElementText());
+            }
+            // 'sequence'
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_SEQUENCE)) {
+                list.add(AtfxParseUtil.parseByteSeq(reader.getElementText()));
+            }
+            reader.next();
+        }
+        return list.toArray(new byte[0][0]);
+    }
+
+    private byte[] parseBytestr(String attrName, XMLStreamReader reader) throws XMLStreamException, AoException {
+        byte[] bytes = new byte[0];
+        // support "old" method of byte stream
+        try {
+            bytes = AtfxParseUtil.parseByteSeq(reader.getElementText());
+        } catch (Exception e) {
+            // new method '<length>4</length><sequence>...'
+            while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
+                // 'length'
+                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_LENGTH)) {
+                }
+                // 'sequence'
+                else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_SEQUENCE)) {
+                    bytes = AtfxParseUtil.parseByteSeq(reader.getElementText());
+                }
+                reader.next();
+            }
+        }
+        return bytes;
     }
 
     /**
@@ -1188,16 +1232,14 @@ class AtfxInstanceReader {
         }
         return instance;
     }
-    
-    
+
     /**
      * returns the given string length value as integer value (parses string to integer)
      * 
      * @param lengthValue string length value read from the ATFX file
      * @param attributeName name of the external component attribute
      * @return the parsed integer value
-     * @throws AoException if an error occurs during the parse operation 
-     * (e.g. lengthValue to parse > Integer.MAX_VALUE) 
+     * @throws AoException if an error occurs during the parse operation (e.g. lengthValue to parse > Integer.MAX_VALUE)
      */
     private int parseFileLength(String lengthValue, String attributeName) throws AoException {
 

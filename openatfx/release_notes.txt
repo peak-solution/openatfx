@@ -23,6 +23,9 @@
 
 1. Changes
 
+	0.6.6 (Masayoshi Kuroda)
+	
+		- Added support for new ASAM ODS 6.0 'DT_BYTESTR'
 
 	0.6.5 (Gigatronik Ingolstadt GmbH)
 	

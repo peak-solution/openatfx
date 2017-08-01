@@ -8,8 +8,6 @@ import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -30,6 +28,7 @@ import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
+import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -170,6 +169,8 @@ public class InstanceElementImplTest {
             assertEquals((byte) 222, ieTstSer.getValue("appl_attr_dt_byte").value.u.byteVal());
             // DT_BYTESTR
             assertArrayEquals(new byte[] { (byte) 18, (byte) 42, (byte) 52, (byte) 222 },
+                              ieTstSer.getValue("appl_attr_dt_bytestr_new").value.u.bytestrVal());
+            assertArrayEquals(new byte[] { (byte) 18, (byte) 42, (byte) 52, (byte) 222 },
                               ieTstSer.getValue("appl_attr_dt_bytestr").value.u.bytestrVal());
             // DT_COMPLEX
             // assertEquals(5.1d,
@@ -200,9 +201,8 @@ public class InstanceElementImplTest {
             // DT_STRING
             assertEquals("test string", ieTstSer.getValue("appl_attr_dt_string").value.u.stringVal());
             // DS_BOOLEAN
-            assertEquals(true,
-                         Arrays.equals(new boolean[] { true, true, false, false },
-                                       ieTstSer.getValue("appl_attr_ds_boolean").value.u.booleanSeq()));
+            assertEquals(true, Arrays.equals(new boolean[] { true, true, false, false },
+                                             ieTstSer.getValue("appl_attr_ds_boolean").value.u.booleanSeq()));
             // DS_BYTE
             assertArrayEquals(new byte[] { (byte) 18, (byte) 42, (byte) 52, (byte) 222 },
                               ieTstSer.getValue("appl_attr_ds_byte").value.u.byteSeq());
@@ -509,7 +509,7 @@ public class InstanceElementImplTest {
             ApplicationElement aeTstser = as.getElementByName("tstser");
             ApplicationRelation applRel = as.getRelations(aePrj, aeTstser)[0];
             assertEquals(1, iePrj.getRelatedInstances(applRel, "Test_+empty+*").getCount());
-            
+
             // dts->pas
             ApplicationElement aeDts = as.getElementByName("dts");
             ApplicationElement aePas = as.getElementByName("pas");
@@ -603,13 +603,13 @@ public class InstanceElementImplTest {
             // changing the parent (1:1)
             ApplicationRelation arParent = aeMeaQua.getRelationsByBaseName("measurement")[0];
             assertEquals(1, ieMeaQua.getRelatedInstances(arParent, "*").getCount());
-            assertEquals("Detector;rms A fast - Zusammenfassung", ieMeaQua.getRelatedInstances(arParent, "*").nextOne()
-                                                                          .getName());
+            assertEquals("Detector;rms A fast - Zusammenfassung",
+                         ieMeaQua.getRelatedInstances(arParent, "*").nextOne().getName());
             InstanceElement otherMeasurement = aeDts.getInstanceByName("Slow quantity - Zusammenfassung");
             ieMeaQua.createRelation(arParent, otherMeasurement);
             assertEquals(1, ieMeaQua.getRelatedInstances(arParent, "*").getCount());
-            assertEquals("Slow quantity - Zusammenfassung", ieMeaQua.getRelatedInstances(arParent, "*").nextOne()
-                                                                    .getName());
+            assertEquals("Slow quantity - Zusammenfassung",
+                         ieMeaQua.getRelatedInstances(arParent, "*").nextOne().getName());
 
             // adding a info relation (m:n)
             ApplicationRelation arPas = aoSession.getApplicationStructure().getRelations(aeDts, aePas)[0];

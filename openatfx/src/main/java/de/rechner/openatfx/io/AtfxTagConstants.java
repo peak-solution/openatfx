@@ -101,6 +101,9 @@ class AtfxTagConstants {
     public static final String EXTREF_MIMETYPE = "mimetype";
     public static final String EXTREF_LOCATION = "location";
 
+    public static final String BYTESTR_LENGTH = "length";
+    public static final String BYTESTR_SEQUENCE = "sequence";
+    
     public static final String BLOB_TEXT = "text";
     public static final String BLOB_BYTEFIELD = "bytefield";
     public static final String BLOB_LENGTH = "length";

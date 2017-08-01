@@ -1424,7 +1424,7 @@ public abstract class ODSHelper {
         }
         // DS_BYTESTR
         else if (dt == DataType.DS_BYTESTR) {
-            value.u.bytestrVal((byte[]) obj);
+            value.u.bytestrSeq((byte[][]) obj);
         }
         // DS_COMPLEX
         else if (dt == DataType.DS_COMPLEX) {
