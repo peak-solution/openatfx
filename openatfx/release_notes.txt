@@ -23,6 +23,11 @@
 
 1. Changes
 
+	0.6.7 (Christian Rechner)
+	
+		- Added test cases for reading official ASAM 6.0 example files
+
+
 	0.6.6 (Masayoshi Kuroda)
 	
 		- Added support for new ASAM ODS 6.0 'DT_BYTESTR'
