@@ -1122,7 +1122,7 @@ class AtfxInstanceReader {
         while (!(reader.isEndElement() && reader.getLocalName().equals(attrName))) {
             // 'length'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_LENGTH)) {
-                // int length = Integer.parseInt(reader.getElementText());
+                Integer.parseInt(reader.getElementText());
             }
             // 'sequence'
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BYTESTR_SEQUENCE)) {
