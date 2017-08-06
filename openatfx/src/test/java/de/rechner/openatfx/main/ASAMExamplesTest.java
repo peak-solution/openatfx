@@ -1,0 +1,87 @@
+package de.rechner.openatfx.main;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.net.URL;
+
+import org.asam.ods.AoException;
+import org.asam.ods.AoFactory;
+import org.asam.ods.AoSession;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.omg.CORBA.ORB;
+
+import de.rechner.openatfx.AoServiceFactory;
+import junit.framework.JUnit4TestAdapter;
+
+
+/**
+ * Test class to check the official ASAM examples.
+ * 
+ * @author Christian Rechner
+ */
+public class ASAMExamplesTest {
+
+    private static AoFactory aoFactory;
+
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+    }
+
+    @Test
+    public void readExampleAllTypes() {
+        try {
+            URL url = ASAMExamplesTest.class.getResource("/de/rechner/openatfx/asam600/Example_AllTypes.atfx");
+            System.out.println(url);
+            AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+
+            assertEquals(14, aoSession.getApplicationStructureValue().applElems.length);
+            assertEquals(30, aoSession.getApplicationStructureValue().applRels.length);
+
+            aoSession.close();
+        } catch (AoException aoe) {
+            fail(aoe.reason);
+        }
+    }
+
+    @Test
+    public void readExampleBus() {
+        try {
+            URL url = ASAMExamplesTest.class.getResource("/de/rechner/openatfx/asam600/Example_Bus.atfx");
+            System.out.println(url);
+            AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+
+            assertEquals(18, aoSession.getApplicationStructureValue().applElems.length);
+            assertEquals(48, aoSession.getApplicationStructureValue().applRels.length);
+
+            aoSession.close();
+        } catch (AoException aoe) {
+            fail(aoe.reason);
+        }
+    }
+
+    @Test
+    public void readExampleBusWithIndex() {
+        try {
+            URL url = ASAMExamplesTest.class.getResource("/de/rechner/openatfx/asam600/Example_Bus.atfx");
+            System.out.println(url);
+            AoSession aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
+
+            assertEquals(18, aoSession.getApplicationStructureValue().applElems.length);
+            assertEquals(48, aoSession.getApplicationStructureValue().applRels.length);
+
+            aoSession.close();
+        } catch (AoException aoe) {
+            fail(aoe.reason);
+        }
+    }
+    
+    public static junit.framework.Test suite() {
+        return new JUnit4TestAdapter(ASAMExamplesTest.class);
+    }
+
+}

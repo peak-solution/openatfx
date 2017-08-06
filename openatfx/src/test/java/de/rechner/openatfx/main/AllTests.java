@@ -72,7 +72,8 @@ public class AllTests {
         suite.addTest(ReadValuesFromTest.suite());
 
         suite.addTest(AtfxParseUtilTest.suite());
-
+        suite.addTest(ASAMExamplesTest.suite());
+        
         return suite;
     }
 
