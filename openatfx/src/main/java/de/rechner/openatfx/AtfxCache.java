@@ -30,6 +30,7 @@ import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -569,8 +570,8 @@ class AtfxCache {
             }
             return ie;
         }
-        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Instance not found [aid=" + aid + ",iid="
-                + iid + "]");
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                              "Instance not found [aid=" + aid + ",iid=" + iid + "]");
     }
 
     public static byte[] toByta(long[] data) {
@@ -825,6 +826,23 @@ class AtfxCache {
 
         // read values from memory
         java.lang.Object jValue = this.instanceValueMap.get(aid).get(iid).get(attrNo);
+
+        // adjust datatype in case for internal values
+        // and raw datatype differs from measurement quantity datatype
+        if (lcValuesAttr && jValue != null && jValue instanceof float[]) {
+            dt = DataType.DS_FLOAT;
+        } else if (lcValuesAttr && jValue != null && jValue instanceof double[]) {
+            dt = DataType.DS_DOUBLE;
+        } else if (lcValuesAttr && jValue != null && jValue instanceof byte[]) {
+            dt = DataType.DS_BYTE;
+        } else if (lcValuesAttr && jValue != null && jValue instanceof short[]) {
+            dt = DataType.DS_SHORT;
+        } else if (lcValuesAttr && jValue != null && jValue instanceof int[]) {
+            dt = DataType.DS_LONG;
+        } else if (lcValuesAttr && jValue != null && jValue instanceof T_LONGLONG[]) {
+            dt = DataType.DS_LONGLONG;
+        }
+
         return (jValue == null) ? ODSHelper.createEmptyTS_Value(dt) : ODSHelper.jObject2tsValue(dt, jValue);
     }
 
@@ -1078,8 +1096,8 @@ class AtfxCache {
         ApplicationRelation invApplRel = getInverseRelation(applRel);
         ApplicationElement elem1 = invApplRel.getElem1();
         if (elem1 == null) {
-            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0, "Elem1 not set for relation: "
-                    + invApplRel.getRelationName());
+            throw new AoException(ErrorCode.AO_INVALID_RELATION, SeverityFlag.ERROR, 0,
+                                  "Elem1 not set for relation: " + invApplRel.getRelationName());
         }
 
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());

@@ -9,6 +9,11 @@ import java.net.URL;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationStructure;
+import org.asam.ods.AttrType;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
@@ -41,6 +46,16 @@ public class ASAMExamplesTest {
             assertEquals(14, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(30, aoSession.getApplicationStructureValue().applRels.length);
 
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
+
             aoSession.close();
         } catch (AoException aoe) {
             fail(aoe.reason);
@@ -55,6 +70,16 @@ public class ASAMExamplesTest {
 
             assertEquals(18, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(48, aoSession.getApplicationStructureValue().applRels.length);
+
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
 
             aoSession.close();
         } catch (AoException aoe) {
@@ -71,6 +96,16 @@ public class ASAMExamplesTest {
             assertEquals(18, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(48, aoSession.getApplicationStructureValue().applRels.length);
 
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
+
             aoSession.close();
         } catch (AoException aoe) {
             fail(aoe.reason);
@@ -85,6 +120,16 @@ public class ASAMExamplesTest {
 
             assertEquals(21, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(82, aoSession.getApplicationStructureValue().applRels.length);
+
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
 
             aoSession.close();
         } catch (AoException aoe) {
@@ -101,6 +146,16 @@ public class ASAMExamplesTest {
             assertEquals(14, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(30, aoSession.getApplicationStructureValue().applRels.length);
 
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
+
             aoSession.close();
         } catch (AoException aoe) {
             fail(aoe.reason);
@@ -115,6 +170,16 @@ public class ASAMExamplesTest {
 
             assertEquals(20, aoSession.getApplicationStructureValue().applElems.length);
             assertEquals(62, aoSession.getApplicationStructureValue().applRels.length);
+
+            // read all instance values including AoLocalColumn.values
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            for (ApplicationElement ae : as.getElements("*")) {
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ie.getValueSeq(ie.listAttributes("*", AttrType.ALL));
+                }
+            }
 
             aoSession.close();
         } catch (AoException aoe) {

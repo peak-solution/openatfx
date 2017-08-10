@@ -26,7 +26,8 @@
 	0.6.7 (Christian Rechner)
 	
 		- Added test cases for reading official ASAM 6.0 example files
-
+		- Fixed adjust datatype in case for inline XML values and raw datatype
+		  differs from measurement quantity datatype (to make ASAM example working)
 
 	0.6.6 (Masayoshi Kuroda)
 	
