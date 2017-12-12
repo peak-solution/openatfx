@@ -6,8 +6,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AIDName;
 import org.asam.ods.AIDNameUnitId;
 import org.asam.ods.AIDNameValueSeqUnitId;
@@ -29,6 +27,7 @@ import org.asam.ods.SelItem;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelOrder;
 import org.asam.ods.SelValueExt;
+import org.asam.ods.SetType;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
@@ -42,6 +41,7 @@ import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
+import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -128,26 +128,26 @@ public class ApplElemAccessImplTest {
             T_LONGLONG aidMea = as.getElementByName("mea").getId();
 
             // prj->tstser
-            assertEquals(2,
-                         applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid").length);
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
             // tstser->mea
-            assertEquals(1,
-                         applElemAccess.getRelInst(new ElemId(aidTstser, ODSHelper.asODSLongLong(2)), "mea_iid").length);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidTstser, ODSHelper.asODSLongLong(2)),
+                                                      "mea_iid").length);
             // mea->dts
             assertEquals(3,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dts_iid").length);
             // mea->setup_iid
-            assertEquals(1,
-                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "setup_iid").length);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "setup_iid").length);
             // mea->dsk_iid
             assertEquals(0,
                          applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dsk_iid").length);
             // mea->audifahrzeug_iid
-            assertEquals(1,
-                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifahrzeug_iid").length);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "audifahrzeug_iid").length);
             // mea->audifm_iid
-            assertEquals(1,
-                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "audifm_iid").length);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "audifm_iid").length);
 
         } catch (AoException e) {
             fail(e.reason);
@@ -156,12 +156,28 @@ public class ApplElemAccessImplTest {
 
     @Test
     public void testSetRelInst() {
-        // try {
-        // applElemAccess.getRelInst(null, null);
-        // fail("AoException expected");
-        // } catch (AoException e) {
-        // assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
-        // }
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidPrj = as.getElementByName("prj").getId();
+
+            // prj->tstser
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+            // remove
+            applElemAccess.setRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid",
+                                      new T_LONGLONG[] { ODSHelper.asODSLongLong(1) }, SetType.REMOVE);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+
+            // add again
+            applElemAccess.setRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid",
+                                      new T_LONGLONG[] { ODSHelper.asODSLongLong(1) }, SetType.INSERT);
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
     }
 
     @Test

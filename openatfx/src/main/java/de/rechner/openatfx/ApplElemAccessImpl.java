@@ -208,8 +208,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // check if Application Element exists
         long jAid = ODSHelper.asJLong(aid);
         if (this.atfxCache.getApplicationElementById(jAid) == null) {
-            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "ApplicationElement with id="
-                    + jAid + " not found");
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "ApplicationElement with id=" + jAid + " not found");
         }
         // delete each instance
         for (T_LONGLONG instId : instIds) {
@@ -242,8 +242,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // lookup relation
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, relName);
         if (applRel == null || applRel.getElem2() == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
-                    + aid + ",relName=" + relName);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "ApplicationRelation not found aid=" + aid + ",relName=" + relName);
         }
 
         // return related instance ids
@@ -276,8 +276,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // check 'relName'
         ApplicationRelation applRel = this.atfxCache.getApplicationRelationByName(aid, relName);
         if (applRel == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "ApplicationRelation not found aid="
-                    + aid + ",relName=" + relName);
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "ApplicationRelation not found aid=" + aid + ",relName=" + relName);
         }
         long otherAid = ODSHelper.asJLong(applRel.getElem2().getId());
 
@@ -305,7 +305,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             for (T_LONGLONG otherIidT : instIds) {
                 otherIidsToRemove.add(ODSHelper.asJLong(otherIidT));
             }
-            this.atfxCache.createInstanceRelations(aid, iid, applRel, otherIidsToRemove);
+            this.atfxCache.removeInstanceRelations(aid, iid, applRel, otherIidsToRemove);
         }
     }
 
@@ -363,9 +363,10 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 rel = this.atfxCache.getInverseRelation(rel);
             }
             if (rel == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Application relation [aid=" + aid
-                        + ",aeName=" + this.atfxCache.getApplicationElementNameById(aid) + ",relName=" + aoq.relName
-                        + "] not found!");
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "Application relation [aid=" + aid + ",aeName="
+                                              + this.atfxCache.getApplicationElementNameById(aid) + ",relName="
+                                              + aoq.relName + "] not found!");
             }
             iids = this.atfxCache.getRelatedInstanceIds(aid, iid, rel);
         }
@@ -375,8 +376,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             String attrName = aoq.anuSeq[i].attr.aaName;
             Integer attrNo = atfxCache.getAttrNoByName(aid, attrName);
             if (attrNo == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Attribute '" + attrName
-                        + "' not found!");
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "Attribute '" + attrName + "' not found!");
             }
             ers.attrValues[i] = new AttrResultSet();
             ers.attrValues[i].attrValues = new NameValueSeqUnitId();
