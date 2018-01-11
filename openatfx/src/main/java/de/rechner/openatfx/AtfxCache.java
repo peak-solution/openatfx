@@ -1087,7 +1087,7 @@ class AtfxCache {
 
         // add relation, if none or multiple cardinality, overwrite
         Set<Long> relInstIds = this.instanceRelMap.get(aid).get(iid).get(applRel);
-        if ((relInstIds.size() > 0) && (applRel.getRelationRange().max != -1)) {
+        if ((!relInstIds.isEmpty()) && (applRel.getRelationRange().max != -1)) {
             relInstIds.clear();
         }
         relInstIds.addAll(otherIids);
@@ -1102,8 +1102,16 @@ class AtfxCache {
 
         long otherAid = ODSHelper.asJLong(invApplRel.getElem1().getId());
         for (Long otherIid : otherIids) {
-            Set<Long> invRelInstIds = this.instanceRelMap.get(otherAid).get(otherIid).get(invApplRel);
-            if ((invRelInstIds.size() > 0) && (invApplRel.getRelationRange().max != -1)) {
+            Map<Long, Map<ApplicationRelation, Set<Long>>> instanceRelMapForAid = this.instanceRelMap.get(otherAid);
+            if (instanceRelMapForAid == null) {
+                continue;
+            }
+            Map<ApplicationRelation, Set<Long>> instanceRelsForIid = instanceRelMapForAid.get(otherIid);
+            if (instanceRelsForIid == null) {
+                continue;
+            }
+            Set<Long> invRelInstIds = instanceRelsForIid.get(invApplRel);
+            if (invRelInstIds != null && (!invRelInstIds.isEmpty()) && (invApplRel.getRelationRange().max != -1)) {
                 invRelInstIds.clear();
             }
             invRelInstIds.add(iid);
