@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -195,8 +196,71 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
      * @see org.asam.ods.ApplElemAccessOperations#updateInstances(org.asam.ods.AIDNameValueSeqUnitId[])
      */
     public void updateInstances(AIDNameValueSeqUnitId[] val) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'updateInstances' not implemented");
+     // check for empty data
+        if (val == null || val.length < 1) {
+            return;
+        }
+        int numberOfRows = val[0].values.flag.length;
+
+        // group by application element id and check if id attr is given
+        Map<Long, AIDNameValueSeqUnitId> idColumns = new HashMap<Long, AIDNameValueSeqUnitId>();
+        Map<Long, List<AIDNameValueSeqUnitId>> aeGroupColumns = new HashMap<Long, List<AIDNameValueSeqUnitId>>();
+        for (AIDNameValueSeqUnitId column : val) {
+            long aid = ODSHelper.asJLong(column.attr.aid);
+            Integer attrNo = this.atfxCache.getAttrNoByName(aid, column.attr.aaName);
+            // add to ae group
+            List<AIDNameValueSeqUnitId> list = aeGroupColumns.get(aid);
+            if (list == null) {
+                list = new ArrayList<AIDNameValueSeqUnitId>();
+                aeGroupColumns.put(aid, list);
+            }
+            list.add(column);
+            // check for id column
+            Integer idAttrNo = this.atfxCache.getAttrNoByBaName(aid, "id");
+            if (attrNo != null && attrNo.equals(idAttrNo)) {
+                idColumns.put(aid, column);
+            }
+        }
+        
+        for (final long aid : aeGroupColumns.keySet()) { // iterate over application elements
+            List<AIDNameValueSeqUnitId> attributes = aeGroupColumns.get(aid);
+            
+            // find 'id' column
+            AIDNameValueSeqUnitId idCol = idColumns.get(aid);
+        
+            // iterate over rows (instances)
+            for (int row = 0; row < numberOfRows; row++) {
+
+                // fetch id
+                long iid = 0;
+                if (idCol != null) {
+                    iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
+                }
+                
+                // write instance values or relation
+                for (AIDNameValueSeqUnitId anvsui : attributes) {
+                    Integer attrNo = this.atfxCache.getAttrNoByName(aid, anvsui.attr.aaName);
+                    TS_Value value = ODSHelper.tsValueSeq2tsValue(anvsui.values, row);
+                    // attribute is an application attribute
+                    if (attrNo != null) {
+                        this.atfxCache.setInstanceValue(aid, iid, attrNo, value);
+                    }
+                    // attribute is an application relation or an instance attribute
+                    else {
+                        ApplicationRelation rel = this.atfxCache.getApplicationRelationByName(aid, anvsui.attr.aaName);
+                        if (rel != null) {
+                            List<Long> otherIids = new ArrayList<Long>();
+                            otherIids.add(ODSHelper.asJLong(value.u.longlongVal()));
+                            this.atfxCache.createInstanceRelations(aid, iid, rel, otherIids);
+                        }
+                        // not defined in application model, assume instance attribute
+                        else {
+                            this.atfxCache.setInstanceAttributeValue(aid, iid, anvsui.attr.aaName, value);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -347,8 +411,19 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // prepare result
         ElemResultSet ers = new ElemResultSet();
         ers.aid = aoq.anuSeq[0].attr.aid; // fetch aid from first column
-        ers.attrValues = new AttrResultSet[aoq.anuSeq.length];
-
+        long aidOfFirstColumn = ODSHelper.asJLong(ers.aid);
+        boolean attrNameWildcardSpecified = false;
+        if ("*".equals(aoq.anuSeq[0].attr.aaName)) {
+            attrNameWildcardSpecified = true;
+        }
+        Collection<String> allAttrNamesForAid = null;
+        if (attrNameWildcardSpecified) {
+            allAttrNamesForAid = atfxCache.listApplicationAttributes(aidOfFirstColumn);
+            ers.attrValues = new AttrResultSet[allAttrNamesForAid.size()];
+        } else {
+            ers.attrValues = new AttrResultSet[aoq.anuSeq.length];
+        }
+        
         // get instance ids
         Collection<Long> iids = new LinkedHashSet<Long>(0);
         if (aoq.relName == null || aoq.relName.length() < 1) { // all of application element
@@ -371,20 +446,43 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
             iids = this.atfxCache.getRelatedInstanceIds(aid, iid, rel);
         }
 
-        for (int i = 0; i < aoq.anuSeq.length; i++) {
-            long aid = ODSHelper.asJLong(aoq.anuSeq[i].attr.aid);
-            String attrName = aoq.anuSeq[i].attr.aaName;
-            Integer attrNo = atfxCache.getAttrNoByName(aid, attrName);
-            if (attrNo == null) {
-                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                      "Attribute '" + attrName + "' not found!");
+        if (attrNameWildcardSpecified) {
+            // if wildcard specified, add all attributes of given AID to result...
+            Iterator<String> attrNameIterator = allAttrNamesForAid.iterator();
+            for (int i = 0; true; i++) {
+                if (!attrNameIterator.hasNext()) {
+                    break;
+                }
+                String attrName = attrNameIterator.next();
+                Integer attrNo = atfxCache.getAttrNoByName(aidOfFirstColumn, attrName);
+                if (attrNo == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                          "Attribute '" + attrName + "' not found!");
+                }
+                ers.attrValues[i] = new AttrResultSet();
+                ers.attrValues[i].attrValues = new NameValueSeqUnitId();
+                ers.attrValues[i].attrValues.unitId = atfxCache.getUnitIIDForAttr(aidOfFirstColumn, attrNo);
+                ers.attrValues[i].attrValues.valName = attrName;
+                ers.attrValues[i].attrValues.value = atfxCache.getInstanceValues(aidOfFirstColumn, attrNo, iids);
             }
-            ers.attrValues[i] = new AttrResultSet();
-            ers.attrValues[i].attrValues = new NameValueSeqUnitId();
-            ers.attrValues[i].attrValues.unitId = aoq.anuSeq[i].unitId;
-            ers.attrValues[i].attrValues.valName = aoq.anuSeq[i].attr.aaName;
-            ers.attrValues[i].attrValues.value = atfxCache.getInstanceValues(aid, attrNo, iids);
+        } else {
+            // ... otherwise just take the requested attributes from the given anuSeq
+            for (int i = 0; i < aoq.anuSeq.length; i++) {
+                long aid = ODSHelper.asJLong(aoq.anuSeq[i].attr.aid);
+                String attrName = aoq.anuSeq[i].attr.aaName;
+                Integer attrNo = atfxCache.getAttrNoByName(aid, attrName);
+                if (attrNo == null) {
+                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                          "Attribute '" + attrName + "' not found!");
+                }
+                ers.attrValues[i] = new AttrResultSet();
+                ers.attrValues[i].attrValues = new NameValueSeqUnitId();
+                ers.attrValues[i].attrValues.unitId = aoq.anuSeq[i].unitId;
+                ers.attrValues[i].attrValues.valName = attrName;
+                ers.attrValues[i].attrValues.value = atfxCache.getInstanceValues(aid, attrNo, iids);
+            }
         }
+        
         return new ElemResultSet[] { ers };
     }
 

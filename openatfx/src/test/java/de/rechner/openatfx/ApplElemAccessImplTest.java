@@ -20,6 +20,7 @@ import org.asam.ods.ElemId;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.JoinDef;
+import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
 import org.asam.ods.SelAIDNameUnitId;
@@ -96,10 +97,69 @@ public class ApplElemAccessImplTest {
     @Test
     public void testUpdateInstances() {
         try {
-            applElemAccess.updateInstances(null);
-            fail("AoException expected");
+            T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("dsk").getId();
+            AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
+            AIDNameValueSeqUnitId nameAnvsui = new AIDNameValueSeqUnitId();
+            nameAnvsui.attr = new AIDName(aid, "iname");
+            nameAnvsui.values = new TS_ValueSeq();
+            nameAnvsui.values.flag = new short[] { 15 };
+            nameAnvsui.values.u = new TS_UnionSeq();
+            nameAnvsui.values.u.stringVal(new String[] { "updateInstancesTest" });
+            aidSeq[0] = nameAnvsui;
+            aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].attr = new AIDName(aid, "created");
+            aidSeq[1].values = new TS_ValueSeq();
+            aidSeq[1].values.flag = new short[] { 15 };
+            aidSeq[1].values.u = new TS_UnionSeq();
+            aidSeq[1].values.u.dateVal(new String[] { "20180427" });
+            ElemId[] elemIds = applElemAccess.insertInstances(aidSeq);
+            
+            assertEquals(1, elemIds.length);
+            T_LONGLONG iid = elemIds[0].iid;
+            
+            AIDNameValueSeqUnitId iidAnvsui = new AIDNameValueSeqUnitId();
+            iidAnvsui.attr = new AIDName(aid, "dsk_iid");
+            iidAnvsui.values = new TS_ValueSeq();
+            iidAnvsui.values.flag = new short[] { 15 };
+            iidAnvsui.values.u = new TS_UnionSeq();
+            iidAnvsui.values.u.longlongVal(new T_LONGLONG[] { iid });
+            AIDNameValueSeqUnitId hostAnvsui = new AIDNameValueSeqUnitId();
+            hostAnvsui.attr = new AIDName(aid, "host");
+            hostAnvsui.values = new TS_ValueSeq();
+            hostAnvsui.values.flag = new short[] { 15 };
+            hostAnvsui.values.u = new TS_UnionSeq();
+            hostAnvsui.values.u.stringVal(new String[] { "testHost" });
+            AIDNameValueSeqUnitId[] updateAidSeq = new AIDNameValueSeqUnitId[3];
+            updateAidSeq[0] = iidAnvsui;
+            updateAidSeq[1] = nameAnvsui;
+            updateAidSeq[2] = hostAnvsui;
+            applElemAccess.updateInstances(updateAidSeq);
+            
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[1];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aid, "host");
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aid, "dsk_iid"), new T_LONGLONG());
+            selValue.oper = SelOpcode.EQ;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
+            qse.condSeq[0].value(selValue);
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            
+            assertEquals(1, resSetExt.length);
+            ResultSetExt result = resSetExt[0];
+            assertEquals(1, result.firstElems.length);
+            assertEquals(1, result.firstElems[0].values.length);
+            NameValueSeqUnitId resultHostNvsui = result.firstElems[0].values[0];
+            String[] resultHostValues = resultHostNvsui.value.u.stringVal();
+            assertEquals(1, resultHostValues.length);
+            assertEquals("testHost", resultHostValues[0]);
         } catch (AoException e) {
-            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+            fail(e.reason);
         }
     }
 

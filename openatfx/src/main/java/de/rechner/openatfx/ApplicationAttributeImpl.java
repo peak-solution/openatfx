@@ -276,7 +276,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             if (!aaIsUnique && this.baseAttribute.isUnique()) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Reducing the uniqueness of attributes derived from unique base attributes is not allowed [aid="
-                                              + aid + ",aaName=" + aaName + "]");
+                                              + aid + ",aaName=" + aaName + ",baName=" + baseAttribute.getName() + "]");
             }
         }
 

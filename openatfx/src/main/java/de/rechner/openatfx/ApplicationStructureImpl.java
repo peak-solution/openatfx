@@ -237,7 +237,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         if (baseElem == null) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "baseElem must not be empty");
         }
-        // check if attribute already exists
+        // check if element already exists
         if (this.atfxCache.getApplicationElementByName("") != null) {
             throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 0,
                                   "Creating a new application element with already having other elements with empty name is not allowed!");

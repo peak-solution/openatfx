@@ -5,8 +5,14 @@
 
 1. Changes
 
-	0.7.0 (Christian Rechner)
-	
+	0.7.0 (Markus Renner)
+
+		- implemented method ApplElemAccessImpl.updateInstances()
+		- added support for * wildcard at method ApplElemAccessImpl.getInstances()
+		- small addition to an error message for easier error tracking
+		- added tolerance of DataType DT_LONG for the AoLocalColumn.sequence_representation
+		  attribute at method AtfxCache.setInstanceValue() which was preventing atfx
+		  generation for given data coming directly from a Horiba Stars system.
 		- Fixed bug in base model 'asam32' when AoExternalComponent is missing
 
 

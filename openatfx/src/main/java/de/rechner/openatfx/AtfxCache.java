@@ -723,12 +723,20 @@ class AtfxCache {
      * @param value The value.
      */
     public void setInstanceValue(long aid, long iid, int attrNo, TS_Value value) throws AoException {
-        // check if attribute is 'values' of 'AoLocalColumn', then special handlong
+        // check if attribute is 'values' of 'AoLocalColumn', then special handling
         if (isLocalColumnValuesAttribute(aid, attrNo)) {
 
             // read sequence representation and write_mode
             int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
-            int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
+            TS_Value seqRepValue = getInstanceValue(aid, seqRepAttrNo, iid);
+            int seqRep = -1;
+            if (DataType.DT_ENUM == seqRepValue.u.discriminator()) {
+                seqRep = seqRepValue.u.enumVal();
+            } else if (DataType.DT_LONG == seqRepValue.u.discriminator()) {
+                // in HORIBA STARS the sequence representation comes as DT_LONG
+                seqRep = seqRepValue.u.longVal();
+            }
+            
             String writeMode = this.context.get("write_mode").value.u.stringVal();
 
             // ***************************************************
@@ -881,10 +889,8 @@ class AtfxCache {
      * @throws AoException
      */
     public String getUnitNameForAttr(long aid, int attrNo) throws AoException {
-        ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
-
         // unit instance id
-        long unitIid = ODSHelper.asJLong(aa.getUnit());
+        long unitIid = ODSHelper.asJLong(getUnitIIDForAttr(aid, attrNo));
         if (unitIid < 1) {
             return "";
         }
@@ -904,6 +910,19 @@ class AtfxCache {
 
         String unitNameObj = (String) this.instanceValueMap.get(unitAid).get(unitIid).get(unitNameAttrNo);
         return (unitNameObj == null) ? "" : unitNameObj;
+    }
+    
+    /**
+     * Returns the unit IID for an application attribute.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The attribute number
+     * @return The unit IID.
+     * @throws AoException
+     */
+    public T_LONGLONG getUnitIIDForAttr(long aid, int attrNo) throws AoException {
+        ApplicationAttribute aa = getApplicationAttribute(aid, attrNo);
+        return aa.getUnit();
     }
 
     /**
