@@ -4,7 +4,14 @@
 	
 
 1. Changes
+
+	0.7.0 (Christian Rechner)
+	
+		- Fixed bug in base model 'asam32' when AoExternalComponent is missing
+
+
 	0.6.9 (Markus Renner)
+
 		- prevented Nullpointer Exceptions when a insertInstances() was called
 		  with relation attributes, where a Flag was null and the IID was a LongLong 0
 

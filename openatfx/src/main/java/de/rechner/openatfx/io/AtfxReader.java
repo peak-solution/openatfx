@@ -480,6 +480,12 @@ public class AtfxReader {
         String baseModelVersion = aeExtComp.getApplicationStructure().getSession().getBaseStructure().getVersion();
         int baseModelVersioNo = Integer.parseInt(baseModelVersion.replace("asam", ""));
 
+        // filename_url
+        if (!existingBaNames.contains("filename_url")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("filename_url");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("filename_url")[0]);
+        }
         // flags_filename_url
         if (!existingBaNames.contains("flags_filename_url")) {
             ApplicationAttribute aa = aeExtComp.createAttribute();
