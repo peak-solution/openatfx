@@ -5,6 +5,9 @@
 
 1. Changes
 
+	0.7.1 (Elektronische Fahrwerksysteme GmbH)
+		- changed type of AoExternalComponent.inioffset to DT_LONGLONG
+
 	0.7.0 (Markus Renner)
 
 		- implemented method ApplElemAccessImpl.updateInstances()

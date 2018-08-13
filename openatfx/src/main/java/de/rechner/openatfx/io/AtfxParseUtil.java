@@ -129,7 +129,7 @@ abstract class AtfxParseUtil {
                 return Integer.parseInt(str.trim());
             } catch (NumberFormatException nfe) {
                 double sizeGB = (((double)Integer.MAX_VALUE) / ((double)1073741824.0));
-                String reason = "The string value '" + str + "' is not parsable to an integer (DT_LONG) value or "
+                String reason = "The value '" + str + "' is not parsable to an integer (DT_LONG) value or "
                         + "exceeds the maximal allowed range of '" + Integer.MAX_VALUE + "' byte (" + sizeGB + " GB)!";
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
             }

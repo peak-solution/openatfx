@@ -375,7 +375,7 @@ class AtfxInstanceReader {
             }
             // 'inioffset'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-                inioffset = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
+                inioffset = parseStartOffset(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
             }
             // 'blocksize'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
@@ -524,7 +524,7 @@ class AtfxInstanceReader {
             }
             // 'inioffset'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_INIOFFSET))) {
-                inioffset = parseFileLength(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
+                inioffset = parseStartOffset(reader.getElementText(), AtfxTagConstants.COMPONENT_INIOFFSET);
             }
             // 'blocksize'
             else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.COMPONENT_BLOCKSIZE))) {
@@ -1232,6 +1232,32 @@ class AtfxInstanceReader {
         }
         return instance;
     }
+    
+    /**
+     * returns the given string length value as long value (parses string to long)
+     * 
+     * @param lengthValue string length value read from the ATFX file
+     * @param attributeName name of the external component attribute
+     * @return the parsed long value
+     * @throws AoException if an error occurs during the parse operation (e.g. lengthValue to parse > Long.MAX_VALUE)
+     */
+    private long parseStartOffset(String offsetValue, String attributeName) throws AoException {
+        try {
+            if (offsetValue == null || offsetValue.trim().length() <= 0) {
+                String reason = "empty string not allowed (value of external component with " + "attribute name '"
+                        + attributeName + "')";
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
+            }
+            return Long.parseLong(offsetValue.trim());
+
+        } catch (NumberFormatException e) {
+            double sizeGB = (((double) Long.MAX_VALUE) / ((double) 1073741824.0));
+            String reason = "The value '" + offsetValue + "' of the data file specific external "
+                    + "component attribute '" + attributeName + "' is not parsable to an long (DT_LONGLONG) value or "
+                    + "exceeds the maximal allowed range of '" + Long.MAX_VALUE + "' byte (" + sizeGB + " GB)!";
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
+        }
+    }
 
     /**
      * returns the given string length value as integer value (parses string to integer)
@@ -1253,7 +1279,7 @@ class AtfxInstanceReader {
 
         } catch (NumberFormatException e) {
             double sizeGB = (((double) Integer.MAX_VALUE) / ((double) 1073741824.0));
-            String reason = "The string value '" + lengthValue + "' of the data file specific external "
+            String reason = "The value '" + lengthValue + "' of the data file specific external "
                     + "component attribute '" + attributeName + "' is not parsable to an integer (DT_LONG) value or "
                     + "exceeds the maximal allowed range of '" + Integer.MAX_VALUE + "' byte (" + sizeGB + " GB)!";
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, reason);
