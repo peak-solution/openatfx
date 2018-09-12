@@ -148,7 +148,7 @@ public class AoSessionImplTest {
     @Test
     public void testListContext() {
         try {
-            assertEquals(22, aoSession.listContext("*").getCount());
+            assertEquals(24, aoSession.listContext("*").getCount());
             assertEquals(3, aoSession.listContext("WILD*").getCount());
         } catch (AoException e) {
             fail(e.reason);
@@ -161,7 +161,7 @@ public class AoSessionImplTest {
     @Test
     public void testGetContext() {
         try {
-            assertEquals(22, aoSession.getContext("*").getCount());
+            assertEquals(24, aoSession.getContext("*").getCount());
             assertEquals(3, aoSession.getContext("WILD*").getCount());
         } catch (AoException e) {
             fail(e.reason);
@@ -193,7 +193,7 @@ public class AoSessionImplTest {
         try {
             aoSession.setContext(ODSHelper.createStringNV("NEW_CONTEXT", "test"));
             assertEquals("test", aoSession.getContextByName("NEW_CONTEXT").value.u.stringVal());
-            assertEquals(23, aoSession.listContext("*").getCount());
+            assertEquals(25, aoSession.listContext("*").getCount());
             aoSession.removeContext("NEW_CONTEXT");
         } catch (AoException e) {
             fail(e.reason);
@@ -214,7 +214,7 @@ public class AoSessionImplTest {
         try {
             aoSession.setContextString("NEW_CONTEXT", "test");
             assertEquals("test", aoSession.getContextByName("NEW_CONTEXT").value.u.stringVal());
-            assertEquals(23, aoSession.listContext("*").getCount());
+            assertEquals(25, aoSession.listContext("*").getCount());
             aoSession.removeContext("NEW_CONTEXT");
         } catch (AoException e) {
             fail(e.reason);
@@ -234,7 +234,7 @@ public class AoSessionImplTest {
         try {
             aoSession.setContextString("NEW_CONTEXT", "test");
             assertEquals("test", aoSession.getContextByName("NEW_CONTEXT").value.u.stringVal());
-            assertEquals(23, aoSession.listContext("*").getCount());
+            assertEquals(25, aoSession.listContext("*").getCount());
             aoSession.removeContext("NEW_CONTEXT");
         } catch (AoException e) {
             fail(e.reason);

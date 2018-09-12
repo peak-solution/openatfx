@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.7.2 (Christian Rechner)
+		- skip parse errors in documentation section to be able to read files having invalid
+		  documentation section
+
 	0.7.1 (Elektronische Fahrwerksysteme GmbH)
 		- changed type of AoExternalComponent.inioffset to DT_LONGLONG
 
