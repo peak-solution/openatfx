@@ -7,13 +7,12 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.Column;
+import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrix;
@@ -24,6 +23,7 @@ import org.junit.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
+import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -169,6 +169,34 @@ public class ValueMatrixOnSubMatrixImplTest {
         }
     }
 
+    @Test
+    public void testGetValue() {
+        try {
+            Column[] cols = vmCalculated.getColumns("*");
+            // whole array
+            NameValueSeqUnit[] nvsu = vmCalculated.getValue(cols, 0, 0); 
+            assertEquals(167, nvsu[0].value.flag.length);
+            assertEquals(167, nvsu[0].value.u.floatVal().length);
+            assertEquals(167, nvsu[1].value.flag.length);
+            assertEquals(167, nvsu[1].value.u.doubleVal().length);
+
+            // part array
+            nvsu = vmCalculated.getValue(cols, 100, 3);
+            assertEquals(3, nvsu[0].value.flag.length);
+            assertEquals(3, nvsu[0].value.u.floatVal().length);
+            assertEquals(3, nvsu[1].value.flag.length);
+            assertEquals(3, nvsu[1].value.u.doubleVal().length);
+            
+            // part array with count overflow
+            nvsu = vmCalculated.getValue(cols, 100, 100);
+            assertEquals(67, nvsu[0].value.flag.length);
+            assertEquals(67, nvsu[0].value.u.floatVal().length);
+            assertEquals(67, nvsu[1].value.flag.length);
+            assertEquals(67, nvsu[1].value.u.doubleVal().length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
     @Test
     public void testDestroy() {
         ValueMatrix vm = null;

@@ -413,6 +413,58 @@ public class ApplElemAccessImplTest {
     }
 
     @Test
+    public void testGetInstancesExtSelectRelationAttribute() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "dts_iid"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "meq_iid";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.INSET;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.longlongSeq(new T_LONGLONG[] { new T_LONGLONG(0, 38), new T_LONGLONG(0, 69) });
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+            assertEquals("Time", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[1]); // a value
+            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a value
+            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a value
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
     public void testGetValueMatrix() {
         try {
             // ValueMatrix in AoSubMatrix

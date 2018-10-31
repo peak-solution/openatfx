@@ -5,6 +5,15 @@
 
 1. Changes
 
+	0.7.3 (Matthias Koller, Markus Renner)
+		- switched from woodstox-core-lgpl to woodstox-core-asl
+		- implemented method ValueMatrixOnSubMatrixImpl#getValue()
+		- extended ApplElemAccessImpl#getInstancesExt() to also accept RelationAttributes on the N-side in anuSeq and condSeq
+		- added support for * wildcard at method ApplElemAccessImpl.getInstancesExt()
+		- allowed DS_STRING for conditions in ApplElemAccessImpl.getInstancesExt()
+		- improved error message at existence check of select attributes of query in ApplElemAccessImpl.getInstancesExt()
+		- skipped values attribute of AoLocalColumns to be returned on ApplElemAccessImpl.getInstances() calls with attribute wildcard
+
 	0.7.2 (Christian Rechner)
 		- skip parse errors in documentation section to be able to read files having invalid
 		  documentation section

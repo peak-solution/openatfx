@@ -1176,6 +1176,41 @@ class AtfxCache {
         return new ArrayList<Long>(this.instanceRelMap.get(aid).get(iid).get(applRel));
     }
 
+    /**
+     * Returns the instance ids of the related instances by given application relation.
+     * @param aid The application element id.
+     * @param iids The instance ids.
+     * @param applRel The application relation. Only N to 1 relations allowed.
+     * @return TS_ValueSeq with the related instance ids
+     * @throws AoException
+     */
+    public TS_ValueSeq getRelatedInstanceIds(long aid, List<Long> iids, ApplicationRelation applRel) throws AoException {
+        if (applRel == null) {
+            throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                    "Application relation cannot be null!");
+        }
+
+        if (applRel.getRelationRange().max != 1) {
+            // only 1:N relations allowed
+            throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
+                    "Only 1:N relations are supported!");
+        }
+
+        List<TS_Value> list = new ArrayList<TS_Value>();
+        
+        for (long iid : iids) {
+            List<Long> relatedIids = getRelatedInstanceIds(aid, iid, applRel);
+            if (relatedIids.isEmpty()) {
+                list.add(ODSHelper.createEmptyTS_Value(DataType.DT_LONGLONG));
+            } else if (relatedIids.size() == 1) {
+                java.lang.Object jValue = ODSHelper.asODSLongLong(relatedIids.get(0));
+                list.add(ODSHelper.jObject2tsValue(DataType.DT_LONGLONG, jValue));
+            }
+        }
+
+        return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), DataType.DT_LONGLONG);
+    }
+
     public synchronized InstanceElementIterator newInstanceElementIterator(POA instancePOA, InstanceElement[] instances)
             throws AoException {
         nextInstanceIteratorId++;
@@ -1209,5 +1244,13 @@ class AtfxCache {
         this.instanceIteratorElementCache.remove(id);
         this.instanceIteratorPointerCache.remove(id);
     }
-
+    
+    public ApplicationRelation getRelationByName(Long aid, String aaName) throws AoException {
+        for (ApplicationRelation ar : this.applicationRelationMap.get(aid)) {
+            if (aaName.equals(ar.getRelationName())) {
+                return ar;
+            }
+        }
+        return null;
+    }
 }

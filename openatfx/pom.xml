@@ -3,7 +3,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.7.2</version>
+	<version>0.7.3</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 
@@ -105,7 +105,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.woodstox</groupId>
-			<artifactId>woodstox-core-lgpl</artifactId>
+			<artifactId>woodstox-core-asl</artifactId>
 			<version>4.4.1</version>
 		</dependency>
 		<dependency>

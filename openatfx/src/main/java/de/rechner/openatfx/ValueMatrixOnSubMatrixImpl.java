@@ -863,7 +863,13 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
      * @see org.asam.ods.ValueMatrixOperations#getValue(org.asam.ods.Column[], int, int)
      */
     public NameValueSeqUnit[] getValue(Column[] columns, int startPoint, int count) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Not implemented");
+        List<NameValueSeqUnit> nvsuList = new ArrayList<NameValueSeqUnit>();
+
+        for (Column column : columns) {
+            TS_ValueSeq tsValue = getValueVector(column, startPoint, count);
+            nvsuList.add(new NameValueSeqUnit(column.getName(), tsValue, column.getUnit()));
+        }
+        return nvsuList.toArray(new NameValueSeqUnit[0]);
     }
 
     /**

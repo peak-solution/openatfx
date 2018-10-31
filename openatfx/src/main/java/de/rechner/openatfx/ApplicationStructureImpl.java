@@ -180,7 +180,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
                 return enumDef;
             }
         }
-        throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0, "EnumerationDefinition '" + enumName
+        throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "EnumerationDefinition '" + enumName
                 + "' not found");
     }
 
