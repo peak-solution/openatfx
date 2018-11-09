@@ -3,6 +3,7 @@ package de.rechner.openatfx;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -288,7 +289,8 @@ class ExtCompReader {
                 byte[] record = new byte[blockSize];
                 raf.read(record, 0, record.length);
 
-                sourceMbb.clear();
+                // make buildable with both java8 and java9
+                Buffer.class.cast(sourceMbb).clear();
                 sourceMbb.put(record);
                 sourceMbb.position(valueOffset);
 
@@ -348,7 +350,7 @@ class ExtCompReader {
                             ByteBuffer bb = ByteBuffer.allocate(4);
                             bb.order(byteOrder);
                             bb.put(tmp);
-                            bb.rewind();
+                            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                             int intValue = bb.getInt();
                             intValue = intValue >> bitOffset; // shift right bit offset
                             int mask = 0xFFFFFFFF >>> (32 - bitCount); // mask out unnecessary bits
@@ -360,7 +362,7 @@ class ExtCompReader {
                             ByteBuffer bb = ByteBuffer.allocate(8);
                             bb.order(byteOrder);
                             bb.put(tmp);
-                            bb.rewind();
+                            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                             long longValue = bb.getLong();
                             longValue = longValue >> bitOffset; // shift right bit offset
                             long mask = 0xFFFFFFFFFFFFFFFFl >>> (64 - bitCount); // mask out unnecessary bits

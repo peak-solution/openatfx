@@ -14,6 +14,7 @@
 		- improved error message at existence check of select attributes of query in ApplElemAccessImpl.getInstancesExt()
 		- skipped values attribute of AoLocalColumns to be returned on ApplElemAccessImpl.getInstances() calls with attribute wildcard
 		- made m:n relations supported at ApplElemAccessImpl.updateInstances(), handled DataType DS_LONGLONG additionally to DT_LONGLONG
+		- added workarounds in methods of ByteBuffer to enable builds with both java 8 and java >=9
 
 	0.7.2 (Christian Rechner)
 		- skip parse errors in documentation section to be able to read files having invalid

@@ -3,6 +3,7 @@ package de.rechner.openatfx;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -130,7 +131,8 @@ class ExtCompWriter {
                 valueType = 13; // dt_bytestr
                 int ordinalNumber = 1;
 
-                long extCompSize = ODSHelper.asJLong(atfxCache.getContext().get("EXT_COMP_SEGSIZE").value.u.longlongVal());
+                long extCompSize = ODSHelper.asJLong(atfxCache.getContext()
+                                                              .get("EXT_COMP_SEGSIZE").value.u.longlongVal());
                 byte[][] byteStreamSeq = value.u.bytestrSeq();
                 for (byte[] currentByteStream : byteStreamSeq) {
                     int lengthOfByteStream = currentByteStream.length;
@@ -156,7 +158,7 @@ class ExtCompWriter {
                     do {
                         // write bytestream (split)
                         bb.put(currentByteStream, bytestreamOffset, bytesToWrite);
-                        bb.rewind();
+                        Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                         length += channel.write(bb);
                         valuesPerBlock++;
 
@@ -234,7 +236,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.put(value.u.byteSeq()[i]);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_SHORT
@@ -248,7 +250,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.putShort(value.u.shortSeq()[i]);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_LONG
@@ -262,7 +264,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.putInt(value.u.longSeq()[i]);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_LONGLONG
@@ -276,7 +278,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.putLong(ODSHelper.asJLong(value.u.longlongSeq()[i]));
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_DATE
@@ -306,7 +308,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.putFloat(value.u.floatSeq()[i]);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_COMPLEX
@@ -321,7 +323,7 @@ class ExtCompWriter {
                         bb.putFloat(value.u.complexSeq()[i].r);
                         bb.putFloat(value.u.complexSeq()[i].i);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_DOUBLE
@@ -335,7 +337,7 @@ class ExtCompWriter {
                     for (int i = 0; i < length; i++) {
                         bb.putDouble(value.u.doubleSeq()[i]);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // DS_DCOMPLEX
@@ -350,14 +352,14 @@ class ExtCompWriter {
                         bb.putDouble(value.u.dcomplexSeq()[i].r);
                         bb.putDouble(value.u.dcomplexSeq()[i].i);
                     }
-                    bb.rewind();
+                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
                     channel.write(bb);
                 }
                 // not supported
                 else {
-                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType '"
-                            + ODSHelper.dataType2String(dt)
-                            + "' not yet supported for writing to external component file");
+                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                          "DataType '" + ODSHelper.dataType2String(dt)
+                                                  + "' not yet supported for writing to external component file");
                 }
 
                 createAoExternalComponent(atfxCache, iidLc, extCompFile, valueType, length, startOffset, blockSize,
@@ -396,8 +398,8 @@ class ExtCompWriter {
      * @param ordinalNumber
      * @throws AoException
      */
-    private void createAoExternalComponent(AtfxCache atfxCache, long iidLc, File extCompFile, int valueType,
-            int length, long startOffset, int blockSize, int valuesPerBlock, int ordinalNumber) throws AoException {
+    private void createAoExternalComponent(AtfxCache atfxCache, long iidLc, File extCompFile, int valueType, int length,
+            long startOffset, int blockSize, int valuesPerBlock, int ordinalNumber) throws AoException {
         // create 'AoExternalComponent' instance
         long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
@@ -517,7 +519,7 @@ class ExtCompWriter {
             for (int i = 0; i < flags.length; i++) {
                 bb.putShort(flags[i]);
             }
-            bb.rewind();
+            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
             channel.write(bb);
 
             // flags_filename_url

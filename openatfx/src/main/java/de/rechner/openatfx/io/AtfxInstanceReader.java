@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -571,7 +572,8 @@ class AtfxInstanceReader {
                 byte[] buffer = new byte[blockSize];
                 raf.read(buffer, 0, buffer.length);
 
-                sourceMbb.clear();
+                // make buildable with both java8 and java9
+                Buffer.class.cast(sourceMbb).clear();
                 sourceMbb.put(buffer);
                 sourceMbb.position(valOffsets);
 
