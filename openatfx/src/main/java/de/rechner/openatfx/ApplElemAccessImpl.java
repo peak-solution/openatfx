@@ -249,7 +249,14 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                         ApplicationRelation rel = this.atfxCache.getApplicationRelationByName(aid, anvsui.attr.aaName);
                         if (rel != null) {
                             List<Long> otherIids = new ArrayList<Long>();
-                            otherIids.add(ODSHelper.asJLong(value.u.longlongVal()));
+                            if (value.u.discriminator().equals(DataType.DT_LONGLONG)) {
+                                otherIids.add(ODSHelper.asJLong(value.u.longlongVal()));
+                            } else if (value.u.discriminator().equals(DataType.DS_LONGLONG)) {
+                                for (T_LONGLONG otherIid : value.u.longlongSeq()) {
+                                    otherIids.add(ODSHelper.asJLong(otherIid));
+                                }
+                            }
+                            
                             this.atfxCache.createInstanceRelations(aid, iid, rel, otherIids);
                         }
                         // not defined in application model, assume instance attribute
@@ -579,7 +586,8 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 wildcardHelper = new WildcardHandlingHelper(atfxCache, aid);
                 break;
             }
-            if (atfxCache.getAttrNoByName(aid, selectedAttribute.attr.aaName) == null) {
+            if (atfxCache.getAttrNoByName(aid, selectedAttribute.attr.aaName) == null
+                    && atfxCache.getRelationByName(aid, selectedAttribute.attr.aaName) == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "QueryStructureExt invalid: Selected attribute '" + selectedAttribute.attr.aaName
                                               + "' (aid=" + selectedAttribute.attr.aid.low

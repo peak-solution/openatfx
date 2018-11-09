@@ -86,7 +86,7 @@ public class WildcardHandlingHelper {
         init();
         int nrOfAttributes = getNrOfAttributes();
         ers.attrValues = new AttrResultSet[nrOfAttributes + relations.length];
-        for (int col = 9; col < attributeNames.length; col++) {
+        for (int col = 0; col < attributeNames.length; col++) {
             ers.attrValues[col] = new AttrResultSet();
             ers.attrValues[col].attrValues = new NameValueSeqUnitId();
             ers.attrValues[col].attrValues.unitId = cache.getUnitIIDForAttr(aid, attributeNumbers[col]);
