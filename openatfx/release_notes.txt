@@ -4,6 +4,12 @@
 	
 
 1. Changes
+	0.7.4 (Markus Renner)
+		- A very rare case in an ODS model definition causes an exception if read by openATFx. If for an application element there is an
+		  attribute defined, that has the same name like a base attribute in the base model (e.g. "id"), than this will cause an exception
+		  like "attribute with name id already exists", if that attribute is defined before the attribute derived from the base attribute
+		  is defined. This issue is now fixed by first handling all base attributes (which may change the name of the attribute in the base model)
+		  and after that all other attributes, which then can use the name without any problem, since it is "free" again.
 
 	0.7.3 (Matthias Koller, Markus Renner)
 		- switched from woodstox-core-lgpl to woodstox-core-asl
