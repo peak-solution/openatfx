@@ -443,6 +443,8 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             valueSeq.u.complexVal(values.value.u.complexSeq());
         } else if (rawDt == DataType.DS_DCOMPLEX && targetDt == DataType.DT_DCOMPLEX) {
             valueSeq.u.dcomplexVal(values.value.u.dcomplexSeq());
+        } else if (rawDt == DataType.DS_BYTESTR && targetDt == DataType.DT_BYTESTR) {
+            valueSeq.u.bytestrVal(values.value.u.bytestrSeq());
         } else {
             List<Number> list = getNumbericValues(values.value.u);
             // DS_SHORT

@@ -1102,6 +1102,12 @@ public class AtfxWriter {
             writeStringSeq(streamWriter, u.stringSeq());
             streamWriter.writeEndElement();
         }
+        // DS_BYTESTR
+        else if (dataType == DataType.DS_BYTESTR) {
+            streamWriter.writeStartElement(AtfxTagConstants.VALUES_ATTR_BYTEFIELD);
+            writeBytestrSeq(streamWriter, u.bytestrSeq());
+            streamWriter.writeEndElement();
+        }
         // not supported
         else {
             throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
@@ -1168,7 +1174,21 @@ public class AtfxWriter {
             writeElement(streamWriter, AtfxTagConstants.STRING_SEQ, s);
         }
     }
-
+    
+    /**
+     * Writes a bytestr sequence to the XML stream.
+     * 
+     * @param streamWriter The XML stream writer.
+     * @param bytestrSeq The bytes sequence.
+     * @throws XMLStreamException Error writing XML file.
+     */   
+    private void writeBytestrSeq(XMLStreamWriter streamWriter, byte[][] bytestrSeq) throws XMLStreamException {
+        for (byte[] bytes : bytestrSeq) {
+            writeElement(streamWriter, AtfxTagConstants.BYTESTR_LENGTH, String.valueOf(bytes.length));
+            writeElement(streamWriter, AtfxTagConstants.BYTESTR_SEQUENCE, AtfxExportUtil.createByteSeqString(bytes));
+        }
+    }
+    
     private void writeElement(XMLStreamWriter streamWriter, String elemName, String textContent)
             throws XMLStreamException {
         streamWriter.writeStartElement(elemName);

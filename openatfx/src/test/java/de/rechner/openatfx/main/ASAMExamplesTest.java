@@ -12,8 +12,10 @@ import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.AttrType;
+import org.asam.ods.Column;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
+import org.asam.ods.ValueMatrix;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.omg.CORBA.ORB;
@@ -81,6 +83,18 @@ public class ASAMExamplesTest {
                 }
             }
 
+             { // read all valuematrix values.
+                ApplicationElement ae = as.getElementsByBaseType("AoSubmatrix")[0];
+                InstanceElementIterator iter = ae.getInstances("*");
+                for (int i = 0; i < iter.getCount(); i++) {
+                    InstanceElement ie = iter.nextOne();
+                    ValueMatrix vm = ie.upcastSubMatrix().getValueMatrix();
+                    for(Column column : vm.getColumns("*")) {
+                        vm.getValueVector(column, 0, 0);
+                    }
+                }
+            }
+             
             aoSession.close();
         } catch (AoException aoe) {
             fail(aoe.reason);
