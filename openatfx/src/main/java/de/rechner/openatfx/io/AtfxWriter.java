@@ -231,8 +231,8 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading base model version.
      */
-    private void writeBaseModelVersion(XMLStreamWriter streamWriter, AoSession aoSession) throws XMLStreamException,
-            AoException {
+    private void writeBaseModelVersion(XMLStreamWriter streamWriter, AoSession aoSession)
+            throws XMLStreamException, AoException {
         writeElement(streamWriter, AtfxTagConstants.BASE_MODEL_VERSION, aoSession.getBaseStructure().getVersion());
     }
 
@@ -540,8 +540,7 @@ public class AtfxWriter {
         streamWriter.writeStartElement(applElem.aeName);
 
         // write application attribute data
-        List<String> attrNames = new ArrayList<String>(
-                                                       Arrays.asList(modelCache.getApplAttrNames(ODSHelper.asJLong(applElem.aid))));
+        List<String> attrNames = new ArrayList<String>(Arrays.asList(modelCache.getApplAttrNames(ODSHelper.asJLong(applElem.aid))));
 
         // special handling: LocalColumn; do not write external component values
         InstanceElement[] externalComponentChilds = null; // is not null if ApplElem=AoLocalColumn
@@ -745,6 +744,13 @@ public class AtfxWriter {
             startOffset = ODSHelper.asJLong(nvuStartOffset.value.u.longlongVal());
         }
         writeElement(streamWriter, AtfxTagConstants.COMPONENT_INIOFFSET, String.valueOf(startOffset));
+
+        // valueperblock = 1
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(1));
+
+        // blocksize=length * 2
+        long blockSize = componentLength * 2;
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_BLOCKSIZE, String.valueOf(blockSize));
 
         streamWriter.writeEndElement();
         streamWriter.writeEndElement();
@@ -1008,8 +1014,8 @@ public class AtfxWriter {
         }
         // unsupported data type
         else {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "DataType " + dataType.value()
-                    + " not yet implemented");
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "DataType " + dataType.value() + " not yet implemented");
         }
 
         streamWriter.writeEndElement();
@@ -1023,8 +1029,8 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instance data.
      */
-    private void writeLocalColumnValues(XMLStreamWriter streamWriter, NameValueUnit nvu) throws XMLStreamException,
-            AoException {
+    private void writeLocalColumnValues(XMLStreamWriter streamWriter, NameValueUnit nvu)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(nvu.valName);
 
         TS_Union u = nvu.value.u;
@@ -1174,21 +1180,21 @@ public class AtfxWriter {
             writeElement(streamWriter, AtfxTagConstants.STRING_SEQ, s);
         }
     }
-    
+
     /**
      * Writes a bytestr sequence to the XML stream.
      * 
      * @param streamWriter The XML stream writer.
      * @param bytestrSeq The bytes sequence.
      * @throws XMLStreamException Error writing XML file.
-     */   
+     */
     private void writeBytestrSeq(XMLStreamWriter streamWriter, byte[][] bytestrSeq) throws XMLStreamException {
         for (byte[] bytes : bytestrSeq) {
             writeElement(streamWriter, AtfxTagConstants.BYTESTR_LENGTH, String.valueOf(bytes.length));
             writeElement(streamWriter, AtfxTagConstants.BYTESTR_SEQUENCE, AtfxExportUtil.createByteSeqString(bytes));
         }
     }
-    
+
     private void writeElement(XMLStreamWriter streamWriter, String elemName, String textContent)
             throws XMLStreamException {
         streamWriter.writeStartElement(elemName);

@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.7.6 (Christian Rechner)
+	
+		- Added writing of flag file component attributes "valueperblock" and "blocksize"
+
 	0.7.5 (Masayoshi Kuroda)
 
 		- Implemented reading/writing DS_BYTESTR type of Local column values.

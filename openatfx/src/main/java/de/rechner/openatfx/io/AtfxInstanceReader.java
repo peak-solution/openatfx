@@ -544,6 +544,14 @@ class AtfxInstanceReader {
             reader.next();
         }
 
+        // case 'valperblock' and 'blockSize' has not been found
+        if (valPerBlock == 0) {
+            valPerBlock = 1;
+        }
+        if (blockSize == 0) {
+            blockSize = length * 2;
+        }
+
         // read flags to memory because the MixedMode server may not handle flags in component structure :-(
         long start = System.currentTimeMillis();
         AoSession aoSession = ieExtComp.getApplicationElement().getApplicationStructure().getSession();
@@ -1234,7 +1242,7 @@ class AtfxInstanceReader {
         }
         return instance;
     }
-    
+
     /**
      * returns the given string length value as long value (parses string to long)
      * 
