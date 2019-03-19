@@ -546,7 +546,7 @@ class AtfxInstanceReader {
 
         // case 'valperblock' and 'blockSize' has not been found
         if (valPerBlock == 0) {
-            valPerBlock = 1;
+            valPerBlock = length;
         }
         if (blockSize == 0) {
             blockSize = length * 2;

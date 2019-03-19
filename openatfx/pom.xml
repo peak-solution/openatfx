@@ -4,7 +4,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.7.6</version>
+	<version>0.7.7</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 

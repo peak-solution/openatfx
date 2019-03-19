@@ -745,8 +745,8 @@ public class AtfxWriter {
         }
         writeElement(streamWriter, AtfxTagConstants.COMPONENT_INIOFFSET, String.valueOf(startOffset));
 
-        // valueperblock = 1
-        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(1));
+        // valueperblock = length
+        writeElement(streamWriter, AtfxTagConstants.COMPONENT_VALPERBLOCK, String.valueOf(componentLength));
 
         // blocksize=length * 2
         long blockSize = componentLength * 2;
