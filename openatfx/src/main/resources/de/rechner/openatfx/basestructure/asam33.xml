@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<BaseStructure version="asam33">
+	<EnumerationDefinition index="0" name="datatype_enum">
+		<EnumerationItem item="0" name="DT_UNKNOWN" />
+		<EnumerationItem item="1" name="DT_STRING" />
+		<EnumerationItem item="2" name="DT_SHORT" />
+		<EnumerationItem item="3" name="DT_FLOAT" />
+		<EnumerationItem item="4" name="DT_BOOLEAN" />
+		<EnumerationItem item="5" name="DT_BYTE" />
+		<EnumerationItem item="6" name="DT_LONG" />
+		<EnumerationItem item="7" name="DT_DOUBLE" />
+		<EnumerationItem item="8" name="DT_LONGLONG" />
+		<EnumerationItem item="9" name="DT_ID" />
+		<EnumerationItem item="10" name="DT_DATE" />
+		<EnumerationItem item="11" name="DT_BYTESTR" />
+		<EnumerationItem item="12" name="DT_BLOB" />
+		<EnumerationItem item="13" name="DT_COMPLEX" />
+		<EnumerationItem item="14" name="DT_DCOMPLEX" />
+		<EnumerationItem item="28" name="DT_EXTERNALREFERENCE" />
+		<EnumerationItem item="30" name="DT_ENUM" />
+	</EnumerationDefinition>
+	<EnumerationDefinition index="1" name="interpolation_enum">
+		<EnumerationItem item="0" name="no_interpolation" />
+		<EnumerationItem item="1" name="linear_interpolation" />
+		<EnumerationItem item="2" name="application_specific" />
+	</EnumerationDefinition>
+	<EnumerationDefinition index="2" name="seq_rep_enum">
+		<EnumerationItem item="0" name="explicit" />
+		<EnumerationItem item="1" name="implicit_constant" />
+		<EnumerationItem item="2" name="implicit_linear" />
+		<EnumerationItem item="3" name="implicit_saw" />
+		<EnumerationItem item="4" name="raw_linear" />
+		<EnumerationItem item="5" name="raw_polynomial" />
+		<EnumerationItem item="6" name="formula" />
+		<EnumerationItem item="7" name="external_component" />
+		<EnumerationItem item="8" name="raw_linear_external" />
+		<EnumerationItem item="9" name="raw_polynomial_external" />
+		<EnumerationItem item="10" name="raw_linear_calibrated" />
+		<EnumerationItem item="11" name="raw_linear_calibrated_external" />
+		<EnumerationItem item="12" name="raw_rational" />
+		<EnumerationItem item="13" name="raw_rational_external" />
+	</EnumerationDefinition>
+	<EnumerationDefinition index="3" name="typespec_enum">
+		<EnumerationItem item="0" name="dt_boolean" />
+		<EnumerationItem item="1" name="dt_byte" />
+		<EnumerationItem item="2" name="dt_short" />
+		<EnumerationItem item="3" name="dt_long" />
+		<EnumerationItem item="4" name="dt_longlong" />
+		<EnumerationItem item="5" name="ieeefloat4" />
+		<EnumerationItem item="6" name="ieeefloat8" />
+		<EnumerationItem item="7" name="dt_short_beo" />
+		<EnumerationItem item="8" name="dt_long_beo" />
+		<EnumerationItem item="9" name="dt_longlong_beo" />
+		<EnumerationItem item="10" name="ieeefloat4_beo" />
+		<EnumerationItem item="11" name="ieeefloat8_beo" />
+		<EnumerationItem item="12" name="dt_string" />
+		<EnumerationItem item="13" name="dt_bytestr" />
+		<EnumerationItem item="18" name="dt_bytestr_beo" />
+		<EnumerationItem item="19" name="dt_sbyte" />
+		<EnumerationItem item="20" name="dt_sbyte_flags_beo" />
+		<EnumerationItem item="21" name="dt_ushort" />
+		<EnumerationItem item="22" name="dt_ushort_beo" />
+		<EnumerationItem item="23" name="dt_ulong" />
+		<EnumerationItem item="24" name="dt_ulong_beo" />
+		<EnumerationItem item="25" name="dt_string_utf8" />
+		<EnumerationItem item="26" name="dt_string_utf8_flags_beo" />
+		<EnumerationItem item="27" name="dt_bit_int" />
+		<EnumerationItem item="28" name="dt_bit_int_beo" />
+		<EnumerationItem item="29" name="dt_bit_uint" />
+		<EnumerationItem item="30" name="dt_bit_uint_beo" />
+		<EnumerationItem item="31" name="dt_bit_ieeefloat" />
+		<EnumerationItem item="32" name="dt_bit_ieeefloat_beo" />
+		<EnumerationItem item="33" name="dt_bytestr_leo" />
+	</EnumerationDefinition>
+	<EnumerationDefinition index="4" name="ao_storagetype_enum">
+		<EnumerationItem item="0" name="database" />
+		<EnumerationItem item="1" name="external_only" />
+		<EnumerationItem item="2" name="mixed" />
+		<EnumerationItem item="3" name="foreign_format" />
+	</EnumerationDefinition>
+	<BaseElement topLevel="true" type="AoEnvironment">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_STRING" name="meaning_of_aliases" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="max_test_level" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="base_model_version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="application_model_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="application_model_version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="timezone" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoTest">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoSubTest">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoMeasurement">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="measurement_begin" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="measurement_end" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_values_accessed" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_values_accessed_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_values_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_values_modified_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="ao_storagetype_enum" name="ao_storagetype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="ao_mea_size" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoMeasurementQuantity">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="datatype_enum" name="datatype" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="rank" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_LONG" name="dimension" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="type_size" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="interpolation_enum" name="interpolation" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="minimum" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="maximum" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="average" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="standard_deviation" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoSubmatrix">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="number_of_rows" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoLocalColumn">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="global_flag" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_SHORT" name="flags" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="independent" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="minimum" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="maximum" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="seq_rep_enum" name="sequence_representation" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="datatype_enum" name="raw_datatype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_DOUBLE" name="generation_parameters" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_UNKNOWN" name="values" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoPhysicalDimension">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="length_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="mass_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="time_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="current_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="temperature_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="molar_amount_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="luminous_intensity_exp" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="length_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="mass_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="time_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="current_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="temperature_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="molar_amount_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="luminous_intensity_exp_den" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoQuantity">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="default_mq_name" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="datatype_enum" name="default_datatype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="default_rank" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_LONG" name="default_dimension" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="default_type_size" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoQuantityGroup">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoTestEquipment">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoTestEquipmentPart">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoTestDevice">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoTestSequence">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoTestSequencePart">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoUnitUnderTest">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoUnitUnderTestPart">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoUnit">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="factor" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DOUBLE" name="offset" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoUnitGroup">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoUser">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="password" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="ao_disabled" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoUserGroup">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="superuser_flag" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoExternalComponent">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="ordinal_number" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="component_length" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="filename_url" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="typespec_enum" name="value_type" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="start_offset" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="block_size" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="valuesperblock" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONG" name="value_offset" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="flags_filename_url" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="flags_start_offset" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="ao_bit_count" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_SHORT" name="ao_bit_offset" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoAny">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoLog">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="date" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoParameterSet">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoParameter">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_ENUM" enumerationDefinition="datatype_enum" name="parameter_datatype" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="pvalue" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoNameMap">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="entity_name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DS_STRING" name="alias_names" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoAttributeMap">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="attribute_name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DS_STRING" name="alias_names" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="false" type="AoFile">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_file_mimetype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_location" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="ao_size" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_original_filename" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_original_filedate" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseElement topLevel="true" type="AoMimetypeMap">
+		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DS_STRING" name="ao_list" obligatory="false" unique="false" />
+	</BaseElement>
+	<BaseRelation elem1="AoEnvironment" elem2="AoTest" inverseRelationName="environment" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="tests" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoEnvironment" elem2="AoTestEquipment" inverseRelationName="environment" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="equipments" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoEnvironment" elem2="AoTestSequence" inverseRelationName="environment" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="sequences" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoEnvironment" elem2="AoUnitUnderTest" inverseRelationName="environment" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="uuts" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoEnvironment" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoEnvironment" elem2="AoNameMap" inverseRelationName="environment" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="INFO_TO" relationName="entity_mapping" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoTest" elem2="AoMeasurement" inverseRelationName="test" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTest" elem2="AoSubTest" inverseRelationName="parent_test" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTest" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTest" elem2="AoEnvironment" inverseRelationName="tests" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="environment" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoSubTest" elem2="AoMeasurement" inverseRelationName="test" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoSubTest" elem2="AoSubTest" inverseRelationName="parent_test" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoSubTest" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoSubTest" elem2="AoTest" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_test" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoSubTest" elem2="AoSubTest" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_test" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoMeasurementQuantity" inverseRelationName="measurement" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoSubmatrix" inverseRelationName="measurement" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="submatrices" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTest" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="test" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoSubTest" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="test" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTestEquipment" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="equipments" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTestEquipmentPart" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="equipments" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTestDevice" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="equipments" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTestSequence" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="sequences" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoTestSequencePart" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="sequences" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoUnitUnderTest" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="units_under_test" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurement" elem2="AoUnitUnderTestPart" inverseRelationName="measurement" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="units_under_test" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoMeasurement" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="measurement" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoLocalColumn" inverseRelationName="measurement_quantity" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="INFO_TO" relationName="local_columns" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoMeasurementQuantity" inverseRelationName="scales" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="is_scaled_by" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoMeasurementQuantity" inverseRelationName="is_scaled_by" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="scales" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoQuantity" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="quantity" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoTestEquipment" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="channel" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoTestEquipmentPart" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="channel" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoTestDevice" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="channel" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoMeasurementQuantity" elem2="AoUnit" inverseRelationName="measurement_quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="unit" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoSubmatrix" elem2="AoLocalColumn" inverseRelationName="submatrix" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="local_columns" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoSubmatrix" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoSubmatrix" elem2="AoMeasurement" inverseRelationName="submatrices" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="measurement" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoSubmatrix" elem2="AoLocalColumn" inverseRelationName="ao_lookup_table" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="INFO_TO" relationName="ao_describes" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoSubmatrix" elem2="AoLocalColumn" inverseRelationName="ao_previews" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="INFO_TO" relationName="ao_value_column" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoExternalComponent" inverseRelationName="local_column" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="external_component" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoSubmatrix" inverseRelationName="local_columns" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="submatrix" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoMeasurementQuantity" inverseRelationName="local_columns" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="measurement_quantity" relationRangeMax="1" relationRangeMin="1" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoSubmatrix" inverseRelationName="ao_describes" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="ao_lookup_table" relationRangeMax="1" relationRangeMin="1" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoLocalColumn" elem2="AoSubmatrix" inverseRelationName="ao_value_column" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="ao_previews" relationRangeMax="1" relationRangeMin="1" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoPhysicalDimension" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoPhysicalDimension" elem2="AoUnit" inverseRelationName="phys_dimension" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="INFO_TO" relationName="units" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoQuantity" elem2="AoQuantity" inverseRelationName="predecessor" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="successors" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoQuantity" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoQuantity" elem2="AoQuantity" inverseRelationName="successors" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="predecessor" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoQuantity" elem2="AoMeasurementQuantity" inverseRelationName="quantity" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoQuantity" elem2="AoQuantityGroup" inverseRelationName="quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="groups" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoQuantity" elem2="AoUnit" inverseRelationName="quantities" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="default_unit" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoQuantityGroup" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoQuantityGroup" elem2="AoQuantity" inverseRelationName="groups" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoTestEquipmentPart" inverseRelationName="parent_equipment" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoTestDevice" inverseRelationName="parent_equipment" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoEnvironment" inverseRelationName="equipments" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="environment" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoMeasurement" inverseRelationName="equipments" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoTestEquipment" elem2="AoMeasurementQuantity" inverseRelationName="channel" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoTestEquipmentPart" inverseRelationName="parent_equipment_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoTestDevice" inverseRelationName="parent_equipment_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoTestEquipment" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoTestEquipmentPart" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoMeasurement" inverseRelationName="equipments" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoMeasurementQuantity" inverseRelationName="channel" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoTestEquipmentPart" elem2="AoTestDevice" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoTestDevice" inverseRelationName="parent_equipment_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoTestEquipment" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoTestEquipmentPart" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoTestDevice" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_equipment_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoMeasurement" inverseRelationName="equipments" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoMeasurementQuantity" inverseRelationName="channel" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoTestDevice" elem2="AoTestEquipmentPart" inverseRelationName="parent_equipment_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestSequence" elem2="AoTestSequencePart" inverseRelationName="parent_sequence" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestSequence" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestSequence" elem2="AoEnvironment" inverseRelationName="sequences" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="environment" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestSequence" elem2="AoMeasurement" inverseRelationName="sequences" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoTestSequencePart" elem2="AoTestSequencePart" inverseRelationName="parent_sequence_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestSequencePart" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoTestSequencePart" elem2="AoTestSequence" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_sequence" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestSequencePart" elem2="AoTestSequencePart" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_sequence_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoTestSequencePart" elem2="AoMeasurement" inverseRelationName="sequences" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUnitUnderTest" elem2="AoUnitUnderTestPart" inverseRelationName="parent_unit_under_test" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnitUnderTest" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnitUnderTest" elem2="AoEnvironment" inverseRelationName="uuts" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="environment" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoUnitUnderTest" elem2="AoMeasurement" inverseRelationName="units_under_test" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUnitUnderTestPart" elem2="AoUnitUnderTestPart" inverseRelationName="parent_unit_under_test_part" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnitUnderTestPart" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnitUnderTestPart" elem2="AoUnitUnderTest" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_unit_under_test" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoUnitUnderTestPart" elem2="AoUnitUnderTestPart" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent_unit_under_test_part" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoUnitUnderTestPart" elem2="AoMeasurement" inverseRelationName="units_under_test" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="measurement" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUnit" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnit" elem2="AoMeasurementQuantity" inverseRelationName="unit" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="measurement_quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoUnit" elem2="AoPhysicalDimension" inverseRelationName="units" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="phys_dimension" relationRangeMax="1" relationRangeMin="1" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoUnit" elem2="AoQuantity" inverseRelationName="default_unit" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="quantities" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoUnit" elem2="AoUnitGroup" inverseRelationName="units" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="groups" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUnit" elem2="AoParameter" inverseRelationName="unit" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="parameters" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoUnitGroup" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUnitGroup" elem2="AoUnit" inverseRelationName="groups" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="units" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUser" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUser" elem2="AoUserGroup" inverseRelationName="users" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="groups" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoUserGroup" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoUserGroup" elem2="AoUser" inverseRelationName="groups" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_REL" relationName="users" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_REL" />
+	<BaseRelation elem1="AoExternalComponent" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoExternalComponent" elem2="AoLocalColumn" inverseRelationName="external_component" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="local_column" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoExternalComponent" elem2="AoFile" inverseRelationName="ao_extcomp_values" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="ao_values_file" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoExternalComponent" elem2="AoFile" inverseRelationName="ao_extcomp_flags" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="ao_flags_file" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoAny" elem2="AoAny" inverseRelationName="parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoAny" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoAny" elem2="AoAny" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoLog" elem2="AoLog" inverseRelationName="parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoLog" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoLog" elem2="AoLog" inverseRelationName="children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoParameterSet" elem2="AoParameter" inverseRelationName="parameter_set" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="parameters" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoParameterSet" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoParameter" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoParameter" elem2="AoParameterSet" inverseRelationName="parameters" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="parameter_set" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoParameter" elem2="AoUnit" inverseRelationName="parameters" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="unit" relationRangeMax="1" relationRangeMin="0" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoNameMap" elem2="AoAttributeMap" inverseRelationName="name_mapping" inverseRelationRangeMax="1" inverseRelationRangeMin="1" inverseRelationship="FATHER" relationName="attribute_mapping" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoNameMap" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoNameMap" elem2="AoEnvironment" inverseRelationName="entity_mapping" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="INFO_FROM" relationName="environment" relationRangeMax="1" relationRangeMin="1" relationType="INFO" relationship="INFO_TO" />
+	<BaseRelation elem1="AoAttributeMap" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoAttributeMap" elem2="AoNameMap" inverseRelationName="attribute_mapping" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="name_mapping" relationRangeMax="1" relationRangeMin="1" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+	<BaseRelation elem1="AoFile" elem2="AoEnvironment" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTest" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoSubTest" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoMeasurement" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoMeasurementQuantity" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoSubmatrix" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoLocalColumn" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoExternalComponent" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoQuantity" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoQuantityGroup" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUnit" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUnitGroup" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoPhysicalDimension" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUnitUnderTest" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUnitUnderTestPart" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTestSequence" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTestSequencePart" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTestEquipment" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTestEquipmentPart" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoTestDevice" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUser" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoUserGroup" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoNameMap" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoAttributeMap" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoParameterSet" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoParameter" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoLog" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoAny" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoFile" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoFile" elem2="AoExternalComponent" inverseRelationName="ao_values_file" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="ao_extcomp_values" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoFile" elem2="AoExternalComponent" inverseRelationName="ao_flags_file" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="INFO_TO" relationName="ao_extcomp_flags" relationRangeMax="Many" relationRangeMin="0" relationType="INFO" relationship="INFO_FROM" />
+	<BaseRelation elem1="AoFile" elem2="AoMimetypeMap" inverseRelationName="ao_file_children" inverseRelationRangeMax="Many" inverseRelationRangeMin="0" inverseRelationship="CHILD" relationName="ao_file_parent" relationRangeMax="1" relationRangeMin="0" relationType="FATHER_CHILD" relationship="FATHER" />
+	<BaseRelation elem1="AoMimetypeMap" elem2="AoFile" inverseRelationName="ao_file_parent" inverseRelationRangeMax="1" inverseRelationRangeMin="0" inverseRelationship="FATHER" relationName="ao_file_children" relationRangeMax="Many" relationRangeMin="0" relationType="FATHER_CHILD" relationship="CHILD" />
+</BaseStructure>
