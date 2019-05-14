@@ -5,6 +5,11 @@
 
 1. Changes
 
+	0.8.0 (Christian Rechner)
+	
+		- Added base model "asam33" to support ASAM 6 files
+		- Fixed endless loop while reading a ExternalComponent that is shorter than expected
+
 	0.7.7 (Christian Rechner)
 	
 		- Fixed writing of flag file component attributes "valueperblock" and "blocksize"

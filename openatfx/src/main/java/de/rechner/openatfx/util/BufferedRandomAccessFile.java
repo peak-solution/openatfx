@@ -72,6 +72,9 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
             System.arraycopy(buffer, readAtIdx, b, idx, toread);
             idx += toread;
             filePos += toread;
+            // check if end of file is reached
+            if (filePos == fileLength)
+                return toread-off;
         }
         return idx - off;
     }
