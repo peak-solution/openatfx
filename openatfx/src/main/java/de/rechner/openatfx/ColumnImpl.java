@@ -192,9 +192,9 @@ class ColumnImpl extends ColumnPOA {
      * @see org.asam.ods.ColumnOperations#getRawDataType()
      */
     public DataType getRawDataType() throws AoException {
-        // raw_linear (=4), raw_polynomial (=5), raw_linear_calibrated (=10)
+        // raw_linear (=4), raw_polynomial (=5), raw_linear_calibrated (=10), raw_rational (=12)
         int seqReq = getSequenceRepresentation();
-        if ((mode == ValueMatrixMode.STORAGE) && (seqReq == 4 || seqReq == 5 || seqReq == 10)) {
+        if ((mode == ValueMatrixMode.STORAGE) && (seqReq == 4 || seqReq == 5 || seqReq == 10 || seqReq == 12)) {
             NameValueUnit nvu = this.ieLocalColumn.getValueByBaseName("raw_datatype'");
             if (nvu.value.flag == 15) {
                 return ODSHelper.enum2dataType(nvu.value.u.enumVal());

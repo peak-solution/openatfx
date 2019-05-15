@@ -559,8 +559,8 @@ public class AtfxWriter {
             // attrNames sequence representation
             int seqRepEnum = ODSHelper.getEnumVal(ie.getValue(applAttrSeqRep));
             // check if the sequence representation is 7(external_component), 8(raw_linear_external),
-            // 9(raw_polynomial_external) or 11(raw_linear_calibrated_external)
-            if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11) {
+            // 9(raw_polynomial_external), 11(raw_linear_calibrated_external) or 13(raw_rational_external)
+            if (seqRepEnum == 7 || seqRepEnum == 8 || seqRepEnum == 9 || seqRepEnum == 11 || seqRepEnum == 13) {
                 InstanceElementIterator iterIeExtComps = ie.getRelatedInstancesByRelationship(Relationship.CHILD, "*");
                 externalComponentChilds = iterIeExtComps.nextN(iterIeExtComps.getCount());
                 iterIeExtComps.destroy();

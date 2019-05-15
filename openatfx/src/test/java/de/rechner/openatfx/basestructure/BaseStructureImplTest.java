@@ -159,7 +159,7 @@ public class BaseStructureImplTest {
             assertEquals("asam30", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam30").getVersion());
             assertEquals("asam31", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam31").getVersion());
             assertEquals("asam32", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam32").getVersion());
-            assertEquals("asam32", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam32").getVersion());
+            assertEquals("asam33", BaseStructureFactory.getInstance().getBaseStructure(orb, "asam33").getVersion());
         } catch (AoException e) {
             fail(e.reason);
         }

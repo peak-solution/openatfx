@@ -819,8 +819,8 @@ class AtfxCache {
         if (lcValuesAttr) {
             int seqRepAttrNo = getAttrNoByBaName(aid, "sequence_representation");
             int seqRep = getInstanceValue(aid, seqRepAttrNo, iid).u.enumVal();
-            // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11
-            if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11) {
+            // external_component=7,raw_linear_external=8,raw_polynomial_external=9,raw_linear_calibrated_external=11,raw_rational_external=13
+            if (seqRep == 7 || seqRep == 8 || seqRep == 9 || seqRep == 11 || seqRep == 13) {
                 return ExtCompReader.getInstance().readValues(this, iid, dt);
             }
         }

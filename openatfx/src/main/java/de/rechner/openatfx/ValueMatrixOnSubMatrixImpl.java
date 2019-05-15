@@ -263,15 +263,17 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
      * <p>
      * The server behavior depends on the mode of the value matrix. Value matrix mode 'CALCULATED':<br>
      * In case 'sequence_representation' of the corresponding local column is one of the entries 'raw_linear',
-     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated', or
-     * 'raw_linear_calibrated_external', the server will first calculate the physical values from raw values and
+     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated',
+     * 'raw_linear_calibrated_external', 'raw_rational', or 'raw_rational_external'
+     * the server will first calculate the physical values from raw values and
      * generation parameters, before it returns them to the requesting client.
      * </p>
      * <p>
      * Value matrix mode 'STORAGE':<br>
      * In case 'sequence_representation' of the corresponding local column is one of the entries 'raw_linear',
-     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated', or
-     * 'raw_linear_calibrated_external', the server will return the raw values of the local column.
+     * raw_polynomial', 'raw_linear_external', 'raw_polynomial_external', 'raw_linear_calibrated',
+     * 'raw_linear_calibrated_external', 'raw_rational', or 'raw_rational_external'
+     * the server will return the raw values of the local column.
      * </p>
      * 
      * @throws AoException with the following possible error codes:<br>
@@ -425,6 +427,22 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             }
         }
 
+        // raw_rational (=12), raw_rational_external (=13)
+        else if (seqReq == 12 || seqReq == 13) {
+              if (this.mode == ValueMatrixMode.STORAGE) {
+                NameValueUnit values = ieLc.getValueByBaseName("values");
+                handleRawValuesStorage(values, valueSeq, startPoint, rowCount);
+            } else if (this.mode == ValueMatrixMode.CALCULATED) {  
+                NameValueUnit values = ieLc.getValueByBaseName("values");
+                NameValueUnit genParams = ieLc.getValueByBaseName("generation_parameters");
+                handleValuesRawRationalCalculated(values, genParams.value.u.doubleSeq(), valueSeq, targetDt,
+                                                          startPoint, rowCount);              
+            } else {
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Unsupported ValueMatrixMode: " + this.mode);
+            }       
+        }
+        
         return valueSeq;
     }
 
@@ -799,6 +817,77 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
         }
     }
 
+    private void handleValuesRawRationalCalculated(NameValueUnit values, double[] genParams,
+            TS_ValueSeq valueSeq, DataType targetDt, int startPoint, int count) throws AoException {
+        if (genParams.length != 6) {
+            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                  "Generation parameters for sequence_representation=raw_rational must have length=6");
+        }
+        // xn = (p1*rn^2+p2*rn+p3) / (p4*rn^2+p5*rn+p6)
+        double p1 = genParams[0];
+        double p2 = genParams[1];
+        double p3 = genParams[2];
+        double p4 = genParams[3];
+        double p5 = genParams[4];
+        double p6 = genParams[5];
+        
+        List<Number> list = getNumbericValues(values.value.u);
+        // DS_SHORT
+        if (targetDt == DataType.DT_SHORT) {
+            valueSeq.u.shortVal(new short[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.shortVal()[i] = (short) ((p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6));
+            }
+        }
+        // DS_FLOAT
+        else if (targetDt == DataType.DT_FLOAT) {
+            valueSeq.u.floatVal(new float[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.floatVal()[i] = (float) ((p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6));
+            }
+        }
+        // DS_DOUBLE
+        else if (targetDt == DataType.DT_DOUBLE) {
+            valueSeq.u.doubleVal(new double[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.doubleVal()[i] = (p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6);
+            }
+        }
+        // DS_LONG
+        else if (targetDt == DataType.DT_LONG) {
+            valueSeq.u.longVal(new int[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.longVal()[i] = (int) ((p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6));
+            }
+        }
+        // DS_LONGLONG
+        else if (targetDt == DataType.DT_LONGLONG) {
+            valueSeq.u.longlongVal(new T_LONGLONG[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.longlongVal()[i] = ODSHelper.asODSLongLong((long) ((p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6)));
+            }
+        }
+        // DS_BYTE
+        else if (targetDt == DataType.DS_BYTE) {
+            valueSeq.u.byteVal(new byte[count]);
+            for (int i = 0; i < count; i++) {
+                double rawValue = list.get(startPoint + i).doubleValue();
+                valueSeq.u.byteVal()[i] = (byte) ((p1 * Math.pow(rawValue, 2) + p2 * rawValue + p3) / (p4 * Math.pow(rawValue, 2) + p5 * rawValue + p6));
+            }
+        }
+        // unsupported
+        else {
+            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                  "Unsupported datatype for sequence_representation=explicit or external_component: "
+                                          + ODSHelper.dataType2String(values.value.u.discriminator()));
+        }
+    }
+    
     private List<Number> getNumbericValues(TS_Union u) throws AoException {
         DataType dt = u.discriminator();
         List<Number> list = new ArrayList<Number>();

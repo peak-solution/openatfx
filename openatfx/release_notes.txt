@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.8.1 (Masayoshi Kuroda)
+	
+		- Support raw_rational/raw_rational_external values calculation
+
 	0.8.0 (Christian Rechner)
 	
 		- Added base model "asam33" to support ASAM 6 files

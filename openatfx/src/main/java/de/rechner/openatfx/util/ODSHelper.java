@@ -3289,6 +3289,11 @@ public abstract class ODSHelper {
         else if (seqRep == 10) {
             return 11;
         }
+        // raw_rational => raw_rational_external
+        else if (seqRep == 12) {
+            return 13;
+        }
+        
         return seqRep;
     }
 
@@ -3309,7 +3314,11 @@ public abstract class ODSHelper {
         else if (seqRep == 11) {
             seqRep = 10;
         }
-
+        // raw_rational_external => raw_rational
+        else if (seqRep == 13) {
+            seqRep = 12;
+        }
+        
         return seqRep;
     }
 
