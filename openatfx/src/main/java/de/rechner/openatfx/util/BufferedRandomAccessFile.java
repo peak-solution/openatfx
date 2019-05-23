@@ -63,9 +63,9 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
                 continue;
             }
             int toread = stop - idx;
-            int available = (int) (fileLength - filePos);
+            long available = (fileLength - filePos);
             if (toread > available)
-                toread = available;
+                toread = (int) available;
             int availableInBuffer = bufferSize - readAtIdx;
             if (toread > availableInBuffer)
                 toread = availableInBuffer;
@@ -74,7 +74,7 @@ public class BufferedRandomAccessFile extends RandomAccessFile {
             filePos += toread;
             // check if end of file is reached
             if (filePos == fileLength)
-                return toread-off;
+                return toread - off;
         }
         return idx - off;
     }

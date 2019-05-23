@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.8.2 (Christian Rechner)
+	
+		- Fixed bug in case file length exceeds max int
+
 	0.8.1 (Masayoshi Kuroda)
 	
 		- Support raw_rational/raw_rational_external values calculation
