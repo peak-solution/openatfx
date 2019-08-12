@@ -213,9 +213,8 @@ class ExtCompWriter {
                 // DS_STRING
                 else if (dt == DataType.DS_STRING) {
                     valueType = 12; // dt_string
-                    blockSize = 0;
                     length = 0;
-                    valuesPerBlock = 0;
+                    valuesPerBlock = value.u.stringSeq().length;
                     for (String str : value.u.stringSeq()) {
                         byte[] b = str.getBytes("ISO-8859-1");
                         length += b.length;
@@ -225,6 +224,7 @@ class ExtCompWriter {
                         length += 1;
                         channel.write(bb);
                     }
+                    blockSize = length;
                 }
                 // DS_BYTE
                 else if (dt == DataType.DS_BYTE) {

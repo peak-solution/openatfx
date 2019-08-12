@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.8.3 (Markus Renner)
+
+		- Fixed ExtCompWriter for DS_String datatype, which did not set valuesperblock and blocksize correctly
+
 	0.8.2 (Christian Rechner)
 	
 		- Fixed bug in case file length exceeds max int
