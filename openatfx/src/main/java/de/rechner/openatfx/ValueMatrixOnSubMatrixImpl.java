@@ -34,6 +34,8 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import de.rechner.openatfx.util.ODSHelper;
+import org.asam.ods.T_COMPLEX;
+import org.asam.ods.T_DCOMPLEX;
 
 
 /**
@@ -450,19 +452,43 @@ class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
             int count) throws AoException {
         DataType rawDt = values.value.u.discriminator();
         if (rawDt == DataType.DS_STRING && targetDt == DataType.DT_STRING) {
-            valueSeq.u.stringVal(values.value.u.stringSeq());
+            valueSeq.u.stringVal(new String[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.stringVal()[i] = values.value.u.stringSeq()[startPoint + i];
+            }
         } else if (rawDt == DataType.DS_STRING && targetDt == DataType.DT_DATE) {
-            valueSeq.u.dateVal(values.value.u.stringSeq());
+            valueSeq.u.stringVal(new String[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.stringVal()[i] = values.value.u.stringSeq()[startPoint + i];
+            }
         } else if (rawDt == DataType.DS_DATE && targetDt == DataType.DT_DATE) {
-            valueSeq.u.dateVal(values.value.u.dateSeq());
+            valueSeq.u.dateVal(new String[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.dateVal()[i] = values.value.u.dateSeq()[startPoint + i];
+            }
         } else if (rawDt == DataType.DS_BOOLEAN && targetDt == DataType.DT_BOOLEAN) {
-            valueSeq.u.booleanVal(values.value.u.booleanSeq());
+            valueSeq.u.booleanVal(new boolean[count]);
+            for (int i = 0; i < count; i++) {
+                valueSeq.u.booleanVal()[i] = values.value.u.booleanSeq()[startPoint + i];
+            }
         } else if (rawDt == DataType.DS_COMPLEX && targetDt == DataType.DT_COMPLEX) {
-            valueSeq.u.complexVal(values.value.u.complexSeq());
+            valueSeq.u.complexVal(new T_COMPLEX[count]);
+            for (int i = 0; i < count; i++) {
+                T_COMPLEX v = values.value.u.complexSeq()[startPoint + i];
+                valueSeq.u.complexVal()[i] = new T_COMPLEX(v.r, v.i);
+            }
         } else if (rawDt == DataType.DS_DCOMPLEX && targetDt == DataType.DT_DCOMPLEX) {
-            valueSeq.u.dcomplexVal(values.value.u.dcomplexSeq());
+            valueSeq.u.dcomplexVal(new T_DCOMPLEX[count]);
+            for (int i = 0; i < count; i++) {
+                T_DCOMPLEX v = values.value.u.dcomplexSeq()[startPoint + i];
+                valueSeq.u.dcomplexVal()[i] = new T_DCOMPLEX(v.r, v.i);
+            }
         } else if (rawDt == DataType.DS_BYTESTR && targetDt == DataType.DT_BYTESTR) {
-            valueSeq.u.bytestrVal(values.value.u.bytestrSeq());
+            valueSeq.u.bytestrVal(new byte[count][]);
+            for (int i = 0; i < count; i++) {
+                byte[] v = values.value.u.bytestrSeq()[startPoint + i];
+                valueSeq.u.bytestrVal()[i] = v.clone();
+            }
         } else {
             List<Number> list = getNumbericValues(values.value.u);
             // DS_SHORT

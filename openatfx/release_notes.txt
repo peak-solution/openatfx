@@ -5,6 +5,10 @@
 
 1. Changes
 
+	0.8.4 (Masayoshi Kuroda)
+
+		- Fixed [bugs:#6] unused start,count params of getValueVector()
+
 	0.8.3 (Markus Renner)
 
 		- Fixed ExtCompWriter for DS_String datatype, which did not set valuesperblock and blocksize correctly

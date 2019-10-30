@@ -1,7 +1,5 @@
 package de.rechner.openatfx.main;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import de.rechner.openatfx.AoFactoryImplTest;
 import de.rechner.openatfx.AoServiceFactoryTest;
 import de.rechner.openatfx.AoSessionImplTest;
@@ -18,6 +16,7 @@ import de.rechner.openatfx.InstanceElementIteratorImplTest;
 import de.rechner.openatfx.MeasurementImplTest;
 import de.rechner.openatfx.NameIteratorImplTest;
 import de.rechner.openatfx.NameValueIteratorImplTest;
+import de.rechner.openatfx.ReadValuesFromExampleAllTypesTest;
 import de.rechner.openatfx.ReadValuesFromExampleTest;
 import de.rechner.openatfx.ReadValuesFromTest;
 import de.rechner.openatfx.ValueMatrixOnSubMatrixImplTest;
@@ -29,6 +28,8 @@ import de.rechner.openatfx.basestructure.BaseRelationImplTest;
 import de.rechner.openatfx.basestructure.BaseStructureImplTest;
 import de.rechner.openatfx.io.AtfxParseUtilTest;
 import de.rechner.openatfx.util.ODSHelperTest;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 
 /**
@@ -69,11 +70,12 @@ public class AllTests {
         suite.addTest(ValueMatrixReadFlagsTest.suite());
         suite.addTest(ColumnImplTest.suite());
         suite.addTest(ReadValuesFromExampleTest.suite());
+        suite.addTest(ReadValuesFromExampleAllTypesTest.suite());
         suite.addTest(ReadValuesFromTest.suite());
 
         suite.addTest(AtfxParseUtilTest.suite());
         suite.addTest(ASAMExamplesTest.suite());
-        
+
         return suite;
     }
 
