@@ -151,6 +151,7 @@ class AtfxInstanceReader {
                                   "ApplicationElement '" + aeName + "' not found");
         }
         Long aid = ODSHelper.asJLong(applElem.aid);
+        boolean ismeaq = applElem.beName.equals("AoMeasurementQuantity");
 
         // read attributes
         List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
@@ -241,7 +242,8 @@ class AtfxInstanceReader {
                 ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
                 short relMax = applRel.arRelationRange.max;
                 short invMax = applRel.invRelationRange.max;
-                if ((relMax == -1) || (relMax == 1 && invMax == 1) || (applRel.brName.equals("measurement_quantity"))) {
+                if ((relMax == -1) || (relMax == 1 && invMax == 1) || (applRel.brName.equals("measurement_quantity"))
+                        || (ismeaq && applRel.brName.equals("unit"))) {
                     String textContent = reader.getElementText();
                     if (textContent.length() > 0) {
                         T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);

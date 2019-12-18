@@ -5,6 +5,11 @@
 
 1. Changes
 
+	0.8.5 (Viktor Stoehr)
+
+		- allow reading non inverse relation AoMeasurementQuantity -> AoUnit [unit]
+		  while parsing AoMeasurementQuantity instance data
+
 	0.8.4 (Masayoshi Kuroda)
 
 		- Fixed [bugs:#6] unused start,count params of getValueVector()
