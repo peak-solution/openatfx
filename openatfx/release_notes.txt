@@ -5,6 +5,11 @@
 
 1. Changes
 
+	0.8.6 (Martin Fleischer)
+	
+		- Fixed writing DS_BYTESTR values to external components
+		- Start value for external component ordinal numbers changed from 0 to 1
+
 	0.8.5 (Viktor Stoehr)
 
 		- allow reading non inverse relation AoMeasurementQuantity -> AoUnit [unit]
@@ -29,7 +34,7 @@
 	0.8.0 (Christian Rechner)
 	
 		- Added base model "asam33" to support ASAM 6 files
-		- Fixed endless loop while reading a ExternalComponent that is shorter than expected
+		- Fixed endless loop while reading an ExternalComponent that is shorter than expected
 
 	0.7.7 (Christian Rechner)
 	
@@ -46,7 +51,7 @@
 	0.7.4 (Markus Renner)
 
 		- A very rare case in an ODS model definition causes an exception if read by openATFx. If for an application element there is an
-		  attribute defined, that has the same name like a base attribute in the base model (e.g. "id"), than this will cause an exception
+		  attribute defined that has the same name like a base attribute in the base model (e.g. "id"), then this will cause an exception
 		  like "attribute with name id already exists", if that attribute is defined before the attribute derived from the base attribute
 		  is defined. This issue is now fixed by first handling all base attributes (which may change the name of the attribute in the base model)
 		  and after that all other attributes, which then can use the name without any problem, since it is "free" again.

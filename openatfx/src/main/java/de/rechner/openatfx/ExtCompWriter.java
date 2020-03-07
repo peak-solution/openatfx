@@ -7,6 +7,8 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -55,15 +57,22 @@ class ExtCompWriter {
         return binFile;
     }
 
-    private static File getExtCompFileBytestr(AtfxCache atfxCache, int cnt) {
+    private static File getExtCompFileBytestr(AtfxCache atfxCache, boolean getNextUnused) {
         Map<String, NameValue> context = atfxCache.getContext();
         String rootPath = context.get("FILE_ROOT").value.u.stringVal();
         File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
-        long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
-        File binFile = new File(rootPath, FileUtil.stripExtension(atfxPath.getName()) + "_" + cnt + "_bytestream.btf");
-        if (binFile.length() >= extCompSize) {
-            binFile = getExtCompFileBytestr(atfxCache, cnt + 1);
+        String pattern = FileUtil.stripExtension(atfxPath.getName()) + "_%d_bytestream.btf";
+        int nextUnusedNo = 1;
+        while (true) {
+           if (Files.exists(Paths.get(rootPath, String.format(pattern, nextUnusedNo)))) {
+               nextUnusedNo++;
+           } else {
+               break;
+           }
         }
+        
+        File binFile = new File(rootPath, String.format(pattern, (getNextUnused ? nextUnusedNo :  Math.max(1, nextUnusedNo - 1))));
+        
         return binFile;
     }
 
@@ -95,7 +104,7 @@ class ExtCompWriter {
         if (dt == DataType.DS_STRING || dt == DataType.DS_DATE) {
             extCompFile = getExtCompFileString(atfxCache, 1);
         } else if (dt == DataType.DS_BYTESTR) {
-            extCompFile = getExtCompFileBytestr(atfxCache, 1);
+            extCompFile = getExtCompFileBytestr(atfxCache, false);
         } else {
             extCompFile = getExtCompFile(atfxCache, 1);
         }
@@ -125,246 +134,218 @@ class ExtCompWriter {
             int length = 0;
             int blockSize = 0;
             int valuesPerBlock = 0;
+            
+            int ordinalNumber = 1;
 
-            // bytestream datatype needs special handling
+            // DS_BYTESTR
             if (dt == DataType.DS_BYTESTR) {
                 valueType = 13; // dt_bytestr
-                int ordinalNumber = 1;
 
                 long extCompSize = ODSHelper.asJLong(atfxCache.getContext()
-                                                              .get("EXT_COMP_SEGSIZE").value.u.longlongVal());
-                byte[][] byteStreamSeq = value.u.bytestrSeq();
-                for (byte[] currentByteStream : byteStreamSeq) {
-                    int lengthOfByteStream = currentByteStream.length;
-                    int bytestreamOffset = 0;
-                    boolean nextSplitAvailable = false;
+                                                     .get("EXT_COMP_SEGSIZE").value.u.longlongVal());
 
-                    int bufferLength = 0;
-                    if (startOffset + 4 + lengthOfByteStream > extCompSize) {
-                        // bytestream length exceeds allowed ext comp size -> split it
-                        bufferLength = safeLongToInt(extCompSize - startOffset);
-                        nextSplitAvailable = true;
-                    } else {
-                        bufferLength = 4 + lengthOfByteStream;
-                        nextSplitAvailable = false;
+                for (byte[] currentByteStream : value.u.bytestrSeq()) {
+                    int lengthOfByteStream = currentByteStream.length;
+
+                    int dataLength = 4 + lengthOfByteStream;
+                    if (startOffset + length + dataLength > extCompSize) {
+                        // allowed ext comp size exceeded -> write to new ext comp file:
+                        // finish old ext comp file:
+                        channel.close();
+                        fos.close();
+
+                        // write external component for old ext comp file:
+                        createAoExternalComponent(atfxCache, iidLc, extCompFile, valueType, length, startOffset,
+                                                  blockSize, valuesPerBlock, ordinalNumber++);
+
+                        // get new ext comp file:
+                        extCompFile = getExtCompFileBytestr(atfxCache, true);
+                        fos = new FileOutputStream(extCompFile, true);
+                        channel = fos.getChannel();
+                        startOffset = channel.size();
+
+                        valuesPerBlock = 0;
+                        length = 0;
                     }
 
-                    ByteBuffer bb = ByteBuffer.allocate(bufferLength);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
+                    ByteBuffer bb = ByteBuffer.allocate(dataLength);
+                    // length information must be big endian for dt_bytestr typespec, see recent clarification in ODS documentation:
+                    bb.order(ByteOrder.BIG_ENDIAN);  
                     // write 4 byte length block
                     bb.putInt(lengthOfByteStream);
-                    int bytesToWrite = bufferLength - 4;
 
-                    do {
-                        // write bytestream (split)
-                        bb.put(currentByteStream, bytestreamOffset, bytesToWrite);
-                        Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                        length += channel.write(bb);
-                        valuesPerBlock++;
-
-                        createAoExternalComponent(atfxCache, iidLc, extCompFile, valueType, length, startOffset,
-                                                  blockSize, valuesPerBlock, ordinalNumber);
-
-                        if (nextSplitAvailable) {
-                            // finish last split
-                            channel.close();
-                            fos.close();
-
-                            // prepare for next split
-                            valuesPerBlock = 0;
-                            length = 0;
-                            ordinalNumber++;
-                            bytestreamOffset += bytesToWrite;
-                            lengthOfByteStream -= bytesToWrite;
-                            extCompFile = getExtCompFileBytestr(atfxCache, 1);
-                            fos = new FileOutputStream(extCompFile, true);
-                            channel = fos.getChannel();
-                            startOffset = channel.size();
-
-                            if (startOffset + lengthOfByteStream > extCompSize) {
-                                // bytestream length exceeds allowed ext comp size -> split it
-                                bufferLength = safeLongToInt(extCompSize - startOffset);
-                                nextSplitAvailable = true;
-                            } else {
-                                bufferLength = lengthOfByteStream;
-                                nextSplitAvailable = false;
-                            }
-                            bb = ByteBuffer.allocate(bufferLength);
-                            bb.order(ByteOrder.LITTLE_ENDIAN);
-                            bytesToWrite = bufferLength;
-                        } else {
-                            break;
-                        }
-                    } while (true);
-                }
-            } else {
-                // DS_BOOLEAN
-                if (dt == DataType.DS_BOOLEAN) {
-                    valueType = 0; // dt_boolean
-                    length = value.u.booleanSeq().length;
-                    blockSize = 1 + ((int) value.u.booleanSeq().length - 1) / 8;
-                    valuesPerBlock = length;
-                    byte[] target = new byte[length];
-                    for (int i = 0; i < value.u.booleanSeq().length; i++) {
-                        ODSHelper.setBit(target, i, value.u.booleanSeq()[i]);
-                    }
-                    channel.write(ByteBuffer.wrap(target));
-                }
-                // DS_STRING
-                else if (dt == DataType.DS_STRING) {
-                    valueType = 12; // dt_string
-                    length = 0;
-                    valuesPerBlock = value.u.stringSeq().length;
-                    for (String str : value.u.stringSeq()) {
-                        byte[] b = str.getBytes("ISO-8859-1");
-                        length += b.length;
-                        ByteBuffer bb = ByteBuffer.wrap(b);
-                        channel.write(bb);
-                        bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
-                        length += 1;
-                        channel.write(bb);
-                    }
-                    blockSize = length;
-                }
-                // DS_BYTE
-                else if (dt == DataType.DS_BYTE) {
-                    valueType = 1; // dt_byte
-                    blockSize = 1;
-                    valuesPerBlock = 1;
-                    length = value.u.byteSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    for (int i = 0; i < length; i++) {
-                        bb.put(value.u.byteSeq()[i]);
-                    }
+                    bb.put(currentByteStream, 0, lengthOfByteStream);
                     Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
+                    length += channel.write(bb);
+                    valuesPerBlock++;
                 }
-                // DS_SHORT
-                else if (dt == DataType.DS_SHORT) {
-                    valueType = 2; // dt_short
-                    blockSize = 2;
-                    valuesPerBlock = 1;
-                    length = value.u.shortSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length; i++) {
-                        bb.putShort(value.u.shortSeq()[i]);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
+            } 
+            // DS_BOOLEAN
+            else if (dt == DataType.DS_BOOLEAN) {
+                valueType = 0; // dt_boolean
+                length = value.u.booleanSeq().length;
+                blockSize = 1 + ((int) value.u.booleanSeq().length - 1) / 8;
+                valuesPerBlock = length;
+                byte[] target = new byte[length];
+                for (int i = 0; i < value.u.booleanSeq().length; i++) {
+                    ODSHelper.setBit(target, i, value.u.booleanSeq()[i]);
                 }
-                // DS_LONG
-                else if (dt == DataType.DS_LONG) {
-                    valueType = 3; // dt_long
-                    blockSize = 4;
-                    valuesPerBlock = 1;
-                    length = value.u.longSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length; i++) {
-                        bb.putInt(value.u.longSeq()[i]);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // DS_LONGLONG
-                else if (dt == DataType.DS_LONGLONG) {
-                    valueType = 4; // dt_longlong
-                    blockSize = 8;
-                    valuesPerBlock = 1;
-                    length = value.u.longlongSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length; i++) {
-                        bb.putLong(ODSHelper.asJLong(value.u.longlongSeq()[i]));
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // DS_DATE
-                else if (dt == DataType.DS_DATE) {
-                    valueType = 12; // dt_date
-                    blockSize = 0;
-                    length = 0;
-                    valuesPerBlock = 1;
-                    for (String str : value.u.dateSeq()) {
-                        byte[] b = str.getBytes("ISO-8859-1");
-                        length += b.length;
-                        ByteBuffer bb = ByteBuffer.wrap(b);
-                        channel.write(bb);
-                        bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
-                        length += 1;
-                        channel.write(bb);
-                    }
-                }
-                // DS_FLOAT
-                else if (dt == DataType.DS_FLOAT) {
-                    valueType = 5; // dt_float
-                    blockSize = 4;
-                    valuesPerBlock = 1;
-                    length = value.u.floatSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length; i++) {
-                        bb.putFloat(value.u.floatSeq()[i]);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // DS_COMPLEX
-                else if (dt == DataType.DS_COMPLEX) {
-                    valueType = 5; // dt_float
-                    blockSize = 4;
-                    valuesPerBlock = 1;
-                    length = value.u.complexSeq().length * 2;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < (length / 2); i++) {
-                        bb.putFloat(value.u.complexSeq()[i].r);
-                        bb.putFloat(value.u.complexSeq()[i].i);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // DS_DOUBLE
-                else if (dt == DataType.DS_DOUBLE) {
-                    valueType = 6; // dt_double
-                    blockSize = 8;
-                    valuesPerBlock = 1;
-                    length = value.u.doubleSeq().length;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length; i++) {
-                        bb.putDouble(value.u.doubleSeq()[i]);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // DS_DCOMPLEX
-                else if (dt == DataType.DS_DCOMPLEX) {
-                    valueType = 6; // dt_double
-                    blockSize = 8;
-                    valuesPerBlock = 1;
-                    length = value.u.dcomplexSeq().length * 2;
-                    ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
-                    bb.order(ByteOrder.LITTLE_ENDIAN);
-                    for (int i = 0; i < length / 2; i++) {
-                        bb.putDouble(value.u.dcomplexSeq()[i].r);
-                        bb.putDouble(value.u.dcomplexSeq()[i].i);
-                    }
-                    Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                    channel.write(bb);
-                }
-                // not supported
-                else {
-                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                          "DataType '" + ODSHelper.dataType2String(dt)
-                                                  + "' not yet supported for writing to external component file");
-                }
-
-                createAoExternalComponent(atfxCache, iidLc, extCompFile, valueType, length, startOffset, blockSize,
-                                          valuesPerBlock, 0);
+                channel.write(ByteBuffer.wrap(target));
             }
+            // DS_STRING
+            else if (dt == DataType.DS_STRING) {
+                valueType = 12; // dt_string
+                length = 0;
+                valuesPerBlock = value.u.stringSeq().length;
+                for (String str : value.u.stringSeq()) {
+                    byte[] b = str.getBytes("ISO-8859-1");
+                    length += b.length;
+                    ByteBuffer bb = ByteBuffer.wrap(b);
+                    channel.write(bb);
+                    bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
+                    length += 1;
+                    channel.write(bb);
+                }
+                blockSize = length;
+            }
+            // DS_BYTE
+            else if (dt == DataType.DS_BYTE) {
+                valueType = 1; // dt_byte
+                blockSize = 1;
+                valuesPerBlock = 1;
+                length = value.u.byteSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                for (int i = 0; i < length; i++) {
+                    bb.put(value.u.byteSeq()[i]);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_SHORT
+            else if (dt == DataType.DS_SHORT) {
+                valueType = 2; // dt_short
+                blockSize = 2;
+                valuesPerBlock = 1;
+                length = value.u.shortSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putShort(value.u.shortSeq()[i]);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_LONG
+            else if (dt == DataType.DS_LONG) {
+                valueType = 3; // dt_long
+                blockSize = 4;
+                valuesPerBlock = 1;
+                length = value.u.longSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putInt(value.u.longSeq()[i]);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_LONGLONG
+            else if (dt == DataType.DS_LONGLONG) {
+                valueType = 4; // dt_longlong
+                blockSize = 8;
+                valuesPerBlock = 1;
+                length = value.u.longlongSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putLong(ODSHelper.asJLong(value.u.longlongSeq()[i]));
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_DATE
+            else if (dt == DataType.DS_DATE) {
+                valueType = 12; // dt_date
+                blockSize = 0;
+                length = 0;
+                valuesPerBlock = 1;
+                for (String str : value.u.dateSeq()) {
+                    byte[] b = str.getBytes("ISO-8859-1");
+                    length += b.length;
+                    ByteBuffer bb = ByteBuffer.wrap(b);
+                    channel.write(bb);
+                    bb = ByteBuffer.wrap(new byte[] { (byte) 0 });
+                    length += 1;
+                    channel.write(bb);
+                }
+            }
+            // DS_FLOAT
+            else if (dt == DataType.DS_FLOAT) {
+                valueType = 5; // dt_float
+                blockSize = 4;
+                valuesPerBlock = 1;
+                length = value.u.floatSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putFloat(value.u.floatSeq()[i]);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_COMPLEX
+            else if (dt == DataType.DS_COMPLEX) {
+                valueType = 5; // dt_float
+                blockSize = 4;
+                valuesPerBlock = 1;
+                length = value.u.complexSeq().length * 2;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < (length / 2); i++) {
+                    bb.putFloat(value.u.complexSeq()[i].r);
+                    bb.putFloat(value.u.complexSeq()[i].i);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_DOUBLE
+            else if (dt == DataType.DS_DOUBLE) {
+                valueType = 6; // dt_double
+                blockSize = 8;
+                valuesPerBlock = 1;
+                length = value.u.doubleSeq().length;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length; i++) {
+                    bb.putDouble(value.u.doubleSeq()[i]);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // DS_DCOMPLEX
+            else if (dt == DataType.DS_DCOMPLEX) {
+                valueType = 6; // dt_double
+                blockSize = 8;
+                valuesPerBlock = 1;
+                length = value.u.dcomplexSeq().length * 2;
+                ByteBuffer bb = ByteBuffer.allocate(length * blockSize);
+                bb.order(ByteOrder.LITTLE_ENDIAN);
+                for (int i = 0; i < length / 2; i++) {
+                    bb.putDouble(value.u.dcomplexSeq()[i].r);
+                    bb.putDouble(value.u.dcomplexSeq()[i].i);
+                }
+                Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+                channel.write(bb);
+            }
+            // not supported
+            else {
+                throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                                      "DataType '" + ODSHelper.dataType2String(dt)
+                                      + "' not yet supported for writing to external component file");
+            }
+
+            createAoExternalComponent(atfxCache, iidLc, extCompFile, valueType, length, startOffset, blockSize,
+                                      valuesPerBlock, ordinalNumber);
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
