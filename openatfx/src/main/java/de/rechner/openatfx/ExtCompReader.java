@@ -1,11 +1,15 @@
 package de.rechner.openatfx;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -410,7 +414,7 @@ class ExtCompReader {
         // get datatype
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
         int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
-        if (valueType != 12) {
+        if (valueType != 12 && valueType != 25) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "Unsupported 'value_type' for data type DT_STRING or DT_DATE: " + valueType);
         }
@@ -435,6 +439,7 @@ class ExtCompReader {
         RandomAccessFile raf = null;
         byte[] backingBuffer = new byte[componentLength];
         List<String> list = new ArrayList<String>();
+        Charset charset = valueType == 12 ? ISO_8859_1 : UTF_8;
         try {
             // open source channel
             raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE);
@@ -444,7 +449,7 @@ class ExtCompReader {
             int startPosition = 0;
             for (int position = 0; position < componentLength; position++) {
                 if (backingBuffer[position] == 0) {
-                    list.add(new String(backingBuffer, startPosition, position - startPosition, "ISO-8859-1"));
+                    list.add(new String(backingBuffer, startPosition, position - startPosition, charset));
                     startPosition = position + 1;
                 }
             }

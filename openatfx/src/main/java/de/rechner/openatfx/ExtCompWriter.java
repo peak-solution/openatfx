@@ -1,5 +1,8 @@
 package de.rechner.openatfx;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,6 +60,18 @@ class ExtCompWriter {
         return binFile;
     }
 
+    private static File getExtCompFileUTF8String(AtfxCache atfxCache, int cnt) {
+        Map<String, NameValue> context = atfxCache.getContext();
+        String rootPath = context.get("FILE_ROOT").value.u.stringVal();
+        File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
+        long extCompSize = ODSHelper.asJLong(context.get("EXT_COMP_SEGSIZE").value.u.longlongVal());
+        File binFile = new File(rootPath, FileUtil.stripExtension(atfxPath.getName()) + "_" + cnt + "_utf8string.btf");
+        if (binFile.length() > extCompSize) {
+            binFile = getExtCompFileUTF8String(atfxCache, cnt + 1);
+        }
+        return binFile;
+    }
+
     private static File getExtCompFileBytestr(AtfxCache atfxCache, boolean getNextUnused) {
         Map<String, NameValue> context = atfxCache.getContext();
         String rootPath = context.get("FILE_ROOT").value.u.stringVal();
@@ -101,7 +116,9 @@ class ExtCompWriter {
 
         // open file, strings have to be in the same file
         File extCompFile = null;
-        if (dt == DataType.DS_STRING || dt == DataType.DS_DATE) {
+        if (dt == DataType.DS_STRING) {
+            extCompFile = getExtCompFileUTF8String(atfxCache, 1);
+        } else if (dt == DataType.DS_DATE) {
             extCompFile = getExtCompFileString(atfxCache, 1);
         } else if (dt == DataType.DS_BYTESTR) {
             extCompFile = getExtCompFileBytestr(atfxCache, false);
@@ -194,11 +211,11 @@ class ExtCompWriter {
             }
             // DS_STRING
             else if (dt == DataType.DS_STRING) {
-                valueType = 12; // dt_string
+                valueType = 25; // dt_string_utf8
                 length = 0;
                 valuesPerBlock = value.u.stringSeq().length;
                 for (String str : value.u.stringSeq()) {
-                    byte[] b = str.getBytes("ISO-8859-1");
+                    byte[] b = str.getBytes(UTF_8);
                     length += b.length;
                     ByteBuffer bb = ByteBuffer.wrap(b);
                     channel.write(bb);
@@ -265,12 +282,12 @@ class ExtCompWriter {
             }
             // DS_DATE
             else if (dt == DataType.DS_DATE) {
-                valueType = 12; // dt_date
+                valueType = 12; // dt_date (dt_string)
                 blockSize = 0;
                 length = 0;
                 valuesPerBlock = 1;
                 for (String str : value.u.dateSeq()) {
-                    byte[] b = str.getBytes("ISO-8859-1");
+                    byte[] b = str.getBytes(ISO_8859_1);
                     length += b.length;
                     ByteBuffer bb = ByteBuffer.wrap(b);
                     channel.write(bb);

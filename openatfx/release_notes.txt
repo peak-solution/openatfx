@@ -5,6 +5,11 @@
 
 1. Changes
 
+	0.8.7 (Viktor Stoehr)
+	
+		- write string values as UTF-8 strings in write_mode = file
+        - read string values as UTF-8 (type_spec = dt_string_utf8) or iso-8859-1 (type_spec = dt_string)  
+
 	0.8.6 (Martin Fleischer)
 	
 		- Fixed writing DS_BYTESTR values to external components
