@@ -5,6 +5,11 @@
 
 1. Changes
 
+	0.8.8 (Markus Renner)
+		
+		- corrected obligatory-flag of AoNameMap.alias_names from true to false in base models, since standard specifies it as LIST[0:?],
+		  which implicitly makes it optional by the minimum 0
+
 	0.8.7 (Viktor Stoehr)
 	
 		- write string values as UTF-8 strings in write_mode = file

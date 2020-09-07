@@ -398,7 +398,7 @@
 		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="entity_name" obligatory="true" unique="false" />
-		<BaseAttribute dataType="DS_STRING" name="alias_names" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DS_STRING" name="alias_names" obligatory="false" unique="false" />
 	</BaseElement>
 	<BaseElement topLevel="false" type="AoAttributeMap">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
