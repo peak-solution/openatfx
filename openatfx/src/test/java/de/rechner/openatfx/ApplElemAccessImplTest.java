@@ -455,10 +455,10 @@ public class ApplElemAccessImplTest {
             assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
             assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
 
-            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
-            assertEquals("Time", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[1]); // a value
-            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a value
-            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a value
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[1]); // a value
+            assertEquals("Time", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a value
+            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a value
         } catch (AoException e) {
             fail(e.reason);
         }

@@ -23,3 +23,5 @@ Following dependencies are needed to run this library:
 - JUnit: Eclipse Public License 1.0
 - Woodstox: LGPL
 - StAX API: BSD License
+- AssertJ: Apache 2 license
+- Mockito: MIT license

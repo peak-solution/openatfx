@@ -1054,6 +1054,42 @@ public abstract class ODSHelper {
             length = unionSeq.stringSeq().length;
         return length;
     }
+    
+    public static int tsUnionLength(TS_Union union) {
+        DataType dt = union.discriminator();
+        int length = 1;
+        if (dt == DataType.DT_UNKNOWN)
+            length = 0;
+        else if (dt == DataType.DS_BOOLEAN)
+            length = union.booleanSeq().length;
+        else if (dt == DataType.DS_BYTE)
+            length = union.byteSeq().length;
+        else if (dt == DataType.DS_BYTESTR)
+            length = union.bytestrSeq().length;
+        else if (dt == DataType.DS_COMPLEX)
+            length = union.complexSeq().length;
+        else if (dt == DataType.DS_DATE)
+            length = union.dateSeq().length;
+        else if (dt == DataType.DS_DCOMPLEX)
+            length = union.dcomplexSeq().length;
+        else if (dt == DataType.DS_DOUBLE)
+            length = union.doubleSeq().length;
+        else if (dt == DataType.DS_ENUM)
+            length = union.enumSeq().length;
+        else if (dt == DataType.DS_EXTERNALREFERENCE)
+            length = union.extRefSeq().length;
+        else if (dt == DataType.DS_FLOAT)
+            length = union.floatSeq().length;
+        else if (dt == DataType.DS_LONG)
+            length = union.longSeq().length;
+        else if (dt == DataType.DS_LONGLONG)
+            length = union.longlongSeq().length;
+        else if (dt == DataType.DS_SHORT)
+            length = union.shortSeq().length;
+        else if (dt == DataType.DS_STRING)
+            length = union.stringSeq().length;
+        return length;
+    }
 
     /*******************************************************************************************************************
      * Methods for datatype conversions.

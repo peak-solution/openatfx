@@ -4,7 +4,15 @@
 	
 
 1. Changes
-
+	0.8.9 (Markus Renner)
+	
+		- added to getInstancesExt(): support for multiple conditions connected with AND, restrictions on datatypes, opCodes and related instance conditions apply
+		- if localColumnInstance.getValue(flags-attribute name) is called, now the global flag attribute value is returned
+		  if neither the flags could be read from a (external) component file nor from the Flags attribute itself
+		- invalid characters for xml files are now replaced by _ if written to an atfx file
+		- supported * wildcard in InstanceElement.getValueSeq()
+		- now NaN and NAN are both supported for according values, led to exception before since Java accepts only NaN
+		
 	0.8.8 (Markus Renner)
 		
 		- corrected obligatory-flag of AoNameMap.alias_names from true to false in base models, since standard specifies it as LIST[0:?],

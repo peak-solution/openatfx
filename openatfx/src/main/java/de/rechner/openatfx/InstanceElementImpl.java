@@ -223,6 +223,18 @@ class InstanceElementImpl extends InstanceElementPOA {
      * @see org.asam.ods.InstanceElementOperations#getValueSeq(java.lang.String[])
      */
     public NameValueUnit[] getValueSeq(String[] attrNames) throws AoException {
+        // handle attribute request with wildcard
+        if (attrNames.length == 1 && attrNames[0].equals("*"))
+        {
+            String[] allAttributeNames = listAttributes("*", AttrType.ALL);
+            NameValueUnit[] values = new NameValueUnit[allAttributeNames.length];
+            for (int i = 0; i < allAttributeNames.length; i++) {
+                values[i] = getValue(allAttributeNames[i]);
+            }
+            return values;
+        }
+        
+        // otherwise handle request for specific attributes
         NameValueUnit[] values = new NameValueUnit[attrNames.length];
         for (int i = 0; i < attrNames.length; i++) {
             values[i] = getValue(attrNames[i]);

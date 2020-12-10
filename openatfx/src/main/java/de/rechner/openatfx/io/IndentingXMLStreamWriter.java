@@ -128,7 +128,7 @@ class IndentingXMLStreamWriter implements XMLStreamWriter {
 
     public void writeComment(String data) throws XMLStreamException {
         beforeMarkup();
-        out.writeComment(data);
+        out.writeComment(cleanInvalidXmlChars(data, "_"));
         afterMarkup();
     }
 
@@ -169,7 +169,7 @@ class IndentingXMLStreamWriter implements XMLStreamWriter {
     }
 
     public void writeCharacters(String text) throws XMLStreamException {
-        out.writeCharacters(text);
+        out.writeCharacters(cleanInvalidXmlChars(text, "_"));
         afterData();
     }
 
@@ -350,4 +350,16 @@ class IndentingXMLStreamWriter implements XMLStreamWriter {
         out.close();
     }
 
+    /**
+    * From xml spec valid chars:<br>
+    * #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]<br>
+    * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF.<br>
+    * @param text The String to clean
+    * @param replacement The string to be substituted for each match
+    * @return The resulting String
+    */
+    private String cleanInvalidXmlChars(String text, String replacement) {
+        String re = "[^\u0009\r\n\u0020-\uD7FF\uE000-\uFFFD\uD800\uDC00-\uDBFF\uDFFF]";
+        return text.replaceAll(re, replacement);
+    }
 }

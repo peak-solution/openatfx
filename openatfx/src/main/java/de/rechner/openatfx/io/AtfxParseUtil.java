@@ -167,7 +167,7 @@ abstract class AtfxParseUtil {
     public static float parseFloat(String str) throws AoException {
         if (str != null && str.length() > 0) {
             try {
-                return Float.parseFloat(str.trim());
+                return Float.parseFloat(handleNaNValue(str));
             } catch (NumberFormatException nfe) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Error parsing value of type DT_FLOAT '" + str + "'");
@@ -206,7 +206,7 @@ abstract class AtfxParseUtil {
     public static double parseDouble(String str) throws AoException {
         if (str != null && str.length() > 0) {
             try {
-                return Double.parseDouble(str.trim());
+                return Double.parseDouble(handleNaNValue(str));
             } catch (NumberFormatException nfe) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Error parsing value of type DT_DOUBLE '" + str + "'");
@@ -431,4 +431,20 @@ abstract class AtfxParseUtil {
         return new T_DCOMPLEX[0];
     }
 
+    /**
+     * ODS specification says in chapter 8.12.2, that applications need to support the strings NaN and NAN. Therefore
+     * this value has to be handled accordingly, since Java's parseFloat/Double() methods only work for NaN.
+     * 
+     * @param originalValue the original value
+     * @return the probably adjusted value
+     */
+    private static String handleNaNValue(String originalValue)
+    {
+        String adjustedValue = originalValue.trim();
+        if ("nan".equalsIgnoreCase(adjustedValue))
+        {
+            adjustedValue = "NaN";
+        }
+        return adjustedValue;
+    }
 }

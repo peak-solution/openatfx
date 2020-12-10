@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,8 @@ import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
@@ -831,10 +834,10 @@ class AtfxCache {
                 return flags;
             }
         }
-
+        
         // read values from memory
         java.lang.Object jValue = this.instanceValueMap.get(aid).get(iid).get(attrNo);
-
+        
         // adjust datatype in case for internal values
         // and raw datatype differs from measurement quantity datatype
         if (lcValuesAttr && jValue != null && jValue instanceof float[]) {
@@ -849,6 +852,27 @@ class AtfxCache {
             dt = DataType.DS_LONG;
         } else if (lcValuesAttr && jValue != null && jValue instanceof T_LONGLONG[]) {
             dt = DataType.DS_LONGLONG;
+        }
+        
+        // if flags attribute could neither be read from external component file or from the attribute in atfx,
+        // return the global flag value
+        if (lcFlagsAttr && jValue == null) {
+            int globalFlagAttrNo = getAttrNoByBaName(aid, "global_flag");
+            short globalFlag = getInstanceValue(aid, globalFlagAttrNo, iid).u.shortVal();
+            
+            int valuesAttrNo = getAttrNoByBaName(aid, "values");
+            int nrOfValues = ODSHelper.tsUnionLength(getInstanceValue(aid, valuesAttrNo, iid).u);
+            
+            short[] flags = new short[nrOfValues];
+            for (int i = 0; i < nrOfValues; i++) {
+                flags[i] = globalFlag;
+            }
+            
+            TS_Value tsValue = new TS_Value();
+            tsValue.flag = (short) 15;
+            tsValue.u = new TS_Union();
+            tsValue.u.shortSeq(flags);
+            return tsValue;
         }
 
         return (jValue == null) ? ODSHelper.createEmptyTS_Value(dt) : ODSHelper.jObject2tsValue(dt, jValue);
@@ -877,7 +901,11 @@ class AtfxCache {
             list.add(getInstanceValue(aid, attrNo, iid));
         }
 
-        return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), dt);
+        if (list.isEmpty()) {
+            return new TS_ValueSeq(new TS_UnionSeq(), new short[0]);
+        } else {
+            return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), dt);
+        }
     }
 
     /**
@@ -1189,25 +1217,40 @@ class AtfxCache {
             throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
                     "Application relation cannot be null!");
         }
-
-        if (applRel.getRelationRange().max != 1) {
-            // only 1:N relations allowed
-            throw new AoException(ErrorCode.AO_BAD_OPERATION, SeverityFlag.ERROR, 0,
-                    "Only 1:N relations are supported!");
-        }
-
-        List<TS_Value> list = new ArrayList<TS_Value>();
         
-        for (long iid : iids) {
-            List<Long> relatedIids = getRelatedInstanceIds(aid, iid, applRel);
+        List<TS_Value> list = new ArrayList<TS_Value>();
+        List<Long> relatedIids = null;
+        if (iids.size() == 1) {
+            relatedIids = getRelatedInstanceIds(aid, iids.get(0), applRel);
+        } else {
+            relatedIids = new ArrayList<>();
+            for (long iid : iids) {
+                relatedIids.addAll(getRelatedInstanceIds(aid, iid, applRel));
+            }
+        }
+        
+        if (relatedIids != null ) {
             if (relatedIids.isEmpty()) {
                 list.add(ODSHelper.createEmptyTS_Value(DataType.DT_LONGLONG));
             } else if (relatedIids.size() == 1) {
                 java.lang.Object jValue = ODSHelper.asODSLongLong(relatedIids.get(0));
                 list.add(ODSHelper.jObject2tsValue(DataType.DT_LONGLONG, jValue));
+            } else {
+                T_LONGLONG[] ids = new T_LONGLONG[relatedIids.size()];
+                for (int i = 0; i < ids.length; i++) {
+                    long relatedIid = relatedIids.get(i);
+                    ids[i] = ODSHelper.asODSLongLong(relatedIid);
+                }
+                TS_UnionSeq uSeq = new TS_UnionSeq();
+                uSeq.longlongVal(ids);
+                
+                short[] flag = new short[ids.length];
+                Arrays.fill(flag, (short) 15);
+                
+                return new TS_ValueSeq(uSeq, flag);
             }
         }
-
+        
         return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), DataType.DT_LONGLONG);
     }
 

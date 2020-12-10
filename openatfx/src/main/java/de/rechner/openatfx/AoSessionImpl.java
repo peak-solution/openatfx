@@ -677,4 +677,12 @@ public class AoSessionImpl extends AoSessionPOA {
         return list.toArray(new EnumerationStructure[0]);
     }
 
+    /**
+     * For unit tests
+     * 
+     * @return the {@link AtfxCache}
+     */
+    protected AtfxCache getAtfxCache() {
+        return this.atfxCache;
+    }
 }

@@ -3,6 +3,7 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
@@ -46,7 +47,9 @@ public class WildcardHandlingHelper {
      * @throws AoException
      */
     private void init() throws AoException {
-        boolean isLocalColumn = this.cache.getAidsByBaseType("aolocalcolumn").contains(aid);
+        Set<Long> lcAids = this.cache.getAidsByBaseType("aolocalcolumn");
+        boolean isLocalColumn = lcAids != null && lcAids.contains(aid);
+        
         Collection<ApplicationAttribute> allApplicationAttributes = this.cache.getApplicationAttributes(aid);
         Collection<ApplicationRelation> allApplicationRelations = this.cache.getApplicationRelations(aid);
         List<String> attrNames = new ArrayList<String>();
