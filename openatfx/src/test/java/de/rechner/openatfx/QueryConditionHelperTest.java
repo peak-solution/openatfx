@@ -29,8 +29,10 @@ import org.asam.ods.SelValueExt;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -42,6 +44,7 @@ public class QueryConditionHelperTest {
     private static ApplicationRelation noneBaseFCRel;
     private static ApplicationRelation noneBaseInfoRel1;
     private static ApplicationRelation noneBaseInfoRel2;
+    private static AtfxCache cacheMock;
 
     @BeforeClass
     public static void setUpBeforeClass() throws Exception {
@@ -76,6 +79,13 @@ public class QueryConditionHelperTest {
         when(noneBaseInfoRel2.getRelationName()).thenReturn("noneBaseInfoRel2");
     }
     
+    @Before
+    public void prepareMock()
+    {
+        cacheMock = Mockito.mock(AtfxCache.class);
+        Mockito.when(cacheMock.getContext()).thenReturn(Collections.emptyMap());
+    }
+    
     @AfterClass
     public static void tearDownAfterClass() throws Exception {
         aoSession.close();
@@ -83,7 +93,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testIdentifyRelevantRelation_noRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         
@@ -94,7 +104,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testIdentifyRelevantRelation_otherRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseInfoRel1);
@@ -107,7 +117,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testIdentifyRelevantRelation_oneBaseRelation_filterCorrectly() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(baseInfoRel);
@@ -121,7 +131,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testIdentifyRelevantRelation_noBaseOneFCRelation_filterCorrectly() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseInfoRel1);
@@ -135,7 +145,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testIdentifyRelevantRelation_twoBaseRelations_throw() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(baseFCRel);
@@ -150,7 +160,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindBaseRelation_noRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         
@@ -161,7 +171,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindBaseRelation_otherRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseInfoRel1);
@@ -174,7 +184,7 @@ public class QueryConditionHelperTest {
 
     @Test
     public void testFindBaseRelation_oneBaseRelation_filterCorrectly() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(baseInfoRel);
@@ -188,7 +198,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindBaseRelation_moreBaseRelations_throw() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(baseInfoRel);
@@ -203,7 +213,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindFatherChildRelation_noRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         
@@ -214,7 +224,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindFatherChildRelation_otherRelations_isNull() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseInfoRel1);
@@ -227,7 +237,7 @@ public class QueryConditionHelperTest {
 
     @Test
     public void testFindFatherChildRelation_oneFCRelation_filterCorrectly() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseFCRel);
@@ -241,7 +251,7 @@ public class QueryConditionHelperTest {
     
     @Test
     public void testFindFatherChildRelation_moreFCRelations_throw() throws Exception {
-        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), null);
+        QueryConditionHelper qch = new QueryConditionHelper(1, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relations = new ArrayList<>();
         relations.add(noneBaseFCRel);
@@ -261,9 +271,8 @@ public class QueryConditionHelperTest {
         ApplicationElement tstserElem = as.getElementByName("tstser");
         long projId = ODSHelper.asJLong(projElem.getId());
         
-        AtfxCache atfxCache = mock(AtfxCache.class);
-        when(atfxCache.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
-        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), atfxCache);
+        when(cacheMock.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
+        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> ar = qch.findRelationPath(projId, ODSHelper.asJLong(tstserElem.getId()));
         
@@ -278,10 +287,9 @@ public class QueryConditionHelperTest {
         ApplicationElement meaElem = as.getElementByName("mea");
         long projId = ODSHelper.asJLong(projElem.getId());
         
-        AtfxCache atfxCache = mock(AtfxCache.class);
-        when(atfxCache.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
-        when(atfxCache.getApplicationRelations(eq(ODSHelper.asJLong(tstserElem.getId())))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
-        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), atfxCache);
+        when(cacheMock.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
+        when(cacheMock.getApplicationRelations(eq(ODSHelper.asJLong(tstserElem.getId())))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
+        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), cacheMock);
         
         List<ApplicationRelation> relationPath = qch.findRelationPath(projId, ODSHelper.asJLong(meaElem.getId()));
         
@@ -298,21 +306,22 @@ public class QueryConditionHelperTest {
     }
     
     @Test
-    public void testFindRelationPath_threeSteps() throws Exception {
+    public void testFindRelationPath_exceedMaxRelJumps() throws Exception {
         ApplicationStructure as = aoSession.getApplicationStructure();
         ApplicationElement projElem = as.getElementByName("prj");
         ApplicationElement tstserElem = as.getElementByName("tstser");
         ApplicationElement meaElem = as.getElementByName("mea");
-        ApplicationElement rbElem = as.getElementByName("randbedingung");
+        ApplicationElement matrixElem = as.getElementByName("sm");
+        ApplicationElement lcElem = as.getElementByName("lc");
         long projId = ODSHelper.asJLong(projElem.getId());
         
-        AtfxCache atfxCache = mock(AtfxCache.class);
-        when(atfxCache.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
-        when(atfxCache.getApplicationRelations(eq(ODSHelper.asJLong(tstserElem.getId())))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
-        when(atfxCache.getApplicationRelations(eq(ODSHelper.asJLong(meaElem.getId())))).thenReturn(Arrays.asList(meaElem.getAllRelations()));
-        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), atfxCache);
+        when(cacheMock.getApplicationRelations(eq(projId))).thenReturn(Arrays.asList(projElem.getAllRelations()));
+        when(cacheMock.getApplicationRelations(eq(ODSHelper.asJLong(tstserElem.getId())))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
+        when(cacheMock.getApplicationRelations(eq(ODSHelper.asJLong(meaElem.getId())))).thenReturn(Arrays.asList(meaElem.getAllRelations()));
+        when(cacheMock.getApplicationRelations(eq(ODSHelper.asJLong(matrixElem.getId())))).thenReturn(Arrays.asList(matrixElem.getAllRelations()));
+        QueryConditionHelper qch = new QueryConditionHelper(projId, Arrays.asList(1l), cacheMock);
         
-        Throwable thrown = catchThrowable(() -> { qch.findRelationPath(projId, ODSHelper.asJLong(rbElem.getId())); });
+        Throwable thrown = catchThrowable(() -> { qch.findRelationPath(projId, ODSHelper.asJLong(lcElem.getId())); });
         
         assertThat(thrown).isNotNull();
         assertThat(thrown).isInstanceOf(AoException.class);
@@ -349,15 +358,14 @@ public class QueryConditionHelperTest {
         condition.oper = SelOpcode.EQ;
         
         // mock the atfxCache for this test case
-        AtfxCache atfxCache = mock(AtfxCache.class);
-        when(atfxCache.getApplicationRelations(eq(projAid))).thenReturn(Arrays.asList(projElem.getAllRelations()));
-        when(atfxCache.getApplicationRelations(eq(tstSerAid))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
-        when(atfxCache.getRelatedInstanceIds(eq(projAid), eq(projectIID), any(ApplicationRelation.class))).thenReturn(Arrays.asList(tstSerIID1, tstSerIID2));
-        when(atfxCache.getRelatedInstanceIds(eq(tstSerAid), eq(tstSerIID1), any(ApplicationRelation.class))).thenReturn(Collections.emptyList());
-        when(atfxCache.getRelatedInstanceIds(eq(tstSerAid), eq(tstSerIID2), any(ApplicationRelation.class))).thenReturn(Arrays.asList(22l));
-        when(atfxCache.getAttrNoByName(eq(meaAid), eq(attrName))).thenReturn(attrNo);
-        when(atfxCache.getInstanceValue(eq(meaAid), eq(attrNo), eq(meaIID))).thenReturn(value);
-        QueryConditionHelper qch = new QueryConditionHelper(projAid, Arrays.asList(1l), atfxCache);
+        when(cacheMock.getApplicationRelations(eq(projAid))).thenReturn(Arrays.asList(projElem.getAllRelations()));
+        when(cacheMock.getApplicationRelations(eq(tstSerAid))).thenReturn(Arrays.asList(tstserElem.getAllRelations()));
+        when(cacheMock.getRelatedInstanceIds(eq(projAid), eq(projectIID), any(ApplicationRelation.class))).thenReturn(Arrays.asList(tstSerIID1, tstSerIID2));
+        when(cacheMock.getRelatedInstanceIds(eq(tstSerAid), eq(tstSerIID1), any(ApplicationRelation.class))).thenReturn(Collections.emptyList());
+        when(cacheMock.getRelatedInstanceIds(eq(tstSerAid), eq(tstSerIID2), any(ApplicationRelation.class))).thenReturn(Arrays.asList(22l));
+        when(cacheMock.getAttrNoByName(eq(meaAid), eq(attrName))).thenReturn(attrNo);
+        when(cacheMock.getInstanceValue(eq(meaAid), eq(attrNo), eq(meaIID))).thenReturn(value);
+        QueryConditionHelper qch = new QueryConditionHelper(projAid, Arrays.asList(1l), cacheMock);
         
         boolean checkResult = qch.checkConditionOnRelatedInstances(projectIID, ODSHelper.asJLong(condition.attr.attr.aid), condition);
         

@@ -12,6 +12,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.NameValue;
 import org.asam.ods.RelationType;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelValueExt;
@@ -43,10 +44,11 @@ import de.rechner.openatfx.util.PatternUtil;
  *         $Date: $: Date of last commit
  */
 class QueryConditionHelper {
-    private static final int MAX_RELATION_PATH_LENGTH = 2;
+    private static final int DEFAULT_MAX_RELATION_PATH_LENGTH = 3;
     private Collection<Long> iids;
     private final long aid;
     private final AtfxCache atfxCache;
+    private final int maxConditionRelationFollow;
     
     /**
      * Constructor.
@@ -54,11 +56,30 @@ class QueryConditionHelper {
      * @param aid the query's aid in selects
      * @param iids all available iids for the given aid
      * @param atfxCache the atfx cache
+     * @throws AoException 
      */
-    QueryConditionHelper (long aid, Collection<Long> iids, AtfxCache atfxCache) {
+    QueryConditionHelper (long aid, Collection<Long> iids, AtfxCache atfxCache) throws AoException {
         this.aid = aid;
         this.iids = iids;
         this.atfxCache = atfxCache;
+        
+        NameValue configuredMaxRelValue = atfxCache.getContext().get("MAX_CONDITION_RELATION_FOLLOW");
+        if (configuredMaxRelValue != null)
+        {
+            String configuredMaxRelValueString = ODSHelper.nameValue2string(configuredMaxRelValue);
+            if (configuredMaxRelValueString != null && !configuredMaxRelValueString.isEmpty())
+            {
+                maxConditionRelationFollow = Integer.parseInt(configuredMaxRelValueString);
+            }
+            else
+            {
+                maxConditionRelationFollow = DEFAULT_MAX_RELATION_PATH_LENGTH;
+            }
+        }
+        else
+        {
+            maxConditionRelationFollow = DEFAULT_MAX_RELATION_PATH_LENGTH;
+        }
     }
     
     /**
@@ -283,7 +304,7 @@ class QueryConditionHelper {
     private List<ApplicationRelation> recursivelyFindRelationPath(long fromAid, long toAid, long pathLength) throws AoException {
         List<ApplicationRelation> relationsPath = new ArrayList<>();
         
-        if (pathLength > MAX_RELATION_PATH_LENGTH) {
+        if (pathLength > maxConditionRelationFollow) {
             return Collections.emptyList();
         }
         

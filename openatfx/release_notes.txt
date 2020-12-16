@@ -4,9 +4,15 @@
 	
 
 1. Changes
+	0.8.10 (Markus Renner)
+	
+		- increased default maximum number of relation jumps to automatically find conditions on related instances in QueryConditionHelper
+		  to 3 and also made it configurable via session context variable MAX_CONDITION_RELATION_FOLLOW
+	
 	0.8.9 (Markus Renner)
 	
-		- added to getInstancesExt(): support for multiple conditions connected with AND, restrictions on datatypes, opCodes and related instance conditions apply
+		- added to getInstancesExt(): support for multiple conditions connected with AND, restrictions on datatypes, opCodes and related
+		  instance conditions apply
 		- if localColumnInstance.getValue(flags-attribute name) is called, now the global flag attribute value is returned
 		  if neither the flags could be read from a (external) component file nor from the Flags attribute itself
 		- invalid characters for xml files are now replaced by _ if written to an atfx file

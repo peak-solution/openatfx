@@ -26,10 +26,12 @@ public static void main(String[] args) {
     }
 }
 
-Implementation specific ASAM ODS context parameter
--------------------------------------------------- 
+Implementation specific ASAM ODS context parameters
+--------------------------------------------------- 
 
 INDENT_XML: Whether to ident the XML on output. Possible values are "TRUE" or "FALSE", default is true.
+MAX_CONDITION_RELATION_FOLLOW: The maximum number of relation jumps checked to identify a related condition
+							   instance in AoSession.getInstancesExt(), default value is 3.
 
 Known bugs/missing features:
 ----------------------------
