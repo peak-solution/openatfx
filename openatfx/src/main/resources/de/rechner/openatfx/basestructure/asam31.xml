@@ -72,6 +72,7 @@
 		<EnumerationItem item="30" name="dt_bit_uint_beo" />
 		<EnumerationItem item="31" name="dt_bit_float" />
 		<EnumerationItem item="32" name="dt_bit_float_beo" />
+		<EnumerationItem item="33" name="dt_bytestr_leo" />
 	</EnumerationDefinition>
 	<EnumerationDefinition index="4" name="ao_storagetype_enum">
 		<EnumerationItem item="0" name="database" />

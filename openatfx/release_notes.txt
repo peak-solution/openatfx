@@ -4,6 +4,12 @@
 	
 
 1. Changes
+
+	0.8.11 (Christian Rechner)
+	
+		- Added missing 'dt_bytestr_leo' to base model 'asam31.xml'
+
+
 	0.8.10 (Markus Renner)
 	
 		- increased default maximum number of relation jumps to automatically find conditions on related instances in QueryConditionHelper
