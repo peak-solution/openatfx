@@ -155,7 +155,7 @@ public class AoServiceFactory {
     }
 
     /**
-     * Creates a new <code>org.asam.ods.AoSession</code> without having a application model and instance elements.
+     * Creates a new <code>org.asam.ods.AoSession</code> without having an application model and instance elements.
      * 
      * @param orb The ORB.
      * @param atfxFile The target ATFX file. Caution: On session commit this file will be created or overwritten.

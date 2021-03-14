@@ -5,6 +5,25 @@
 
 1. Changes
 
+	0.9.0 (Markus Renner, Martin Fleischer, Matthias Koller)
+	
+		- fixed issue related to Sun ORB, which is required to use when openATFx is used inside openMDM5. This ORB has a problem when an
+		  empty TS_UnionSeq was not initialized with a discriminator. That led to an exception in certain scenarios of calls to getInstancesExt().
+		- added support for value types dt_bit_int and dt_bit_int_beo when reading data from external components
+		- fixed reading external component values with value types dt_bit_uint and dt_bit_uint_beo
+		- fixed handling of raw datatypes when getting lc values via getInstancesExt() 
+		- fixed typo when getting attribute by base name in ColumnImpl.getRawDataType()
+		- added support for operators IS_NULL, IS_NOT_NULL and NOTINSET in query conditions
+		- added support for DS_ENUM datatype in query conditions
+		- improved relation path handling (selection algorithm) at condition calculations in queries
+		- implemented reading of flags distributed over more than one external component per local column
+		- added base models 34 (6.0.1) and 35 (6.1.0)
+		- made configured base model version handling more robust
+		- fallback to base model version with best compatibility (30) if configured one is lower than 29, the minimum supported;
+		  allows reading from AVL systems, which use asam26
+		- the invalid flag of the local column values attribute is now checked, which led to errors when loading
+		  mixed sequence representation local columns before
+
 	0.8.11 (Christian Rechner)
 	
 		- Added missing 'dt_bytestr_leo' to base model 'asam31.xml'

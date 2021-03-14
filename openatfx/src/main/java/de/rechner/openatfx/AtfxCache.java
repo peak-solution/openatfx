@@ -896,13 +896,33 @@ class AtfxCache {
         DataType dt = aa.getDataType();
 
         List<TS_Value> list = new ArrayList<TS_Value>();
+        DataType dtForValuesConsistencyCheck = null;
         for (long iid : iids) {
             dt = lcValuesAttr ? getDataTypeForLocalColumnValues(iid) : aa.getDataType();
+            if (lcValuesAttr)
+            {
+                if (dtForValuesConsistencyCheck == null)
+                {
+                    dtForValuesConsistencyCheck = dt;
+                }
+                else if (dtForValuesConsistencyCheck != dt)
+                {
+                    throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                          "Invalid query, please make sure you queried only local column values of the same datatype!");
+                }
+            }
             list.add(getInstanceValue(aid, attrNo, iid));
         }
 
         if (list.isEmpty()) {
-            return new TS_ValueSeq(new TS_UnionSeq(), new short[0]);
+            if (lcValuesAttr) {
+                TS_UnionSeq u = new TS_UnionSeq();
+                u.__default();
+                return new TS_ValueSeq(u, new short[0]);
+            }
+            // when no iids were passed and the empty value sequence is generated here a datatype DT_UNKNOWN would
+            // cause an exception
+            return ODSHelper.tsValue2tsValueSeq(new TS_Value[0], dt);
         } else {
             return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), dt);
         }
@@ -1030,10 +1050,31 @@ class AtfxCache {
      * @throws AoException Error getting datatype.
      */
     private DataType getDataTypeForLocalColumnValues(long lcIid) throws AoException {
-        long meaQuaAid = getAidsByBaseType("aomeasurementquantity").iterator().next();
-        long meaQuaIid = getMeaQuantityInstance(lcIid);
-        int attrNo = getAttrNoByBaName(meaQuaAid, "datatype");
-        TS_Value dtValue = getInstanceValue(meaQuaAid, attrNo, meaQuaIid);
+        long lcAid = getAidsByBaseType("aolocalcolumn").iterator().next();
+        int seqRepAttrNo = getAttrNoByBaName(lcAid, "sequence_representation");
+        TS_Value seqRepValue = getInstanceValue(lcAid, seqRepAttrNo, lcIid);
+        int seqRepEnumVal = seqRepValue.u.enumVal();
+        TS_Value dtValue = null;
+        
+        // first check whether to use the local column's raw datatype if available
+        // (compare ODS chapter 4.4.5 (near the end))
+        if (seqRepEnumVal == 4 || seqRepEnumVal == 5 || seqRepEnumVal >= 8) {
+            int rawDatatypeAttrNo = getAttrNoByBaName(lcAid, "raw_datatype");
+            TS_Value rawDtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
+            if (rawDtValue.u.enumVal() != 0)
+            {
+                dtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
+            }
+        }
+        // otherwise take the datatype from the AoMeasurementQuantity
+        if (dtValue == null)
+        {
+            long meaQuaAid = getAidsByBaseType("aomeasurementquantity").iterator().next();
+            long meaQuaIid = getMeaQuantityInstance(lcIid);
+            int attrNo = getAttrNoByBaName(meaQuaAid, "datatype");
+            dtValue = getInstanceValue(meaQuaAid, attrNo, meaQuaIid);
+        }
+        
         if (dtValue != null && dtValue.flag == 15 && dtValue.u.discriminator() == DataType.DT_ENUM) {
             int val = dtValue.u.enumVal();
             if (val == 1) { // DT_STRING

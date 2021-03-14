@@ -99,8 +99,8 @@ public class AtfxWriter {
 
             streamWriter.writeStartDocument("UTF-8", "1.0");
             streamWriter.writeStartElement(AtfxTagConstants.ATFX_FILE);
-            streamWriter.writeAttribute("version", "atfx_file: V1.2.0");
-            streamWriter.writeAttribute("xmlns", "http://www.asam.net/ODS/5.2.0/Schema");
+            streamWriter.writeAttribute("version", "atfx_file: V1.3.1");
+            streamWriter.writeAttribute("xmlns", getXmlns(aoSession));
 
             // documentation
             writeDocumentation(streamWriter);
@@ -149,6 +149,33 @@ public class AtfxWriter {
         }
 
         LOG.info("Wrote XML in " + (System.currentTimeMillis() - start) + "ms to '" + xmlFile.getAbsolutePath() + "'");
+    }
+    
+    /**
+     * Creates the XML namespace string based on the session's base model version.
+     * 
+     * @param aoSession
+     * @return
+     * @throws AoException
+     */
+    private String getXmlns(AoSession aoSession) throws AoException {
+        String xmlns = "http://www.asam.net/ODS/";
+        String baseModelVersion = aoSession.getBaseStructure().getVersion();
+        String version = "5.1.1";
+        if ("asam30".equalsIgnoreCase(baseModelVersion)) {
+            version = "5.2.0";
+        } else if ("asam31".equalsIgnoreCase(baseModelVersion)) {
+            version = "5.3.0";
+        } else if ("asam32".equalsIgnoreCase(baseModelVersion)) {
+            version = "5.3.1";
+        } else if ("asam33".equalsIgnoreCase(baseModelVersion)) {
+            version = "6.0.0";
+        } else if ("asam34".equalsIgnoreCase(baseModelVersion)) {
+            version = "6.0.1";
+        } else if ("asam35".equalsIgnoreCase(baseModelVersion)) {
+            version = "6.1.0";
+        }
+        return xmlns + version + "/Schema";
     }
 
     /**
@@ -909,6 +936,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_ENUM) {
             String enumName = modelCache.getEnumName(aid, nvu.valName);
             String enumValue = modelCache.getEnumItem(enumName, u.enumVal());
+            if (enumValue == null) {
+                enumValue = "";
+            }
             streamWriter.writeCharacters(enumValue);
         }
         // DT_EXTERNALREFERENCE

@@ -1,5 +1,8 @@
 package de.rechner.openatfx.util;
 
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,6 +14,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.asam.ods.AIDName;
 import org.asam.ods.AggrFunc;
 import org.asam.ods.AoException;
@@ -1247,8 +1251,12 @@ public abstract class ODSHelper {
 
     public static TS_Value tsValueSeq2tsValue(TS_ValueSeq valueSeq, int pos) throws AoException {
         TS_Value tsValue = new TS_Value();
-        tsValue.u = tsUnionSeq2tsUnion(valueSeq.u, pos);
         tsValue.flag = valueSeq.flag[pos];
+        if (tsValue.flag == 15) {
+            tsValue.u = tsUnionSeq2tsUnion(valueSeq.u, pos);
+        } else {
+            tsValue.u = createEmptyTS_Union(valueSeq.u.discriminator());
+        }
         return tsValue;
     }
 
@@ -3367,6 +3375,56 @@ public abstract class ODSHelper {
         } else {
             data[posByte] = (byte) (oldByte | (0 << 7 - posBit));
         }
+    }
+    
+    public static Number getBitShiftedIntegerValue(byte[] arrInput, int valueType, int bitCount, int bitOffset) throws AoException {
+        Number ret = null;
+
+        // LEO is used for processing here:
+        if (valueType == 28 || valueType == 30) { // BEO
+            ArrayUtils.reverse(arrInput);
+        }
+
+        int inputLength = arrInput.length;
+        boolean isSigned = (valueType == 27 || valueType == 28);
+        boolean isNegative = 
+                (isSigned && inputLength > 0
+                        && ((arrInput[inputLength - 1] & (1 << ((bitCount + bitOffset - 1) % 8))) != 0x00));
+
+        if (inputLength > 9) {
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                  "Unsupported value data length (" + inputLength + " bytes), data must not be longer than 9 bytes!");
+        } else if (inputLength > 8) {
+            ByteBuffer bb = 
+                    ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN).put(arrInput);
+            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+            long tmp1 = (bb.getLong() >>> bitOffset);
+            long tmp2 = (bb.getLong() << (64 - bitOffset));
+            ret = (tmp1 | tmp2);
+        } else if (inputLength > 4 
+                || (!isSigned && inputLength == 4 && (arrInput[3] & (1 << 7)) != 0x00)) {
+            ByteBuffer bb = 
+                    ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN).put(arrInput);
+            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+            ret = (bb.getLong() >>> bitOffset); // shift right by bit offset
+        } else {
+            ByteBuffer bb = 
+                    ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).put(arrInput);
+            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
+            ret = (bb.getInt() >>> bitOffset); // shift right by bit offset
+        }
+
+        // Negative numbers are stored using two's complement, so set bits above actual value bits to one if negative,
+        // else ensure these bits are set to zero:
+        if (ret instanceof Long) {
+            long mask = (bitCount == 64 ? 0L : (0xFFFFFFFFFFFFFFFFL << bitCount)); // left-shifting a long by 64 results in no shift at all...
+            ret  = (isNegative ? (ret.longValue() | mask) : (ret.longValue() & ~mask));
+        } else {
+            int mask = (bitCount == 32 ? 0 : (0xFFFFFFFF << bitCount)); // left-shifting an int by 32 bits results in no shift at all...
+            ret  = (isNegative ? (ret.intValue() | mask) : (ret.intValue() & ~mask));
+        }
+
+        return ret;     
     }
 
 }

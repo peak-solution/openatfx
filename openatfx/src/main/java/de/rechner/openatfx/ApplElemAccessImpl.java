@@ -487,7 +487,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // - no aggregate functions
         // - order by is ignored
         // - only one or no DT_STRING or DS_LONGLONG condition
-        // - allowed condition selOpCodes: SelOpCode.EQ, SelOpcode.CI_EQ, SelOpCode.LIKE, SelOpcode.CI_LIKE
+        // - only specific condition selOpCodes supported
         // - conditions only with AND operators
 
         // query must contain at least one select statement. otherwise just return an empty result set
@@ -563,22 +563,24 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 if (condition == null) {
                     continue;
                 }
-                // only allow conditions of type DT_STRING, DS_STRING, DT_LONGLONG or DS_LONGLONG
+                // only support conditions of type D?_STRING, D?_LONGLONG or D?_ENUM
                 if (condition.value.u.discriminator() != DataType.DT_STRING
                         && condition.value.u.discriminator() != DataType.DS_STRING
                         && condition.value.u.discriminator() != DataType.DT_LONGLONG
                         && condition.value.u.discriminator() != DataType.DS_LONGLONG
-                        && condition.value.u.discriminator() != DataType.DT_ENUM) {
+                        && condition.value.u.discriminator() != DataType.DT_ENUM
+                        && condition.value.u.discriminator() != DataType.DS_ENUM) {
                     throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Condition DataType '"
                             + ODSHelper.dataType2String(condition.value.u.discriminator()) + "' not supported.");
-                 // only allow (CI_)(N)EQ, (CI_)(NOT)LIKE or INSET
+                 // only allow (CI_)(N)EQ, (CI_)(NOT)LIKE, (NOT)INSET, IS_NULL and IS_NOT_NULL
                 } else if (condition.oper != SelOpcode.EQ && condition.oper != SelOpcode.CI_EQ
                         && condition.oper != SelOpcode.NEQ && condition.oper != SelOpcode.CI_NEQ
                         && condition.oper != SelOpcode.LIKE && condition.oper != SelOpcode.CI_LIKE
                         && condition.oper != SelOpcode.NOTLIKE && condition.oper != SelOpcode.CI_NOTLIKE
-                        && condition.oper != SelOpcode.INSET) {
+                        && condition.oper != SelOpcode.INSET && condition.oper != SelOpcode.NOTINSET
+                        && condition.oper != SelOpcode.IS_NULL && condition.oper != SelOpcode.IS_NOT_NULL) {
                     throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                          "QueryStructureExt not supported: Condition '" + condition.oper
+                                          "QueryStructureExt not supported: Condition operator '" + condition.oper.value()
                                                   + "' not yet supported.");
                 // make sure the condition attribute or relation exists
                 } else {

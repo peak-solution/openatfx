@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -341,38 +343,17 @@ class ExtCompReader {
                         long val = sourceMbb.getInt() & 0xffffffffL;
                         list.add(val);
                     }
+                    // 27=dt_bit_int, 28=dt_bit_int_beo
                     // 29=dt_bit_uint, 30=dt_bit_uint_beo
-                    else if ((valueType == 29) || (valueType == 30)) {
-
-                        // read that number of bytes from the byte position within the file
+                    else if ((valueType == 27) || (valueType == 28)
+                            || (valueType == 29) || (valueType == 30)) {
+                        
+                        // Read required number of bytes from the byte position within the file:
                         int bytesToRead = ((bitCount + bitOffset - 1) / 8) + 1;
                         byte[] tmp = new byte[bytesToRead];
                         sourceMbb.get(tmp);
-
-                        // put the byte into an integer to enable bit shifting
-                        if (tmp.length <= 4) {
-                            ByteBuffer bb = ByteBuffer.allocate(4);
-                            bb.order(byteOrder);
-                            bb.put(tmp);
-                            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                            int intValue = bb.getInt();
-                            intValue = intValue >> bitOffset; // shift right bit offset
-                            int mask = 0xFFFFFFFF >>> (32 - bitCount); // mask out unnecessary bits
-                            intValue = intValue & mask;
-                            list.add(intValue);
-                        }
-                        // put the byte into a long to enable bit shifting
-                        else {
-                            ByteBuffer bb = ByteBuffer.allocate(8);
-                            bb.order(byteOrder);
-                            bb.put(tmp);
-                            Buffer.class.cast(bb).rewind(); // workaround: make buildable with both java8 and java9
-                            long longValue = bb.getLong();
-                            longValue = longValue >> bitOffset; // shift right bit offset
-                            long mask = 0xFFFFFFFFFFFFFFFFl >>> (64 - bitCount); // mask out unnecessary bits
-                            longValue = longValue & mask;
-                            list.add(longValue);
-                        }
+                        
+                        list.add(ODSHelper.getBitShiftedIntegerValue(tmp, valueType, bitCount, bitOffset));
                     }
                     // unsupported data type
                     else {
@@ -481,83 +462,99 @@ class ExtCompReader {
         ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
         Collection<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
 
-        if (iidExtComps.size() < 1) {
+        if (iidExtComps.isEmpty()) {
             return null;
-        } else if (iidExtComps.size() != 1) {
-            throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "The implementation currently only may read exactly one external component file");
         }
-        long iidExtComp = iidExtComps.iterator().next();
+        
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
-
-        // get filename
-        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
-        if (attrNo == null) {
-            return null;
+        
+        Iterator<Long> extCompIter = iidExtComps.iterator();
+        Integer attrNoComponentLength = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
+        
+        // count the number of flags in all the external components
+        int overallNrOfFlags = 0;
+        while (extCompIter.hasNext())
+        {
+            long iidExtComp = extCompIter.next();
+            if (attrNoComponentLength == null) {
+                return null;
+            }
+            overallNrOfFlags += atfxCache.getInstanceValue(aidExtComp, attrNoComponentLength, iidExtComp).u.longVal();
         }
-        TS_Value v = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
-        if ((v == null) || (v.flag != 15) || (v.u.stringVal() == null) || (v.u.stringVal().length() < 1)) {
-            return null;
+        short[] overallFlags = new short[overallNrOfFlags];
+        
+        Integer attrNoFlagsFilenameUrl = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
+        Integer attrNoFlagsStartOffset = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
+        List<String> flagsFileNames = new ArrayList<>();
+        
+        // collect all flags from all external components
+        extCompIter = iidExtComps.iterator();
+        int flagIndex = 0;
+        while (extCompIter.hasNext())
+        {
+            long iidExtComp = extCompIter.next();
+            // get filename
+            TS_Value v = atfxCache.getInstanceValue(aidExtComp, attrNoFlagsFilenameUrl, iidExtComp);
+            if ((v == null) || (v.flag != 15) || (v.u.stringVal() == null) || (v.u.stringVal().length() < 1)) {
+                return null;
+            }
+            String flagsFilenameUrl = v.u.stringVal();
+            File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
+            File flagsFile = new File(fileRoot, flagsFilenameUrl);
+            flagsFileNames.add(flagsFile.getName());
+    
+            // read start offset, may be DT_LONG or DT_LONGLONG
+            int flagsStartOffset = 0;
+            if (attrNoFlagsStartOffset == null) {
+                throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                      "Application attribute derived from base attribute 'flags_start_offset' not found");
+            }
+            TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNoFlagsStartOffset, iidExtComp);
+            if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
+                flagsStartOffset = vStartOffset.u.longVal();
+            } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
+                flagsStartOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
+            }
+            
+            // read and store flag values of current external component
+            int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNoComponentLength, iidExtComp).u.longVal();
+            for (Short flag : readFlagsFromFile(flagsFile, flagsStartOffset, componentLength))
+            {
+                overallFlags[flagIndex++] = flag;
+            }
         }
-        String flagsFilenameUrl = v.u.stringVal();
-        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
-        File flagsFile = new File(fileRoot, flagsFilenameUrl);
-
-        // read start offset, may be DT_LONG or DT_LONGLONG
-        int flagsStartOffset = 0;
-        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
-        if (attrNo == null) {
-            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                  "Application attribute derived from base attribute 'flags_start_offset' not found");
-        }
-        TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
-        if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
-            flagsStartOffset = vStartOffset.u.longVal();
-        } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
-            flagsStartOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
-        }
-
-        // read length
-        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "component_length");
-        int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
-
-        // read values
+        
+        // prepare return value
         TS_Value tsValue = new TS_Value();
         tsValue.flag = (short) 15;
         tsValue.u = new TS_Union();
-        tsValue.u.shortSeq(new short[componentLength]);
+        tsValue.u.shortSeq(overallFlags);
 
-        RandomAccessFile raf = null;
+        LOG.info("Read " + overallNrOfFlags + " flags for LocalColumn " + iidLc + " from component file(s) '" + flagsFileNames.stream().collect(Collectors.joining(",")) + "' in "
+                + (System.currentTimeMillis() - start) + "ms");
+        return tsValue;
+    }
+    
+    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength) throws AoException
+    {
+        List<Short> flags = new ArrayList<>();
+        
         byte[] backingBuffer = new byte[2];
-        try {
-            // open source channel
-            raf = new BufferedRandomAccessFile(flagsFile, "r", BUFFER_SIZE);
+        // open source channel and read flag values
+        try (RandomAccessFile raf = new BufferedRandomAccessFile(flagsFile, "r", BUFFER_SIZE)) {
             raf.seek(flagsStartOffset);
-
             for (int i = 0; i < componentLength; i++) {
                 raf.read(backingBuffer, 0, backingBuffer.length);
                 ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
                 sourceMbb.order(ByteOrder.LITTLE_ENDIAN);
-                tsValue.u.shortSeq()[i] = sourceMbb.getShort();
+                flags.add(sourceMbb.getShort());
             }
-
-            LOG.info("Read " + componentLength + " flags from component file '" + flagsFilenameUrl + "' in "
-                    + (System.currentTimeMillis() - start) + "ms");
-            return tsValue;
         } catch (IOException e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, e.getMessage());
-        } finally {
-            backingBuffer = null;
-            try {
-                if (raf != null) {
-                    raf.close();
-                }
-                raf = null;
-            } catch (Exception e) {
-                LOG.error(e.getMessage(), e);
-            }
         }
+        
+        return flags;
     }
 
     /**

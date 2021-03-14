@@ -14,6 +14,7 @@ import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.NameValue;
 import org.asam.ods.RelationType;
+import org.asam.ods.Relationship;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelValueExt;
 import org.asam.ods.SeverityFlag;
@@ -31,7 +32,7 @@ import de.rechner.openatfx.util.PatternUtil;
  * <p>
  * Helper class for handling a query's conditions. Handles multiple conditions with AND operators only. Supports EQ and
  * LIKE opCodes with their according CI and negated counterparts as well as INSET. Supports datatypes DT/DS_STRING,
- * DT/DS_LONGLONG and DT_ENUM. Supports conditions on other elements than in select, as long as the path to reach them
+ * DT/DS_LONGLONG and DT/DS_ENUM. Supports conditions on other elements than in select, as long as the path to reach them
  * does not exceed 2 relation jumps. The path to related elements is identified by 
  * </p>
  *
@@ -108,56 +109,26 @@ class QueryConditionHelper {
     private Set<Long> filter(SelValueExt condition) throws AoException {
         Set<Long> filteredIids = new HashSet<>();
         long conditionAid = ODSHelper.asJLong(condition.attr.attr.aid);
-        
+
         for (Long iid : iids) {
             if (condition == null) {
                 filteredIids.add(iid);
-            } else if (condition.value.u.discriminator() == DataType.DT_STRING) {
-                if (conditionAid == aid) {
-                    Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
-                    TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                    if ((value != null) && (value.u != null) && (value.u.stringVal() != null)) {
-                        boolean addToFilter = false;
-                        if (isCIOpcode(condition.oper)) {
-                            addToFilter = PatternUtil.nameFilterMatchCI(value.u.stringVal(), condition.value.u.stringVal());
-                        } else {
-                            addToFilter = PatternUtil.nameFilterMatch(value.u.stringVal(), condition.value.u.stringVal());
-                        }
-                        if (isNegatedOpcode(condition.oper)) {
-                            addToFilter = !addToFilter;
-                        }
-                        if (addToFilter) {
-                            filteredIids.add(iid);
-                        }
-                    }
-                } else {
-                    if (checkConditionOnRelatedInstances(iid, conditionAid, condition)) {
-                        filteredIids.add(iid);
-                    }
-                }
-            } else if ((condition.value.u.discriminator() == DataType.DS_STRING)
-                    && (condition.oper == SelOpcode.INSET)) {
-                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
-                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                String[] cond = condition.value.u.stringSeq();
-                Arrays.sort(cond); // sort so find method works
-                if (Arrays.binarySearch(cond, value.u.stringVal()) > -1) {
+            } else if (conditionAid != aid) {
+                if (checkConditionOnRelatedInstances(iid, conditionAid, condition)) {
                     filteredIids.add(iid);
                 }
-
-            } else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
-                if (conditionAid == aid) {
-                    Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+            } else if (condition.value.u.discriminator() == DataType.DT_STRING) {
+                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                if ((value != null) && (value.u != null) && (value.u.stringVal() != null)) {
                     boolean addToFilter = false;
-                    if (attrNo == null) {
-                        ApplicationRelation ar = atfxCache.getRelationByName(aid, condition.attr.attr.aaName);
-                        List<Long> longlongVals  = atfxCache.getRelatedInstanceIds(aid, iid, ar);
-                        addToFilter = longlongVals.size() == 1 && longlongVals.get(0) == ODSHelper.asJLong(condition.value.u.longlongVal());
+                    if ((condition.oper == SelOpcode.IS_NULL && value.flag == 0)
+                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.flag == 15)) {
+                        addToFilter = true;
+                    } else if (isCIOpcode(condition.oper)) {
+                        addToFilter = PatternUtil.nameFilterMatchCI(value.u.stringVal(), condition.value.u.stringVal());
                     } else {
-                        TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                        if ((value != null) && (value.u != null) && (value.u.longlongVal() != null)) {
-                            addToFilter = ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(condition.value.u.longlongVal());
-                        }
+                        addToFilter = PatternUtil.nameFilterMatch(value.u.stringVal(), condition.value.u.stringVal());
                     }
                     if (isNegatedOpcode(condition.oper)) {
                         addToFilter = !addToFilter;
@@ -165,47 +136,88 @@ class QueryConditionHelper {
                     if (addToFilter) {
                         filteredIids.add(iid);
                     }
+                }
+            } else if (condition.value.u.discriminator() == DataType.DS_STRING) {
+                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                String[] cond = condition.value.u.stringSeq();
+                Arrays.sort(cond); // sort so find method works
+                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, value.u.stringVal()) > -1)
+                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, value.u.stringVal()) < 0) {
+                    filteredIids.add(iid);
+                }
+
+            } else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
+                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                boolean addToFilter = false;
+                if (attrNo == null) {
+                    // is a relation condition
+                    ApplicationRelation ar = atfxCache.getRelationByName(aid, condition.attr.attr.aaName);
+                    List<Long> longlongVals = atfxCache.getRelatedInstanceIds(aid, iid, ar);
+                    addToFilter = longlongVals.size() == 1
+                            && longlongVals.get(0) == ODSHelper.asJLong(condition.value.u.longlongVal());
                 } else {
-                    if (checkConditionOnRelatedInstances(iid, conditionAid, condition)) {
-                        filteredIids.add(iid);
+                    // is an attribute condition
+                    TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                    if ((value != null) && (value.u != null) && (value.u.longlongVal() != null)) {
+                        addToFilter = ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(condition.value.u.longlongVal());
                     }
+                }
+                if (isNegatedOpcode(condition.oper)) {
+                    addToFilter = !addToFilter;
+                }
+                if (addToFilter) {
+                    filteredIids.add(iid);
                 }
             } else if ((condition.value.u.discriminator() == DataType.DS_LONGLONG)
                     && (condition.oper == SelOpcode.INSET)) {
                 Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
                 if (attrNo == null) {
+                    // is a relation condition
                     ApplicationRelation ar = atfxCache.getRelationByName(aid, condition.attr.attr.aaName);
-                    List<Long> longlongVals  = atfxCache.getRelatedInstanceIds(aid, iid, ar);
+                    List<Long> longlongVals = atfxCache.getRelatedInstanceIds(aid, iid, ar);
                     long[] cond = ODSHelper.asJLong(condition.value.u.longlongSeq());
                     Arrays.sort(cond); // sort so find method works
 
-                    if (longlongVals.size() == 1 && Arrays.binarySearch(cond, longlongVals.get(0)) > -1) {
+                    if (longlongVals.size() == 1 && ((condition.oper == SelOpcode.INSET
+                            && Arrays.binarySearch(cond, longlongVals.get(0)) > -1)
+                            || condition.oper == SelOpcode.NOTINSET
+                                    && Arrays.binarySearch(cond, longlongVals.get(0)) < 0)) {
                         filteredIids.add(iid);
                     }
                 } else {
+                    // is an attribute condition
                     TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
                     long[] cond = ODSHelper.asJLong(condition.value.u.longlongSeq());
                     Arrays.sort(cond); // sort so find method works
-                    if (Arrays.binarySearch(cond, ODSHelper.asJLong(value.u.longlongVal())) > -1) {
+                    long searchValue = ODSHelper.asJLong(value.u.longlongVal());
+                    if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, searchValue) > -1)
+                            || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, searchValue) < 0) {
                         filteredIids.add(iid);
                     }
                 }
             } else if (condition.value.u.discriminator() == DataType.DT_ENUM) {
-                if (conditionAid == aid) {
-                    Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
-                    TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                    if ((value != null) && (value.u != null) && (value.u.enumVal() >= 0)
-                            && value.u.enumVal() == condition.value.u.enumVal()) {
-                        filteredIids.add(iid);
-                    }
-                } else {
-                    if (checkConditionOnRelatedInstances(iid, conditionAid, condition)) {
+                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                if (value != null && value.u != null) {
+                    if ((condition.oper == SelOpcode.IS_NULL && value.flag == 0)
+                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.flag == 15) || (value.u.enumVal() >= 0
+                                    && value.flag == 15 && value.u.enumVal() == condition.value.u.enumVal())) {
                         filteredIids.add(iid);
                     }
                 }
+            } else if (condition.value.u.discriminator() == DataType.DS_ENUM) {
+                Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
+                TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
+                int[] cond = condition.value.u.enumSeq();
+                Arrays.sort(cond); // sort so find method works
+                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, value.u.enumVal()) > -1)
+                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, value.u.enumVal()) < 0) {
+                    filteredIids.add(iid);
+                }
             }
         }
-        
+
         return filteredIids;
     }
     
@@ -337,9 +349,7 @@ class QueryConditionHelper {
                     continue;
                 }
                 
-                if (list.size() < shortestPath.size()) {
-                    shortestPath = list;
-                }
+                shortestPath = comparePaths(list, shortestPath);
             }
             relationsPath.addAll(shortestPath);
         } else if (foundRelations.size() == 1) {
@@ -353,6 +363,68 @@ class QueryConditionHelper {
         }
         
         return relationsPath;
+    }
+    
+    /**
+     * Gives precedence to paths that have more father/child relations, more base relations or less of other relations.
+     * If all the same, then the shorter path is returned. If the length is equal, the previous best relation is
+     * returned.
+     * 
+     * @param newPath
+     * @param previousBestPath
+     * @return the "better" path
+     * @throws AoException
+     */
+    private List<ApplicationRelation> comparePaths(List<ApplicationRelation> newPath,
+            List<ApplicationRelation> previousBestPath) throws AoException {
+        int nrOfPreviousBaseRelations = 0;
+        int nrOfPreviousFatherChildRelations = 0;
+        int nrOfPreviousLowImportanceRelations = 0;
+        for (int i = 0; i < previousBestPath.size(); i++) {
+            ApplicationRelation ar = previousBestPath.get(i);
+            if (ar.getBaseRelation() != null)
+            {
+                nrOfPreviousBaseRelations++;
+            }
+            if (Relationship.FATHER == ar.getRelationship() || Relationship.CHILD == ar.getRelationship())
+            {
+                nrOfPreviousFatherChildRelations++;
+            }
+            else if (ar.getBaseRelation() == null)
+            {
+                nrOfPreviousLowImportanceRelations++;
+            }
+        }
+        
+        int nrOfNewBaseRelations = 0;
+        int nrOfNewFatherChildRelations = 0;
+        int nrOfNewLowImportanceRelations = 0;
+        for (int i = 0; i < newPath.size(); i++) {
+            ApplicationRelation ar = newPath.get(i);
+            if (ar.getBaseRelation() != null)
+            {
+                nrOfNewBaseRelations++;
+            }
+            if (Relationship.FATHER == ar.getRelationship() || Relationship.CHILD == ar.getRelationship())
+            {
+                nrOfNewFatherChildRelations++;
+            }
+            else if (ar.getBaseRelation() == null)
+            {
+                nrOfNewLowImportanceRelations++;
+            }
+        }
+        
+        List<ApplicationRelation> newBestPath = previousBestPath;
+        if (nrOfNewLowImportanceRelations < nrOfPreviousLowImportanceRelations
+                || nrOfNewFatherChildRelations > nrOfPreviousFatherChildRelations
+                || nrOfNewBaseRelations > nrOfPreviousBaseRelations
+                || (newPath.size() < previousBestPath.size() 
+                        && nrOfNewLowImportanceRelations == nrOfPreviousLowImportanceRelations))
+        {
+            newBestPath = newPath;
+        }
+        return newBestPath;
     }
     
     /**

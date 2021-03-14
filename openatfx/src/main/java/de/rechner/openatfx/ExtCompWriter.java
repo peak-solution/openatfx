@@ -78,12 +78,8 @@ class ExtCompWriter {
         File atfxPath = new File(context.get("FILENAME").value.u.stringVal());
         String pattern = FileUtil.stripExtension(atfxPath.getName()) + "_%d_bytestream.btf";
         int nextUnusedNo = 1;
-        while (true) {
-           if (Files.exists(Paths.get(rootPath, String.format(pattern, nextUnusedNo)))) {
-               nextUnusedNo++;
-           } else {
-               break;
-           }
+        while (Files.exists(Paths.get(rootPath, String.format(pattern, nextUnusedNo)))) {
+            nextUnusedNo++;
         }
         
         File binFile = new File(rootPath, String.format(pattern, (getNextUnused ? nextUnusedNo :  Math.max(1, nextUnusedNo - 1))));
@@ -112,6 +108,10 @@ class ExtCompWriter {
      * @throws AoException Error writing value.
      */
     public void writeValues(AtfxCache atfxCache, long iidLc, TS_Value value) throws AoException {
+        if (value.flag != 15) {
+            return;
+        }
+        
         DataType dt = value.u.discriminator();
 
         // open file, strings have to be in the same file

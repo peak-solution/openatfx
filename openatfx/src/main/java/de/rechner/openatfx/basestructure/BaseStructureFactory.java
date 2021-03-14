@@ -85,22 +85,52 @@ public class BaseStructureFactory {
      * The base structure objects will be cached for each base model version.
      * 
      * @param orb The ORB.
-     * @param baseModelVersion The base model version.
+     * @param baseModelVersionString The base model version.
      * @return The base structure.
      * @throws AoException Error getting base structure.
      */
-    public BaseStructure getBaseStructure(ORB orb, String baseModelVersion) throws AoException {
+    public BaseStructure getBaseStructure(ORB orb, String baseModelVersionString) throws AoException {
         try {
+            LOG.debug("Received baseModel version " + baseModelVersionString + " to initialize base model");
+            // tolerate base model version being specified as two digit number
+            String baseModelVersion = baseModelVersionString.trim();
+            if (baseModelVersion.length() == 2) {
+                baseModelVersion = "asam" + baseModelVersion;
+            }
+            // tolerate upper case string
+            baseModelVersion = baseModelVersion.toLowerCase();
+
             BaseStructure baseStructure = this.baseStructureCache.get(baseModelVersion);
             if (baseStructure != null) {
                 return baseStructure;
             }
 
             // read base model XML from resources
+            LOG.debug("Try to read model file " + baseModelVersion + ".xml...");
             InputStream in = BaseStructureFactory.class.getResourceAsStream(baseModelVersion + ".xml");
             if (in == null) {
-                throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
-                                      "Unsupported base model version: " + baseModelVersion);
+                LOG.warn("Configured base model " + baseModelVersion + " is not supported, trying to fallback to version 30!");
+                int versionNumber = 0;
+                if (baseModelVersion.length() == 6) {
+                    String versionNumberString = baseModelVersion.substring(baseModelVersion.length() - 2);
+                    try {
+                        versionNumber = Integer.valueOf(versionNumberString);
+                    } catch (NumberFormatException ex) {
+                        // tolerate if last two characters are no number
+                    }
+                }
+
+                // use the model with the best compatibility as fallback, in case a lower model as supported was configured,
+                // ODS should be backward compatible
+                if (versionNumber > 0 && versionNumber < 29) {
+                    LOG.info("Base model version " + versionNumber
+                            + " was configured, but as fallback the most compatible version 30 will be used!");
+                    baseModelVersion = "asam30.xml";
+                    in = BaseStructureFactory.class.getResourceAsStream(baseModelVersion);
+                } else {
+                    throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
+                                          "Invalid base model version: " + baseModelVersion);
+                }
             }
 
             // parse XML
