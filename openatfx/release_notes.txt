@@ -5,6 +5,9 @@
 
 1. Changes
 
+    0.9.1 (Christian Rechner)
+        - fix version information
+
 	0.9.0 (Markus Renner, Martin Fleischer, Matthias Koller)
 	
 		- fixed issue related to Sun ORB, which is required to use when openATFx is used inside openMDM5. This ORB has a problem when an
