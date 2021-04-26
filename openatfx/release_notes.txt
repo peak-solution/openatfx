@@ -5,7 +5,10 @@
 
 1. Changes
 
-    0.9.1 (Christian Rechner)
+    0.9.2 (Matthias Koller)
+        - improved flag handling in ApplElemAccessImpl.updateInstances() and .insertInstances()
+
+	0.9.1 (Christian Rechner)
         - fix version information
 
 	0.9.0 (Markus Renner, Martin Fleischer, Matthias Koller)

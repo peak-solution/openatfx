@@ -160,6 +160,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
 
                 // write instance values or relation
                 for (AIDNameValueSeqUnitId anvsui : aeGroupColumns.get(aid)) {
+                    if (anvsui.values.flag[row] != (short) 15) {
+                        continue;
+                    }
                     Integer attrNo = this.atfxCache.getAttrNoByName(aid, anvsui.attr.aaName);
                     TS_Value value = ODSHelper.tsValueSeq2tsValue(anvsui.values, row);
                     // attribute is an application attribute
@@ -237,6 +240,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 
                 // write instance values or relation
                 for (AIDNameValueSeqUnitId anvsui : attributes) {
+                    if (anvsui.values.flag[row] != (short) 15) {
+                        continue;
+                    }
                     Integer attrNo = this.atfxCache.getAttrNoByName(aid, anvsui.attr.aaName);
                     TS_Value value = ODSHelper.tsValueSeq2tsValue(anvsui.values, row);
                     // attribute is an application attribute
