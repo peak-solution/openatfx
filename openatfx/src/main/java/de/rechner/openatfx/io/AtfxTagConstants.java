@@ -75,6 +75,7 @@ class AtfxTagConstants {
     public static final String INST_ATTR_ASCIISTRING = "inst_attr_asciistring";
     public static final String INST_ATTR_FLOAT32 = "inst_attr_float32";
     public static final String INST_ATTR_FLOAT64 = "inst_attr_float64";
+    public static final String INST_ATTR_UINT8 = "inst_attr_uint8";
     public static final String INST_ATTR_INT8 = "inst_attr_int8";
     public static final String INST_ATTR_INT16 = "inst_attr_int16";
     public static final String INST_ATTR_INT32 = "inst_attr_int32";

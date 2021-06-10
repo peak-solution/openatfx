@@ -779,6 +779,16 @@ class AtfxInstanceReader {
                         nvu.value.flag = (short) 0;
                     }
                 }
+                // DT_BYTE (unsigned)
+                else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_UINT8)) {
+                    if (textContent.trim().length() > 0) {
+                        nvu.value.u.shortVal(AtfxParseUtil.parseShort(textContent));
+                        nvu.value.flag = (short) 15;
+                    } else {
+                        nvu.value.u.byteVal((byte) 0);
+                        nvu.value.flag = (short) 0;
+                    }
+                }
                 // DT_SHORT
                 else if (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR_INT16)) {
                     if (textContent.trim().length() > 0) {

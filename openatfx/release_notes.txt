@@ -5,6 +5,10 @@
 
 1. Changes
 
+    0.9.3 (Viktor Stöhr)
+        - add support for inf/INF and -inf/-INF
+        - add support for missing instant attribute data type 'inst_attr_uint8'
+
     0.9.2 (Matthias Koller)
         - improved flag handling in ApplElemAccessImpl.updateInstances() and .insertInstances()
 

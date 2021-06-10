@@ -167,7 +167,7 @@ abstract class AtfxParseUtil {
     public static float parseFloat(String str) throws AoException {
         if (str != null && str.length() > 0) {
             try {
-                return Float.parseFloat(handleNaNValue(str));
+                return Float.parseFloat(handleNaNorINFValue(str));
             } catch (NumberFormatException nfe) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Error parsing value of type DT_FLOAT '" + str + "'");
@@ -206,7 +206,7 @@ abstract class AtfxParseUtil {
     public static double parseDouble(String str) throws AoException {
         if (str != null && str.length() > 0) {
             try {
-                return Double.parseDouble(handleNaNValue(str));
+                return Double.parseDouble(handleNaNorINFValue(str));
             } catch (NumberFormatException nfe) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Error parsing value of type DT_DOUBLE '" + str + "'");
@@ -432,18 +432,22 @@ abstract class AtfxParseUtil {
     }
 
     /**
-     * ODS specification says in chapter 8.12.2, that applications need to support the strings NaN and NAN. Therefore
-     * this value has to be handled accordingly, since Java's parseFloat/Double() methods only work for NaN.
+     * ODS specification says in chapter 8.12.2, that applications need to support the strings NaN and NAN.
+     * Therefore this value has to be handled accordingly, since Java's parseFloat/Double() methods only
+     * work for NaN. Furthermore it is required to support following infinity representations: 
+     * inf, INF, -inf, -INF in addition to Infinity / -Infinity
      * 
      * @param originalValue the original value
      * @return the probably adjusted value
      */
-    private static String handleNaNValue(String originalValue)
-    {
+    private static String handleNaNorINFValue(String originalValue) {
         String adjustedValue = originalValue.trim();
-        if ("nan".equalsIgnoreCase(adjustedValue))
-        {
+        if ("nan".equalsIgnoreCase(adjustedValue)) {
             adjustedValue = "NaN";
+        } else if ("inf".equalsIgnoreCase(adjustedValue)) {
+            adjustedValue = "Infinity";
+        } else if ("-inf".equalsIgnoreCase(adjustedValue)) {
+            adjustedValue = "-Infinity";
         }
         return adjustedValue;
     }
