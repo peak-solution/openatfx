@@ -5,6 +5,9 @@
 
 1. Changes
 
+    0.9.4 (Christian Rechner)
+        - add implicit creation of additional AoExternalComponent attributes
+
     0.9.3 (Viktor Stöhr)
         - add support for inf/INF and -inf/-INF
         - add support for missing instant attribute data type 'inst_attr_uint8'

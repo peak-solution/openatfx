@@ -526,6 +526,30 @@ public class AtfxReader {
             aa.setName("bitoffset");
             aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("ao_bit_offset")[0]);
         }
+        // start_offset, since asam33 models
+        if (!existingBaNames.contains("start_offset")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("start_offset");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("start_offset")[0]);
+        }
+        // block_size, since asam33 models
+        if (!existingBaNames.contains("block_size")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("block_size");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("block_size")[0]);
+        }
+        // valuesperblock, since asam33 models
+        if (!existingBaNames.contains("valuesperblock")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("valuesperblock");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("valuesperblock")[0]);
+        }
+        // value_offset, since asam33 models
+        if (!existingBaNames.contains("value_offset")) {
+            ApplicationAttribute aa = aeExtComp.createAttribute();
+            aa.setName("value_offset");
+            aa.setBaseAttribute(aeExtComp.getBaseElement().getAttributes("value_offset")[0]);
+        }
     }
 
     /**
@@ -618,7 +642,7 @@ public class AtfxReader {
         this.applAttrs.put(aeName, new HashMap<String, ApplicationAttribute>());
         this.applRels.put(aeName, new HashMap<String, ApplicationRelation>());
 
-     // attributes and relations
+        // attributes and relations
         parseApplicationAttributesAndRelations(applElem, reader, baseAttrMap, baseRelMap);
     }
 
@@ -637,14 +661,15 @@ public class AtfxReader {
      * @throws AoException Error writing to application model.
      */
     private void parseApplicationAttributesAndRelations(ApplicationElement applElem, XMLStreamReader reader,
-            Map<String, BaseAttribute> baseAttrMap, Map<String, BaseRelation> baseRelMap) throws XMLStreamException, AoException {
+            Map<String, BaseAttribute> baseAttrMap, Map<String, BaseRelation> baseRelMap)
+            throws XMLStreamException, AoException {
         List<TempApplicationAttribute> attributesToAddAfterBaseAttributes = new ArrayList<TempApplicationAttribute>();
-        
+
         while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ELEM))) {
             // 'application_attribute'
             if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_ATTR)) {
                 TempApplicationAttribute newAttr = parseApplicationAttribute(reader);
-        
+
                 // check if base attribute already exists (obligatory base attributes are generated automatically)
                 if (newAttr.baseAttrStr != null && newAttr.baseAttrStr.length() > 0) {
                     BaseAttribute baseAttr = baseAttrMap.get(newAttr.baseAttrStr);
@@ -662,7 +687,8 @@ public class AtfxReader {
                     }
                     updateApplicationAttribute(applElem, aa, newAttr, baseAttr);
                 } else {
-                    // if current attribute is no base attribute, add it to the list for creation after all base attributes were created
+                    // if current attribute is no base attribute, add it to the list for creation after all base
+                    // attributes were created
                     attributesToAddAfterBaseAttributes.add(newAttr);
                 }
             }
@@ -670,17 +696,17 @@ public class AtfxReader {
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_REL)) {
                 parseApplicationRelation(applElem, reader, baseRelMap);
             }
-            
+
             reader.next();
         }
-        
+
         // now create all non-base attributes
         for (TempApplicationAttribute currentAttr : attributesToAddAfterBaseAttributes) {
             ApplicationAttribute aa = applElem.createAttribute();
             updateApplicationAttribute(applElem, aa, currentAttr, null);
         }
     }
-    
+
     /**
      * Parses the next application attribute from the reader and extracts it into a temporary attribute element.
      * 
@@ -731,7 +757,7 @@ public class AtfxReader {
         }
         return attribute;
     }
-    
+
     /**
      * Updates the given attribute for the given element in the model.
      * 
@@ -772,7 +798,8 @@ public class AtfxReader {
         }
         // enumeration
         if (attributeToCreate.enumtypeStr != null && attributeToCreate.enumtypeStr.length() > 0) {
-            EnumerationDefinition enumDef = applElem.getApplicationStructure().getEnumerationDefinition(attributeToCreate.enumtypeStr);
+            EnumerationDefinition enumDef = applElem.getApplicationStructure()
+                                                    .getEnumerationDefinition(attributeToCreate.enumtypeStr);
             aa.setEnumerationDefinition(enumDef);
         }
         // unit
@@ -943,6 +970,7 @@ public class AtfxReader {
      * Helper class for the transfer of the information of a parsed attribute.
      */
     private class TempApplicationAttribute {
+
         private String aaNameStr = "";
         private String baseAttrStr = "";
         private String dataTypeStr = "";
