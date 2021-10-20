@@ -283,7 +283,7 @@ public class ApplElemAccessImplTest {
             assertEquals(1, resSetExt[0].firstElems.length); // no of aes
             assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
             assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
-            assertEquals(14, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals(16, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
             assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
 
             // 3. put in a condition

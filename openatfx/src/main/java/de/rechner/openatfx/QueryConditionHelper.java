@@ -323,7 +323,8 @@ class QueryConditionHelper {
         // find relations, that directly connect the other element
         List<ApplicationRelation> foundRelations = new ArrayList<>();
         for (ApplicationRelation ar : atfxCache.getApplicationRelations(fromAid)) {
-            if (ODSHelper.asJLong(ar.getElem2().getId()) == toAid) {
+            if (!(ar.getElem2() == null && this.atfxCache.isExtendedCompatibilityModeConfigured())
+                    && ODSHelper.asJLong(ar.getElem2().getId()) == toAid) {
                 foundRelations.add(ar);
             }
         }

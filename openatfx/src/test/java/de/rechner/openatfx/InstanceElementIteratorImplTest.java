@@ -53,7 +53,7 @@ public class InstanceElementIteratorImplTest {
     @Test
     public void testGetCount() {
         try {
-            assertEquals(14, this.instanceElementIterator.getCount());
+            assertEquals(16, this.instanceElementIterator.getCount());
         } catch (AoException e) {
             fail(e.reason);
         }

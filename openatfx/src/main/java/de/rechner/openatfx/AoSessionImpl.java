@@ -69,7 +69,7 @@ import de.rechner.openatfx.util.PatternUtil;
  * @author Christian Rechner
  */
 public class AoSessionImpl extends AoSessionPOA {
-
+    
     private static final Log LOG = LogFactory.getLog(AoSessionImpl.class);
 
     /** The static context variables, these may not be changed */
@@ -614,14 +614,16 @@ public class AoSessionImpl extends AoSessionPOA {
                 applRel.arName = ar.getRelationName();
                 applRel.elem1 = ar.getElem1().getId();
                 ApplicationElement appelem = ar.getElem2();
-                applRel.elem2 = appelem.getId();
-                applRel.brName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getRelationName();
-                applRel.arRelationRange = ar.getRelationRange();
-                applRel.arRelationType = ar.getRelationType();
-                applRel.invName = ar.getInverseRelationName();
-                applRel.invBrName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getInverseRelationName();
-                applRel.invRelationRange = ar.getInverseRelationRange();
-                applRelList.add(applRel);
+                if (!(appelem == null && this.atfxCache.isExtendedCompatibilityModeConfigured())) {
+                    applRel.elem2 = appelem.getId();
+                    applRel.brName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getRelationName();
+                    applRel.arRelationRange = ar.getRelationRange();
+                    applRel.arRelationType = ar.getRelationType();
+                    applRel.invName = ar.getInverseRelationName();
+                    applRel.invBrName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getInverseRelationName();
+                    applRel.invRelationRange = ar.getInverseRelationRange();
+                    applRelList.add(applRel);
+                }
             }
 
             applElemList.add(applElem);
@@ -684,5 +686,9 @@ public class AoSessionImpl extends AoSessionPOA {
      */
     protected AtfxCache getAtfxCache() {
         return this.atfxCache;
+    }
+    
+    public boolean isExtendedCompatibilityMode() throws AoException {
+        return this.atfxCache.isExtendedCompatibilityModeConfigured();
     }
 }

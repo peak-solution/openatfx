@@ -613,8 +613,8 @@
 			<audifahrzeug_iid>11</audifahrzeug_iid>
 			<audifm_iid>17</audifm_iid>
 			<pas_iid>23</pas_iid>
-			<sm_iid>33</sm_iid>
-			<meq_iid>38 44 46</meq_iid>
+			<sm_iid>33 113</sm_iid>
+			<meq_iid>38 44 46 114 117</meq_iid>
 		</dts>
 		<sm>
 			<sm_iid>33</sm_iid>
@@ -1694,6 +1694,6 @@
 				</component>
 			</values>
 			<global_flag>15</global_flag>
-		</lc>
+		</lc>				<sm>			<sm_iid>113</sm_iid>			<iname>byte_sbyte_test</iname>			<number_of_rows>10</number_of_rows>			<dts_iid>32</dts_iid>			<lc_iid>115 118</lc_iid>		</sm>		<meq>			<meq_iid>114</meq_iid>			<iname>signed_bytes</iname>			<aodt>DT_BYTE</aodt>			<dts_iid>32</dts_iid>			<lc_iid>115</lc_iid>			<quantity_iid>110</quantity_iid>		</meq>		<lc>			<lc_iid>115</lc_iid>			<sm_iid>113</sm_iid>			<sequence_representation>external_component</sequence_representation>			<iname>signed_b</iname>			<global_flag>15</global_flag>			<independent>0</independent>			<meq_iid>114</meq_iid>			<ec_iid>116</ec_iid>		</lc>		<ec>			<ec_iid>116</ec_iid>			<iname>ec_sbyte</iname>			<component_length>10</component_length>			<start_offset>0</start_offset>			<filename_url>byte_sbyte_test.btf</filename_url>			<value_type>dt_sbyte</value_type>			<block_size>10</block_size>			<valuesperblock>10</valuesperblock>			<value_offset>0</value_offset>			<lc_iid>115</lc_iid>		</ec>		<meq>			<meq_iid>117</meq_iid>			<iname>unsigned_bytes</iname>			<aodt>DT_BYTE</aodt>			<dts_iid>32</dts_iid>			<lc_iid>118</lc_iid>			<quantity_iid>110</quantity_iid>		</meq>		<lc>			<lc_iid>118</lc_iid>			<sm_iid>113</sm_iid>			<sequence_representation>external_component</sequence_representation>			<iname>unsigned_b</iname>			<global_flag>15</global_flag>			<independent>0</independent>			<meq_iid>117</meq_iid>			<ec_iid>119</ec_iid>		</lc>		<ec>			<ec_iid>119</ec_iid>			<iname>ec_byte</iname>			<component_length>10</component_length>			<start_offset>10</start_offset>			<filename_url>byte_sbyte_test.btf</filename_url>			<value_type>dt_byte</value_type>			<block_size>10</block_size>			<valuesperblock>10</valuesperblock>			<value_offset>0</value_offset>			<lc_iid>118</lc_iid>		</ec>
 	</instance_data>
 </atfx_file>

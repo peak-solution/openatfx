@@ -29,6 +29,7 @@ import org.asam.ods.ApplAttr;
 import org.asam.ods.ApplElem;
 import org.asam.ods.ApplElemAccess;
 import org.asam.ods.ApplRel;
+import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
@@ -38,6 +39,8 @@ import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.NameIterator;
+import org.asam.ods.NameValue;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.SetType;
 import org.asam.ods.SeverityFlag;
@@ -64,9 +67,13 @@ import de.rechner.openatfx.util.ODSHelper;
 class AtfxInstanceReader {
 
     private static final Log LOG = LogFactory.getLog(AtfxInstanceReader.class);
+    private static final String CONTEXT_EXTCOMP_FILENAME_STRIP_STRING = "ETXCOMP_FILENAME_STRIP_STRING";
 
     /** The singleton instance */
     private static volatile AtfxInstanceReader instance;
+    
+    private boolean isExtendedCompatiblityMode;
+    private String configuredExtCompFilenameStartRemoveString;
 
     /**
      * Non visible constructor.
@@ -81,16 +88,20 @@ class AtfxInstanceReader {
      * @param aoSession The session.
      * @param files Map containing component files.
      * @param reader The XML stream reader.
+     * @param isExtendedCompatiblityMode true if extended backward compatibility is active
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    public void parseInstanceElements(AoSession aoSession, Map<String, String> files, XMLStreamReader reader)
+    public void parseInstanceElements(AoSession aoSession, Map<String, String> files, XMLStreamReader reader, boolean isExtendedCompatiblityMode)
             throws XMLStreamException, AoException {
         ModelCache modelCache = new ModelCache(aoSession.getApplicationStructureValue(),
                                                aoSession.getEnumerationAttributes(),
-                                               aoSession.getEnumerationStructure());
+                                               aoSession.getEnumerationStructure(),
+                                               isExtendedCompatiblityMode);
+        this.isExtendedCompatiblityMode = isExtendedCompatiblityMode;
         Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
-
+        initConfiguredExtCompFilenameStripString(aoSession);
+        
         long start = System.currentTimeMillis();
 
         // delete 'old' flags file if existing (in case flags are stored as component file)
@@ -127,6 +138,30 @@ class AtfxInstanceReader {
         }
 
         LOG.info("Set relations in " + (System.currentTimeMillis() - start) + " ms");
+    }
+
+    /**
+     * Reads the possibly configured value for the String to strip from the beginning of any external component (flags)
+     * file path from the session context.
+     * 
+     * @param aoSession
+     * @throws AoException
+     */
+    private void initConfiguredExtCompFilenameStripString(AoSession aoSession) throws AoException {
+        NameIterator iter = aoSession.listContext(CONTEXT_EXTCOMP_FILENAME_STRIP_STRING);
+        try {
+            if (iter.getCount() > 0) {
+                NameValue extCompFilenameStripStringContextValue = aoSession.getContextByName(CONTEXT_EXTCOMP_FILENAME_STRIP_STRING);
+                if (extCompFilenameStripStringContextValue != null && extCompFilenameStripStringContextValue.value.flag == (short)15) {
+                    String val = extCompFilenameStripStringContextValue.value.u.stringVal();
+                    if (!val.isEmpty()) {
+                        configuredExtCompFilenameStartRemoveString = extCompFilenameStripStringContextValue.value.u.stringVal();
+                    }
+                }
+            }
+        } finally {
+            iter.destroy();
+        }
     }
 
     /**
@@ -189,7 +224,7 @@ class AtfxInstanceReader {
                     valuesAttrValue.attr = new AIDName();
                     valuesAttrValue.attr.aid = applElem.aid;
                     valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
-                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value);
+                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value, isExtendedCompatiblityMode);
                     applAttrValues.add(valuesAttrValue);
                 }
             }
@@ -209,7 +244,7 @@ class AtfxInstanceReader {
                     applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
                                                                                               currentTagName,
                                                                                               applAttr.dType,
-                                                                                              modelCache, reader));
+                                                                                              modelCache, reader), isExtendedCompatiblityMode);
                     applAttrValues.add(applAttrValue);
                 }
                 // flags in external component
@@ -217,7 +252,7 @@ class AtfxInstanceReader {
                     if (ieExternalComponent == null) {
                         ieExternalComponent = createExtCompIe(aoSession);
                     }
-                    parseLocalColumnFlagsComponent(ieExternalComponent, files, modelCache, reader);
+                    parseLocalColumnFlagsComponent(aoSession, ieExternalComponent, files, modelCache, reader);
                 }
             }
 
@@ -232,7 +267,7 @@ class AtfxInstanceReader {
                 applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
                                                                                           currentTagName,
                                                                                           applAttr.dType, modelCache,
-                                                                                          reader));
+                                                                                          reader), isExtendedCompatiblityMode);
                 applAttrValues.add(applAttrValue);
             }
 
@@ -270,6 +305,13 @@ class AtfxInstanceReader {
                 LOG.warn("Unsupported XML tag name: " + reader.getLocalName());
             }
         }
+        
+        // fix external component file url if configured
+        if (configuredExtCompFilenameStartRemoveString != null && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
+            ApplicationElement extCompAE = aoSession.getApplicationStructure().getElementById(applElem.aid);
+            fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "filename_url", applAttrValues);
+            fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "flags_filename_url", applAttrValues);
+        }
 
         // create instance element
         if (applAttrValues.isEmpty()) { // no values
@@ -306,6 +348,40 @@ class AtfxInstanceReader {
         retMap.put(new ElemId(applElem.aid, elemId.iid), instRelMap);
 
         return retMap;
+    }
+    
+    /**
+     * Removes a configured String from the beginning of the given external component file attribute if found and
+     * updates the respective anvsui in given list. Primarily AVL atfx files come with invalid file urls specified,
+     * still including their file symbol. If stripped, the url points to the actual path of that file relative to the
+     * atfx file.
+     * 
+     * @param removeString
+     * @param extCompAE
+     * @param fileAttrBaseName
+     * @param applAttrValues
+     * @throws AoException
+     */
+    private void fixExtCompFileUrls(String removeString, ApplicationElement extCompAE, String fileAttrBaseName,
+            List<AIDNameValueSeqUnitId> applAttrValues) throws AoException {
+        ApplicationAttribute filenameUrlAttr = extCompAE.getAttributeByBaseName(fileAttrBaseName);
+        String filenameUrlAttrName = filenameUrlAttr.getName();
+        for (AIDNameValueSeqUnitId anvsui : applAttrValues) {
+            if (filenameUrlAttrName.equals(anvsui.attr.aaName)) {
+                String[] orgUrls = anvsui.values.u.stringVal();
+                String[] fixedUrls = new String[orgUrls.length];
+                for (int i = 0; i < orgUrls.length; i++) {
+                    String url = orgUrls[i];
+                    if (url.startsWith(removeString)) {
+                        fixedUrls[i] = url.substring(removeString.length());
+                    } else {
+                        fixedUrls[i] = url;
+                    }
+                }
+                anvsui.values.u.stringVal(fixedUrls);
+                break;
+            }
+        }
     }
 
     /**
@@ -487,7 +563,7 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error reading XML.
      * @throws AoException Error creating instance element.
      */
-    private void parseLocalColumnFlagsComponent(InstanceElement ieExtComp, Map<String, String> files,
+    private void parseLocalColumnFlagsComponent(AoSession aoSession, InstanceElement ieExtComp, Map<String, String> files,
             ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
         ApplicationElement aeExtComp = ieExtComp.getApplicationElement();
         ApplicationStructure as = aeExtComp.getApplicationStructure();
@@ -556,7 +632,6 @@ class AtfxInstanceReader {
 
         // read flags to memory because the MixedMode server may not handle flags in component structure :-(
         long start = System.currentTimeMillis();
-        AoSession aoSession = ieExtComp.getApplicationElement().getApplicationStructure().getSession();
         File fileRoot = new File(aoSession.getContextByName("FILE_ROOT").value.u.stringVal());
         File componentFile = new File(fileRoot, fileName);
         File flagsFile = getFlagsTmpFile(aoSession);
@@ -716,9 +791,9 @@ class AtfxInstanceReader {
                 value.u.stringSeq(parseStringSeq(AtfxTagConstants.VALUES_ATTR_UTF8STRING, reader));
             }
             // not supported
-            else if (reader.isStartElement()) {
+            else if (reader.isStartElement() && !isExtendedCompatiblityMode) {
                 throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
-                                      "Unsupported local column 'values' datatype: " + reader.getLocalName());
+                                  "Unsupported local column 'values' datatype: " + reader.getLocalName());
             }
             reader.nextTag();
         }

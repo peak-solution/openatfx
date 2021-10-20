@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,6 +32,7 @@ import org.asam.ods.BaseStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.NameValue;
 import org.asam.ods.RelationRange;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
@@ -76,6 +78,8 @@ public class AtfxReader {
     private final Map<String, ApplicationElement> applElems;
     private final Map<String, Map<String, ApplicationAttribute>> applAttrs; // aeName, aaName, aa
     private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
+    
+    private boolean isExtendedCompatiblityMode;
 
     /**
      * Non visible constructor.
@@ -89,15 +93,119 @@ public class AtfxReader {
     }
 
     /**
-     * Returns the ASAM ODS aoSession object for a ATFX file.
+     * Returns the ASAM ODS AoSession for an ATFX file.
      * 
      * @param orb The ORB.
      * @param fileHandler The file handler for file system abstraction.
      * @param path The full path to the file to open.
+     * @param extraContext additional optional context values to set in the session.
      * @return The aoSession object.
      * @throws AoException Error getting aoSession.
      */
-    public synchronized AoSession createSessionForATFX(ORB orb, IFileHandler fileHandler, String path)
+    public synchronized AoSession createSessionForATFX(ORB orb, IFileHandler fileHandler, String path, NameValue...extraContext)
+            throws AoException {
+      long start = System.currentTimeMillis();
+      InputStream in = null;
+      try {
+          // get stream from file handler
+          in = fileHandler.getFileStream(path);
+
+          // open XML file
+          XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+          XMLStreamReader rawReader = inputFactory.createXMLStreamReader(in);
+          XMLStreamReader reader = inputFactory.createFilteredReader(rawReader, new StartEndElementFilter());
+
+          String baseModelVersion = "";
+          AoSession aoSession = null;
+          while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.ATFX_FILE))) {
+
+              // parse 'documentation'
+              if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.DOCUMENTATION)) {
+                  documentation.putAll(parseDocumentation(reader));
+              }
+              // parse 'base_model_version'
+              else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.BASE_MODEL_VERSION)) {
+                  baseModelVersion = reader.getElementText();
+              }
+              // parse 'files'
+              else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.FILES)) {
+                  files.putAll(parseFiles(reader));
+              }
+              // parse 'application_model'
+              else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.APPL_MODEL)) {
+                  parseApplicationModel(aoSession.getApplicationStructure(), reader);
+              }
+              // parse 'instance_data'
+              else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
+                  // parseInstanceElements(aoSession, reader);
+                  AtfxInstanceReader.getInstance().parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
+              }
+
+              // create AoSession object and write documentation to context
+              if ((baseModelVersion.length() > 0) && (aoSession == null)) {
+                  BaseStructure bs = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
+                  POA modelPOA = createModelPOA(orb);
+                  AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, bs);
+                  modelPOA.activate_object(aoSessionImpl);
+                  aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
+                  for (NameValue nameValue : extraContext) {
+                      aoSessionImpl.setContext(nameValue);
+                  }
+                  isExtendedCompatiblityMode = aoSessionImpl.isExtendedCompatibilityMode();
+              }
+
+              reader.nextTag();
+          }
+
+          // set context
+          for (String docKey : documentation.keySet()) {
+              aoSession.setContextString("documentation_" + docKey, documentation.get(docKey));
+          }
+
+          LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms");
+          return aoSession;
+      } catch (IOException e) {
+          LOG.error(e.getMessage(), e);
+          throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+      } catch (XMLStreamException e) {
+          LOG.error(e.getMessage(), e);
+          throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+      } catch (ServantAlreadyActive e) {
+          LOG.error(e.getMessage(), e);
+          throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+      } catch (WrongPolicy e) {
+          LOG.error(e.getMessage(), e);
+          throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+      } catch (ServantNotActive e) {
+          LOG.error(e.getMessage(), e);
+          throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+      } finally {
+          if (in != null) {
+              try {
+                  in.close();
+              } catch (IOException e) {
+                  LOG.error(e.getMessage(), e);
+              }
+          }
+          this.documentation.clear();
+          this.files.clear();
+          this.applElems.clear();
+          this.applAttrs.clear();
+          this.applRels.clear();
+      }
+    }
+    
+    /**
+     * Method to enable an AtfxCache to be used in unit tests. The cache can be retrieved from the AoSessionImpl.
+     * 
+     * @param orb The ORB.
+     * @param fileHandler The file handler for file system abstraction.
+     * @param path The full path to the file to open.
+     * @param extraContext additional optional context values to set in the session.
+     * @return The aoSession object.
+     * @throws AoException Error getting aoSession.
+     */
+    public synchronized AoSessionImpl createSessionImplForATFX(ORB orb, IFileHandler fileHandler, String path, NameValue...extraContext)
             throws AoException {
         long start = System.currentTimeMillis();
         InputStream in = null;
@@ -111,6 +219,7 @@ public class AtfxReader {
             XMLStreamReader reader = inputFactory.createFilteredReader(rawReader, new StartEndElementFilter());
 
             String baseModelVersion = "";
+            AoSessionImpl aoSessionImpl = null;
             AoSession aoSession = null;
             while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.ATFX_FILE))) {
 
@@ -132,42 +241,33 @@ public class AtfxReader {
                 }
                 // parse 'instance_data'
                 else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
-                    // parseInstanceElements(aoSession, reader);
-                    AtfxInstanceReader.getInstance().parseInstanceElements(aoSession, files, reader);
+                    AtfxInstanceReader.getInstance().parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
                 }
 
                 // create AoSession object and write documentation to context
-                if ((baseModelVersion.length() > 0) && (aoSession == null)) {
+                if ((baseModelVersion.length() > 0) && (aoSessionImpl == null)) {
                     BaseStructure bs = BaseStructureFactory.getInstance().getBaseStructure(orb, baseModelVersion);
                     POA modelPOA = createModelPOA(orb);
-                    AoSessionImpl aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, bs);
+                    aoSessionImpl = new AoSessionImpl(modelPOA, fileHandler, path, bs);
                     modelPOA.activate_object(aoSessionImpl);
                     aoSession = AoSessionHelper.narrow(modelPOA.servant_to_reference(aoSessionImpl));
+                    for (NameValue nameValue : extraContext) {
+                        aoSessionImpl.setContext(nameValue);
+                    }
+                    isExtendedCompatiblityMode = aoSessionImpl.isExtendedCompatibilityMode();
                 }
 
                 reader.nextTag();
             }
 
             // set context
-            for (String docKey : documentation.keySet()) {
-                aoSession.setContextString("documentation_" + docKey, documentation.get(docKey));
+            for (Entry<String, String> entry : documentation.entrySet()) {
+                aoSessionImpl.setContextString("documentation_" + entry.getKey(), documentation.get(entry.getKey()));
             }
 
             LOG.info("Read ATFX in " + (System.currentTimeMillis() - start) + "ms");
-            return aoSession;
-        } catch (IOException e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (XMLStreamException e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantAlreadyActive e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (WrongPolicy e) {
-            LOG.error(e.getMessage(), e);
-            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
-        } catch (ServantNotActive e) {
+            return aoSessionImpl;
+        } catch (IOException | XMLStreamException | ServantAlreadyActive | WrongPolicy | ServantNotActive e) {
             LOG.error(e.getMessage(), e);
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
         } finally {
@@ -364,7 +464,7 @@ public class AtfxReader {
 
                 // check if reference is complete
                 if (elem1 == null || elem2 == null) {
-                    fixIncompleteReleation(as, baseRelation, rel);
+                    fixIncompleteRelation(as, baseRelation, rel);
                     elem1 = rel.getElem1();
                     elem2 = rel.getElem2();
                 }
@@ -401,7 +501,7 @@ public class AtfxReader {
      * @param rel The relation that shall be fixed.
      * @throws AoException Raised if an error occurs, or a fix is not possible.
      */
-    private void fixIncompleteReleation(ApplicationStructure as, BaseRelation base, ApplicationRelation rel)
+    private void fixIncompleteRelation(ApplicationStructure as, BaseRelation base, ApplicationRelation rel)
             throws AoException {
         ApplicationElement appelem = rel.getElem1();
         if (appelem == null && base != null) {
@@ -426,9 +526,9 @@ public class AtfxReader {
                 rel.setElem2(aes[0]);
                 appelem = rel.getElem2();
                 LOG.info("Automatically fixed reverse relation for " + appelem.getName());
-            } else {
+            } else if (!isExtendedCompatiblityMode) {
                 String message = "ATFX File is missing required inverse relations. "
-                        + "Automatic correction is not possible.";
+                    + "Automatic correction is not possible.";
                 LOG.error(message);
                 throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, message);
             }
@@ -706,7 +806,7 @@ public class AtfxReader {
             updateApplicationAttribute(applElem, aa, currentAttr, null);
         }
     }
-
+    
     /**
      * Parses the next application attribute from the reader and extracts it into a temporary attribute element.
      * 
@@ -757,7 +857,7 @@ public class AtfxReader {
         }
         return attribute;
     }
-
+    
     /**
      * Updates the given attribute for the given element in the model.
      * 
@@ -779,6 +879,14 @@ public class AtfxReader {
         if (attributeToCreate.dataTypeStr != null && attributeToCreate.dataTypeStr.length() > 0) {
             DataType datatype = ODSHelper.string2dataType(attributeToCreate.dataTypeStr);
             aa.setDataType(datatype);
+        }
+        // Extended compatibility mode
+        try {
+            if (isExtendedCompatiblityMode && "Id".equals(aa.getName()) && DataType.DT_LONG.equals(aa.getDataType())) {
+                aa.setDataType(DataType.DT_LONGLONG);
+            }
+        } catch (AoException e) {
+            // nothing to do, just tolerate it
         }
         // obligatory
         if (attributeToCreate.obligatoryStr != null && attributeToCreate.obligatoryStr.length() > 0) {

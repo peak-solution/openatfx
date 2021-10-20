@@ -243,7 +243,7 @@ public class ApplicationAttributeImplTest {
             // AoLocalColumn attrs
             ApplicationElement aeLc = as.getElementByName("lc");
             assertEquals(true, aeLc.getAttributeByBaseName("independent").isObligatory());
-            assertEquals(false, aeLc.getAttributeByBaseName("sequence_representation").isObligatory());
+            assertEquals(true, aeLc.getAttributeByBaseName("sequence_representation").isObligatory());
             assertEquals(false, aeLc.getAttributeByBaseName("generation_parameters").isObligatory());
 
         } catch (AoException e) {

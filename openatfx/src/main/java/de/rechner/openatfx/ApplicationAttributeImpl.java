@@ -182,6 +182,7 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             }
 
             this.unique = baseAttr.isUnique();
+            this.obligatory = baseAttr.isObligatory();
             this.atfxCache.setBaNameForAttrNo(aid, attrNo, baseAttr.getName());
         } else {
             this.baseAttribute = null;
@@ -329,10 +330,14 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
             }
         }
         if (mustBeObligatory && !aaIsObligatory) {
-            throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
+            if (this.atfxCache.isExtendedCompatibilityModeConfigured()) {
+                aaIsObligatory = true;
+            } else {
+                throw new AoException(ErrorCode.AO_IS_BASE_ATTRIBUTE, SeverityFlag.ERROR, 0,
                                   "Unable to set obligatory flag to 'false' for application attribute derived"
                                   + " from the obligatory base attribute '" + baseAttributeName + "' of base element"
                                   + " '" + baseElementName + "'.");
+            }
         }
         this.obligatory = aaIsObligatory;
     }
@@ -383,7 +388,8 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
                 && enumDef.getName().equals(this.enumerationDefinition.getName())) {
             return;
         }
-        if (this.baseAttribute != null) {
+        
+        if (!atfxCache.isExtendedCompatibilityModeConfigured() && this.baseAttribute != null) {
             throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                   "changing the enumeration definition not allowed for application attribute derived from base attribute");
         }

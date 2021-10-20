@@ -119,7 +119,7 @@ class ExtCompReader {
         else {
             List<Number> list = new ArrayList<Number>();
             for (long iidExtComp : iidExtComps) {
-                list.addAll(readNumberValues(atfxCache, iidExtComp, rawDataType));
+                list.addAll(readNumberValues(atfxCache, iidExtComp));
             }
             // DS_BOOLEAN
             if (rawDataType == DataType.DS_BOOLEAN) {
@@ -209,7 +209,7 @@ class ExtCompReader {
         return tsValue;
     }
 
-    private List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp, DataType rawDataType)
+    protected List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp)
             throws AoException {
         long start = System.currentTimeMillis();
 
@@ -305,12 +305,10 @@ class ExtCompReader {
 
                     // 1=dt_byte
                     if (valueType == 1) {
-                        // int b = sourceMbb.get() & 0xFF;
-                        list.add(sourceMbb.get());
+                        list.add(sourceMbb.get() & 0xff);
                     }
                     // 19=dt_sbyte
                     else if (valueType == 19) {
-                        // short b = (short) (sourceMbb.get() & 0xFF);
                         list.add(sourceMbb.get());
                     }
                     // 2=dt_short, 7=dt_short_beo

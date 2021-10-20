@@ -4,7 +4,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>0.9.4</version>
+	<version>1.0.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 
@@ -34,7 +34,6 @@
 
 	<build>
 		<plugins>
-			<!-- compatibility with java 1.6 -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.6.1</version>

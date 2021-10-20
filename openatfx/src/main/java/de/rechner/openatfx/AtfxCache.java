@@ -47,6 +47,7 @@ import de.rechner.openatfx.util.ODSHelper;
 class AtfxCache {
 
     private static final Log LOG = LogFactory.getLog(AtfxCache.class);
+    private static final String CONTEXT_EXTENDED_COMPATIBILITYMODE = "EXTENDED_COMPATIBILITYMODE";
 
     /** the file handler */
     private final IFileHandler fileHandler;
@@ -90,6 +91,8 @@ class AtfxCache {
     /** The counters for ids */
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
+    
+    private Boolean extendedCompatibilityMode = null;
 
     /**
      * Constructor.
@@ -181,6 +184,19 @@ class AtfxCache {
 
     public Map<String, NameValue> getContext() {
         return context;
+    }
+    
+    public boolean isExtendedCompatibilityModeConfigured() throws AoException
+    {
+        if (extendedCompatibilityMode == null) {
+            if (getContext().containsKey(CONTEXT_EXTENDED_COMPATIBILITYMODE)
+                    && Boolean.parseBoolean(ODSHelper.tsValue2string(getContext().get(CONTEXT_EXTENDED_COMPATIBILITYMODE).value))) {
+                extendedCompatibilityMode = true;
+            } else {
+                extendedCompatibilityMode = false;
+            }
+        }
+        return extendedCompatibilityMode;
     }
 
     /***********************************************************************************
@@ -860,8 +876,18 @@ class AtfxCache {
             int globalFlagAttrNo = getAttrNoByBaName(aid, "global_flag");
             short globalFlag = getInstanceValue(aid, globalFlagAttrNo, iid).u.shortVal();
             
-            int valuesAttrNo = getAttrNoByBaName(aid, "values");
-            int nrOfValues = ODSHelper.tsUnionLength(getInstanceValue(aid, valuesAttrNo, iid).u);
+            // don't get the flags array's length from the values' union length!
+            // this can easily cause high memory usage for example in mdf source 
+            // files because all values would have to be read and cached
+            int nrOfValues = 0;
+            ApplicationRelation parentMatrixRelation = getApplicationRelationByBaseName(aid, "submatrix");
+            List<Long> parentMatrixIds = getRelatedInstanceIds(aid, iid, parentMatrixRelation);
+            if (parentMatrixIds.size() == 1)
+            {
+                long matrixAid = ODSHelper.asJLong(parentMatrixRelation.getElem2().getId());
+                int nrOfRowsAttrNo = getAttrNoByBaName(matrixAid, "number_of_rows");
+                nrOfValues = getInstanceValue(matrixAid, nrOfRowsAttrNo, parentMatrixIds.get(0)).u.longVal();
+            }
             
             short[] flags = new short[nrOfValues];
             for (int i = 0; i < nrOfValues; i++) {

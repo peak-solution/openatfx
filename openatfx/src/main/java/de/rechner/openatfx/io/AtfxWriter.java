@@ -85,7 +85,7 @@ public class AtfxWriter {
         long start = System.currentTimeMillis();
         ModelCache modelCache = new ModelCache(aoSession.getApplicationStructureValue(),
                                                aoSession.getEnumerationAttributes(),
-                                               aoSession.getEnumerationStructure());
+                                               aoSession.getEnumerationStructure(), false);
 
         XMLOutputFactory factory = XMLOutputFactory.newInstance();
         OutputStream fos = null;

@@ -13,6 +13,7 @@ import org.asam.ods.AoSession;
 import org.asam.ods.AoSessionHelper;
 import org.asam.ods.BaseStructure;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.Policy;
@@ -130,11 +131,12 @@ public class AoServiceFactory {
      * 
      * @param orb The ORB.
      * @param atfxFile The ATFX file.
+     * @param extraContext additional optional context values to set in the session.
      * @return The created session.
      * @throws AoException Error creating session.
      */
-    public synchronized AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
-        return newAoSession(orb, new LocalFileHandler(), atfxFile.getAbsolutePath());
+    public synchronized AoSession newAoSession(ORB orb, File atfxFile, NameValue...extraContext) throws AoException {
+        return newAoSession(orb, new LocalFileHandler(), atfxFile.getAbsolutePath(), extraContext);
     }
 
     /**
@@ -147,11 +149,12 @@ public class AoServiceFactory {
      * @param orb The ORB.
      * @param fileHandler The file handler, must not be null.
      * @param path The path to the ATFX file.
+     * @param extraContext additional optional context values to set in the session.
      * @return The created session.
      * @throws AoException Error creating session.
      */
-    public synchronized AoSession newAoSession(ORB orb, IFileHandler fileHandler, String path) throws AoException {
-        return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, path);
+    public synchronized AoSession newAoSession(ORB orb, IFileHandler fileHandler, String path, NameValue...extraContext) throws AoException {
+        return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, path, extraContext);
     }
 
     /**

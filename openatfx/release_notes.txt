@@ -5,7 +5,14 @@
 
 1. Changes
 
-    0.9.4 (Christian Rechner)
+    1.0.0 (Markus Renner)
+    	- fixed setting of unit id for queries with * select
+        - added extended compatibility mode to allow older ODS version atfx files to be handled, especially asam26
+        - improved memory footprint when getting local column flags and only global flag was set
+        - fixed reading of unsigned byte values that are bigger than 127
+        - the obligatory flag of attributes is now initialized with the value from the base attribute, if available
+
+	0.9.4 (Christian Rechner)
         - add implicit creation of additional AoExternalComponent attributes
 
     0.9.3 (Viktor Stöhr)

@@ -125,7 +125,7 @@ public class WildcardHandlingHelper {
             erse.values[col] = new NameValueSeqUnitId();
             erse.values[col].valName = attributeNames[col];
             erse.values[col].value = cache.getInstanceValues(aid, attributeNumbers[col], iids);
-            erse.values[col].unitId = new T_LONGLONG(0, 0);
+            erse.values[col].unitId = cache.getUnitIIDForAttr(aid, attributeNumbers[col]);
         }
         // add relevant relation attributes to result for relations
         int col = nrOfAttributes;

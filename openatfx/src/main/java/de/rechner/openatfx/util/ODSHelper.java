@@ -1104,13 +1104,14 @@ public abstract class ODSHelper {
      * exactly one row.
      * 
      * @param value The input value.
+     * @param isExtendedCompatiblityMode Flag that specifies whether or not the extended compatibility is active.
      * @return The output value.
      * @throws AoException Error converting value.
      */
-    public static TS_ValueSeq tsValue2tsValueSeq(TS_Value value) throws AoException {
+    public static TS_ValueSeq tsValue2tsValueSeq(TS_Value value, boolean isExtendedCompatiblityMode) throws AoException {
         TS_ValueSeq valueSeq = new TS_ValueSeq();
         valueSeq.flag = new short[] { value.flag };
-        valueSeq.u = tsUnion2tsUnionSeq(value.u);
+        valueSeq.u = tsUnion2tsUnionSeq(value.u, isExtendedCompatiblityMode);
         return valueSeq;
     }
 
@@ -1119,10 +1120,11 @@ public abstract class ODSHelper {
      * exactly one row.
      * 
      * @param u The input value.
+     * @param isExtendedCompatiblityMode Flag that specifies whether or not the extended compatibility is active.
      * @return The output value.
      * @throws AoException Error converting value.
      */
-    public static TS_UnionSeq tsUnion2tsUnionSeq(TS_Union u) throws AoException {
+    public static TS_UnionSeq tsUnion2tsUnionSeq(TS_Union u, boolean isExtendedCompatiblityMode) throws AoException {
         TS_UnionSeq uSeq = new TS_UnionSeq();
         DataType dt = u.discriminator();
         // DT_BLOB
@@ -1243,8 +1245,10 @@ public abstract class ODSHelper {
         }
         // unknown dataType
         else {
-            throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
+            if (!isExtendedCompatiblityMode) {
+                throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
                                   "Unknown DataType: " + dt.value());
+            }
         }
         return uSeq;
     }
@@ -1261,7 +1265,7 @@ public abstract class ODSHelper {
     }
 
     public static java.lang.Object tsValue2jObject(TS_Value value) throws AoException {
-        if (value == null || value.flag != 15) {
+        if (value == null || value.flag != 15 || value.u.discriminator() == null) {
             return null;
         }
 
@@ -1696,6 +1700,10 @@ public abstract class ODSHelper {
         // DT_STRING
         else if (dt == DataType.DT_STRING) {
             u.stringVal(uSeq.stringVal()[pos]);
+        }
+        // No DataType set
+        else if (dt == null) {
+            // nothing to do
         }
         // unknown dataType
         else {

@@ -488,11 +488,11 @@ public class InstanceElementImplTest {
 
             // child 'measurement_quantities'
             rel = ieDts.getApplicationElement().getRelationsByBaseName("measurement_quantities")[0];
-            assertEquals(3, ieDts.listRelatedInstances(rel, "*").getCount());
+            assertEquals(5, ieDts.listRelatedInstances(rel, "*").getCount());
 
             // child 'submatrices'
             rel = ieDts.getApplicationElement().getRelationsByBaseName("submatrices")[0];
-            assertEquals(1, ieDts.listRelatedInstances(rel, "*").getCount());
+            assertEquals(2, ieDts.listRelatedInstances(rel, "*").getCount());
         } catch (AoException e) {
             e.printStackTrace();
             fail(e.reason);
@@ -559,9 +559,9 @@ public class InstanceElementImplTest {
     @Test
     public void testListRelatedInstancesByRelationship() {
         try {
-            assertEquals(8, ieDts.listRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
+            assertEquals(11, ieDts.listRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
             assertEquals(1, ieDts.listRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
-            assertEquals(4, ieDts.listRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
+            assertEquals(7, ieDts.listRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
             assertEquals(2, ieDts.listRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
             assertEquals(1, ieDts.listRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
         } catch (AoException e) {
@@ -572,9 +572,9 @@ public class InstanceElementImplTest {
     @Test
     public void testGetRelatedInstancesByRelationship() {
         try {
-            assertEquals(8, ieDts.getRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
+            assertEquals(11, ieDts.getRelatedInstancesByRelationship(Relationship.ALL_REL, "*").getCount());
             assertEquals(1, ieDts.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
-            assertEquals(4, ieDts.getRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
+            assertEquals(7, ieDts.getRelatedInstancesByRelationship(Relationship.CHILD, "*").getCount());
             assertEquals(2, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_TO, "*").getCount());
             assertEquals(1, ieDts.getRelatedInstancesByRelationship(Relationship.INFO_REL, "*").getCount());
         } catch (AoException e) {
@@ -594,10 +594,10 @@ public class InstanceElementImplTest {
 
             // adding a child (1:n)
             ApplicationRelation arChild = aeDts.getRelationsByBaseName("measurement_quantities")[0];
-            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(5, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(0, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
             ieDts.createRelation(arChild, ieMeaQua);
-            assertEquals(4, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(6, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(1, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
 
             // changing the parent (1:1)
@@ -652,10 +652,10 @@ public class InstanceElementImplTest {
 
             // removing a child (1:n)
             ApplicationRelation arChild = aeDts.getRelationsByBaseName("measurement_quantities")[0];
-            assertEquals(3, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(5, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(1, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
             ieDts.removeRelation(arChild, ieMeaQua);
-            assertEquals(2, ieDts.getRelatedInstances(arChild, "*").getCount());
+            assertEquals(4, ieDts.getRelatedInstances(arChild, "*").getCount());
             assertEquals(0, ieMeaQua.getRelatedInstancesByRelationship(Relationship.FATHER, "*").getCount());
 
             // cleanup

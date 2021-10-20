@@ -13,9 +13,11 @@ import org.asam.ods.ApplAttr;
 import org.asam.ods.ApplElem;
 import org.asam.ods.ApplRel;
 import org.asam.ods.ApplicationStructureValue;
+import org.asam.ods.DataType;
 import org.asam.ods.EnumerationAttributeStructure;
 import org.asam.ods.EnumerationItemStructure;
 import org.asam.ods.EnumerationStructure;
+import org.asam.ods.T_LONGLONG;
 
 
 public class ModelCache {
@@ -40,6 +42,8 @@ public class ModelCache {
     private String lcAeName;
     private String lcValuesAaName;
     private String lcFlagsAaName;
+    
+    private boolean isExtendedCompatiblityMode;
 
     /**
      * Instantiates a new ASAM ODS application model cache object.
@@ -47,9 +51,10 @@ public class ModelCache {
      * @param asv The ASAM ODS ApplicationStructureValue.
      * @param easAr The ASAM ODS EnumerationAttributeStructure.
      * @param esAr The ASAM ODS EnumerationStructure.
+     * @param isExtendedCompatiblityMode Flag that specifies whether or not the extended compatibility is active.
      */
     public ModelCache(ApplicationStructureValue asv, EnumerationAttributeStructure[] easAr,
-            EnumerationStructure[] esAr) {
+            EnumerationStructure[] esAr, boolean isExtendedCompatiblityMode) {
         this.asv = asv;
         this.esAr = esAr;
         this.aid2applElemMap = new HashMap<Long, ApplElem>();
@@ -61,9 +66,19 @@ public class ModelCache {
         this.applAttrEnums = new HashMap<Long, Map<String, String>>();
         this.enumIndices = new HashMap<String, Map<String, Integer>>();
         this.enumItems = new HashMap<String, Map<Integer, String>>();
+        this.isExtendedCompatiblityMode = isExtendedCompatiblityMode;
 
         Map<Long, String> aid2AeNameMap = new HashMap<Long, String>();
         for (ApplElem applElem : asv.applElems) {
+            if (this.isExtendedCompatiblityMode && applElem.aid instanceof T_LONGLONG) {
+                for (ApplAttr applAttr : applElem.attributes) {
+                    if ("Id".equalsIgnoreCase(applAttr.baName) && DataType.DT_LONG.equals(applAttr.dType)) {
+                        applAttr.dType = DataType.DT_LONGLONG;
+                        break;
+                    }
+                }
+            }
+
             this.aid2applElemMap.put(ODSHelper.asJLong(applElem.aid), applElem);
             this.aeName2ApplElemMap.put(applElem.aeName, applElem);
 
@@ -209,7 +224,11 @@ public class ModelCache {
     }
 
     public int getEnumIndex(String enumName, String enumItem) throws AoException {
-        return this.enumIndices.get(enumName).get(enumItem);
+        Integer val = this.enumIndices.get(enumName).get(enumItem);
+        if (val == null && this.isExtendedCompatiblityMode) {
+            val = this.enumIndices.get(enumName).get(enumItem.toLowerCase());
+        }
+        return val;
     }
 
     public String getEnumItem(String enumName, int enumIndex) throws AoException {
