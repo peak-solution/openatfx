@@ -5,6 +5,11 @@
 
 1. Changes
 
+	1.0.1 (Markus Renner)
+		- for getInstancesExt() with queries containing optional relations, a bug is fixed that produced invalid
+		  query results with different lengths in "anvsuis", when not every instance had a related instance
+		- added support for queries with aggregation max
+
     1.0.0 (Markus Renner)
     	- fixed setting of unit id for queries with * select
         - added extended compatibility mode to allow older ODS version atfx files to be handled, especially asam26

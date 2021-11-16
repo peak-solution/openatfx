@@ -490,7 +490,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // - selects from only one application element
         // - no joins
         // - no group by's
-        // - no aggregate functions
+        // - no aggregate functions (except MAX)
         // - order by is ignored
         // - only one or no DT_STRING or DS_LONGLONG condition
         // - only specific condition selOpCodes supported
@@ -514,14 +514,19 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // do not allow null AIDNames, aggregate functions or null attribute names in any of the selects. Also do not
         // allow more than one application element.
         Long aid = null;
+        List<SelAIDNameUnitId> aggregateSelects = new ArrayList<>();
         for (SelAIDNameUnitId anu : aoq.anuSeq) {
             if (anu.attr == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                       "Invalid SelAIDNameUnitId found: AIDName was null");
             }
-            if (anu.aggregate == null && anu.aggregate != AggrFunc.NONE) {
-                throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                      "Invalid SelAIDNameUnitId found: Aggregate functions not supported");
+            if (anu.aggregate != null && anu.aggregate != AggrFunc.NONE) {
+                if (anu.aggregate == AggrFunc.MAX) {
+                    aggregateSelects.add(anu);
+                } else {
+                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                            "Invalid SelAIDNameUnitId found: Only MAX Aggregate function is supported");
+                }
             }
             if (anu.attr.aaName == null || anu.attr.aaName.trim().length() < 1) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
@@ -544,7 +549,13 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                                   "QueryStructureExt invalid: Given AID '" + aid
                                           + "' does not reference a existing application element");
         }
-
+        
+        // prepare aggregate helper
+        QueryAggregationHelper aggregateHelper = null;
+        if (!aggregateSelects.isEmpty()) {
+            aggregateHelper = new QueryAggregationHelper(atfxCache, aoq, aid, aggregateSelects);
+        }
+        
         // only allow the AND operator between conditions
         if (aoq.condSeq != null && aoq.condSeq.length > 1) {
             for (SelItem condition : aoq.condSeq) {
@@ -629,7 +640,10 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // build the result set
         ElemResultSetExt erse = new ElemResultSetExt();
         erse.aid = ODSHelper.asODSLongLong(aid);
-        if (wildcardHelper != null) {
+        if (aggregateHelper != null) {
+            aggregateHelper.fillElemResultSetExt(erse, filteredIids);
+        }
+        else if (wildcardHelper != null) {
             wildcardHelper.fillElemResultsSetExt(erse, filteredIids);
         } else {
         	erse.values = new NameValueSeqUnitId[aoq.anuSeq.length];

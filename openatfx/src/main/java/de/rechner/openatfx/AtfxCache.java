@@ -1,7 +1,6 @@
 package de.rechner.openatfx;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1285,40 +1284,40 @@ class AtfxCache {
                     "Application relation cannot be null!");
         }
         
-        List<TS_Value> list = new ArrayList<TS_Value>();
-        List<Long> relatedIids = null;
-        if (iids.size() == 1) {
-            relatedIids = getRelatedInstanceIds(aid, iids.get(0), applRel);
-        } else {
-            relatedIids = new ArrayList<>();
-            for (long iid : iids) {
-                relatedIids.addAll(getRelatedInstanceIds(aid, iid, applRel));
-            }
+        // first get related ids
+        Map<Long, List<Long>> relatedIidsBySourceIid = new HashMap<>();
+        for (long iid : iids) {
+            relatedIidsBySourceIid.put(iid, getRelatedInstanceIds(aid, iid, applRel));
         }
         
-        if (relatedIids != null ) {
-            if (relatedIids.isEmpty()) {
-                list.add(ODSHelper.createEmptyTS_Value(DataType.DT_LONGLONG));
-            } else if (relatedIids.size() == 1) {
-                java.lang.Object jValue = ODSHelper.asODSLongLong(relatedIids.get(0));
-                list.add(ODSHelper.jObject2tsValue(DataType.DT_LONGLONG, jValue));
-            } else {
-                T_LONGLONG[] ids = new T_LONGLONG[relatedIids.size()];
-                for (int i = 0; i < ids.length; i++) {
-                    long relatedIid = relatedIids.get(i);
-                    ids[i] = ODSHelper.asODSLongLong(relatedIid);
+        boolean isSequenceType = applRel.getRelationRange().max == -1;
+        DataType dt = isSequenceType ? DataType.DS_LONGLONG : DataType.DT_LONGLONG;
+        
+        // create values
+        TS_Value[] tsValues = new TS_Value[iids.size()];
+        for (Entry<Long, List<Long>> entry : relatedIidsBySourceIid.entrySet())
+        {
+            int index = iids.indexOf(entry.getKey());
+            List<Long> relatedIids = entry.getValue();
+            if (relatedIids.isEmpty())
+            {
+                tsValues[index] = ODSHelper.createEmptyTS_Value(dt);
+            }
+            else if (isSequenceType)
+            {
+                List<T_LONGLONG> ids = new ArrayList<>();
+                for (Long relatedIid : entry.getValue())
+                {
+                    ids.add(ODSHelper.asODSLongLong(relatedIid));
                 }
-                TS_UnionSeq uSeq = new TS_UnionSeq();
-                uSeq.longlongVal(ids);
-                
-                short[] flag = new short[ids.length];
-                Arrays.fill(flag, (short) 15);
-                
-                return new TS_ValueSeq(uSeq, flag);
+                tsValues[index] = ODSHelper.jObject2tsValue(dt, ids.toArray(new T_LONGLONG[0]));
+            }
+            else
+            {
+                tsValues[index] = ODSHelper.jObject2tsValue(dt, ODSHelper.asODSLongLong(entry.getValue().get(0)));
             }
         }
-        
-        return ODSHelper.tsValue2tsValueSeq(list.toArray(new TS_Value[0]), DataType.DT_LONGLONG);
+        return ODSHelper.tsValue2tsValueSeq(tsValues, dt);
     }
 
     public synchronized InstanceElementIterator newInstanceElementIterator(POA instancePOA, InstanceElement[] instances)
