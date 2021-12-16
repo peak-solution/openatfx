@@ -4,8 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactoryPOA;
 import org.asam.ods.AoSession;
@@ -15,6 +13,8 @@ import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.omg.CORBA.ORB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.io.AtfxReader;
 
@@ -25,8 +25,7 @@ import de.rechner.openatfx.io.AtfxReader;
  * @author Christian Rechner
  */
 class AoFactoryImpl extends AoFactoryPOA {
-
-    private static final Log LOG = LogFactory.getLog(AoFactoryImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AoFactoryImpl.class);
 
     private final ORB orb;
     private final IFileHandler fileHandler;

@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoFactoryHelper;
@@ -33,6 +31,8 @@ import org.omg.PortableServer.POAPackage.InvalidPolicy;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.basestructure.BaseStructureFactory;
 import de.rechner.openatfx.io.AtfxReader;
@@ -44,8 +44,7 @@ import de.rechner.openatfx.io.AtfxReader;
  * @author Christian Rechner
  */
 public class AoServiceFactory {
-
-    private static final Log LOG = LogFactory.getLog(AoServiceFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AoServiceFactory.class);
 
     /** The singleton instance */
     private static AoServiceFactory instance;

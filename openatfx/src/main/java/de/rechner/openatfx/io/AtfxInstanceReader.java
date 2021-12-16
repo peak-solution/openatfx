@@ -19,8 +19,6 @@ import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AIDName;
 import org.asam.ods.AIDNameValueSeqUnitId;
 import org.asam.ods.AoException;
@@ -52,6 +50,8 @@ import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
 import org.codehaus.stax2.typed.TypedXMLStreamException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.BufferedRandomAccessFile;
 import de.rechner.openatfx.util.FileUtil;
@@ -65,8 +65,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxInstanceReader {
-
-    private static final Log LOG = LogFactory.getLog(AtfxInstanceReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AtfxInstanceReader.class);
     private static final String CONTEXT_EXTCOMP_FILENAME_STRIP_STRING = "ETXCOMP_FILENAME_STRIP_STRING";
 
     /** The singleton instance */

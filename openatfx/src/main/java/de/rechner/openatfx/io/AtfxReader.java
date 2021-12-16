@@ -16,8 +16,6 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.AoSessionHelper;
@@ -53,6 +51,8 @@ import org.omg.PortableServer.POAPackage.InvalidPolicy;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.AoSessionImpl;
 import de.rechner.openatfx.IFileHandler;
@@ -66,8 +66,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 public class AtfxReader {
-
-    private static final Log LOG = LogFactory.getLog(AtfxReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AtfxReader.class);
 
     /** The singleton instance */
     private static volatile AtfxReader instance;

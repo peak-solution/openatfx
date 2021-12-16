@@ -3,8 +3,6 @@ package de.rechner.openatfx;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.NameIteratorPOA;
@@ -13,6 +11,8 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -21,8 +21,7 @@ import org.omg.PortableServer.POAPackage.WrongPolicy;
  * @author Christian Rechner
  */
 class NameIteratorImpl extends NameIteratorPOA {
-
-    private static final Log LOG = LogFactory.getLog(NameIteratorImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NameIteratorImpl.class);
 
     private final POA poa;
     private final String[] names;

@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
@@ -30,6 +28,8 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.BufferedRandomAccessFile;
 import de.rechner.openatfx.util.ODSHelper;
@@ -41,8 +41,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class ExtCompReader {
-
-    private static final Log LOG = LogFactory.getLog(ExtCompReader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExtCompReader.class);
     private static final int BUFFER_SIZE = 32768;
 
     /** The singleton instance */

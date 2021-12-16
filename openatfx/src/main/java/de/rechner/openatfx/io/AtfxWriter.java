@@ -21,8 +21,6 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplAttr;
@@ -52,6 +50,8 @@ import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_ExternalReference;
 import org.asam.ods.T_LONGLONG;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.ModelCache;
 import de.rechner.openatfx.util.ODSHelper;
@@ -63,8 +63,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 public class AtfxWriter {
-
-    private static final Log LOG = LogFactory.getLog(AtfxWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AtfxWriter.class);
 
     /** singleton instance */
     private static AtfxWriter instance;

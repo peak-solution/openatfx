@@ -16,8 +16,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
@@ -28,6 +26,8 @@ import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.RelationRange;
 import org.asam.ods.SeverityFlag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,8 +40,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class BaseStructureWriter {
-
-    private static final Log LOG = LogFactory.getLog(BaseStructureWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseStructureWriter.class);
 
     /** The singleton instance */
     private static BaseStructureWriter instance;

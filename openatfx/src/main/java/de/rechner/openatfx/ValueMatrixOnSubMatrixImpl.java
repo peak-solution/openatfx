@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.Column;
 import org.asam.ods.ColumnHelper;
@@ -25,6 +23,8 @@ import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
 import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.T_COMPLEX;
+import org.asam.ods.T_DCOMPLEX;
 import org.asam.ods.T_LONGLONG;
 import org.asam.ods.ValueMatrixMode;
 import org.asam.ods.ValueMatrixPOA;
@@ -32,10 +32,10 @@ import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.ODSHelper;
-import org.asam.ods.T_COMPLEX;
-import org.asam.ods.T_DCOMPLEX;
 
 
 /**
@@ -44,8 +44,7 @@ import org.asam.ods.T_DCOMPLEX;
  * @author Christian Rechner
  */
 class ValueMatrixOnSubMatrixImpl extends ValueMatrixPOA {
-
-    private static final Log LOG = LogFactory.getLog(ValueMatrixOnSubMatrixImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ValueMatrixOnSubMatrixImpl.class);
 
     private final POA modelPOA;
     private final SubMatrixImpl sourceSubMatrix;

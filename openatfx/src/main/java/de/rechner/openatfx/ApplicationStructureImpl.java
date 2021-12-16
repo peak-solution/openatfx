@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationAttribute;
@@ -34,6 +32,8 @@ import org.omg.PortableServer.POAPackage.ObjectNotActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongAdapter;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
@@ -45,8 +45,7 @@ import de.rechner.openatfx.util.PatternUtil;
  * @author Christian Rechner
  */
 class ApplicationStructureImpl extends ApplicationStructurePOA {
-
-    private static final Log LOG = LogFactory.getLog(ApplicationStructureImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationStructureImpl.class);
 
     private final POA modelPOA;
     private final POA instancePOA;

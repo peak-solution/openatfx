@@ -1,7 +1,5 @@
 package de.rechner.openatfx;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
@@ -16,6 +14,8 @@ import org.asam.ods.SeverityFlag;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -26,8 +26,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class ApplicationRelationImpl extends ApplicationRelationPOA {
-
-    private static final Log LOG = LogFactory.getLog(ApplicationRelationImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ApplicationRelationImpl.class);
 
     private final POA modelPOA;
     private final AtfxCache atfxCache;

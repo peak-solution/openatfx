@@ -12,9 +12,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
@@ -34,6 +33,8 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 import org.omg.PortableServer.POA;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -44,8 +45,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 class AtfxCache {
-
-    private static final Log LOG = LogFactory.getLog(AtfxCache.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AtfxCache.class);
     private static final String CONTEXT_EXTENDED_COMPATIBILITYMODE = "EXTENDED_COMPATIBILITYMODE";
 
     /** the file handler */
@@ -91,6 +91,8 @@ class AtfxCache {
     private int nextAid;
     private final Map<Long, Integer> nextAttrNoMap;
     
+    private Map<Long, AtomicLong> nextIidsByAid;
+    
     private Boolean extendedCompatibilityMode = null;
 
     /**
@@ -127,6 +129,7 @@ class AtfxCache {
 
         this.nextAid = 1;
         this.nextAttrNoMap = new HashMap<Long, Integer>();
+        this.nextIidsByAid = new HashMap<>();
     }
 
     /**
@@ -170,11 +173,7 @@ class AtfxCache {
      * @return The instance element id.
      */
     public long nextIid(long aid) {
-        Long[] instIids = getInstanceIds(aid).toArray(new Long[0]);
-        if (instIids.length > 0) {
-            return instIids[instIids.length - 1] + 1;
-        }
-        return 1;
+        return nextIidsByAid.computeIfAbsent(aid, v -> new AtomicLong(1)).getAndIncrement();
     }
 
     /***********************************************************************************
@@ -1293,11 +1292,17 @@ class AtfxCache {
         boolean isSequenceType = applRel.getRelationRange().max == -1;
         DataType dt = isSequenceType ? DataType.DS_LONGLONG : DataType.DT_LONGLONG;
         
+        // for better performance finding the respective index in the TS_Value for each iid
+        Map<Long, Integer> indexByIid = new HashMap<>();
+        for (int i = 0; i < iids.size(); i++) {
+            indexByIid.put(iids.get(i), i);
+        }
+        
         // create values
         TS_Value[] tsValues = new TS_Value[iids.size()];
         for (Entry<Long, List<Long>> entry : relatedIidsBySourceIid.entrySet())
         {
-            int index = iids.indexOf(entry.getKey());
+            int index = indexByIid.get(entry.getKey());
             List<Long> relatedIids = entry.getValue();
             if (relatedIids.isEmpty())
             {

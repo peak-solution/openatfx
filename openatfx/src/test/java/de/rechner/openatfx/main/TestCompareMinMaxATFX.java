@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -33,7 +32,6 @@ import de.rechner.openatfx.util.ODSHelper;
 public class TestCompareMinMaxATFX {
 
     public static void main(String[] args) {
-        BasicConfigurator.configure();
         ORB orb = ORB.init(args, System.getProperties());
         File file = new File("D:\\PUBLIC\\test\\test\\test.atfx");
         List<String> failures = new ArrayList<String>();

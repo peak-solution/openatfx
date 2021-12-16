@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.AoSessionPOA;
@@ -56,6 +54,8 @@ import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
 import org.omg.PortableServer.POAPackage.InvalidPolicy;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.io.AtfxWriter;
 import de.rechner.openatfx.util.FileUtil;
@@ -69,8 +69,7 @@ import de.rechner.openatfx.util.PatternUtil;
  * @author Christian Rechner
  */
 public class AoSessionImpl extends AoSessionPOA {
-    
-    private static final Log LOG = LogFactory.getLog(AoSessionImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AoSessionImpl.class);
 
     /** The static context variables, these may not be changed */
     private static final Map<String, NameValue> STATIC_CONTEXT = new LinkedHashMap<String, NameValue>();

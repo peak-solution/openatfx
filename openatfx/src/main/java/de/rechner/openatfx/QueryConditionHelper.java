@@ -19,6 +19,7 @@ import org.asam.ods.SelOpcode;
 import org.asam.ods.SelValueExt;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
+import org.asam.ods.T_LONGLONG;
 
 import de.rechner.openatfx.util.ODSHelper;
 import de.rechner.openatfx.util.PatternUtil;
@@ -110,6 +111,36 @@ class QueryConditionHelper {
         Set<Long> filteredIids = new HashSet<>();
         long conditionAid = ODSHelper.asJLong(condition.attr.attr.aid);
 
+        // for performance reasons the values need to be fetched separately once before iterating over iids
+        String stringVal = null;
+        String[] stringSeqVal = null;
+        T_LONGLONG longVal = null;
+        long[] longSeqVal = null;
+        Integer intVal = null;
+        int[] intSeqVal = null;
+        if (condition.value.u.discriminator() == DataType.DT_STRING) {
+            stringVal = condition.value.u.stringVal();
+        }
+        else if (condition.value.u.discriminator() == DataType.DS_STRING) {
+            stringSeqVal = condition.value.u.stringSeq();
+            Arrays.sort(stringSeqVal); // sort so find method works
+        }
+        else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
+            longVal = condition.value.u.longlongVal();
+        }
+        else if (condition.value.u.discriminator() == DataType.DS_LONGLONG) {
+            T_LONGLONG[] longLongSeqVal = condition.value.u.longlongSeq();
+            longSeqVal = ODSHelper.asJLong(longLongSeqVal);
+            Arrays.sort(longSeqVal); // sort so find method works
+        }
+        else if (condition.value.u.discriminator() == DataType.DT_ENUM) {
+            intVal = condition.value.u.enumVal();
+        }
+        else if (condition.value.u.discriminator() == DataType.DS_ENUM) {
+            intSeqVal = condition.value.u.enumSeq();
+            Arrays.sort(intSeqVal); // sort so find method works
+        }
+        
         for (Long iid : iids) {
             if (condition == null) {
                 filteredIids.add(iid);
@@ -126,9 +157,9 @@ class QueryConditionHelper {
                             || (condition.oper == SelOpcode.IS_NOT_NULL && value.flag == 15)) {
                         addToFilter = true;
                     } else if (isCIOpcode(condition.oper)) {
-                        addToFilter = PatternUtil.nameFilterMatchCI(value.u.stringVal(), condition.value.u.stringVal());
+                        addToFilter = PatternUtil.nameFilterMatchCI(value.u.stringVal(), stringVal);
                     } else {
-                        addToFilter = PatternUtil.nameFilterMatch(value.u.stringVal(), condition.value.u.stringVal());
+                        addToFilter = PatternUtil.nameFilterMatch(value.u.stringVal(), stringVal);
                     }
                     if (isNegatedOpcode(condition.oper)) {
                         addToFilter = !addToFilter;
@@ -140,10 +171,8 @@ class QueryConditionHelper {
             } else if (condition.value.u.discriminator() == DataType.DS_STRING) {
                 Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
                 TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                String[] cond = condition.value.u.stringSeq();
-                Arrays.sort(cond); // sort so find method works
-                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, value.u.stringVal()) > -1)
-                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, value.u.stringVal()) < 0) {
+                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(stringSeqVal, value.u.stringVal()) > -1)
+                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(stringSeqVal, value.u.stringVal()) < 0) {
                     filteredIids.add(iid);
                 }
 
@@ -155,12 +184,12 @@ class QueryConditionHelper {
                     ApplicationRelation ar = atfxCache.getRelationByName(aid, condition.attr.attr.aaName);
                     List<Long> longlongVals = atfxCache.getRelatedInstanceIds(aid, iid, ar);
                     addToFilter = longlongVals.size() == 1
-                            && longlongVals.get(0) == ODSHelper.asJLong(condition.value.u.longlongVal());
+                            && longlongVals.get(0) == ODSHelper.asJLong(longVal);
                 } else {
                     // is an attribute condition
                     TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
                     if ((value != null) && (value.u != null) && (value.u.longlongVal() != null)) {
-                        addToFilter = ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(condition.value.u.longlongVal());
+                        addToFilter = ODSHelper.asJLong(value.u.longlongVal()) == ODSHelper.asJLong(longVal);
                     }
                 }
                 if (isNegatedOpcode(condition.oper)) {
@@ -176,23 +205,18 @@ class QueryConditionHelper {
                     // is a relation condition
                     ApplicationRelation ar = atfxCache.getRelationByName(aid, condition.attr.attr.aaName);
                     List<Long> longlongVals = atfxCache.getRelatedInstanceIds(aid, iid, ar);
-                    long[] cond = ODSHelper.asJLong(condition.value.u.longlongSeq());
-                    Arrays.sort(cond); // sort so find method works
-
                     if (longlongVals.size() == 1 && ((condition.oper == SelOpcode.INSET
-                            && Arrays.binarySearch(cond, longlongVals.get(0)) > -1)
+                            && Arrays.binarySearch(longSeqVal, longlongVals.get(0)) > -1)
                             || condition.oper == SelOpcode.NOTINSET
-                                    && Arrays.binarySearch(cond, longlongVals.get(0)) < 0)) {
+                                    && Arrays.binarySearch(longSeqVal, longlongVals.get(0)) < 0)) {
                         filteredIids.add(iid);
                     }
                 } else {
                     // is an attribute condition
                     TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                    long[] cond = ODSHelper.asJLong(condition.value.u.longlongSeq());
-                    Arrays.sort(cond); // sort so find method works
                     long searchValue = ODSHelper.asJLong(value.u.longlongVal());
-                    if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, searchValue) > -1)
-                            || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, searchValue) < 0) {
+                    if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(longSeqVal, searchValue) > -1)
+                            || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(longSeqVal, searchValue) < 0) {
                         filteredIids.add(iid);
                     }
                 }
@@ -202,17 +226,15 @@ class QueryConditionHelper {
                 if (value != null && value.u != null) {
                     if ((condition.oper == SelOpcode.IS_NULL && value.flag == 0)
                             || (condition.oper == SelOpcode.IS_NOT_NULL && value.flag == 15) || (value.u.enumVal() >= 0
-                                    && value.flag == 15 && value.u.enumVal() == condition.value.u.enumVal())) {
+                                    && value.flag == 15 && value.u.enumVal() == intVal)) {
                         filteredIids.add(iid);
                     }
                 }
             } else if (condition.value.u.discriminator() == DataType.DS_ENUM) {
                 Integer attrNo = atfxCache.getAttrNoByName(aid, condition.attr.attr.aaName);
                 TS_Value value = atfxCache.getInstanceValue(aid, attrNo, iid);
-                int[] cond = condition.value.u.enumSeq();
-                Arrays.sort(cond); // sort so find method works
-                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(cond, value.u.enumVal()) > -1)
-                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(cond, value.u.enumVal()) < 0) {
+                if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(intSeqVal, value.u.enumVal()) > -1)
+                        || condition.oper == SelOpcode.NOTINSET && Arrays.binarySearch(intSeqVal, value.u.enumVal()) < 0) {
                     filteredIids.add(iid);
                 }
             }

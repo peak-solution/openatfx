@@ -4,7 +4,17 @@
 	
 
 1. Changes
-
+	1.1.0 (Markus Renner)
+		- Important Note: Apache commons.logging has been removed from dependencies and no logging implementation
+		  is provided anymore via dependencies (previously log4j1.2). In case you relied on that in any way in your
+		  application using openATFX, please make sure you provide your own logging implementation
+		  (e.g. log4j version 2.16.0+). Logging can now easily be used with your logging implementation via SLF4J
+		  (http://www.slf4j.org/) and its bridges.
+		
+		- Switched logging framework to SLF4J
+		- improved efficiency of method to get next free iid for an aid, which immensely reduces reading time of
+		  a big source file (issue identified and fix tested in combination with mdf4 source files)
+	
 	1.0.1 (Markus Renner)
 		- for getInstancesExt() with queries containing optional relations, a bug is fixed that produced invalid
 		  query results with different lengths in "anvsuis", when not every instance had a related instance

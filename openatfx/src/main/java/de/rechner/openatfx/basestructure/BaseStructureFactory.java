@@ -12,8 +12,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseAttributeHelper;
@@ -49,6 +47,8 @@ import org.omg.PortableServer.POAPackage.InvalidPolicy;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -63,8 +63,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * @author Christian Rechner
  */
 public class BaseStructureFactory {
-
-    private static final Log LOG = LogFactory.getLog(BaseStructureFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseStructureFactory.class);
 
     /** The singleton instance */
     private static BaseStructureFactory instance;

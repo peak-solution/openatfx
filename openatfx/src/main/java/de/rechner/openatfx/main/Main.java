@@ -1,8 +1,5 @@
 package de.rechner.openatfx.main;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.log4j.BasicConfigurator;
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.omg.CORBA.ORB;
@@ -12,19 +9,18 @@ import org.omg.CosNaming.NamingContextExt;
 import org.omg.CosNaming.NamingContextExtHelper;
 import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.AoServiceFactory;
 
 
 public class Main {
-
-    private static final Log LOG = LogFactory.getLog(Main.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Main.class);
     private static final String DEFAULT_NAME = "ATFX.ASAM-ODS";
 
     public static void main(String[] args) {
         try {
-            BasicConfigurator.configure();
-
             // configure ORB
             ORB orb = ORB.init(new String[0], System.getProperties());
             AoFactory aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);

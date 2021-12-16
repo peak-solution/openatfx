@@ -15,8 +15,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
@@ -24,14 +22,15 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.NameValue;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.rechner.openatfx.util.FileUtil;
 import de.rechner.openatfx.util.ODSHelper;
 
 
 class ExtCompWriter {
-
-    private static final Log LOG = LogFactory.getLog(ExtCompWriter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExtCompWriter.class);
 
     /** The singleton instance */
     private static volatile ExtCompWriter instance;
