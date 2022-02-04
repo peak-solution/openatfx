@@ -4,6 +4,11 @@
 	
 
 1. Changes
+	1.1.1 (Viktor Stöhr)
+		- fix access to optional field 'AoLocalColumn.raw_datatype' in ATFXCache.getDataTypeForLocalColumnValues()
+		  results in a NullPointerException if attribute is missing in model
+		- restore AoServiceFactory.newAoSession(ORB orb, File atfxFile) since modified signature is not backwards compatible
+	
 	1.1.0 (Markus Renner)
 		- Important Note: Apache commons.logging has been removed from dependencies and no logging implementation
 		  is provided anymore via dependencies (previously log4j1.2). In case you relied on that in any way in your

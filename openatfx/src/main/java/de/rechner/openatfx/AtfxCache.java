@@ -1083,11 +1083,13 @@ class AtfxCache {
         // first check whether to use the local column's raw datatype if available
         // (compare ODS chapter 4.4.5 (near the end))
         if (seqRepEnumVal == 4 || seqRepEnumVal == 5 || seqRepEnumVal >= 8) {
-            int rawDatatypeAttrNo = getAttrNoByBaName(lcAid, "raw_datatype");
-            TS_Value rawDtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
-            if (rawDtValue.u.enumVal() != 0)
-            {
-                dtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
+            Integer rawDatatypeAttrNo = getAttrNoByBaName(lcAid, "raw_datatype");
+            if (rawDatatypeAttrNo != null) {
+                TS_Value rawDtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
+                if (rawDtValue.u.enumVal() != 0)
+                {
+                    dtValue = getInstanceValue(lcAid, rawDatatypeAttrNo, lcIid);
+                }
             }
         }
         // otherwise take the datatype from the AoMeasurementQuantity

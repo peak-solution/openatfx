@@ -130,6 +130,20 @@ public class AoServiceFactory {
      * 
      * @param orb The ORB.
      * @param atfxFile The ATFX file.
+     * @return The created session.
+     * @throws AoException Error creating session.
+     */
+    public synchronized AoSession newAoSession(ORB orb, File atfxFile) throws AoException {
+        return newAoSession(orb, new LocalFileHandler(), atfxFile.getAbsolutePath());
+    }
+
+    /**
+     * Creates a new <code>org.asam.ods.AoSession</code> with the content of given ATFX file.
+     * <p>
+     * The session will contain the complete application structure and all found instances.
+     * 
+     * @param orb The ORB.
+     * @param atfxFile The ATFX file.
      * @param extraContext additional optional context values to set in the session.
      * @return The created session.
      * @throws AoException Error creating session.
