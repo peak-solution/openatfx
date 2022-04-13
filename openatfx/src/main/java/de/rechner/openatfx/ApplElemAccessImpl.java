@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.asam.ods.ACL;
@@ -487,8 +488,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         // LOG.debug("getInstancesExt: anuSeq" + ODSHelper.anuSeq2string(aoq.anuSeq) + ",condSeq=" + aoq.condSeq);
         List<SelValueExt> conditions = new ArrayList<>();
         // this method does only process a certain kind of query:
-        // - selects from only one application element
-        // - no joins
+        // - only a single join is supported
         // - no group by's
         // - no aggregate functions (except MAX)
         // - order by is ignored
@@ -500,60 +500,15 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         if (aoq.anuSeq == null || aoq.anuSeq.length < 1) {
             return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[0], null) };
         }
-        // do not allow joins
-        if (aoq.joinSeq != null && aoq.joinSeq.length > 0) {
+        // do not allow more than one join
+        if (aoq.joinSeq != null && aoq.joinSeq.length > 1) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt not supported: Contains joins");
+                                  "QueryStructureExt not supported: Contains join(s) with non-m2n relation");
         }
         // do not allow 'group by'
         if (aoq.groupBy != null && aoq.groupBy.length > 0) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                                   "QueryStructureExt not supported: Contains 'group by' statements");
-        }
-
-        // do not allow null AIDNames, aggregate functions or null attribute names in any of the selects. Also do not
-        // allow more than one application element.
-        Long aid = null;
-        List<SelAIDNameUnitId> aggregateSelects = new ArrayList<>();
-        for (SelAIDNameUnitId anu : aoq.anuSeq) {
-            if (anu.attr == null) {
-                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                      "Invalid SelAIDNameUnitId found: AIDName was null");
-            }
-            if (anu.aggregate != null && anu.aggregate != AggrFunc.NONE) {
-                if (anu.aggregate == AggrFunc.MAX) {
-                    aggregateSelects.add(anu);
-                } else {
-                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                            "Invalid SelAIDNameUnitId found: Only MAX Aggregate function is supported");
-                }
-            }
-            if (anu.attr.aaName == null || anu.attr.aaName.trim().length() < 1) {
-                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                      "Invalid SelAIDNameUnitId found: Application attribute name was null or empty");
-            }
-            if (aid == null) {
-                aid = ODSHelper.asJLong(anu.attr.aid);
-            } else {
-                // compare the application element ids. they must be equal, or else the query contains select statements
-                // for more than one application element
-                if (ODSHelper.asJLong(anu.attr.aid) != aid) {
-                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                                          "QueryStructureExt not supported: Contains select statements for more than one application element");
-                }
-            }
-        }
-        String queriedAeName = atfxCache.getApplicationElementNameById(aid);
-        if (queriedAeName == null) {
-            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                  "QueryStructureExt invalid: Given AID '" + aid
-                                          + "' does not reference a existing application element");
-        }
-        
-        // prepare aggregate helper
-        QueryAggregationHelper aggregateHelper = null;
-        if (!aggregateSelects.isEmpty()) {
-            aggregateHelper = new QueryAggregationHelper(atfxCache, aoq, aid, aggregateSelects);
         }
         
         // only allow the AND operator between conditions
@@ -602,8 +557,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 // make sure the condition attribute or relation exists
                 } else {
                     String conditionAttributeName = condition.attr.attr.aaName;
-                    if (atfxCache.getAttrNoByName(ODSHelper.asJLong(condition.attr.attr.aid), conditionAttributeName) == null
-                            && atfxCache.getRelationByName(aid, conditionAttributeName) == null) {
+                    long conditionAid = ODSHelper.asJLong(condition.attr.attr.aid);
+                    if (atfxCache.getAttrNoByName(conditionAid, conditionAttributeName) == null
+                            && atfxCache.getRelationByName(conditionAid, conditionAttributeName) == null) {
                         throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
                                               "QueryStructureExt invalid: Condition attribute '" + conditionAttributeName
                                                       + "' does not exist in the condition's application element");
@@ -611,59 +567,120 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 }
             }
         }
-
-     	// make sure the selected attributes or relation exists
-        WildcardHandlingHelper wildcardHelper = null;
-        for (SelAIDNameUnitId selectedAttribute : aoq.anuSeq) {
-            if ("*".equals(selectedAttribute.attr.aaName)) {
-                wildcardHelper = new WildcardHandlingHelper(atfxCache, aid);
-                break;
-            }
-            if (atfxCache.getAttrNoByName(aid, selectedAttribute.attr.aaName) == null
-                    && atfxCache.getRelationByName(aid, selectedAttribute.attr.aaName) == null) {
+        
+        // do not allow null AIDNames, aggregate functions or null attribute names in any of the selects
+        Map<Long, String> querySelectAidsToElementName = new HashMap<>();
+        List<SelAIDNameUnitId> aggregateSelects = new ArrayList<>();
+        Map<Long, Collection<SelAIDNameUnitId>> selectsPerAid = new HashMap<>();
+        for (SelAIDNameUnitId anu : aoq.anuSeq) {
+            if (anu.attr == null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
-                                      "QueryStructureExt invalid: Selected attribute '" + selectedAttribute.attr.aaName
-                                              + "' (aid=" + selectedAttribute.attr.aid.low
-                                              + ") does not exist in selected application element '" + queriedAeName + "' (aid=" + aid + ")");
+                                      "Invalid SelAIDNameUnitId found: AIDName was null");
             }
-        }
-
-        // get all queries instances -> get all instances, then filter manually, because the 'getInstances()' method
-        // uses case sensitivity
-        Set<Long> ieIds = atfxCache.getInstanceIds(aid);
-        QueryConditionHelper conditionHelper = new QueryConditionHelper(aid, ieIds, atfxCache);
-        for (SelValueExt condition : conditions) {
-            conditionHelper.applyCondition(condition);
-        }
-        List<Long> filteredIids = new ArrayList<>(conditionHelper.getFilteredIIDs());
-        
-        // build the result set
-        ElemResultSetExt erse = new ElemResultSetExt();
-        erse.aid = ODSHelper.asODSLongLong(aid);
-        if (aggregateHelper != null) {
-            aggregateHelper.fillElemResultSetExt(erse, filteredIids);
-        }
-        else if (wildcardHelper != null) {
-            wildcardHelper.fillElemResultsSetExt(erse, filteredIids);
-        } else {
-        	erse.values = new NameValueSeqUnitId[aoq.anuSeq.length];
-        	for (int col = 0; col < erse.values.length; col++) {
-        	    Integer attrNo = this.atfxCache.getAttrNoByName(aid, aoq.anuSeq[col].attr.aaName);
-        	    ApplicationRelation ar = atfxCache.getRelationByName(aid, aoq.anuSeq[col].attr.aaName);
-        	    erse.values[col] = new NameValueSeqUnitId();
-        	    erse.values[col].valName = aoq.anuSeq[col].attr.aaName;
-        	    erse.values[col].value = new TS_ValueSeq();
-        	    erse.values[col].unitId = new T_LONGLONG(0, 0);
-        	    
-        	    if (attrNo == null) {
-       		        erse.values[col].value = atfxCache.getRelatedInstanceIds(aid, filteredIids, ar);
-        	    } else {
-        	        erse.values[col].value = atfxCache.getInstanceValues(aid, attrNo, filteredIids);
-        	    }
-        	}
+            if (anu.aggregate != null && anu.aggregate != AggrFunc.NONE) {
+                if (anu.aggregate == AggrFunc.MAX) {
+                    aggregateSelects.add(anu);
+                } else {
+                    throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                            "Invalid SelAIDNameUnitId found: Only MAX Aggregate function is supported");
+                }
+            }
+            if (anu.attr.aaName == null || anu.attr.aaName.trim().length() < 1) {
+                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                      "Invalid SelAIDNameUnitId found: Application attribute name was null or empty");
+            }
+            
+            long aid = ODSHelper.asJLong(anu.attr.aid);
+            if (!querySelectAidsToElementName.containsKey(aid)) {
+                String queriedAeName = atfxCache.getApplicationElementNameById(aid);
+                if (queriedAeName == null) {
+                    throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                          "QueryStructureExt invalid: Given AID '" + aid
+                                                  + "' does not reference a existing application element");
+                }
+                querySelectAidsToElementName.put(aid, queriedAeName);
+            }
+            
+            selectsPerAid.computeIfAbsent(ODSHelper.asJLong(anu.attr.aid), v -> new ArrayList<>()).add(anu);
         }
         
-        return new ResultSetExt[] { new ResultSetExt(new ElemResultSetExt[] { erse }, null) };
+        ElemResultSetExt[] erses = new ElemResultSetExt[querySelectAidsToElementName.size()];
+        int elementCounter = 0;
+        for (Entry<Long, String> selectAidEntry : querySelectAidsToElementName.entrySet()) {
+            long queryAid = selectAidEntry.getKey();
+            
+            // prepare aggregate helper
+            QueryAggregationHelper aggregateHelper = null;
+            if (!aggregateSelects.isEmpty()) {
+                aggregateHelper = new QueryAggregationHelper(atfxCache, aoq, queryAid, aggregateSelects);
+            }
+            
+         	// make sure the selected attributes or relation exists
+            WildcardHandlingHelper wildcardHelper = null;
+            for (SelAIDNameUnitId selectedAttribute : selectsPerAid.get(queryAid)) {
+                if ("*".equals(selectedAttribute.attr.aaName)) {
+                    wildcardHelper = new WildcardHandlingHelper(atfxCache, queryAid);
+                    break;
+                }
+                if (atfxCache.getAttrNoByName(queryAid, selectedAttribute.attr.aaName) == null
+                        && atfxCache.getRelationByName(queryAid, selectedAttribute.attr.aaName) == null) {
+                    throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                          "QueryStructureExt invalid: Selected attribute '" + selectedAttribute.attr.aaName
+                                                  + "' (aid=" + selectedAttribute.attr.aid.low
+                                                  + ") does not exist in selected application element '"
+                                                  + selectAidEntry.getValue() + "' (aid=" + queryAid + ")");
+                }
+            }
+    
+            // get all queries instances -> get all instances, then filter manually, because the 'getInstances()' method
+            // uses case sensitivity
+            Set<Long> ieIds = atfxCache.getInstanceIds(queryAid);
+            QueryConditionHelper conditionHelper = new QueryConditionHelper(queryAid, ieIds, aoq.joinSeq, atfxCache);
+            for (SelValueExt condition : conditions) {
+                conditionHelper.applyCondition(condition);
+            }
+            List<Long> filteredIids = new ArrayList<>(conditionHelper.getFilteredIIDs());
+            
+            // build the result set
+            ElemResultSetExt erse = new ElemResultSetExt();
+            erse.aid = ODSHelper.asODSLongLong(queryAid);
+            if (aggregateHelper != null) {
+                aggregateHelper.fillElemResultSetExt(erse, filteredIids);
+            }
+            else if (wildcardHelper != null) {
+                wildcardHelper.fillElemResultsSetExt(erse, filteredIids);
+            } else {
+                Collection<SelAIDNameUnitId> selects = selectsPerAid.get(queryAid);
+            	erse.values = new NameValueSeqUnitId[selects.size()];
+            	int col = 0;
+            	for (SelAIDNameUnitId sel : selects) {
+            	    Integer attrNo = this.atfxCache.getAttrNoByName(queryAid, sel.attr.aaName);
+            	    ApplicationRelation ar = atfxCache.getRelationByName(queryAid, sel.attr.aaName);
+            	    erse.values[col] = new NameValueSeqUnitId();
+            	    erse.values[col].valName = sel.attr.aaName;
+            	    erse.values[col].value = new TS_ValueSeq();
+            	    erse.values[col].unitId = new T_LONGLONG(0, 0);
+            	    
+            	    if (attrNo == null) {
+           		        erse.values[col].value = atfxCache.getRelatedInstanceIds(queryAid, filteredIids, ar);
+            	    } else {
+            	        erse.values[col].value = atfxCache.getInstanceValues(queryAid, attrNo, filteredIids);
+            	    }
+            	    col++;
+            	}
+            }
+            erses[elementCounter++] = erse;
+        }
+        
+        if (aoq.joinSeq != null && aoq.joinSeq.length > 0 && erses.length > 1) {
+            // Join helper will only be used for queries with at least one join and selections for two elements, for
+            // queries with only one element select, the join was already used in condition helper to identify the
+            // correct relation.
+            JoinHelper joinHelper = new JoinHelper(atfxCache, aoq.joinSeq[0]);
+            erses = joinHelper.join(erses);
+        }
+        
+        return new ResultSetExt[] { new ResultSetExt(erses, null) };
     }
 
     /**

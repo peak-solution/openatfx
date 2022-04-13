@@ -4,6 +4,13 @@
 	
 
 1. Changes
+	1.2.0 (Markus Renner)
+		- added support for multiple select elements in queries at ApplElemAccessImpl.getInstancesExt()
+		- fixed issue, when InstanceElementImpl.collectRelatedInstancesByRelationship() was called, but uninitialized
+		  relations were contained
+		- tolerated float values in local column values attribute for generation parameter values in case of seqRep implicit_linear
+		- added support for a single join in queries at getInstancesExt()
+	
 	1.1.1 (Viktor Stöhr)
 		- fix access to optional field 'AoLocalColumn.raw_datatype' in ATFXCache.getDataTypeForLocalColumnValues()
 		  results in a NullPointerException if attribute is missing in model

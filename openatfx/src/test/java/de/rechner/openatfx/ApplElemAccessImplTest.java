@@ -1,5 +1,6 @@
 package de.rechner.openatfx;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -17,6 +18,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.ElemId;
+import org.asam.ods.ElemResultSetExt;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.JoinDef;
@@ -311,6 +313,78 @@ public class ApplElemAccessImplTest {
             // the value of the aodt attribute
             assertEquals(DataType.DT_FLOAT.value(), resSetExt[0].firstElems[0].values[1].value.u.enumVal()[0]);
 
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+    
+    @Test
+    public void testGetInstancesExt_multipleSelectElements() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+            T_LONGLONG aidDts = as.getElementByName("dts").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            // prepare 'SELECT' with two application elements
+            qse.anuSeq = new SelAIDNameUnitId[3];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            qse.anuSeq[2] = new SelAIDNameUnitId();
+            qse.anuSeq[2].attr = new AIDName(aidDts, "*"); // dts
+            qse.anuSeq[2].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[2].aggregate = AggrFunc.NONE;
+
+            // put in a condition
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aidMeq, "iname"), new T_LONGLONG());
+            selValue.oper = SelOpcode.CI_LIKE;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_STRING, "LS.*");
+            qse.condSeq[0].value(selValue);
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            ElemResultSetExt[] erses = resSetExt[0].firstElems;
+            assertEquals(2, erses.length); // no of aes
+
+            long mqAid = ODSHelper.asJLong(aidMeq);
+            long dtsAid = ODSHelper.asJLong(aidDts);
+            long[] aids = java.util.Arrays.stream(erses).map(erse -> ODSHelper.asJLong(erse.aid)).mapToLong(l -> l)
+                                          .toArray();
+            assertThat(aids).containsExactlyInAnyOrder(mqAid, dtsAid); // aids
+
+            for (ElemResultSetExt erse : erses) {
+                long aid = ODSHelper.asJLong(erse.aid);
+                if (aid == mqAid) {
+                    for (NameValueSeqUnitId nvsui : erse.values) {
+                        if (nvsui.valName.equals("iname")) {
+                            assertThat(erse.values).hasSize(2); // no of attrs
+                            assertThat(erse.values[0].value.flag).hasSize(4); // no of rows
+                            assertThat(erse.values[0].value.u.stringVal()).containsExactlyInAnyOrder("LS.Right Side",
+                                                                                                     "LS.Left Side",
+                                                                                                     "LS.Right Side",
+                                                                                                     "LS.Left Side"); // values
+                        }
+                    }
+                } else if (aid == dtsAid) {
+                    assertThat(erse.values).hasSize(8); // no of attrs
+                    for (NameValueSeqUnitId nvsui : erse.values) {
+                        if (nvsui.valName.equals("iname")) {
+                            assertThat(nvsui.value.flag).hasSize(2); // no of rows
+                            assertThat(nvsui.value.u.stringVal()).containsExactlyInAnyOrder("Detector;rms A fast - Zusammenfassung",
+                                                                                            "1/3 Octave - Zusammenfassung"); // values
+                        }
+                    }
+                }
+            }
         } catch (AoException e) {
             fail(e.reason);
         }

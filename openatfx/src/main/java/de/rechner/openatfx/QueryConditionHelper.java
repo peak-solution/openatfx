@@ -12,6 +12,7 @@ import org.asam.ods.AoException;
 import org.asam.ods.ApplicationRelation;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.JoinDef;
 import org.asam.ods.NameValue;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
@@ -48,6 +49,7 @@ import de.rechner.openatfx.util.PatternUtil;
 class QueryConditionHelper {
     private static final int DEFAULT_MAX_RELATION_PATH_LENGTH = 3;
     private Collection<Long> iids;
+    private final JoinDef[] joins;
     private final long aid;
     private final AtfxCache atfxCache;
     private final int maxConditionRelationFollow;
@@ -60,9 +62,10 @@ class QueryConditionHelper {
      * @param atfxCache the atfx cache
      * @throws AoException 
      */
-    QueryConditionHelper (long aid, Collection<Long> iids, AtfxCache atfxCache) throws AoException {
+    QueryConditionHelper (long aid, Collection<Long> iids, JoinDef[] joins, AtfxCache atfxCache) throws AoException {
         this.aid = aid;
         this.iids = iids;
+        this.joins = joins;
         this.atfxCache = atfxCache;
         
         NameValue configuredMaxRelValue = atfxCache.getContext().get("MAX_CONDITION_RELATION_FOLLOW");
@@ -310,7 +313,7 @@ class QueryConditionHelper {
      */
     private boolean checkConditionOnElement(Collection<Long> instanceIds, SelValueExt condition) throws AoException {
         long elemAid = ODSHelper.asJLong(condition.attr.attr.aid);
-        QueryConditionHelper childHelper = new QueryConditionHelper(elemAid, instanceIds, atfxCache);
+        QueryConditionHelper childHelper = new QueryConditionHelper(elemAid, instanceIds, joins, atfxCache);
         childHelper.applyCondition(condition);
         return !childHelper.getFilteredIIDs().isEmpty();
     }
@@ -355,12 +358,14 @@ class QueryConditionHelper {
         if (foundRelations.isEmpty()) {
             List<List<ApplicationRelation>> recursivePath = new ArrayList<>();
             for (ApplicationRelation ar : atfxCache.getApplicationRelations(fromAid)) {
-                List<ApplicationRelation> currentPath = recursivelyFindRelationPath(ODSHelper.asJLong(ar.getElem2().getId()), toAid, pathLength + 1);
-                if (currentPath == null || currentPath.isEmpty()) {
-                    continue;
+                if (ar.getElem2() != null) {
+                    List<ApplicationRelation> currentPath = recursivelyFindRelationPath(ODSHelper.asJLong(ar.getElem2().getId()), toAid, pathLength + 1);
+                    if (currentPath == null || currentPath.isEmpty()) {
+                        continue;
+                    }
+                    currentPath.add(0, ar);
+                    recursivePath.add(currentPath);
                 }
-                currentPath.add(0, ar);
-                recursivePath.add(currentPath);
             }
             List<ApplicationRelation> shortestPath = new ArrayList<>();
             for (List<ApplicationRelation> list : recursivePath) {
@@ -462,8 +467,14 @@ class QueryConditionHelper {
         if (relations.size() == 1) {
             return relations.get(0);
         } else {
+            // if more than one relation between the elements was found, apply some rules to identify the right one
+            // if an explicit identifying join was provided, use that one to identify the relation
+            ApplicationRelation ar = checkJoinsToIdentifyRelation(relations, joins);
+            
             // if more than one relation between the elements was found, prefer a base relation
-            ApplicationRelation ar = findBaseRelation(relations);
+            if (ar == null) {
+                ar = findBaseRelation(relations);
+            }
             if (ar != null) {
                 return ar;
             // if only non-base relations could be found between elements prefer a FATHER_CHILD relation type
@@ -475,6 +486,38 @@ class QueryConditionHelper {
             }
         }
         
+        return null;
+    }
+    
+    /**
+     * @param relations
+     * @param joins
+     * @return
+     * @throws AoException 
+     */
+    private ApplicationRelation checkJoinsToIdentifyRelation(List<ApplicationRelation> relations, JoinDef[] joins) throws AoException {
+        if (joins == null || joins.length < 1) {
+            return null;
+        }
+        for (ApplicationRelation relation : relations) {
+            for (JoinDef join : joins) {
+                long joinFrom = ODSHelper.asJLong(join.fromAID);
+                long joinTo = ODSHelper.asJLong(join.toAID);
+                long relationFrom = ODSHelper.asJLong(relation.getElem1().getId());
+                long relationTo = ODSHelper.asJLong(relation.getElem2().getId());
+                
+                // check if join references the "normal" relation direction of the current relation
+                if (joinFrom == relationFrom && joinTo == relationTo
+                        && join.refName.equals(relation.getRelationName())) {
+                    return relation;
+                }
+                // check if join references the inverse relation direction of current relation
+                else if (joinFrom == relationTo && joinTo == relationFrom
+                        && join.refName.equals(relation.getInverseRelationName())) {
+                    return relation;
+                }
+            }
+        }
         return null;
     }
     

@@ -3315,6 +3315,12 @@ public abstract class ODSHelper {
                 ar[i] = source.u.longSeq()[i];
             }
             value.u.doubleSeq(ar);
+        } else if ((sourceDt == DataType.DS_FLOAT) && (targetDt == DataType.DS_DOUBLE)) {
+            double[] ar = new double[source.u.floatSeq().length];
+            for (int i = 0; i < ar.length; i++) {
+                ar[i] = source.u.floatSeq()[i];
+            }
+            value.u.doubleSeq(ar);
         } else {
             throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0,
                                   "Unable to convert value from datatype '" + ODSHelper.dataType2String(sourceDt)
@@ -3435,4 +3441,79 @@ public abstract class ODSHelper {
         return ret;     
     }
 
+    public static DataType getSingleDataType(DataType dt) {
+        if (dt.toString().startsWith("DS_")) {
+            switch (dt.value()) {
+                case DataType._DS_BOOLEAN:
+                    return DataType.DT_BOOLEAN;
+                case DataType._DS_BYTE:
+                    return DataType.DT_BYTE;
+                case DataType._DS_BYTESTR:
+                    return DataType.DT_BYTESTR;
+                case DataType._DS_COMPLEX:
+                    return DataType.DT_COMPLEX;
+                case DataType._DS_DATE:
+                    return DataType.DT_DATE;
+                case DataType._DS_DCOMPLEX:
+                    return DataType.DT_DCOMPLEX;
+                case DataType._DS_DOUBLE:
+                    return DataType.DT_DOUBLE;
+                case DataType._DS_ENUM:
+                    return DataType.DT_ENUM;
+                case DataType._DS_EXTERNALREFERENCE:
+                    return DataType.DT_EXTERNALREFERENCE;
+                case DataType._DS_FLOAT:
+                    return DataType.DT_FLOAT;
+                case DataType._DS_LONG:
+                    return DataType.DT_LONG;
+                case DataType._DS_LONGLONG:
+                    return DataType.DT_LONGLONG;
+                case DataType._DS_SHORT:
+                    return DataType.DT_SHORT;
+                case DataType._DS_STRING:
+                    return DataType.DT_STRING;
+                default:
+                break;
+            }
+        }
+        return dt;
+    }
+    
+    public static DataType getSequenceDataType(DataType dt) {
+        if (dt.toString().startsWith("DT_")) {
+            switch (dt.value()) {
+                case DataType._DT_BOOLEAN:
+                    return DataType.DS_BOOLEAN;
+                case DataType._DT_BYTE:
+                    return DataType.DS_BYTE;
+                case DataType._DT_BYTESTR:
+                    return DataType.DS_BYTESTR;
+                case DataType._DT_COMPLEX:
+                    return DataType.DS_COMPLEX;
+                case DataType._DT_DATE:
+                    return DataType.DS_DATE;
+                case DataType._DT_DCOMPLEX:
+                    return DataType.DS_DCOMPLEX;
+                case DataType._DT_DOUBLE:
+                    return DataType.DS_DOUBLE;
+                case DataType._DT_ENUM:
+                    return DataType.DS_ENUM;
+                case DataType._DT_EXTERNALREFERENCE:
+                    return DataType.DS_EXTERNALREFERENCE;
+                case DataType._DT_FLOAT:
+                    return DataType.DS_FLOAT;
+                case DataType._DT_LONG:
+                    return DataType.DS_LONG;
+                case DataType._DT_LONGLONG:
+                    return DataType.DS_LONGLONG;
+                case DataType._DT_SHORT:
+                    return DataType.DS_SHORT;
+                case DataType._DT_STRING:
+                    return DataType.DS_STRING;
+                default:
+                break;
+            }
+        }
+        return dt;
+    }
 }

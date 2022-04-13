@@ -29,6 +29,7 @@ import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.ODSFile;
+import org.asam.ods.RelationRange;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
 import org.asam.ods.SeverityFlag;
@@ -529,6 +530,11 @@ class InstanceElementImpl extends InstanceElementPOA {
         // collect relations
         List<ApplicationRelation> relList = new ArrayList<ApplicationRelation>();
         for (ApplicationRelation rel : this.atfxCache.getApplicationRelations(this.aid)) {
+            RelationRange invRelRange = rel.getInverseRelationRange();
+            if (invRelRange.min == -2 || invRelRange.max == -2)
+            {
+                continue;
+            }
             Relationship relShip = rel.getRelationship();
             if (ieRelationship.value() == Relationship._ALL_REL) {
                 relList.add(rel);

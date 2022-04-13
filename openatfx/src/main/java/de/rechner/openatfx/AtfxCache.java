@@ -292,7 +292,6 @@ class AtfxCache {
         this.nameToAeMap.remove(aidToAeNameMap.get(aid));
         this.aidToAeNameMap.remove(aid);
         this.aidToAeMap.remove(aid);
-        this.aaNameToAttrNoMap.remove(aid);
         this.baNameToAttrNoMap.remove(aid);
         this.aaNameToAttrNoMap.remove(aid);
         this.applicationRelationMap.remove(aid);
@@ -317,8 +316,9 @@ class AtfxCache {
      * application attributes
      ***********************************************************************************/
 
-    public void addApplicationAttribute(long aid, int attrNo, ApplicationAttribute aa) {
+    public void addApplicationAttribute(long aid, int attrNo, ApplicationAttribute aa) throws AoException {
         this.attrNoToAttrMap.get(aid).put(attrNo, aa);
+        this.aaNameToAttrNoMap.get(aid).put(aa.getName(), attrNo);
     }
 
     /**
@@ -1225,10 +1225,12 @@ class AtfxCache {
                 continue;
             }
             Set<Long> invRelInstIds = instanceRelsForIid.get(invApplRel);
-            if (invRelInstIds != null && (!invRelInstIds.isEmpty()) && (invApplRel.getRelationRange().max != -1)) {
-                invRelInstIds.clear();
+            if (invRelInstIds != null) {
+                if (!invRelInstIds.isEmpty() && invApplRel.getRelationRange().max != -1) {
+                    invRelInstIds.clear();
+                }
+                invRelInstIds.add(iid);
             }
-            invRelInstIds.add(iid);
         }
     }
 
