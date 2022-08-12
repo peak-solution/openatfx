@@ -211,7 +211,7 @@
 	</BaseElement>
 	<BaseElement topLevel="true" type="AoPhysicalDimension">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
-		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="true" />
 		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
@@ -239,7 +239,7 @@
 	</BaseElement>
 	<BaseElement topLevel="true" type="AoQuantity">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
-		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="true" />
 		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
@@ -400,7 +400,7 @@
 	</BaseElement>
 	<BaseElement topLevel="true" type="AoUser">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
-		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="true" />
 		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
@@ -516,14 +516,14 @@
 	</BaseElement>
 	<BaseElement topLevel="true" type="AoNameMap">
 		<BaseAttribute dataType="DT_LONGLONG" name="id" obligatory="true" unique="true" />
-		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="name" obligatory="true" unique="true" />
 		<BaseAttribute dataType="DT_STRING" name="description" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="version" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="version_date" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="mime_type" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DS_EXTERNALREFERENCE" name="external_references" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_LONGLONG" name="objecttype" obligatory="false" unique="false" />
-		<BaseAttribute dataType="DT_STRING" name="entity_name" obligatory="true" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="entity_name" obligatory="true" unique="true" />
 		<BaseAttribute dataType="DS_STRING" name="alias_names" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="ao_created" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_created_by" obligatory="false" unique="false" />
@@ -560,7 +560,7 @@
 		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_file_mimetype" obligatory="false" unique="false" />
-		<BaseAttribute dataType="DT_STRING" name="ao_location" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_location" obligatory="false" unique="true" />
 		<BaseAttribute dataType="DT_LONGLONG" name="ao_size" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_original_filename" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="ao_original_filedate" obligatory="false" unique="false" />

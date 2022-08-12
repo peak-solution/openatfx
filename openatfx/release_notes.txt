@@ -4,6 +4,18 @@
 	
 
 1. Changes
+	1.3.0 (Markus Renner)
+		- fixed unique flag of AoFile.ao_location in asam31+ base models from false to true and made obligatory consistent false,
+		  as specified by the ODS standard
+		- fixed unique flags of AoNameMap.name and AoNameMap.entity_name in asam35 base model from false to true,
+		  as specified by the ODS standard
+		- fixed unique flag of AoPhysicalDimension.name in asam35 base model from false to true,
+		  as specified by the ODS standard
+	  	- fixed unique flag of AoQuantity.name in asam35 base model from false to true,
+		  as specified by the ODS standard
+		- fixed unique flag of AoUser.name in asam35 base model from false to true,
+		  as specified by the ODS standard
+	
 	1.2.0 (Markus Renner)
 		- added support for multiple select elements in queries at ApplElemAccessImpl.getInstancesExt()
 		- fixed issue, when InstanceElementImpl.collectRelatedInstancesByRelationship() was called, but uninitialized

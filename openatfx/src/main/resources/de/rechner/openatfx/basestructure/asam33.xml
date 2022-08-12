@@ -560,7 +560,7 @@
 		<BaseAttribute dataType="DT_DATE" name="ao_last_modified" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_last_modified_by" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_file_mimetype" obligatory="false" unique="false" />
-		<BaseAttribute dataType="DT_STRING" name="ao_location" obligatory="false" unique="false" />
+		<BaseAttribute dataType="DT_STRING" name="ao_location" obligatory="false" unique="true" />
 		<BaseAttribute dataType="DT_LONGLONG" name="ao_size" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_STRING" name="ao_original_filename" obligatory="false" unique="false" />
 		<BaseAttribute dataType="DT_DATE" name="ao_original_filedate" obligatory="false" unique="false" />
