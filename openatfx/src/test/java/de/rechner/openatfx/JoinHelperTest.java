@@ -211,6 +211,86 @@ public class JoinHelperTest {
         }
     }
     
+    @Test
+    public void testJoin_m2nJoin_sequenceAttrWithPartiallyInvalidValues() throws Exception {
+        JoinDef join = new JoinDef(aid1, aid2, m2nJoinRelName, null);
+        JoinHelper helper = new JoinHelper(atfxCache, join);
+        
+        T_LONGLONG[][] testValues = new T_LONGLONG[][] {
+                new T_LONGLONG[] { ODSHelper.asODSLongLong(1L) },
+                new T_LONGLONG[] { ODSHelper.asODSLongLong(2L) },
+                new T_LONGLONG[0],
+                new T_LONGLONG[0],
+                new T_LONGLONG[] { ODSHelper.asODSLongLong(3L) } };
+        
+        ElemResultSetExt[] erses = prepareResult_withSequenceValues_partiallyInvalid(testValues);
+        Map<Long, NameValueSeqUnitId[]> valuesForAid = new HashMap<>();
+        for (ElemResultSetExt erse : erses) {
+            valuesForAid.put(ODSHelper.asJLong(erse.aid), erse.values);
+        }
+        
+        ElemResultSetExt[] result = helper.join(erses);
+        
+        assertThat(result).hasSize(2);
+        for (ElemResultSetExt erse : result) {
+            long currentAid = ODSHelper.asJLong(erse.aid);
+            
+            if (aid1L == currentAid) {
+                int expectedSize = valuesForAid.get(aid1L).length;
+                assertThat(erse.values).hasSize(expectedSize);
+                
+                for (NameValueSeqUnitId nvsui : erse.values) {
+                    if (idAttrName.equals(nvsui.valName)) {
+                        T_LONGLONG[] longlongVal = nvsui.value.u.longlongVal();
+                        long[] vals = ODSHelper.asJLong(longlongVal);
+                        assertThat(vals).hasSize(expectedNrOfM2NJoinedInstanceEntries)
+                                        .containsExactlyInAnyOrder(new long[] { iids1[0], iids1[0], iids1[1], iids1[2], iids1[2],
+                                                iids1[2] });
+                    }
+                }
+            } else if (aid2L == currentAid) {
+                int expectedSize = valuesForAid.get(aid2L).length;
+                assertThat(erse.values).hasSize(expectedSize);
+                
+                for (NameValueSeqUnitId nvsui : erse.values) {
+                    if (idAttrName.equals(nvsui.valName)) {
+                        T_LONGLONG[] longlongVal = nvsui.value.u.longlongVal();
+                        long[] vals = ODSHelper.asJLong(longlongVal);
+                        assertThat(vals).hasSize(expectedNrOfM2NJoinedInstanceEntries)
+                                        .containsExactlyInAnyOrder(new long[] { iids2[1], iids2[2], iids2[0], iids2[0],
+                                                iids2[1], iids2[4] });
+                    } else if ("TestAttr".equals(nvsui.valName)) {
+                        T_LONGLONG[][] longlongSeq = nvsui.value.u.longlongSeq();
+                        assertThat(longlongSeq).hasSize(expectedNrOfM2NJoinedInstanceEntries)
+                                               .containsExactlyInAnyOrder(new T_LONGLONG[][] { testValues[1],
+                                                       testValues[2], testValues[0], testValues[0], testValues[1],
+                                                       testValues[4] });
+                    }
+                }
+            }
+        }
+    }
+    
+    private ElemResultSetExt[] prepareResult_withSequenceValues_partiallyInvalid(T_LONGLONG[][] testValues2) {
+        // element 1 nvsuis
+        short[] idFlags1 = new short[iids1.length];
+        Arrays.fill(idFlags1, (short)15);
+        NameValueSeqUnitId idNvsui1 = createNvsui(idAttrName, DataType.DT_LONGLONG, iids1, idFlags1, null);
+        NameValueSeqUnitId[] nvsuis1 = new NameValueSeqUnitId[] {idNvsui1};
+        ElemResultSetExt erse1 = new ElemResultSetExt(aid1, nvsuis1);
+        
+        // element 2 nvsuis
+        short[] idFlags2 = new short[] {(short)15, 15, 15, 15, 15};
+        short[] testFlags2 = new short[] {(short)15, 15, 0, 0, 15};
+        
+        NameValueSeqUnitId idNvsui2 = createNvsui(idAttrName, DataType.DT_LONGLONG, iids2, idFlags2, null);
+        NameValueSeqUnitId testNvsui2 = createNvsui("TestAttr", DataType.DS_LONGLONG, testValues2, testFlags2, null);
+        NameValueSeqUnitId[] nvsuis2 = new NameValueSeqUnitId[] {idNvsui2, testNvsui2};
+        ElemResultSetExt erse2 = new ElemResultSetExt(aid2, nvsuis2);
+        
+        return new ElemResultSetExt[] {erse1, erse2};
+    }
+    
     private ElemResultSetExt[] prepareResult() {
         // element 1 nvsuis
         short[] idFlags1 = new short[iids1.length];

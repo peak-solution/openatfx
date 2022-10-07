@@ -306,8 +306,8 @@ public class JoinHelper {
             T_LONGLONG currentIid = longIids[j];
             for (NameValueSeqUnitId nvsui : erse.values) {
                 DataType currentDt = nvsui.value.u.discriminator();
-                DataType singleDt = ODSHelper.getSingleDataType(currentDt);
                 if (nvsui.valName.equals(idAttrName)) {
+                    DataType singleDt = ODSHelper.getSingleDataType(currentDt);
                     TS_Value idVal = ODSHelper.createEmptyTS_Value(singleDt);
                     idVal.flag = 15;
                     idVal.u.longlongVal(currentIid);
@@ -317,7 +317,7 @@ public class JoinHelper {
                     short flag = nvsui.value.flag[j];
                     NameValueUnitId nvui = null;
                     if (flag == 0) {
-                        nvui = new NameValueUnitId(nvsui.valName, ODSHelper.createEmptyTS_Value(singleDt),
+                        nvui = new NameValueUnitId(nvsui.valName, ODSHelper.createEmptyTS_Value(currentDt),
                                                    nvsui.unitId);
                     } else {
                         TS_Union u = ODSHelper.tsUnionSeq2tsUnion(nvsui.value.u, j);
