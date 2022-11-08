@@ -40,7 +40,6 @@ class ApplicationAttributeImpl extends ApplicationAttributePOA {
         obligatoryAttributes = new HashMap<String, List<String>>();
         obligatoryAttributes.put("id", null); // all application elements
         obligatoryAttributes.put("name", null); // all application elements
-        obligatoryAttributes.put("meaning_of_aliases", Arrays.asList(new String[] { "AoEnvironment" }));
         obligatoryAttributes.put("entity_name", Arrays.asList(new String[] { "AoNameMap", "AoAttributeMap" }));
         obligatoryAttributes.put("factor", Arrays.asList(new String[] { "AoUnit" }));
         obligatoryAttributes.put("offset", Arrays.asList(new String[] { "AoUnit" }));

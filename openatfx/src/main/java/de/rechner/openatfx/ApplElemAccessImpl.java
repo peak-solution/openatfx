@@ -142,7 +142,11 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 // fetch or create id
                 long iid = 0;
                 if (idCol != null) {
-                    iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
+                    if (idCol.values.u.discriminator().equals(DataType.DT_LONG)) {
+                        iid = ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longVal();
+                    } else {
+                        iid = ODSHelper.asJLong(ODSHelper.tsValueSeq2tsValue(idCol.values, row).u.longlongVal());
+                    }
                 } else {
                     iid = this.atfxCache.nextIid(aid);
                 }

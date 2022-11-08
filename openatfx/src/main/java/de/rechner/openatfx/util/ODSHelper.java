@@ -1452,7 +1452,13 @@ public abstract class ODSHelper {
         }
         // DT_LONGLONG
         else if (dt == DataType.DT_LONGLONG) {
-            value.u.longlongVal((T_LONGLONG) obj);
+            T_LONGLONG val = null;
+            if (obj instanceof Integer) {
+                val = ODSHelper.asODSLongLong((Integer)obj);
+            } else {
+                val = (T_LONGLONG) obj;
+            }
+            value.u.longlongVal(val);
         }
         // DT_SHORT
         else if (dt == DataType.DT_SHORT) {
