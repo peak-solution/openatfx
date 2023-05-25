@@ -230,13 +230,13 @@ class ExtCompReader {
         int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.longVal();
 
         // read start offset, may be DT_LONG or DT_LONGLONG
-        int startOffset = 0;
+        long startOffset = 0;
         attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "start_offset");
         TS_Value vStartOffset = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
         if (vStartOffset.u.discriminator() == DataType.DT_LONG) {
             startOffset = vStartOffset.u.longVal();
         } else if (vStartOffset.u.discriminator() == DataType.DT_LONGLONG) {
-            startOffset = (int) ODSHelper.asJLong(vStartOffset.u.longlongVal());
+            startOffset = ODSHelper.asJLong(vStartOffset.u.longlongVal());
         }
 
         // read value offset

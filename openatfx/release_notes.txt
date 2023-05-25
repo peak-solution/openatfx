@@ -4,6 +4,9 @@
 	
 
 1. Changes
+	1.3.3 (Markus Renner)
+		- fixed using long type start_offset values internally to support binary files with size larger than 2GB (max int)
+	
 	1.3.2 (Markus Renner)
 		- fixed handling of models still containing old DT_LONG datatype for IDs or other attributes instead of the newer DT_LONGLONG
 		- removed Environment attribute 'meaning_of_aliases' from the list of obligatory attributes, which it is not
