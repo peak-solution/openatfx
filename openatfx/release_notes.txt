@@ -4,6 +4,9 @@
 	
 
 1. Changes
+	1.3.4 (Masayoshi Kuroda, Markus Renner)
+		- supported reading of values and flags of External Components from related AoFile instances
+	
 	1.3.3 (Markus Renner)
 		- fixed using long type start_offset values internally to support binary files with size larger than 2GB (max int)
 	

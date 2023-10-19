@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -216,13 +217,10 @@ class ExtCompReader {
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
         // get filename
-        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
-        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
-        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
-        File extCompFile = new File(fileRoot, filenameUrl);
-
+        File extCompFile = getExtCompFile(atfxCache, aidExtComp, iidExtComp, false);
+        
         // get value type
-        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
+        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
         int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
 
         // read length
@@ -360,6 +358,8 @@ class ExtCompReader {
                 }
             }
 
+            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
+            String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
             LOG.info("Read " + list.size() + " numeric values from component file '" + filenameUrl + "' in "
                     + (System.currentTimeMillis() - start) + "ms [value_type=" + ODSHelper.valueType2String(valueType)
                     + "]");
@@ -383,14 +383,11 @@ class ExtCompReader {
         long start = System.currentTimeMillis();
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
 
-        // get filename
-        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
-        String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
-        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
-        File extCompFile = new File(fileRoot, filenameUrl);
-
+        // get values File
+        File extCompFile = getExtCompFile(atfxCache, aidExtComp, iidExtComp, false);
+        
         // get datatype
-        attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
+        int attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "value_type");
         int valueType = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.enumVal();
         if (valueType != 12 && valueType != 25) {
             throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
@@ -432,6 +429,8 @@ class ExtCompReader {
                 }
             }
 
+            attrNo = atfxCache.getAttrNoByBaName(aidExtComp, "filename_url");
+            String filenameUrl = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp).u.stringVal();
             LOG.info("Read " + list.size() + " string values from component file '" + filenameUrl + "' in "
                     + (System.currentTimeMillis() - start) + "ms [value_type=" + ODSHelper.valueType2String(valueType)
                     + "]");
@@ -480,9 +479,8 @@ class ExtCompReader {
         }
         short[] overallFlags = new short[overallNrOfFlags];
         
-        Integer attrNoFlagsFilenameUrl = atfxCache.getAttrNoByBaName(aidExtComp, "flags_filename_url");
         Integer attrNoFlagsStartOffset = atfxCache.getAttrNoByBaName(aidExtComp, "flags_start_offset");
-        List<String> flagsFileNames = new ArrayList<>();
+        Collection<String> flagsFileNames = new HashSet<>();
         
         // collect all flags from all external components
         extCompIter = iidExtComps.iterator();
@@ -490,14 +488,11 @@ class ExtCompReader {
         while (extCompIter.hasNext())
         {
             long iidExtComp = extCompIter.next();
-            // get filename
-            TS_Value v = atfxCache.getInstanceValue(aidExtComp, attrNoFlagsFilenameUrl, iidExtComp);
-            if ((v == null) || (v.flag != 15) || (v.u.stringVal() == null) || (v.u.stringVal().length() < 1)) {
+            // get flags file
+            File flagsFile = getExtCompFile(atfxCache, aidExtComp, iidExtComp, true);
+            if (flagsFile == null) {
                 return null;
             }
-            String flagsFilenameUrl = v.u.stringVal();
-            File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
-            File flagsFile = new File(fileRoot, flagsFilenameUrl);
             flagsFileNames.add(flagsFile.getName());
     
             // read start offset, may be DT_LONG or DT_LONGLONG
@@ -532,8 +527,7 @@ class ExtCompReader {
         return tsValue;
     }
     
-    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength) throws AoException
-    {
+    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength) throws AoException {
         List<Short> flags = new ArrayList<>();
         
         byte[] backingBuffer = new byte[2];
@@ -552,6 +546,59 @@ class ExtCompReader {
         }
         
         return flags;
+    }
+    
+    /**
+     * Identifies the requested values or flags file of specified External Component. Tries to identify the file by the
+     * respective reference attribute first and, if no valid value was found there, tries to find the AoFile instance
+     * probably related to the External Component instead.
+     * 
+     * @param atfxCache
+     * @param aidExtComp
+     * @param iidExtComp
+     * @param requestFlags if true, the ExtComp's flags file is requested, the values file otherwise
+     * @return the defined File instance identified at the given external component, null if file could not be identified
+     * @throws AoException
+     */
+    private File getExtCompFile(AtfxCache atfxCache, long aidExtComp, long iidExtComp,
+            boolean requestFlags) throws AoException {
+        String attrName = null;
+        String fileRelBaseName = null;
+        if (requestFlags) {
+            attrName = "flags_filename_url";
+            fileRelBaseName = "ao_flags_file";
+        } else {
+            attrName = "filename_url";
+            fileRelBaseName = "ao_values_file";
+        }
+        
+        Integer attrNo = atfxCache.getAttrNoByBaName(aidExtComp, attrName);
+        File fileRoot = new File(atfxCache.getContext().get("FILE_ROOT").value.u.stringVal());
+        File extCompFile = null;
+        TS_Value v = atfxCache.getInstanceValue(aidExtComp, attrNo, iidExtComp);
+        if ((v == null) || (v.flag != 15) || (v.u.stringVal() == null) || (v.u.stringVal().length() < 1)) {
+            // if no valid file reference is found, find the related AoFile if one exists
+            ApplicationRelation relFile = atfxCache.getApplicationRelationByBaseName(aidExtComp, fileRelBaseName);
+            if (relFile == null) {
+                return null;
+            }
+            
+            long aidFile = ODSHelper.asJLong(relFile.getElem2().getId());
+            List<Long> iidFiles = atfxCache.getRelatedInstanceIds(aidExtComp, iidExtComp, relFile);
+            if (iidFiles.isEmpty()) {
+                return null;
+            }
+            
+            long iidFile = iidFiles.iterator().next();
+            attrNo = atfxCache.getAttrNoByBaName(aidFile, "ao_location");
+            TS_Value value = atfxCache.getInstanceValue(aidFile, attrNo, iidFile);
+            String location = value.u.stringVal();
+            extCompFile = new File(fileRoot, location);
+        } else {
+            String filenameUrl = v.u.stringVal();
+            extCompFile = new File(fileRoot, filenameUrl);
+        }
+        return extCompFile;
     }
 
     /**
@@ -605,5 +652,4 @@ class ExtCompReader {
             }
         }
     }
-
 }
