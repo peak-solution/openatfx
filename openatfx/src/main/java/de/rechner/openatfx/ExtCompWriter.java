@@ -155,7 +155,7 @@ class ExtCompWriter {
 
             // DS_BYTESTR
             if (dt == DataType.DS_BYTESTR) {
-                valueType = 13; // dt_bytestr
+                valueType = 33; // dt_bytestr_leo
 
                 long extCompSize = ODSHelper.asJLong(atfxCache.getContext()
                                                      .get("EXT_COMP_SEGSIZE").value.u.longlongVal());
@@ -499,7 +499,8 @@ class ExtCompWriter {
      */
     public void writeFlags(AtfxCache atfxCache, long iidExtComp, short[] flags) throws AoException {
         long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
-
+        ByteOrder flagsByteOrder = atfxCache.getByteOrder(aidExtComp, iidExtComp);
+        
         // open file
         File flagsFile = getExtCompFileFlags(atfxCache, 1);
         FileOutputStream fos = null;
@@ -512,7 +513,7 @@ class ExtCompWriter {
 
             // DS_SHORT
             ByteBuffer bb = ByteBuffer.allocate(flags.length * 2);
-            bb.order(ByteOrder.LITTLE_ENDIAN);
+            bb.order(flagsByteOrder);
             for (int i = 0; i < flags.length; i++) {
                 bb.putShort(flags[i]);
             }

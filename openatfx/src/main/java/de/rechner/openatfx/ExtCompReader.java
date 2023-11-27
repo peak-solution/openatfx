@@ -51,6 +51,7 @@ class ExtCompReader {
     public TS_Value readValues(AtfxCache atfxCache, long iidLc, DataType targetDataType) throws AoException {
         // read external component instances
         long aidLc = atfxCache.getAidsByBaseType("aolocalcolumn").iterator().next();
+        long aidExtComp = atfxCache.getAidsByBaseType("aoexternalcomponent").iterator().next();
         ApplicationRelation relExtComps = atfxCache.getApplicationRelationByBaseName(aidLc, "external_component");
         List<Long> iidExtComps = atfxCache.getRelatedInstanceIds(aidLc, iidLc, relExtComps);
         if (iidExtComps.size() > 0) {
@@ -60,7 +61,7 @@ class ExtCompReader {
         TS_Value tsValue = new TS_Value();
         tsValue.flag = (short) 15;
         tsValue.u = new TS_Union();
-
+        
         // get raw data type
         DataType rawDataType = targetDataType;
         Integer attrNo = atfxCache.getAttrNoByBaName(aidLc, "raw_datatype");
@@ -119,7 +120,8 @@ class ExtCompReader {
         else {
             List<Number> list = new ArrayList<Number>();
             for (long iidExtComp : iidExtComps) {
-                list.addAll(readNumberValues(atfxCache, iidExtComp));
+                ByteOrder valuesByteOrder = atfxCache.getByteOrder(aidExtComp, iidExtComp);
+                list.addAll(readNumberValues(atfxCache, iidExtComp, valuesByteOrder));
             }
             // DS_BOOLEAN
             if (rawDataType == DataType.DS_BOOLEAN) {
@@ -209,7 +211,7 @@ class ExtCompReader {
         return tsValue;
     }
 
-    protected List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp)
+    protected List<Number> readNumberValues(AtfxCache atfxCache, long iidExtComp, ByteOrder byteOrder)
             throws AoException {
         long start = System.currentTimeMillis();
 
@@ -272,17 +274,6 @@ class ExtCompReader {
 
             // initialize buffer
             ByteBuffer sourceMbb = ByteBuffer.allocate(blockSize);
-            ByteOrder byteOrder = ByteOrder.LITTLE_ENDIAN;
-            // dt_short_beo [7], dt_long_beo [8], dt_longlong_beo [9], ieeefloat4_beo [10], ieeefloat8_beo [11],
-            // dt_boolean_flags_beo [15], dt_byte_flags_beo [16], dt_string_flags_beo [17], dt_bytestr_beo [18],
-            // dt_sbyte_flags_beo [20], dt_ushort_beo [22], dt_ulong_beo [24], dt_string_utf8_beo [26]
-            // dt_bit_int_beo [28], dt_bit_uint_beo [30], dt_bit_float_beo [32]
-            if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 10) || (valueType == 11)
-                    || (valueType == 15) || (valueType == 16) || (valueType == 17) || (valueType == 18)
-                    || (valueType == 20) || (valueType == 22) || (valueType == 24) || (valueType == 26)
-                    || (valueType == 28) || (valueType == 30) || (valueType == 32)) {
-                byteOrder = ByteOrder.BIG_ENDIAN;
-            }
             sourceMbb.order(byteOrder);
 
             // loop over blocks
@@ -509,8 +500,9 @@ class ExtCompReader {
             }
             
             // read and store flag values of current external component
+            ByteOrder flagsByteOrder = atfxCache.getByteOrder(aidExtComp, iidExtComp);
             int componentLength = atfxCache.getInstanceValue(aidExtComp, attrNoComponentLength, iidExtComp).u.longVal();
-            for (Short flag : readFlagsFromFile(flagsFile, flagsStartOffset, componentLength))
+            for (Short flag : readFlagsFromFile(flagsFile, flagsStartOffset, componentLength, flagsByteOrder))
             {
                 overallFlags[flagIndex++] = flag;
             }
@@ -527,7 +519,7 @@ class ExtCompReader {
         return tsValue;
     }
     
-    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength) throws AoException {
+    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength, ByteOrder byteOrder) throws AoException {
         List<Short> flags = new ArrayList<>();
         
         byte[] backingBuffer = new byte[2];
@@ -537,7 +529,7 @@ class ExtCompReader {
             for (int i = 0; i < componentLength; i++) {
                 raf.read(backingBuffer, 0, backingBuffer.length);
                 ByteBuffer sourceMbb = ByteBuffer.wrap(backingBuffer);
-                sourceMbb.order(ByteOrder.LITTLE_ENDIAN);
+                sourceMbb.order(byteOrder);
                 flags.add(sourceMbb.getShort());
             }
         } catch (IOException e) {

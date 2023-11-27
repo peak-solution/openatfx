@@ -3315,10 +3315,28 @@ public abstract class ODSHelper {
         TS_Value value = new TS_Value();
         value.flag = source.flag;
         value.u = new TS_Union();
-        if ((sourceDt == DataType.DS_LONG) && (targetDt == DataType.DS_DOUBLE)) {
+        if ((sourceDt == DataType.DS_SHORT) && (targetDt == DataType.DS_DOUBLE)) {
+            double[] ar = new double[source.u.shortSeq().length];
+            for (int i = 0; i < ar.length; i++) {
+                ar[i] = source.u.shortSeq()[i];
+            }
+            value.u.doubleSeq(ar);
+        } else if ((sourceDt == DataType.DS_LONG) && (targetDt == DataType.DS_DOUBLE)) {
             double[] ar = new double[source.u.longSeq().length];
             for (int i = 0; i < ar.length; i++) {
                 ar[i] = source.u.longSeq()[i];
+            }
+            value.u.doubleSeq(ar);
+        } else if ((sourceDt == DataType.DS_BYTE) && (targetDt == DataType.DS_DOUBLE)) {
+            double[] ar = new double[source.u.byteSeq().length];
+            for (int i = 0; i < ar.length; i++) {
+                ar[i] = source.u.byteSeq()[i];
+            }
+            value.u.doubleSeq(ar);
+        } else if ((sourceDt == DataType.DS_LONGLONG) && (targetDt == DataType.DS_DOUBLE)) {
+            double[] ar = new double[source.u.longlongSeq().length];
+            for (int i = 0; i < ar.length; i++) {
+                ar[i] = asJLong(source.u.longlongSeq()[i]);
             }
             value.u.doubleSeq(ar);
         } else if ((sourceDt == DataType.DS_FLOAT) && (targetDt == DataType.DS_DOUBLE)) {

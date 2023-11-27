@@ -4,6 +4,14 @@
 	
 
 1. Changes
+	1.4.0 (Markus Renner)
+		- supported further datatypes in LocalColumn generation parameters (previously only DT_STRING, DT_LONG, DT_FLOAT, DT_DOUBLE,
+		  now also DT_DATE, DT_BOOLEAN, DT_COMPLEX, DT_DCOMPLEX, DT_BYTESTR, DT_SHORT, DT_LONGLONG, DT_BYTE)
+		- ! CHANGE: generated external components will now have value_type dt_bytestr_leo for byte streams, not the deprecated dt_bytestr anymore
+		- ! CHANGE: local column flags in extcomp files are now read and written with the byte order derived from the respective value_type value
+		  (dt_bytestr will be interpreted as little endian as before), this corrects the previous general interpretation as LITTLE_ENDIAN but
+		  may break tools or processes that were adjusted to this mis-behaviour
+	
 	1.3.4 (Masayoshi Kuroda, Markus Renner)
 		- supported reading of values and flags of External Components from related AoFile instances
 	

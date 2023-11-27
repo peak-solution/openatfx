@@ -37,14 +37,14 @@ public class ExtCompReaderTest {
     @Test
     public void testReadNumberValues_signedByte() throws Exception {
         ExtCompReader reader = new ExtCompReader();
-        List<Number> numbers = reader.readNumberValues(atfxCache, 116);
+        List<Number> numbers = reader.readNumberValues(atfxCache, 116, null);
         assertThat(numbers).containsExactly((byte)1, (byte)0, (byte)-1, (byte)126, (byte)127, (byte)-127, (byte)-128, (byte)42, (byte)-13, (byte)-111);
     }
 
     @Test
     public void testReadNumberValues_unsignedByte() throws Exception {
         ExtCompReader reader = new ExtCompReader();
-        List<Number> numbers = reader.readNumberValues(atfxCache, 119);
+        List<Number> numbers = reader.readNumberValues(atfxCache, 119, null);
         int[] widenedNumbers = numbers.stream().mapToInt(b -> b.intValue()).toArray();
         assertThat(widenedNumbers).containsExactly(1, 0, 127, 128, 129, 254, 255, 42, 13, 111);
     }

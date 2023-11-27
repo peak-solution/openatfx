@@ -1,5 +1,6 @@
 package de.rechner.openatfx;
 
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -824,7 +825,10 @@ class AtfxCache {
                     int valuesAttrNo = getAttrNoByBaName(aid, "values");
                     TS_Value val = getInstanceValue(aid, valuesAttrNo, iid);
                     // generation parameters for 'implicit_constant' may be datatype DT_STRING
-                    if (val.u.discriminator() == DataType.DS_STRING) {
+                    DataType discriminator = val.u.discriminator();
+                    if (DataType.DS_STRING == discriminator || DataType.DS_DATE == discriminator
+                            || DataType.DS_BOOLEAN == discriminator || DataType.DS_BYTESTR == discriminator
+                            || DataType.DS_COMPLEX == discriminator || DataType.DS_DCOMPLEX == discriminator) {
                         return ODSHelper.createEmptyTS_Value(DataType.DS_DOUBLE);
                     }
                     return ODSHelper.convertTsValue(getInstanceValue(aid, valuesAttrNo, iid), DataType.DS_DOUBLE);
@@ -1370,5 +1374,23 @@ class AtfxCache {
             }
         }
         return null;
+    }
+    
+    public ByteOrder getByteOrder(long aidExtComp, long iidExtComp) throws AoException
+    {
+        Integer attrNoValueType = getAttrNoByBaName(aidExtComp, "value_type");
+        int valueType = getInstanceValue(aidExtComp, attrNoValueType, iidExtComp).u.enumVal();
+        
+        // dt_short_beo [7], dt_long_beo [8], dt_longlong_beo [9], ieeefloat4_beo [10], ieeefloat8_beo [11],
+        // dt_boolean_flags_beo [15], dt_byte_flags_beo [16], dt_string_flags_beo [17], dt_bytestr_beo [18],
+        // dt_sbyte_flags_beo [20], dt_ushort_beo [22], dt_ulong_beo [24], dt_string_utf8_beo [26]
+        // dt_bit_int_beo [28], dt_bit_uint_beo [30], dt_bit_float_beo [32]
+        if ((valueType == 7) || (valueType == 8) || (valueType == 9) || (valueType == 10) || (valueType == 11)
+                || (valueType == 15) || (valueType == 16) || (valueType == 17) || (valueType == 18)
+                || (valueType == 20) || (valueType == 22) || (valueType == 24) || (valueType == 26)
+                || (valueType == 28) || (valueType == 30) || (valueType == 32)) {
+            return ByteOrder.BIG_ENDIAN;
+        }
+        return ByteOrder.LITTLE_ENDIAN;
     }
 }

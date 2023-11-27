@@ -3,6 +3,7 @@ package de.rechner.openatfx;
 
 import java.io.File;
 import java.net.URL;
+import java.nio.ByteOrder;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -39,7 +40,7 @@ public class ExtCompReaderAoFileTest {
     @Test
     public void testReadValues() throws AoException {
         ExtCompReader reader = new ExtCompReader();
-        List<Number> numbers= reader.readNumberValues(atfxCache, 1); // LC.Name=51900778_1
+        List<Number> numbers= reader.readNumberValues(atfxCache, 1, ByteOrder.LITTLE_ENDIAN); // LC.Name=51900778_1
         
         // check length
         assertEquals(300004, numbers.size());
