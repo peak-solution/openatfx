@@ -19,6 +19,7 @@ import org.asam.ods.InstanceElement;
 import org.asam.ods.Measurement;
 import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueUnit;
+import org.asam.ods.ODSFile;
 import org.asam.ods.Relationship;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.T_ExternalReference;
@@ -726,6 +727,22 @@ public class InstanceElementImplTest {
             ieDts.upcastSubMatrix();
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_INVALID_BASETYPE.value(), e.errCode.value());
+        }
+    }
+    
+    @Test
+    public void testUpcastODSFile() {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/external_with_flags_aofile.atfx");
+        try {
+            AoSession localAoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+            ApplicationStructure applicationStructure = localAoSession.getApplicationStructure();
+            ApplicationElement aeFile = applicationStructure.getElementByName("ExtCompFile");
+            InstanceElement ieFile = aeFile.getInstanceById(ODSHelper.asODSLongLong(1));
+            ODSFile file = ieFile.upcastODSFile();
+            assertEquals("external_with_flags.bda", file.getName());
+        } catch (AoException e) {
+            fail(e.reason);
         }
     }
 

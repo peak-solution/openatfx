@@ -725,6 +725,23 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Unable to build ValueMatrix on object: " + ie.getAsamPath());
     }
+    
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.ApplElemAccessOperations#getODSFile(org.asam.ods.ElemId)
+     */
+    public ODSFile getODSFile(ElemId elem) throws AoException {
+        long aid = ODSHelper.asJLong(elem.aid);
+        long iid = ODSHelper.asJLong(elem.iid);
+        InstanceElement ie = this.atfxCache.getInstanceById(this.instancePOA, aid, iid);
+        String beName = ie.getApplicationElement().getBaseElement().getType();
+        if (beName.equalsIgnoreCase("AoFile")) {
+            return ie.upcastODSFile();
+        }
+        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
+                              "Unable to get ODSFile from object: " + ie.getAsamPath());
+    }
 
     /***********************************************************************************
      * security
@@ -859,16 +876,6 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
     public InitialRight[] getInstanceInitialRights(T_LONGLONG aid, T_LONGLONG iid) throws AoException {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'getInstanceInitialRights' not implemented");
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.ApplElemAccessOperations#getODSFile(org.asam.ods.ElemId)
-     */
-    public ODSFile getODSFile(ElemId elem) throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'getODSFile' not implemented");
     }
 
 }

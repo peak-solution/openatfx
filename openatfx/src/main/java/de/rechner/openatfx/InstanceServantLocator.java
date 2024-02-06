@@ -64,6 +64,10 @@ class InstanceServantLocator extends LocalObject implements ServantLocator {
         else if (type == 3) {
             return new InstanceElementIteratorPOATie(new InstanceElementIteratorImpl(atfxCache, aid));
         }
+        // type=4, object is a <code>org.asam.ods.ODSFile</code>
+        else if (type == 4) {
+            return new ODSFileImpl(modelPOA, adapter, atfxCache, aid, iid);
+        }
         throw new ForwardRequest();
     }
 

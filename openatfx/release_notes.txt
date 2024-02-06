@@ -4,6 +4,9 @@
 	
 
 1. Changes
+	1.5.0 (Markus Renner)
+		- ODSFile creation now supported
+
 	1.4.0 (Markus Renner)
 		- supported further datatypes in LocalColumn generation parameters (previously only DT_STRING, DT_LONG, DT_FLOAT, DT_DOUBLE,
 		  now also DT_DATE, DT_BOOLEAN, DT_COMPLEX, DT_DCOMPLEX, DT_BYTESTR, DT_SHORT, DT_LONGLONG, DT_BYTE)

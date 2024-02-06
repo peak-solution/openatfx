@@ -1,6 +1,7 @@
 package de.rechner.openatfx;
 
 import java.nio.ByteOrder;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -27,6 +28,8 @@ import org.asam.ods.InstanceElementHelper;
 import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.InstanceElementIteratorHelper;
 import org.asam.ods.NameValue;
+import org.asam.ods.ODSWriteTransfer;
+import org.asam.ods.ODSWriteTransferHelper;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_UnionSeq;
@@ -87,6 +90,11 @@ class AtfxCache {
     private final Map<Long, InstanceElement[]> instanceIteratorElementCache;
     private final Map<Long, Integer> instanceIteratorPointerCache;
     private long nextInstanceIteratorId = 0;
+    
+    /**
+     * cache for ODSWriteTransferImplementations, mapped by the aid and iid of the respective ODSFile instance
+     */
+    private final Map<Long, Map<Long, ODSWriteTransfer>> writeTransferCache;
 
     /** The counters for ids */
     private int nextAid;
@@ -127,6 +135,7 @@ class AtfxCache {
         this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
         this.instanceIteratorElementCache = new HashMap<Long, InstanceElement[]>();
         this.instanceIteratorPointerCache = new HashMap<Long, Integer>();
+        this.writeTransferCache = new HashMap<Long, Map<Long,ODSWriteTransfer>>();
 
         this.nextAid = 1;
         this.nextAttrNoMap = new HashMap<Long, Integer>();
@@ -1392,5 +1401,36 @@ class AtfxCache {
             return ByteOrder.BIG_ENDIAN;
         }
         return ByteOrder.LITTLE_ENDIAN;
+    }
+    
+    public ODSWriteTransfer newWriteTransfer(POA modelPOA, POA instancePOA, long aid, long iid, String fileName, InstanceElement fileInstance) throws AoException {
+        if (getWriteTransfer(aid, iid) != null)
+        {
+            throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 1,
+                                  "Cannot create ODSFileTransfer for file (aid=" + aid + ",iid=" + iid
+                                          + "), because transfer instance already exists!");
+        }
+        
+        ODSWriteTransfer writeTransfer = null;
+        try {
+            String fileRoot = getContext().get("FILE_ROOT_EXTREF").value.u.stringVal();
+            String filePath = Paths.get(fileRoot).resolve(fileName).toString();
+            OdsWriteTransfer transfer = new OdsWriteTransfer(modelPOA, filePath, fileInstance);
+            writeTransfer = ODSWriteTransferHelper.narrow(modelPOA.servant_to_reference(transfer));
+        } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+        
+        writeTransferCache.computeIfAbsent(aid, v -> new HashMap<>()).put(iid, writeTransfer);
+        return writeTransfer;
+    }
+    
+    public ODSWriteTransfer getWriteTransfer(long aid, long iid) {
+        Map<Long, ODSWriteTransfer> map = writeTransferCache.get(aid);
+        if (map != null) {
+            return map.get(iid);
+        }
+        return null;
     }
 }

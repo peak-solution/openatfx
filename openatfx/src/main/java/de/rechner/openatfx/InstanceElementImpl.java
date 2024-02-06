@@ -29,6 +29,7 @@ import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.ODSFile;
+import org.asam.ods.ODSFileHelper;
 import org.asam.ods.RelationRange;
 import org.asam.ods.Relationship;
 import org.asam.ods.RightsSet;
@@ -762,6 +763,30 @@ class InstanceElementImpl extends InstanceElementPOA {
         }
         return SubMatrixHelper.unchecked_narrow(obj);
     }
+    
+    /**
+     * {@inheritDoc}
+     * 
+     * @see org.asam.ods.InstanceElementOperations#upcastODSFile()
+     */
+    public ODSFile upcastODSFile() throws AoException {
+        // check if application element is of type 'AoFile'
+        String beName = getApplicationElement().getBaseElement().getType();
+        if (!beName.equalsIgnoreCase("AoFile")) {
+            throw new AoException(ErrorCode.AO_INVALID_BASETYPE, SeverityFlag.ERROR, 0,
+                                  "InstanceElement is not of base type 'AoFile'");
+        }
+
+        byte[] oid = AtfxCache.toByta(new long[] { 4, aid, iid }); // 4=File
+        org.omg.CORBA.Object obj;
+        try {
+            obj = instancePOA.create_reference_with_id(oid, ODSFileHelper.id());
+        } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
+            LOG.error(e.getMessage(), e);
+            throw new AoException(ErrorCode.AO_UNKNOWN_ERROR, SeverityFlag.ERROR, 0, e.getMessage());
+        }
+        return ODSFileHelper.unchecked_narrow(obj);
+    }
 
     /**
      * {@inheritDoc}
@@ -818,15 +843,4 @@ class InstanceElementImpl extends InstanceElementPOA {
         throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
                               "Method 'setInitialRights' not implemented");
     }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see org.asam.ods.InstanceElementOperations#upcastODSFile()
-     */
-    public ODSFile upcastODSFile() throws AoException {
-        throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0,
-                              "Method 'upcastODSFile' not implemented");
-    }
-
 }
