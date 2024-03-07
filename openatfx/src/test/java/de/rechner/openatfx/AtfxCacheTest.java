@@ -11,18 +11,12 @@ import org.asam.ods.ApplicationRelation;
 import org.asam.ods.RelationRange;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import de.rechner.openatfx.util.ODSHelper;
 
-
 public class AtfxCacheTest {
-
-    @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
-    }
 
     @Test
     public void testGetRelatedInstanceIds() throws Exception {

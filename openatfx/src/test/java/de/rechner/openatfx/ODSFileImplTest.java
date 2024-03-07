@@ -16,13 +16,12 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.ODSFile;
 import org.asam.ods.ODSWriteTransfer;
 import org.asam.ods.T_LONGLONG;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
-
 
 public class ODSFileImplTest {
 
@@ -30,7 +29,7 @@ public class ODSFileImplTest {
     private static ODSFile file;
     private static long fileSize;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ODSFileImplTest.class.getResource("/de/rechner/openatfx/external_with_flags.bda");
@@ -46,7 +45,7 @@ public class ODSFileImplTest {
         file = aeFile.getInstanceById(ODSHelper.asODSLongLong(1)).upcastODSFile();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
         if (aoSession != null) {
             aoSession.close();

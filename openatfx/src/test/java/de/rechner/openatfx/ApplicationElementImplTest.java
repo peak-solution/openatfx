@@ -7,8 +7,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationAttribute;
@@ -19,9 +17,9 @@ import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -37,7 +35,7 @@ public class ApplicationElementImplTest {
     private static AoSession aoSession;
     private static ApplicationElement applicationElement;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ApplicationElementImpl.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -45,9 +43,11 @@ public class ApplicationElementImplTest {
         applicationElement = aoSession.getApplicationStructure().getElementByName("dts");
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test
@@ -101,8 +101,8 @@ public class ApplicationElementImplTest {
         try {
             assertEquals("dts", applicationElement.getName());
             applicationElement.setName("new_name");
-            assertEquals("new_name", applicationElement.getApplicationStructure().getElementByName("new_name")
-                                                       .getName());
+            assertEquals("new_name",
+                         applicationElement.getApplicationStructure().getElementByName("new_name").getName());
             applicationElement.setName("dts");
             assertEquals("dts", applicationElement.getName());
         } catch (AoException e) {
@@ -526,9 +526,4 @@ public class ApplicationElementImplTest {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ApplicationElementImplTest.class);
-    }
-
 }

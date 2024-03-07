@@ -7,16 +7,15 @@ import org.asam.ods.AoException;
 import org.asam.ods.NameValue;
 import org.asam.ods.NameValueIterator;
 import org.asam.ods.NameValueIteratorHelper;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
 
 import de.rechner.openatfx.util.ODSHelper;
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -29,19 +28,19 @@ public class NameValueIteratorImplTest {
     private static POA poa;
     private NameValueIterator nameValueIterator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         poa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
         poa.the_POAManager().activate();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
         poa.destroy(false, false);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         NameValueIteratorImpl impl = new NameValueIteratorImpl(poa, new NameValue[] {
                 ODSHelper.createStringNV("name1", "value1"), ODSHelper.createStringNV("name2", "value2"),
@@ -125,9 +124,4 @@ public class NameValueIteratorImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(NameValueIteratorImplTest.class);
-    }
-
 }

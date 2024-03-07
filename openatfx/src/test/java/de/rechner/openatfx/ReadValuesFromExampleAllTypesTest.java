@@ -15,13 +15,12 @@ import org.asam.ods.SubMatrix;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
-import junit.framework.JUnit4TestAdapter;
 
 
 public class ReadValuesFromExampleAllTypesTest {
@@ -31,7 +30,7 @@ public class ReadValuesFromExampleAllTypesTest {
 
     private static ValueMatrix vmCalculatedExample;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/asam600/Example_AllTypes.atfx");
@@ -43,9 +42,11 @@ public class ReadValuesFromExampleAllTypesTest {
         vmCalculatedExample = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test
@@ -323,9 +324,4 @@ public class ReadValuesFromExampleAllTypesTest {
             fail(e.reason);
         }
     }
-    
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ReadValuesFromExampleAllTypesTest.class);
-    }
-
 }

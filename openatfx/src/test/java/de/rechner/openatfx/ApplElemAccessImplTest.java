@@ -38,13 +38,12 @@ import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -57,7 +56,7 @@ public class ApplElemAccessImplTest {
     private static AoSession aoSession;
     private static ApplElemAccess applElemAccess;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ApplElemAccessImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -65,7 +64,7 @@ public class ApplElemAccessImplTest {
         applElemAccess = aoSession.getApplElemAccess();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
         aoSession.close();
     }
@@ -115,10 +114,10 @@ public class ApplElemAccessImplTest {
             aidSeq[1].values.u = new TS_UnionSeq();
             aidSeq[1].values.u.dateVal(new String[] { "20180427" });
             ElemId[] elemIds = applElemAccess.insertInstances(aidSeq);
-            
+
             assertEquals(1, elemIds.length);
             T_LONGLONG iid = elemIds[0].iid;
-            
+
             AIDNameValueSeqUnitId iidAnvsui = new AIDNameValueSeqUnitId();
             iidAnvsui.attr = new AIDName(aid, "dsk_iid");
             iidAnvsui.values = new TS_ValueSeq();
@@ -136,7 +135,7 @@ public class ApplElemAccessImplTest {
             updateAidSeq[1] = nameAnvsui;
             updateAidSeq[2] = hostAnvsui;
             applElemAccess.updateInstances(updateAidSeq);
-            
+
             QueryStructureExt qse = new QueryStructureExt();
             qse.anuSeq = new SelAIDNameUnitId[1];
             qse.anuSeq[0] = new SelAIDNameUnitId();
@@ -151,7 +150,7 @@ public class ApplElemAccessImplTest {
             selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
             qse.condSeq[0].value(selValue);
             ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
-            
+
             assertEquals(1, resSetExt.length);
             ResultSetExt result = resSetExt[0];
             assertEquals(1, result.firstElems.length);
@@ -317,7 +316,7 @@ public class ApplElemAccessImplTest {
             fail(e.reason);
         }
     }
-    
+
     @Test
     public void testGetInstancesExt_multipleSelectElements() {
         try {
@@ -531,8 +530,10 @@ public class ApplElemAccessImplTest {
 
             assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[1]); // a value
             assertEquals("Time", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
-            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a value
-            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a value
+            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a
+                                                                                                                 // value
+            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a
+                                                                                                                 // value
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -706,9 +707,4 @@ public class ApplElemAccessImplTest {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ApplElemAccessImplTest.class);
-    }
-
 }

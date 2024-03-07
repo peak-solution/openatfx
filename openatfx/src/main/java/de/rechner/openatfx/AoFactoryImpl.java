@@ -121,7 +121,7 @@ class AoFactoryImpl extends AoFactoryPOA {
                 throw new AoException(ErrorCode.AO_MISSING_VALUE, SeverityFlag.ERROR, 0,
                                       "Parameter 'FILENAME' not found");
             }
-            return AtfxReader.getInstance().createSessionForATFX(orb, this.fileHandler, atfxFile.getAbsolutePath());
+            return new AtfxReader().createSessionForATFX(orb, this.fileHandler, atfxFile.getAbsolutePath());
         } catch (AoException aoe) {
             LOG.error(aoe.reason, aoe);
             throw aoe;

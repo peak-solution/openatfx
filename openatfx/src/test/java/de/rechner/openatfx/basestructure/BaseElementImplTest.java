@@ -2,15 +2,14 @@ package de.rechner.openatfx.basestructure;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AoException;
 import org.asam.ods.BaseElement;
 import org.asam.ods.BaseStructure;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 
@@ -23,7 +22,7 @@ public class BaseElementImplTest {
 
     private static BaseElement baseElement;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         BaseStructure baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, "asam30");
@@ -152,9 +151,4 @@ public class BaseElementImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(BaseElementImplTest.class);
-    }
-
 }

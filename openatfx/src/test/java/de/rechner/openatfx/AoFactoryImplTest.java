@@ -6,16 +6,14 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
 import org.asam.ods.NameValue;
 import org.asam.ods.TS_Union;
 import org.asam.ods.TS_Value;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 
@@ -28,10 +26,14 @@ public class AoFactoryImplTest {
 
     private static AoFactory aoFactory;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
-        aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+        try {
+            aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+        } catch (AoException ex) {
+            throw new RuntimeException("Encountered error getting AoFactory " + ex.reason);
+        }
     }
 
     /**
@@ -118,9 +120,4 @@ public class AoFactoryImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(AoFactoryImplTest.class);
-    }
-
 }

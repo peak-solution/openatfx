@@ -68,9 +68,6 @@ import de.rechner.openatfx.util.ODSHelper;
 public class AtfxReader {
     private static final Logger LOG = LoggerFactory.getLogger(AtfxReader.class);
 
-    /** The singleton instance */
-    private static volatile AtfxReader instance;
-
     /** cached model information for faster parsing */
     private final Map<String, String> documentation;
     private final Map<String, String> files;
@@ -79,16 +76,16 @@ public class AtfxReader {
     private final Map<String, Map<String, ApplicationRelation>> applRels; // aeName, relName, rel
     
     private boolean isExtendedCompatiblityMode;
-
-    /**
-     * Non visible constructor.
-     */
-    private AtfxReader() {
+    private AtfxInstanceReader instanceReader;
+    
+    public AtfxReader() {
         this.documentation = new HashMap<String, String>();
         this.files = new HashMap<String, String>();
         this.applElems = new HashMap<String, ApplicationElement>();
         this.applAttrs = new HashMap<String, Map<String, ApplicationAttribute>>();
         this.applRels = new HashMap<String, Map<String, ApplicationRelation>>();
+        
+        instanceReader = new AtfxInstanceReader();
     }
 
     /**
@@ -137,7 +134,7 @@ public class AtfxReader {
               // parse 'instance_data'
               else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
                   // parseInstanceElements(aoSession, reader);
-                  AtfxInstanceReader.getInstance().parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
+                  instanceReader.parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
               }
 
               // create AoSession object and write documentation to context
@@ -240,7 +237,7 @@ public class AtfxReader {
                 }
                 // parse 'instance_data'
                 else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA)) {
-                    AtfxInstanceReader.getInstance().parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
+                    instanceReader.parseInstanceElements(aoSession, files, reader, isExtendedCompatiblityMode);
                 }
 
                 // create AoSession object and write documentation to context
@@ -1046,18 +1043,6 @@ public class AtfxReader {
     /***************************************************************************************
      * methods for parsing attribute values
      ***************************************************************************************/
-
-    /**
-     * Returns the singleton instance.
-     * 
-     * @return The singleton instance.
-     */
-    public static AtfxReader getInstance() {
-        if (instance == null) {
-            instance = new AtfxReader();
-        }
-        return instance;
-    }
 
     /**
      * Custom Stax filter for only collect start and end elements.

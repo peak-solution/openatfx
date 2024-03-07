@@ -7,13 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.omg.CORBA.ORB;
 
 
@@ -22,11 +22,12 @@ import org.omg.CORBA.ORB;
  * 
  * @author Christian Rechner
  */
+@TestInstance(Lifecycle.PER_CLASS)
 public class AoServiceFactoryTest {
 
     private static ORB orb;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         orb = ORB.init(new String[0], System.getProperties());
     }
@@ -56,9 +57,8 @@ public class AoServiceFactoryTest {
     @Test
     public void testNewEmptyAoSession() {
         try {
-            AoSession aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb,
-                                                                                   File.createTempFile("tmp", "atfx"),
-                                                                                   "asam30");
+            AoSession aoSession = AoServiceFactory.getInstance()
+                                                  .newEmptyAoSession(orb, File.createTempFile("tmp", "atfx"), "asam30");
             assertNotNull(aoSession);
             aoSession.close();
         } catch (AoException e) {
@@ -66,10 +66,6 @@ public class AoServiceFactoryTest {
         } catch (IOException e) {
             fail(e.getMessage());
         }
-    }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(AoServiceFactoryTest.class);
     }
 
 }

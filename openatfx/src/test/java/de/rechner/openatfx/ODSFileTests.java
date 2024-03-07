@@ -1,0 +1,40 @@
+package de.rechner.openatfx;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.net.URL;
+
+import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationStructure;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.ODSFile;
+import org.junit.jupiter.api.Test;
+import org.omg.CORBA.ORB;
+
+import de.rechner.openatfx.util.ODSHelper;
+
+
+public class ODSFileTests {
+
+    @Test
+    public void testUpcastODSFile() {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/external_with_flags_aofile.atfx");
+        try {
+            AoSession localAoSession = AoServiceFactory.getInstance().newAoFactory(orb)
+                                                       .newSession("FILENAME=" + new File(url.getFile()));
+            ApplicationStructure applicationStructure = localAoSession.getApplicationStructure();
+            ApplicationElement aeFile = applicationStructure.getElementByName("ExtCompFile");
+            InstanceElement ieFile = aeFile.getInstanceById(ODSHelper.asODSLongLong(1));
+            ODSFile file = ieFile.upcastODSFile();
+            assertEquals("external_with_flags.bda", file.getName());
+            localAoSession.close();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+}

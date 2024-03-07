@@ -4,6 +4,14 @@
 	
 
 1. Changes
+	1.5.1 (Markus Renner)
+		- instance attributes with unit names are now supported
+		- added tolerance for both instance attributes with a defined unit ID and instance attributes with a defined unit name
+		  (openAtfx writes iids to atfx as specified by ODS)
+		- removed Singleton construct for AtfxReader and AtfxInstanceReader to enable openAtfx to be used in the same JVM more than once
+		- updated to JUnit5 framework
+		- updated maven plugins
+	
 	1.5.0 (Markus Renner)
 		- ODSFile creation now supported
 

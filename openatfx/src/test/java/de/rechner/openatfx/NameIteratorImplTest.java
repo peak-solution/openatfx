@@ -2,15 +2,14 @@ package de.rechner.openatfx;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AoException;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameIteratorHelper;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
@@ -26,19 +25,19 @@ public class NameIteratorImplTest {
     private static POA poa;
     private NameIterator nameIterator;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         poa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
         poa.the_POAManager().activate();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
         poa.destroy(false, false);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         NameIteratorImpl impl = new NameIteratorImpl(poa, new String[] { "name1", "name2", "name3", "name4", "name5" });
         this.nameIterator = NameIteratorHelper.narrow(poa.servant_to_reference(impl));
@@ -119,9 +118,4 @@ public class NameIteratorImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(NameIteratorImplTest.class);
-    }
-
 }

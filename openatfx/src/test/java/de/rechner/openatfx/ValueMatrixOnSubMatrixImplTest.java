@@ -17,13 +17,12 @@ import org.asam.ods.SubMatrix;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.ValueMatrix;
 import org.asam.ods.ValueMatrixMode;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -37,7 +36,7 @@ public class ValueMatrixOnSubMatrixImplTest {
     private static ValueMatrix vmStorage;
     private static ValueMatrix vmCalculated;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -49,9 +48,11 @@ public class ValueMatrixOnSubMatrixImplTest {
         vmCalculated = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test
@@ -174,7 +175,7 @@ public class ValueMatrixOnSubMatrixImplTest {
         try {
             Column[] cols = vmCalculated.getColumns("*");
             // whole array
-            NameValueSeqUnit[] nvsu = vmCalculated.getValue(cols, 0, 0); 
+            NameValueSeqUnit[] nvsu = vmCalculated.getValue(cols, 0, 0);
             assertEquals(167, nvsu[0].value.flag.length);
             assertEquals(167, nvsu[0].value.u.floatVal().length);
             assertEquals(167, nvsu[1].value.flag.length);
@@ -186,7 +187,7 @@ public class ValueMatrixOnSubMatrixImplTest {
             assertEquals(3, nvsu[0].value.u.floatVal().length);
             assertEquals(3, nvsu[1].value.flag.length);
             assertEquals(3, nvsu[1].value.u.doubleVal().length);
-            
+
             // part array with count overflow
             nvsu = vmCalculated.getValue(cols, 100, 100);
             assertEquals(67, nvsu[0].value.flag.length);
@@ -197,6 +198,7 @@ public class ValueMatrixOnSubMatrixImplTest {
             fail(e.reason);
         }
     }
+
     @Test
     public void testDestroy() {
         ValueMatrix vm = null;
@@ -210,9 +212,4 @@ public class ValueMatrixOnSubMatrixImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ValueMatrixOnSubMatrixImplTest.class);
-    }
-
 }

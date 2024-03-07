@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.asam.ods.T_COMPLEX;
 import org.asam.ods.T_DCOMPLEX;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import de.rechner.openatfx.util.ODSHelper;
 

@@ -184,7 +184,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                         }
                         // not defined in application model, assume instance attribute
                         else {
-                            this.atfxCache.setInstanceAttributeValue(aid, iid, anvsui.attr.aaName, value);
+                            this.atfxCache.setInstanceAttributeValue(aid, iid, anvsui.attr.aaName, value, anvsui.unitId);
                         }
                     }
                 }
@@ -271,7 +271,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                         }
                         // not defined in application model, assume instance attribute
                         else {
-                            this.atfxCache.setInstanceAttributeValue(aid, iid, anvsui.attr.aaName, value);
+                            this.atfxCache.setInstanceAttributeValue(aid, iid, anvsui.attr.aaName, value, anvsui.unitId);
                         }
                     }
                 }

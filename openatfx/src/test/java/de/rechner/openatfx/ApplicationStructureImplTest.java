@@ -6,8 +6,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
@@ -20,9 +18,9 @@ import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.RelationRange;
 import org.asam.ods.T_LONGLONG;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -38,7 +36,7 @@ public class ApplicationStructureImplTest {
     private static AoSession aoSession;
     private static ApplicationStructure applicationStructure;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ApplicationStructureImpl.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -46,9 +44,11 @@ public class ApplicationStructureImplTest {
         applicationStructure = aoSession.getApplicationStructure();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     /**
@@ -514,9 +514,4 @@ public class ApplicationStructureImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ApplicationStructureImplTest.class);
-    }
-
 }

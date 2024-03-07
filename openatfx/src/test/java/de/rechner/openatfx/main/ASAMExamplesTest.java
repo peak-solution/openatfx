@@ -16,12 +16,11 @@ import org.asam.ods.Column;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.ValueMatrix;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -33,7 +32,7 @@ public class ASAMExamplesTest {
 
     private static AoFactory aoFactory;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
@@ -83,18 +82,18 @@ public class ASAMExamplesTest {
                 }
             }
 
-             { // read all valuematrix values.
+            { // read all valuematrix values.
                 ApplicationElement ae = as.getElementsByBaseType("AoSubmatrix")[0];
                 InstanceElementIterator iter = ae.getInstances("*");
                 for (int i = 0; i < iter.getCount(); i++) {
                     InstanceElement ie = iter.nextOne();
                     ValueMatrix vm = ie.upcastSubMatrix().getValueMatrix();
-                    for(Column column : vm.getColumns("*")) {
+                    for (Column column : vm.getColumns("*")) {
                         vm.getValueVector(column, 0, 0);
                     }
                 }
             }
-             
+
             aoSession.close();
         } catch (AoException aoe) {
             fail(aoe.reason);
@@ -200,9 +199,4 @@ public class ASAMExamplesTest {
             fail(aoe.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ASAMExamplesTest.class);
-    }
-
 }

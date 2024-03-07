@@ -30,10 +30,10 @@ import org.asam.ods.SelOpcode;
 import org.asam.ods.SelValueExt;
 import org.asam.ods.TS_Value;
 import org.asam.ods.T_LONGLONG;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.omg.CORBA.ORB;
 
@@ -50,7 +50,7 @@ public class QueryConditionHelperTest {
     private static ApplicationRelation m2nRelation2;
     private static AtfxCache cacheMock;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = QueryConditionHelperTest.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -109,16 +109,18 @@ public class QueryConditionHelperTest {
         when(m2nRelation2.getElem2()).thenReturn(elem2);
     }
     
-    @Before
+    @BeforeEach
     public void prepareMock()
     {
         cacheMock = Mockito.mock(AtfxCache.class);
         Mockito.when(cacheMock.getContext()).thenReturn(Collections.emptyMap());
     }
     
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
     
     @Test

@@ -19,17 +19,15 @@ import org.asam.ods.InstanceElement;
 import org.asam.ods.Measurement;
 import org.asam.ods.NameUnit;
 import org.asam.ods.NameValueUnit;
-import org.asam.ods.ODSFile;
 import org.asam.ods.Relationship;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.T_ExternalReference;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -44,7 +42,7 @@ public class InstanceElementImplTest {
     private static InstanceElement ieSm;
     private static InstanceElement iePrj;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
@@ -58,9 +56,11 @@ public class InstanceElementImplTest {
         iePrj = aePrj.getInstanceById(ODSHelper.asODSLongLong(1));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test
@@ -440,6 +440,46 @@ public class InstanceElementImplTest {
     }
 
     @Test
+    public void testInstanceAttributeWithUnit() {
+        try {
+            // add test attributes
+            NameValueUnit nvu1 = ODSHelper.createFloatNVU("inst_attr_unit_float", 123.321f);
+            nvu1.unit = "s";
+            ieDts.addInstanceAttribute(nvu1);
+            NameValueUnit nvu2 = ODSHelper.createFloatNVU("inst_attr_unit_longlong", 2);
+            nvu2.unit = "m";
+            ieDts.addInstanceAttribute(nvu2);
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        // test
+        try {
+            NameValueUnit[] nvus = ieDts.getValueSeq(new String[] { "inst_attr_unit_float",
+                    "inst_attr_unit_longlong" });
+            for (NameValueUnit nvu : nvus) {
+                if ("inst_attr_unit_float".equals(nvu.valName)) {
+                    assertEquals("s", nvu.unit);
+                }
+                if ("inst_attr_unit_longlong".equals(nvu.valName)) {
+                    assertEquals("m", nvu.unit);
+                }
+            }
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        // remove
+        try {
+            ieDts.removeInstanceAttribute("inst_attr_unit_float");
+            ieDts.removeInstanceAttribute("inst_attr_unit_longlong");
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
     public void testRemoveInstanceAttribute() {
         try {
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("inst_attr", "test"));
@@ -729,22 +769,6 @@ public class InstanceElementImplTest {
             assertEquals(ErrorCode.AO_INVALID_BASETYPE.value(), e.errCode.value());
         }
     }
-    
-    @Test
-    public void testUpcastODSFile() {
-        ORB orb = ORB.init(new String[0], System.getProperties());
-        URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/external_with_flags_aofile.atfx");
-        try {
-            AoSession localAoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
-            ApplicationStructure applicationStructure = localAoSession.getApplicationStructure();
-            ApplicationElement aeFile = applicationStructure.getElementByName("ExtCompFile");
-            InstanceElement ieFile = aeFile.getInstanceById(ODSHelper.asODSLongLong(1));
-            ODSFile file = ieFile.upcastODSFile();
-            assertEquals("external_with_flags.bda", file.getName());
-        } catch (AoException e) {
-            fail(e.reason);
-        }
-    }
 
     @Test
     public void testShallowCopy() {
@@ -805,9 +829,4 @@ public class InstanceElementImplTest {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(InstanceElementImplTest.class);
-    }
-
 }

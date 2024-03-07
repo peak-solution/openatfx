@@ -2,15 +2,14 @@ package de.rechner.openatfx.basestructure;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.AoException;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.BaseElement;
 import org.asam.ods.BaseStructure;
 import org.asam.ods.EnumerationDefinition;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 
@@ -23,7 +22,7 @@ public class BaseEnumerationDefinitionImplTest {
 
     private static EnumerationDefinition enumerationDefinition;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         BaseStructure baseStructure = BaseStructureFactory.getInstance().getBaseStructure(orb, "asam30");
@@ -146,9 +145,4 @@ public class BaseEnumerationDefinitionImplTest {
         } catch (AoException e) {
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(BaseEnumerationDefinitionImplTest.class);
-    }
-
 }

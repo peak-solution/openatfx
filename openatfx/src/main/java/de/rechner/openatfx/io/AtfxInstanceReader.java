@@ -10,8 +10,10 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,6 +39,7 @@ import org.asam.ods.ElemId;
 import org.asam.ods.EnumerationDefinition;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.NameIterator;
 import org.asam.ods.NameValue;
 import org.asam.ods.NameValueUnit;
@@ -68,16 +71,10 @@ class AtfxInstanceReader {
     private static final Logger LOG = LoggerFactory.getLogger(AtfxInstanceReader.class);
     private static final String CONTEXT_EXTCOMP_FILENAME_STRIP_STRING = "ETXCOMP_FILENAME_STRIP_STRING";
 
-    /** The singleton instance */
-    private static volatile AtfxInstanceReader instance;
-    
     private boolean isExtendedCompatiblityMode;
     private String configuredExtCompFilenameStartRemoveString;
-
-    /**
-     * Non visible constructor.
-     */
-    private AtfxInstanceReader() {}
+    
+    private Map<Long, Map<Long, Collection<NameValueUnit>>> instanceAttributesByIidByAid = new HashMap<>();
 
     /**
      * Read the instance elements from the instance data XML element.
@@ -124,6 +121,9 @@ class AtfxInstanceReader {
 
         LOG.info("Parsed instances in " + (System.currentTimeMillis() - start) + " ms");
 
+        // update unit names of instance attributes
+        updateInstanceAttrUnits(aoSession);
+        
         // create relations
         start = System.currentTimeMillis();
         ApplElemAccess applElemAccess = aoSession.getApplElemAccess();
@@ -137,6 +137,86 @@ class AtfxInstanceReader {
         }
 
         LOG.info("Set relations in " + (System.currentTimeMillis() - start) + " ms");
+    }
+    
+    /**
+     * For instance attributes, if a unit is set, the value of its "unit" attribute has to be a String containing the
+     * iid of the respective unit. Often atfx files incorrectly contain a unit name instead, though. To tolerate that
+     * and also mainly to convert the unit iid from the instance attribute in the atfx file to the unit name required to
+     * be used in the {@link NameValueUnit} class, this method cares about any adjustments regarding this topic. This
+     * has to be done after all instances have been read from file, because it cannot be relied on that unit instances
+     * will always be defined before any referencing instance attribute.
+     * 
+     * @param aoSession
+     * @throws AoException
+     */
+    private void updateInstanceAttrUnits(AoSession aoSession) throws AoException {
+        ApplicationStructure as = aoSession.getApplicationStructure();
+        ApplicationElement[] unitElements = as.getElementsByBaseType("aounit");
+        ApplicationElement unitElement = null;
+
+        if (unitElements.length > 0) {
+            unitElement = unitElements[0];
+        }
+        Map<Long, InstanceElement> unitsByIid = new HashMap<>();
+        Collection<String> knownUnitNames = new HashSet<>();
+        if (unitElement != null) {
+            InstanceElementIterator iter = unitElement.getInstances("*");
+            for (int i = 0; i < iter.getCount(); i++) {
+                InstanceElement unit = iter.nextOne();
+                unitsByIid.put(ODSHelper.asJLong(unit.getId()), unit);
+                knownUnitNames.add(unit.getName());
+            }
+            iter.destroy();
+        }
+
+        for (Entry<Long, Map<Long, Collection<NameValueUnit>>> elementEntry : instanceAttributesByIidByAid.entrySet()) {
+            List<ElemId> elemIds = new ArrayList<>();
+            for (Entry<Long, Collection<NameValueUnit>> instanceEntry : elementEntry.getValue().entrySet()) {
+                elemIds.add(new ElemId(ODSHelper.asODSLongLong(elementEntry.getKey()),
+                                       ODSHelper.asODSLongLong(instanceEntry.getKey())));
+            }
+            InstanceElement[] instances = as.getInstancesById(elemIds.toArray(new ElemId[0]));
+            for (InstanceElement instance : instances) {
+                Collection<NameValueUnit> instAttrs = elementEntry.getValue().get(ODSHelper.asJLong(instance.getId()));
+                for (NameValueUnit nvu : instAttrs) {
+                    String unitString = nvu.unit;
+                    if (unitString == null || unitString.isEmpty()) {
+                        continue;
+                    }
+
+                    try {
+                        if (unitString != null && !unitString.isEmpty()) {
+                            long unitId = Long.parseLong(unitString);
+                            // the unit id is correctly contained in the source NVU from atfx, change it to the unit
+                            // name in the NameValueUnit now
+                            InstanceElement unit = unitsByIid.get(unitId);
+                            if (unit == null) {
+                                String elementName = as.getElementById(ODSHelper.asODSLongLong(elementEntry.getKey()))
+                                                       .getName();
+                                throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                                      elementName + "instance " + instance.getName()
+                                                              + " references unknown unit with iid " + unitId
+                                                              + " in its instance attribute " + nvu.valName);
+                            }
+                            nvu.unit = unit.getName();
+                            instance.setValue(nvu);
+                        }
+                    } catch (NumberFormatException ex) {
+                        // in this case the unit name is specified in the NVU (actually incorrect), just check the unit
+                        // name
+                        if (!knownUnitNames.contains(nvu.unit)) {
+                            String elementName = as.getElementById(ODSHelper.asODSLongLong(elementEntry.getKey()))
+                                                   .getName();
+                            throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
+                                                  elementName + " instance " + instance.getName()
+                                                          + " references unknown unit with name " + nvu.unit
+                                                          + " in its instance attribute " + nvu.valName);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -325,6 +405,7 @@ class AtfxInstanceReader {
             for (NameValueUnit nvu : instAttrValues) {
                 ie.addInstanceAttribute(nvu);
             }
+            instanceAttributesByIidByAid.computeIfAbsent(aid, v -> new HashMap<>()).put(ODSHelper.asJLong(elemId.iid), instAttrValues);
         }
 
         // add external component instance, and set sequence representation to external_component
@@ -813,7 +894,7 @@ class AtfxInstanceReader {
             reader.next();
             if (reader.isStartElement()) {
                 NameValueUnit nvu = new NameValueUnit();
-                nvu.unit = "";
+                nvu.unit = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_UNIT);
                 nvu.valName = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_NAME);
                 nvu.value = new TS_Value();
                 nvu.value.u = new TS_Union();
@@ -1315,18 +1396,6 @@ class AtfxInstanceReader {
             reader.next();
         }
         return list.toArray(new String[0]);
-    }
-
-    /**
-     * Returns the singleton instance.
-     * 
-     * @return The singleton instance.
-     */
-    public static AtfxInstanceReader getInstance() {
-        if (instance == null) {
-            instance = new AtfxInstanceReader();
-        }
-        return instance;
     }
 
     /**

@@ -8,17 +8,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.AttrType;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
@@ -35,16 +33,18 @@ public class PerformanceTest {
     private static ORB orb;
     private static AoSession aoSession;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         orb = ORB.init(new String[0], System.getProperties());
         URL url = InstanceElementImplTest.class.getResource("/de/rechner/openatfx/external_with_flags.atfx");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test
@@ -90,9 +90,4 @@ public class PerformanceTest {
     // }
     // }
     //
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(PerformanceTest.class);
-    }
-
 }

@@ -12,9 +12,9 @@ import org.asam.ods.ApplicationRelation;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.BaseStructure;
 import org.asam.ods.RelationRange;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 
@@ -27,15 +27,17 @@ public class ApplicationRelationStandaloneTest {
 
     private static AoSession aoSession;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         aoSession = AoServiceFactory.getInstance().newEmptyAoSession(orb, File.createTempFile("xxx", "tmp"), "asam30");
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     @Test

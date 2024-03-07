@@ -10,13 +10,11 @@ import java.util.Arrays;
 import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.Blob;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
-
-import junit.framework.JUnit4TestAdapter;
 
 
 /**
@@ -29,19 +27,21 @@ public class BlobImplTest {
     private static AoSession aoSession;
     private Blob blob;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = BlobImplTest.class.getResource("/de/rechner/openatfx/example.atfx");
         aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         this.blob = aoSession.createBlob();
         this.blob.setHeader("header");
@@ -164,9 +164,4 @@ public class BlobImplTest {
             fail(e.reason);
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(BlobImplTest.class);
-    }
-
 }

@@ -7,7 +7,7 @@ package de.rechner.openatfx.io;
  */
 class AtfxTagConstants {
 
-    public static final String VERSION = "1.5.0";
+    public static final String VERSION = "1.5.1";
 
     public static final String ATFX_FILE = "atfx_file";
 
@@ -72,6 +72,7 @@ class AtfxTagConstants {
 
     public static final String INST_ATTR = "instance_attributes";
     public static final String INST_ATTR_NAME = "name";
+    public static final String INST_ATTR_UNIT = "unit";
     public static final String INST_ATTR_ASCIISTRING = "inst_attr_asciistring";
     public static final String INST_ATTR_FLOAT32 = "inst_attr_float32";
     public static final String INST_ATTR_FLOAT64 = "inst_attr_float64";

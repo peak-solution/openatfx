@@ -53,6 +53,7 @@ import org.asam.ods.T_LONGLONG;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.rechner.openatfx.UnitMapper;
 import de.rechner.openatfx.util.ModelCache;
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -76,11 +77,12 @@ public class AtfxWriter {
     /**
      * Writes the complete content of given aoSession to specified XML file.
      * 
+     * @param unitMapper The instance mapping units from or to their name and iid (implemented by AtfxCache).
      * @param xmlFile The XML file.
      * @param aoSession The session.
      * @throws AoException Error writing XML file.
      */
-    public void writeXML(File xmlFile, AoSession aoSession) throws AoException {
+    public void writeXML(UnitMapper unitMapper, File xmlFile, AoSession aoSession) throws AoException {
         long start = System.currentTimeMillis();
         ModelCache modelCache = new ModelCache(aoSession.getApplicationStructureValue(),
                                                aoSession.getEnumerationAttributes(),
@@ -119,7 +121,7 @@ public class AtfxWriter {
 
             // instance data
             if (instancesExists(aoSession)) {
-                writeInstanceData(streamWriter, aoSession, modelCache, writeExtComps, componentFiles);
+                writeInstanceData(unitMapper, streamWriter, aoSession, modelCache, writeExtComps, componentFiles);
             }
 
             streamWriter.writeEndElement();
@@ -514,6 +516,7 @@ public class AtfxWriter {
     /**
      * Writes the instance data to the XML stream.
      * 
+     * @param unitMapper The instance mapping units from or to their name and iid (implemented by AtfxCache).
      * @param streamWriter The XML stream writer.
      * @param aoSession The session.
      * @param modelCache The model cache.
@@ -522,8 +525,9 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instances.
      */
-    private void writeInstanceData(XMLStreamWriter streamWriter, AoSession aoSession, ModelCache modelCache,
-            boolean writeExtComps, Map<String, String> componentFiles) throws XMLStreamException, AoException {
+    private void writeInstanceData(UnitMapper unitMapper, XMLStreamWriter streamWriter, AoSession aoSession,
+            ModelCache modelCache, boolean writeExtComps, Map<String, String> componentFiles)
+            throws XMLStreamException, AoException {
         streamWriter.writeStartElement(AtfxTagConstants.INSTANCE_DATA);
 
         // iterate over all application elements/instance elements
@@ -539,7 +543,7 @@ public class AtfxWriter {
                     continue;
                 }
 
-                writeInstanceElement(streamWriter, applElem, modelCache, aea, ie, writeExtComps, componentFiles);
+                writeInstanceElement(unitMapper, streamWriter, applElem, modelCache, aea, ie, writeExtComps, componentFiles);
             }
             iter.destroy();
         }
@@ -550,6 +554,7 @@ public class AtfxWriter {
     /**
      * Writes the data of an instance element to XML.
      * 
+     * @param unitMapper The instance mapping units from or to their name and iid (implemented by AtfxCache).
      * @param streamWriter The XML stream writer.
      * @param modelCache The model cache.
      * @param aea The ApplElemAccess interface.
@@ -559,9 +564,9 @@ public class AtfxWriter {
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Error reading instance data.
      */
-    private void writeInstanceElement(XMLStreamWriter streamWriter, ApplElem applElem, ModelCache modelCache,
-            ApplElemAccess aea, InstanceElement ie, boolean writeExtComps, Map<String, String> componentFiles)
-            throws XMLStreamException, AoException {
+    private void writeInstanceElement(UnitMapper unitMapper, XMLStreamWriter streamWriter, ApplElem applElem,
+            ModelCache modelCache, ApplElemAccess aea, InstanceElement ie, boolean writeExtComps,
+            Map<String, String> componentFiles) throws XMLStreamException, AoException {
         long aid = ODSHelper.asJLong(applElem.aid);
         streamWriter.writeStartElement(applElem.aeName);
 
@@ -623,7 +628,7 @@ public class AtfxWriter {
         if (instAttrNames.length > 0) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR);
             for (NameValueUnit nvu : ie.getValueSeq(instAttrNames)) {
-                writeInstAttrValue(streamWriter, nvu);
+                writeInstAttrValue(unitMapper, streamWriter, nvu);
             }
             streamWriter.writeEndElement();
         }
@@ -649,7 +654,7 @@ public class AtfxWriter {
         if ((externalComponentChilds != null) && (writeExtComps || externalComponentChilds.length > 1)) {
             for (InstanceElement ieExtComp : externalComponentChilds) {
                 ApplElem applElemExtComp = modelCache.getApplElemByBaseName("AoExternalComponent");
-                writeInstanceElement(streamWriter, applElemExtComp, modelCache, aea, ieExtComp, writeExtComps,
+                writeInstanceElement(unitMapper, streamWriter, applElemExtComp, modelCache, aea, ieExtComp, writeExtComps,
                                      componentFiles);
             }
         }
@@ -787,17 +792,24 @@ public class AtfxWriter {
     /**
      * Writes the value of an instance attribute to the XML stream.
      * 
+     * @param unitMapper The instance mapping units from or to their name and iid (implemented by AtfxCache).
      * @param streamWriter The XML stream writer.
      * @param instAttrValue The instance attribute value.
      * @throws XMLStreamException Error writing XML file.
      * @throws AoException Invalid attribute data type.
      */
-    private void writeInstAttrValue(XMLStreamWriter streamWriter, NameValueUnit instAttrValue)
+    private void writeInstAttrValue(UnitMapper unitMapper, XMLStreamWriter streamWriter, NameValueUnit instAttrValue)
             throws XMLStreamException, AoException {
         DataType dataType = instAttrValue.value.u.discriminator();
         String attrName = instAttrValue.valName;
         TS_Value value = instAttrValue.value;
-
+        String unitIdString = "";
+        String unitString = instAttrValue.unit;
+        if (unitString != null && !unitString.isEmpty()) {
+            long unitId = unitMapper.getUnitId(unitString);
+            unitIdString = String.valueOf(unitId);
+        }
+        
         // DT_STRING
         if (dataType == DataType.DT_STRING) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_ASCIISTRING);
@@ -811,6 +823,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_FLOAT) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_FLOAT32);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (unitIdString != null && !unitIdString.equals("")) {
+                streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
+            }
             if (instAttrValue.value.flag == 15) {
                 streamWriter.writeCharacters(AtfxExportUtil.createFloatString(value.u.floatVal()));
             }
@@ -820,6 +835,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_DOUBLE) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_FLOAT64);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (unitIdString != null && !unitIdString.equals("")) {
+                streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
+            }
             if (instAttrValue.value.flag == 15) {
                 streamWriter.writeCharacters(AtfxExportUtil.createDoubleString(value.u.doubleVal()));
             }
@@ -838,6 +856,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_SHORT) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT16);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (unitIdString != null && !unitIdString.equals("")) {
+                streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
+            }
             if (instAttrValue.value.flag == 15) {
                 streamWriter.writeCharacters(AtfxExportUtil.createShortString(value.u.shortVal()));
             }
@@ -847,6 +868,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_LONG) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT32);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (unitIdString != null && !unitIdString.equals("")) {
+                streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
+            }
             if (instAttrValue.value.flag == 15) {
                 streamWriter.writeCharacters(AtfxExportUtil.createLongString(value.u.longVal()));
             }
@@ -856,6 +880,9 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_LONGLONG) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT64);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
+            if (unitIdString != null && !unitIdString.equals("")) {
+                streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
+            }
             if (instAttrValue.value.flag == 15) {
                 streamWriter.writeCharacters(AtfxExportUtil.createLongLongString(value.u.longlongVal()));
             }

@@ -48,7 +48,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-class AtfxCache {
+class AtfxCache implements UnitMapper {
     private static final Logger LOG = LoggerFactory.getLogger(AtfxCache.class);
     private static final String CONTEXT_EXTENDED_COMPATIBILITYMODE = "EXTENDED_COMPATIBILITYMODE";
 
@@ -82,6 +82,11 @@ class AtfxCache {
 
     /** instance attribute values */
     private final Map<Long, Map<Long, Map<String, TS_Value>>> instanceAttrValueMap; // <aid,<iid,<attrName,value>>>
+    
+    /** instance attribute units */
+    private final Map<Long, Map<String, String>> instanceAttrUnitMap; // <aid,<attrName,unitName>>>
+    
+    private final Map<Long, String> unitIids2UnitNames;
 
     /** instance element CORBA object references */
     private final Map<Long, Map<Long, InstanceElement>> instanceElementCache; // <aid,<iid,<InstanceElement>>>
@@ -132,6 +137,8 @@ class AtfxCache {
         this.instanceRelMap = new HashMap<Long, Map<Long, Map<ApplicationRelation, Set<Long>>>>();
         this.instanceValueMap = new HashMap<Long, Map<Long, Map<Integer, Object>>>();
         this.instanceAttrValueMap = new HashMap<Long, Map<Long, Map<String, TS_Value>>>();
+        this.instanceAttrUnitMap = new HashMap<Long, Map<String, String>>();
+        this.unitIids2UnitNames = new HashMap<Long, String>();
         this.instanceElementCache = new HashMap<Long, Map<Long, InstanceElement>>();
         this.instanceIteratorElementCache = new HashMap<Long, InstanceElement[]>();
         this.instanceIteratorPointerCache = new HashMap<Long, Integer>();
@@ -230,6 +237,7 @@ class AtfxCache {
         this.instanceRelMap.put(aid, new HashMap<Long, Map<ApplicationRelation, Set<Long>>>());
         this.instanceValueMap.put(aid, new TreeMap<Long, Map<Integer, Object>>());
         this.instanceAttrValueMap.put(aid, new TreeMap<Long, Map<String, TS_Value>>());
+        this.instanceAttrUnitMap.put(aid, new TreeMap<String, String>());
         this.instanceElementCache.put(aid, new TreeMap<Long, InstanceElement>());
 
         Set<Long> applElems = this.beToAidMap.get(beName.toLowerCase());
@@ -308,6 +316,7 @@ class AtfxCache {
         this.instanceRelMap.remove(aid);
         this.instanceValueMap.remove(aid);
         this.instanceAttrValueMap.remove(aid);
+        this.instanceAttrUnitMap.remove(aid);
         this.instanceElementCache.remove(aid);
         this.nextAttrNoMap.remove(aid);
     }
@@ -800,6 +809,11 @@ class AtfxCache {
                 return;
             }
         }
+        
+        // check if attribute 'name' of 'AoUnit', then store for unit name resolution
+        else if (isUnitNameAttribute(aid, attrNo)) {
+            unitIids2UnitNames.computeIfAbsent(iid, v -> value.u.stringVal());
+        }
 
         // put value to memory
         java.lang.Object jValue = ODSHelper.tsValue2jObject(value);
@@ -1045,18 +1059,35 @@ class AtfxCache {
     }
 
     /**
-     * Checks whether given attribute name is from base attribute 'sequence_representation' of and this instance is from
+     * Checks whether given attribute name is from base attribute 'generation_parameters' of and this instance is from
      * base element 'AoLocalColumn'.
      * 
      * @param aid The application element id.
      * @param attrNo The application attribute number.
-     * @return True, if attribute is 'sequence_representation'.
+     * @return True, if attribute is 'generation_parameters'.
      */
     private boolean isLocalColumnGenParamsAttribute(long aid, long attrNo) {
         Set<Long> localColumnAids = getAidsByBaseType("aolocalcolumn");
         if (localColumnAids != null && localColumnAids.contains(aid)) {
             Integer genParamsAttrNo = getAttrNoByBaName(aid, "generation_parameters");
             return (genParamsAttrNo != null) && (attrNo == genParamsAttrNo);
+        }
+        return false;
+    }
+    
+    /**
+     * Checks whether given attribute's name is derived from base attribute 'name' and this instance is from
+     * base element 'AoUnit'.
+     * 
+     * @param aid The application element id.
+     * @param attrNo The application attribute number.
+     * @return True, if attribute is 'name'.
+     */
+    private boolean isUnitNameAttribute(long aid, long attrNo) {
+        Set<Long> unitAids = getAidsByBaseType("aounit");
+        if (unitAids != null && unitAids.contains(aid)) {
+            Integer nameAttrNo = getAttrNoByBaName(aid, "name");
+            return (nameAttrNo != null) && (attrNo == nameAttrNo);
         }
         return false;
     }
@@ -1172,9 +1203,32 @@ class AtfxCache {
      * @param iid The instance id.
      * @param attrName The attribute name.
      * @param value The instance value.
+     * @param unitName The value's unit name.
      */
-    public void setInstanceAttributeValue(long aid, long iid, String attrName, TS_Value value) {
+    public void setInstanceAttributeValue(long aid, long iid, String attrName, TS_Value value, String unitName) {
         this.instanceAttrValueMap.get(aid).get(iid).put(attrName, value);
+        this.instanceAttrUnitMap.get(aid).put(attrName, unitName);
+    }
+    
+    /**
+     * Sets an instance attribute value.
+     * 
+     * @param aid The application element id.
+     * @param iid The instance id.
+     * @param attrName The attribute name.
+     * @param value The instance value.
+     * @param unitId The value's unit id.
+     * @throws AoException 
+     */
+    public void setInstanceAttributeValue(long aid, long iid, String attrName, TS_Value value, T_LONGLONG unitId) throws AoException {
+        this.instanceAttrValueMap.get(aid).get(iid).put(attrName, value);
+        final String unitName;
+        if (unitId != null && !(unitId.low == 0 && unitId.high == 0)) {
+            unitName = unitIids2UnitNames.get(ODSHelper.asJLong(unitId));
+        } else {
+            unitName = "";
+        }
+        this.instanceAttrUnitMap.get(aid).computeIfAbsent(attrName, v -> unitName);
     }
 
     /**
@@ -1187,6 +1241,10 @@ class AtfxCache {
      */
     public TS_Value getInstanceAttributeValue(long aid, long iid, String attrName) {
         return instanceAttrValueMap.get(aid).get(iid).get(attrName);
+    }
+    
+    public String getInstanceAttributeUnit(long aid, String attrName) {
+        return this.instanceAttrUnitMap.get(aid).get(attrName);
     }
 
     public void removeInstanceAttribute(long aid, long iid, String attrName) {
@@ -1432,5 +1490,20 @@ class AtfxCache {
             return map.get(iid);
         }
         return null;
+    }
+
+    @Override
+    public long getUnitId(String unitName) {
+        for (Entry<Long, String> entry : unitIids2UnitNames.entrySet()) {
+            if (unitName.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return 0;
+    }
+
+    @Override
+    public String getUnitString(long unitId) {
+        return unitIids2UnitNames.get(unitId);
     }
 }

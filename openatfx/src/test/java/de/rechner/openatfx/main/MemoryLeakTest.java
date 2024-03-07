@@ -11,7 +11,7 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.InstanceElementIterator;
 import org.asam.ods.Relationship;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.BeforeAll;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
@@ -28,7 +28,7 @@ public class MemoryLeakTest {
 
     private static AoFactory aoFactory;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);

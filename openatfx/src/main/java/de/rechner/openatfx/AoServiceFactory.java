@@ -167,7 +167,7 @@ public class AoServiceFactory {
      * @throws AoException Error creating session.
      */
     public synchronized AoSession newAoSession(ORB orb, IFileHandler fileHandler, String path, NameValue...extraContext) throws AoException {
-        return AtfxReader.getInstance().createSessionForATFX(orb, fileHandler, path, extraContext);
+        return new AtfxReader().createSessionForATFX(orb, fileHandler, path, extraContext);
     }
 
     /**

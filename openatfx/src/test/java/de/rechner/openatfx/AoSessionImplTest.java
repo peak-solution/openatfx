@@ -7,8 +7,6 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.net.URL;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
 import org.asam.ods.AoFactory;
 import org.asam.ods.AoSession;
@@ -18,9 +16,9 @@ import org.asam.ods.EnumerationStructure;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InitialRight;
 import org.asam.ods.LockMode;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -36,7 +34,7 @@ public class AoSessionImplTest {
     private static AoFactory aoFactory;
     private static AoSession aoSession;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
         ORB orb = ORB.init(new String[0], System.getProperties());
         aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
@@ -44,9 +42,11 @@ public class AoSessionImplTest {
         aoSession = aoFactory.newSession("FILENAME=" + new File(url.getFile()));
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
 
     /**
@@ -418,9 +418,5 @@ public class AoSessionImplTest {
      */
     @Test
     public void testClose() {}
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(AoSessionImplTest.class);
-    }
 
 }

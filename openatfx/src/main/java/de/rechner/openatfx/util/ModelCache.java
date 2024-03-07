@@ -216,7 +216,11 @@ public class ModelCache {
     }
 
     public ApplRel getApplRel(Long aid, String relName) throws AoException {
-        return this.applRels.get(aid).get(relName);
+        Map<String, ApplRel> relMap = this.applRels.get(aid);
+        if (relMap != null) {
+            return relMap.get(relName);
+        }
+        return null; 
     }
 
     public String getEnumName(Long aid, String aaName) throws AoException {

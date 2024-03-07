@@ -534,7 +534,7 @@ public class AoSessionImpl extends AoSessionPOA {
 
         try {
             // overwrite backup file
-            AtfxWriter.getInstance().writeXML(this.transactionFile, _this());
+            AtfxWriter.getInstance().writeXML(this.atfxCache, this.transactionFile, _this());
 
             FileUtil.copyFile(this.transactionFile, localAtfxFile);
             this.transactionFile.delete();

@@ -1,13 +1,12 @@
 package de.rechner.openatfx.util;
 
 import static org.junit.Assert.assertEquals;
-import junit.framework.JUnit4TestAdapter;
 
 import org.asam.ods.DataType;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 import org.asam.ods.T_LONGLONG;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -194,9 +193,4 @@ public class ODSHelperTest {
         assertEquals((byte) 52, ODSHelper.hexToByte("34"));
         assertEquals((byte) 222, ODSHelper.hexToByte("DE"));
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(ODSHelperTest.class);
-    }
-
 }

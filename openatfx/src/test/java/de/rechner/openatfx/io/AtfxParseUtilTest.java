@@ -6,10 +6,8 @@ import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
-import junit.framework.JUnit4TestAdapter;
-
 import org.asam.ods.AoException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -49,9 +47,8 @@ public class AtfxParseUtilTest {
     @Test
     public void testParseBooleanSeq() {
         try {
-            assertEquals(true,
-                         Arrays.equals(new boolean[] { true, true, false, true, false },
-                                       AtfxParseUtil.parseBooleanSeq(" true 1  FALSE 1  0")));
+            assertEquals(true, Arrays.equals(new boolean[] { true, true, false, true, false },
+                                             AtfxParseUtil.parseBooleanSeq(" true 1  FALSE 1  0")));
             assertEquals(true, Arrays.equals(new boolean[0], AtfxParseUtil.parseBooleanSeq(" ")));
         } catch (AoException e) {
             fail(e.reason);
@@ -318,9 +315,4 @@ public class AtfxParseUtilTest {
         } catch (AoException e) {
         }
     }
-
-    public static junit.framework.Test suite() {
-        return new JUnit4TestAdapter(AtfxParseUtilTest.class);
-    }
-
 }

@@ -201,7 +201,8 @@ class InstanceElementImpl extends InstanceElementPOA {
         // check if instance attribute
         TS_Value iaValue = this.atfxCache.getInstanceAttributeValue(aid, iid, aaName);
         if (iaValue != null) {
-            return new NameValueUnit(aaName, iaValue, "");
+            String unitName = this.atfxCache.getInstanceAttributeUnit(aid, aaName);
+            return new NameValueUnit(aaName, iaValue, unitName);
         }
 
         // get attr number
@@ -281,7 +282,7 @@ class InstanceElementImpl extends InstanceElementPOA {
 
         // instance attribute?
         if ((attrNo == null) && (this.atfxCache.getInstanceAttributeValue(aid, iid, nvu.valName) != null)) {
-            this.atfxCache.setInstanceAttributeValue(aid, iid, nvu.valName, nvu.value);
+            this.atfxCache.setInstanceAttributeValue(aid, iid, nvu.valName, nvu.value, nvu.unit);
             return;
         }
 
@@ -360,7 +361,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             throw new AoException(ErrorCode.AO_INVALID_DATATYPE, SeverityFlag.ERROR, 0,
                                   "DataType is no allowed for InstanceAttributes: " + ODSHelper.dataType2String(dt));
         }
-        this.atfxCache.setInstanceAttributeValue(aid, iid, instAttr.valName, instAttr.value);
+        this.atfxCache.setInstanceAttributeValue(aid, iid, instAttr.valName, instAttr.value, instAttr.unit);
     }
 
     /**
@@ -405,7 +406,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         // rename
         TS_Value value = this.atfxCache.getInstanceAttributeValue(aid, iid, oldName);
         this.atfxCache.removeInstanceAttribute(aid, iid, oldName);
-        this.atfxCache.setInstanceAttributeValue(aid, iid, newName, value);
+        this.atfxCache.setInstanceAttributeValue(aid, iid, newName, value, "");
     }
 
     /***********************************************************************************

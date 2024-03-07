@@ -1,59 +1,66 @@
 package de.rechner.openatfx;
 
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.net.URL;
 import java.nio.ByteOrder;
 import java.util.List;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.asam.ods.AoException;
+import org.asam.ods.TS_Value;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.io.AtfxReader;
-import org.asam.ods.AoException;
-import org.asam.ods.TS_Value;
-import static org.junit.Assert.assertEquals;
+
 
 public class ExtCompReaderAoFileTest {
 
     private static AoSessionImpl aoSession;
     private static AtfxCache atfxCache;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUpBeforeClass() throws Exception {
-        AtfxReader reader = AtfxReader.getInstance();
+        AtfxReader reader = new AtfxReader();
         IFileHandler fileHandler = new LocalFileHandler();
         ORB orb = ORB.init(new String[0], System.getProperties());
         URL url = ExtCompReaderTest.class.getResource("/de/rechner/openatfx/external_with_flags_aofile.atfx");
         String path = new File(url.getFile()).getAbsolutePath();
-        aoSession = reader.createSessionImplForATFX(orb, fileHandler, path);
-        atfxCache = ((AoSessionImpl) aoSession).getAtfxCache();
+        try {
+            aoSession = reader.createSessionImplForATFX(orb, fileHandler, path);
+            atfxCache = ((AoSessionImpl) aoSession).getAtfxCache();
+        } catch (AoException ex) {
+            throw new Exception("Error creating session on " + url + ": " + ex.reason);
+        }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDownAfterClass() throws Exception {
-        aoSession.close();
+        if (aoSession != null) {
+            aoSession.close();
+        }
     }
-    
+
     @Test
     public void testReadValues() throws AoException {
         ExtCompReader reader = new ExtCompReader();
-        List<Number> numbers= reader.readNumberValues(atfxCache, 1, ByteOrder.LITTLE_ENDIAN); // LC.Name=51900778_1
-        
+        List<Number> numbers = reader.readNumberValues(atfxCache, 1, ByteOrder.LITTLE_ENDIAN); // LC.Name=51900778_1
+
         // check length
         assertEquals(300004, numbers.size());
 
         // check first values
-        assertEquals(-0.006515602349889372d, (double)numbers.get(0), 0.00000000000000001);
-        assertEquals(-0.006515602349889372d, (double)numbers.get(1), 0.00000000000000001);
-        assertEquals(Double.NaN, (double)numbers.get(2), 0.00000000000000001);
+        assertEquals(-0.006515602349889372d, (double) numbers.get(0), 0.00000000000000001);
+        assertEquals(-0.006515602349889372d, (double) numbers.get(1), 0.00000000000000001);
+        assertEquals(Double.NaN, (double) numbers.get(2), 0.00000000000000001);
 
         // check last values
-        assertEquals(-0.006576638437476158d, (double)numbers.get(300001), 0.00000000000000001);
-        assertEquals(-0.006576638437476158d, (double)numbers.get(300002), 0.00000000000000001);
-        assertEquals(Double.NaN, (double)numbers.get(300003), 0.00000000000000001);
+        assertEquals(-0.006576638437476158d, (double) numbers.get(300001), 0.00000000000000001);
+        assertEquals(-0.006576638437476158d, (double) numbers.get(300002), 0.00000000000000001);
+        assertEquals(Double.NaN, (double) numbers.get(300003), 0.00000000000000001);
     }
 
     @Test
@@ -61,7 +68,7 @@ public class ExtCompReaderAoFileTest {
         ExtCompReader reader = new ExtCompReader();
         TS_Value value = reader.readFlags(atfxCache, 11); // LC.Name=51900778_1
         short[] flags = value.u.shortSeq();
-        
+
         // check length
         assertEquals(300004, flags.length);
 
