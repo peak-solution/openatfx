@@ -24,11 +24,13 @@ import org.asam.ods.T_LONGLONG;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
 import de.rechner.openatfx.AoSessionImplTest;
+import de.rechner.openatfx.GlassfishCorbaExtension;
 
 
 /**
@@ -36,6 +38,7 @@ import de.rechner.openatfx.AoSessionImplTest;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class AtfxWriterTest {
 
     @TempDir

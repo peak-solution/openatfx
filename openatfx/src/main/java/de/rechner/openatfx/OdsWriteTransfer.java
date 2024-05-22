@@ -22,12 +22,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.asam.ods.AoException;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ErrorCode;
-import org.asam.ods.InstanceElement;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.ODSWriteTransferPOA;
 import org.asam.ods.SeverityFlag;
 import org.asam.ods.T_LONGLONG;
-import org.omg.PortableServer.POA;
 
 import de.rechner.openatfx.util.ODSHelper;
 
@@ -48,15 +46,13 @@ public class OdsWriteTransfer extends ODSWriteTransferPOA {
         OPEN, CLOSED, CLOSE_FAILED
     }
 
-    private final POA poa;
     private final Path filePath;
-    private final InstanceElement instElement;
+    private final InstanceElementImpl instElement;
 
     private State state = State.OPEN;
     private boolean fileModified = false;
 
-    public OdsWriteTransfer(POA poa, String filePath, InstanceElement instElement) {
-        this.poa = poa;
+    public OdsWriteTransfer(String filePath, InstanceElementImpl instElement) {
         this.filePath = Paths.get(filePath);
         this.instElement = instElement;
     }
@@ -157,7 +153,7 @@ public class OdsWriteTransfer extends ODSWriteTransferPOA {
         return sb.toString().toLowerCase();
     }
 
-    private String getAttrNameFromInstance(InstanceElement inst, String baseAttrName) throws AoException {
+    private String getAttrNameFromInstance(InstanceElementImpl inst, String baseAttrName) throws AoException {
         try {
             ApplicationAttribute attr = inst.getApplicationElement().getAttributeByBaseName(baseAttrName);
             return attr.getName();

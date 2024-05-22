@@ -1,14 +1,24 @@
 package de.rechner.openatfx.basestructure;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 
 import org.asam.ods.AoException;
 import org.asam.ods.BaseElement;
 import org.asam.ods.BaseStructure;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
+
+import de.rechner.openatfx.GlassfishCorbaExtension;
+import generated.ODSBaseModel;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
 
 
 /**
@@ -16,6 +26,7 @@ import org.omg.CORBA.ORB;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class BaseStructureImplTest {
 
     private static ORB orb;
@@ -162,5 +173,13 @@ public class BaseStructureImplTest {
         } catch (AoException e) {
             fail(e.reason);
         }
+    }
+    
+    @Test
+    public void testJaxbModel() throws JAXBException, FileNotFoundException {
+        JAXBContext context = JAXBContext.newInstance(ODSBaseModel.class);
+        ODSBaseModel model = (ODSBaseModel) context.createUnmarshaller()
+                                                   .unmarshal(new FileReader("src/main/resources/de/rechner/openatfx/basestructure/ODSBaseModel_asam36.xml"));
+        assertThat(model).isNotNull();
     }
 }

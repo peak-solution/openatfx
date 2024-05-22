@@ -13,9 +13,11 @@ import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
+import org.asam.ods.RightsSet;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -26,6 +28,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class ApplicationAttributeImplTest {
 
     private static AoSession aoSession;
@@ -340,7 +343,7 @@ public class ApplicationAttributeImplTest {
     @Test
     public void testSetRights() {
         try {
-            aaId.setRights(null, 0, null);
+            aaId.setRights(null, 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);

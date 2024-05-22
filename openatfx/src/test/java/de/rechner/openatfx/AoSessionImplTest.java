@@ -19,6 +19,7 @@ import org.asam.ods.LockMode;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -29,6 +30,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class AoSessionImplTest {
 
     private static AoFactory aoFactory;
@@ -150,6 +152,8 @@ public class AoSessionImplTest {
         try {
             assertEquals(24, aoSession.listContext("*").getCount());
             assertEquals(3, aoSession.listContext("WILD*").getCount());
+            assertEquals("WILDCARD_ALL", aoSession.listContext("WILDCARD_ALL").nextOne());
+            assertEquals("WILDCARD_ALL", aoSession.listContext("wildcard_ALL").nextOne());
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -163,6 +167,8 @@ public class AoSessionImplTest {
         try {
             assertEquals(24, aoSession.getContext("*").getCount());
             assertEquals(3, aoSession.getContext("WILD*").getCount());
+            assertEquals("*", aoSession.getContext("WILDCARD_ALL").nextOne().value.u.stringVal());
+            assertEquals("*", aoSession.getContext("wildcard_ALL").nextOne().value.u.stringVal());
         } catch (AoException e) {
             fail(e.reason);
         }

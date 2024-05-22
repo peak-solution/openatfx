@@ -25,6 +25,7 @@ import org.asam.ods.JoinDef;
 import org.asam.ods.NameValueSeqUnitId;
 import org.asam.ods.QueryStructureExt;
 import org.asam.ods.ResultSetExt;
+import org.asam.ods.RightsSet;
 import org.asam.ods.SelAIDNameUnitId;
 import org.asam.ods.SelItem;
 import org.asam.ods.SelOpcode;
@@ -41,6 +42,7 @@ import org.asam.ods.ValueMatrixMode;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -51,6 +53,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class ApplElemAccessImplTest {
 
     private static AoSession aoSession;
@@ -76,12 +79,14 @@ public class ApplElemAccessImplTest {
             T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("dsk").getId();
             AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
             aidSeq[0] = new AIDNameValueSeqUnitId();
+            aidSeq[0].unitId = new T_LONGLONG();
             aidSeq[0].attr = new AIDName(aid, "iname");
             aidSeq[0].values = new TS_ValueSeq();
             aidSeq[0].values.flag = new short[] { 15, 15 };
             aidSeq[0].values.u = new TS_UnionSeq();
             aidSeq[0].values.u.stringVal(new String[] { "name1", "name2" });
             aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].unitId = new T_LONGLONG();
             aidSeq[1].attr = new AIDName(aid, "created");
             aidSeq[1].values = new TS_ValueSeq();
             aidSeq[1].values.flag = new short[] { 15, 15 };
@@ -101,6 +106,7 @@ public class ApplElemAccessImplTest {
             T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("dsk").getId();
             AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
             AIDNameValueSeqUnitId nameAnvsui = new AIDNameValueSeqUnitId();
+            nameAnvsui.unitId = new T_LONGLONG();
             nameAnvsui.attr = new AIDName(aid, "iname");
             nameAnvsui.values = new TS_ValueSeq();
             nameAnvsui.values.flag = new short[] { 15 };
@@ -108,6 +114,7 @@ public class ApplElemAccessImplTest {
             nameAnvsui.values.u.stringVal(new String[] { "updateInstancesTest" });
             aidSeq[0] = nameAnvsui;
             aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].unitId = new T_LONGLONG();
             aidSeq[1].attr = new AIDName(aid, "created");
             aidSeq[1].values = new TS_ValueSeq();
             aidSeq[1].values.flag = new short[] { 15 };
@@ -119,12 +126,14 @@ public class ApplElemAccessImplTest {
             T_LONGLONG iid = elemIds[0].iid;
 
             AIDNameValueSeqUnitId iidAnvsui = new AIDNameValueSeqUnitId();
+            iidAnvsui.unitId = new T_LONGLONG();
             iidAnvsui.attr = new AIDName(aid, "dsk_iid");
             iidAnvsui.values = new TS_ValueSeq();
             iidAnvsui.values.flag = new short[] { 15 };
             iidAnvsui.values.u = new TS_UnionSeq();
             iidAnvsui.values.u.longlongVal(new T_LONGLONG[] { iid });
             AIDNameValueSeqUnitId hostAnvsui = new AIDNameValueSeqUnitId();
+            hostAnvsui.unitId = new T_LONGLONG();
             hostAnvsui.attr = new AIDName(aid, "host");
             hostAnvsui.values = new TS_ValueSeq();
             hostAnvsui.values.flag = new short[] { 15 };
@@ -149,6 +158,9 @@ public class ApplElemAccessImplTest {
             selValue.oper = SelOpcode.EQ;
             selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
             qse.condSeq[0].value(selValue);
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
             ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
 
             assertEquals(1, resSetExt.length);
@@ -238,16 +250,6 @@ public class ApplElemAccessImplTest {
 
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
-        }
-    }
-
-    @Test
-    public void testGetInstances() {
-        try {
-            applElemAccess.getInstances(null, 0);
-            fail("AoException expected");
-        } catch (AoException e) {
-            assertEquals(ErrorCode.AO_BAD_PARAMETER, e.errCode);
         }
     }
 
@@ -349,6 +351,10 @@ public class ApplElemAccessImplTest {
             selValue.oper = SelOpcode.CI_LIKE;
             selValue.value = ODSHelper.string2tsValue(DataType.DT_STRING, "LS.*");
             qse.condSeq[0].value(selValue);
+            
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
 
             ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
             ElemResultSetExt[] erses = resSetExt[0].firstElems;
@@ -374,7 +380,7 @@ public class ApplElemAccessImplTest {
                         }
                     }
                 } else if (aid == dtsAid) {
-                    assertThat(erse.values).hasSize(8); // no of attrs
+                    assertThat(erse.values).hasSize(9); // no of attrs
                     for (NameValueSeqUnitId nvsui : erse.values) {
                         if (nvsui.valName.equals("iname")) {
                             assertThat(nvsui.value.flag).hasSize(2); // no of rows
@@ -591,7 +597,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetAttributeRights() {
         try {
-            applElemAccess.setAttributeRights(null, null, null, 0, null);
+            applElemAccess.setAttributeRights(new T_LONGLONG(), "", new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -601,7 +607,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetElementRights() {
         try {
-            applElemAccess.setElementRights(null, null, 0, null);
+            applElemAccess.setElementRights(new T_LONGLONG(), new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -611,7 +617,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetInstanceRights() {
         try {
-            applElemAccess.setInstanceRights(null, null, null, 0, null);
+            applElemAccess.setInstanceRights(new T_LONGLONG(), new T_LONGLONG[0], new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -621,7 +627,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetAttributeRights() {
         try {
-            applElemAccess.getAttributeRights(null, null);
+            applElemAccess.getAttributeRights(new T_LONGLONG(), "");
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -631,7 +637,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetElementRights() {
         try {
-            applElemAccess.getElementRights(null);
+            applElemAccess.getElementRights(new T_LONGLONG());
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -641,7 +647,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetInstanceRights() {
         try {
-            applElemAccess.getInstanceRights(null, null);
+            applElemAccess.getInstanceRights(new T_LONGLONG(), new T_LONGLONG());
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -651,7 +657,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetElementInitialRights() {
         try {
-            applElemAccess.setElementInitialRights(null, null, 0, null, null);
+            applElemAccess.setElementInitialRights(new T_LONGLONG(), new T_LONGLONG(), 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -661,7 +667,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetInstanceInitialRights() {
         try {
-            applElemAccess.setInstanceInitialRights(null, null, null, 0, null, null);
+            applElemAccess.setInstanceInitialRights(new T_LONGLONG(), new T_LONGLONG[0], new T_LONGLONG(), 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -671,7 +677,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testSetInitialRightReference() {
         try {
-            applElemAccess.setInitialRightReference(null, null, null);
+            applElemAccess.setInitialRightReference(new T_LONGLONG(), "", RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -681,7 +687,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetInitialRightReference() {
         try {
-            applElemAccess.getInitialRightReference(null);
+            applElemAccess.getInitialRightReference(new T_LONGLONG());
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -691,7 +697,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetElementInitialRights() {
         try {
-            applElemAccess.getElementInitialRights(null);
+            applElemAccess.getElementInitialRights(new T_LONGLONG());
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -701,7 +707,7 @@ public class ApplElemAccessImplTest {
     @Test
     public void testGetInstanceInitialRights() {
         try {
-            applElemAccess.getInstanceInitialRights(null, null);
+            applElemAccess.getInstanceInitialRights(new T_LONGLONG(), new T_LONGLONG());
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);

@@ -12,14 +12,19 @@ import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationAttribute;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.ApplicationRelationInstanceElementSeq;
 import org.asam.ods.BaseAttribute;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
+import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
+import org.asam.ods.RightsSet;
+import org.asam.ods.T_LONGLONG;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -30,6 +35,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class ApplicationElementImplTest {
 
     private static AoSession aoSession;
@@ -134,13 +140,13 @@ public class ApplicationElementImplTest {
     @Test
     public void testCreateAttribute() {
         try {
-            assertEquals(6, applicationElement.listAttributes("*").length);
+            assertEquals(7, applicationElement.listAttributes("*").length);
             ApplicationAttribute aa = applicationElement.createAttribute();
             aa.setName("new_attribute");
             assertEquals("new_attribute", aa.getName());
-            assertEquals(7, applicationElement.listAttributes("*").length);
+            assertEquals(8, applicationElement.listAttributes("*").length);
             applicationElement.removeAttribute(aa);
-            assertEquals(6, applicationElement.listAttributes("*").length);
+            assertEquals(7, applicationElement.listAttributes("*").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -149,7 +155,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testListAttributes() {
         try {
-            assertEquals(6, applicationElement.listAttributes("*").length);
+            assertEquals(7, applicationElement.listAttributes("*").length);
             assertEquals(2, applicationElement.listAttributes("meas*").length);
         } catch (AoException e) {
             fail(e.reason);
@@ -159,7 +165,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testGetAttributes() {
         try {
-            assertEquals(6, applicationElement.getAttributes("*").length);
+            assertEquals(7, applicationElement.getAttributes("*").length);
             assertEquals(2, applicationElement.listAttributes("meas*").length);
         } catch (AoException e) {
             fail(e.reason);
@@ -192,7 +198,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testRemoveAttribute() {
         try {
-            assertEquals(6, applicationElement.listAttributes("*").length);
+            assertEquals(7, applicationElement.listAttributes("*").length);
 
             BaseAttribute ba = applicationElement.getBaseElement().getAttributes("description")[0];
             ApplicationAttribute aa = applicationElement.createAttribute();
@@ -200,11 +206,11 @@ public class ApplicationElementImplTest {
             aa.setBaseAttribute(ba);
 
             assertEquals("new_attribute", aa.getName());
-            assertEquals(7, applicationElement.listAttributes("*").length);
+            assertEquals(8, applicationElement.listAttributes("*").length);
             assertNotNull(applicationElement.getAttributeByBaseName("description"));
 
             applicationElement.removeAttribute(aa);
-            assertEquals(6, applicationElement.listAttributes("*").length);
+            assertEquals(7, applicationElement.listAttributes("*").length);
         } catch (AoException e) {
             fail(e.reason);
         }
@@ -440,7 +446,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testCreateInstances() {
         try {
-            applicationElement.createInstances(null, null);
+            applicationElement.createInstances(new NameValueSeqUnit[0], new ApplicationRelationInstanceElementSeq[0]);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -450,7 +456,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testSetRights() {
         try {
-            applicationElement.setRights(null, 0, null);
+            applicationElement.setRights(null, 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -480,7 +486,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testSetInitialRights() {
         try {
-            applicationElement.setInitialRights(null, 0, null, null);
+            applicationElement.setInitialRights(null, 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -520,7 +526,7 @@ public class ApplicationElementImplTest {
     @Test
     public void testSetSecurityLevel() {
         try {
-            applicationElement.setSecurityLevel(0, null);
+            applicationElement.setSecurityLevel(0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);

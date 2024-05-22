@@ -17,9 +17,11 @@ import org.asam.ods.InstanceElementIterator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.AoServiceFactory;
+import de.rechner.openatfx.GlassfishCorbaExtension;
 import de.rechner.openatfx.InstanceElementImplTest;
 
 
@@ -28,6 +30,7 @@ import de.rechner.openatfx.InstanceElementImplTest;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class PerformanceTest {
 
     private static ORB orb;

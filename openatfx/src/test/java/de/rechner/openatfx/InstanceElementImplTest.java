@@ -12,19 +12,24 @@ import org.asam.ods.AoException;
 import org.asam.ods.AoSession;
 import org.asam.ods.ApplicationElement;
 import org.asam.ods.ApplicationRelation;
+import org.asam.ods.ApplicationRelationInstanceElementSeq;
 import org.asam.ods.ApplicationStructure;
 import org.asam.ods.AttrType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.Measurement;
 import org.asam.ods.NameUnit;
+import org.asam.ods.NameValueSeqUnit;
 import org.asam.ods.NameValueUnit;
 import org.asam.ods.Relationship;
+import org.asam.ods.RightsSet;
 import org.asam.ods.SubMatrix;
 import org.asam.ods.T_ExternalReference;
+import org.asam.ods.T_LONGLONG;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
@@ -35,6 +40,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
+@ExtendWith(GlassfishCorbaExtension.class)
 public class InstanceElementImplTest {
 
     private static AoSession aoSession;
@@ -130,17 +136,17 @@ public class InstanceElementImplTest {
     @Test
     public void testListAttributes() {
         try {
-            assertEquals(6, ieDts.listAttributes("*", AttrType.ALL).length);
+            assertEquals(7, ieDts.listAttributes("*", AttrType.ALL).length);
             assertEquals(1, ieDts.listAttributes("*iid", AttrType.ALL).length);
-            assertEquals(6, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
+            assertEquals(7, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
             assertEquals(1, ieDts.listAttributes("*iid", AttrType.APPLATTR_ONLY).length);
             assertEquals(0, ieDts.listAttributes("*", AttrType.INSTATTR_ONLY).length);
 
             // test listing of instance attributes
             ieDts.addInstanceAttribute(ODSHelper.createStringNVU("instattr", "test"));
 
-            assertEquals(7, ieDts.listAttributes("*", AttrType.ALL).length);
-            assertEquals(6, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
+            assertEquals(8, ieDts.listAttributes("*", AttrType.ALL).length);
+            assertEquals(7, ieDts.listAttributes("*", AttrType.APPLATTR_ONLY).length);
             assertEquals(1, ieDts.listAttributes("*", AttrType.INSTATTR_ONLY).length);
             assertEquals(1, ieDts.listAttributes("instattr*", AttrType.INSTATTR_ONLY).length);
             assertEquals(0, ieDts.listAttributes("xxx", AttrType.INSTATTR_ONLY).length);
@@ -419,23 +425,23 @@ public class InstanceElementImplTest {
         }
         // not allowed data type
         try {
-            ieDts.addInstanceAttribute(ODSHelper.createExtRefNVU("xxx", new T_ExternalReference()));
+            ieDts.addInstanceAttribute(ODSHelper.createExtRefNVU("xxx", new T_ExternalReference("", "", "")));
             fail("AoException expected");
         } catch (AoException e) {
-        }
-
-        // remove
-        try {
-            ieDts.removeInstanceAttribute("inst_attr_dt_string");
-            ieDts.removeInstanceAttribute("inst_attr_dt_float");
-            ieDts.removeInstanceAttribute("inst_attr_dt_double");
-            ieDts.removeInstanceAttribute("inst_attr_dt_byte");
-            ieDts.removeInstanceAttribute("inst_attr_dt_short");
-            ieDts.removeInstanceAttribute("inst_attr_dt_long");
-            ieDts.removeInstanceAttribute("inst_attr_dt_longlong");
-            ieDts.removeInstanceAttribute("inst_attr_dt_date");
-        } catch (AoException e) {
-            fail(e.reason);
+        } finally {
+            // remove
+            try {
+                ieDts.removeInstanceAttribute("inst_attr_dt_string");
+                ieDts.removeInstanceAttribute("inst_attr_dt_float");
+                ieDts.removeInstanceAttribute("inst_attr_dt_double");
+                ieDts.removeInstanceAttribute("inst_attr_dt_byte");
+                ieDts.removeInstanceAttribute("inst_attr_dt_short");
+                ieDts.removeInstanceAttribute("inst_attr_dt_long");
+                ieDts.removeInstanceAttribute("inst_attr_dt_longlong");
+                ieDts.removeInstanceAttribute("inst_attr_dt_date");
+            } catch (AoException e) {
+                fail(e.reason);
+            }
         }
     }
 
@@ -709,7 +715,7 @@ public class InstanceElementImplTest {
     @Test
     public void testCreateRelatedInstances() {
         try {
-            ieDts.createRelatedInstances(null, null, null);
+            ieDts.createRelatedInstances(null, new NameValueSeqUnit[0], new ApplicationRelationInstanceElementSeq[0]);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -803,7 +809,7 @@ public class InstanceElementImplTest {
     @Test
     public void testSetRights() {
         try {
-            ieDts.setRights(null, 0, null);
+            ieDts.setRights(null, 0, RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
@@ -823,7 +829,7 @@ public class InstanceElementImplTest {
     @Test
     public void testSetInitialRights() {
         try {
-            ieDts.setInitialRights(null, 0, null, null);
+            ieDts.setInitialRights(null, 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
             fail("AoException expected");
         } catch (AoException e) {
             assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);

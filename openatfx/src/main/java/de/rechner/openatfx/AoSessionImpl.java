@@ -282,7 +282,7 @@ public class AoSessionImpl extends AoSessionPOA {
         try {
             List<String> list = new ArrayList<String>();
             for (String str : this.atfxCache.getContext().keySet()) {
-                if (PatternUtil.nameFilterMatch(str, varPattern)) {
+                if (PatternUtil.nameFilterMatchCI(str, varPattern)) {
                     list.add(str);
                 }
             }
@@ -306,7 +306,7 @@ public class AoSessionImpl extends AoSessionPOA {
         try {
             List<NameValue> list = new ArrayList<NameValue>();
             for (NameValue nv : this.atfxCache.getContext().values()) {
-                if (PatternUtil.nameFilterMatch(nv.valName, varPattern)) {
+                if (PatternUtil.nameFilterMatchCI(nv.valName, varPattern)) {
                     list.add(ODSHelper.cloneNV(nv));
                 }
             }
@@ -683,7 +683,7 @@ public class AoSessionImpl extends AoSessionPOA {
      * 
      * @return the {@link AtfxCache}
      */
-    protected AtfxCache getAtfxCache() {
+    public AtfxCache getAtfxCache() {
         return this.atfxCache;
     }
     

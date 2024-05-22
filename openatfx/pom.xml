@@ -5,7 +5,7 @@
 	<groupId>de.rechner</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>1.5.1</version>
+	<version>2.0.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>http://sourceforge.net/projects/openatfx/</url>
 
@@ -42,16 +42,16 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.12.1</version>
+				<version>3.13.0</version>
 				<configuration>
 					<source>1.8</source>
-					<target>1.8</target>
+					<target>17</target>
 				</configuration>
 			</plugin>
 			<!-- create executable jar -->
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.3.0</version>
+				<version>3.4.1</version>
 				<configuration>
 					<archive>
 						<index>true</index>
@@ -78,7 +78,7 @@
 			<!-- build assembly -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.6.0</version>
+				<version>3.7.1</version>
 				<configuration>
 					<descriptors>
 						<descriptor>src/assembly/assembly.xml</descriptor>
@@ -93,6 +93,29 @@
 					<useSystemClassLoader>false</useSystemClassLoader>
 				</configuration>
 			</plugin>
+			<plugin>
+			    <groupId>org.codehaus.mojo</groupId>
+			    <artifactId>jaxb2-maven-plugin</artifactId>
+			    <version>3.2.0</version>
+			    <executions>
+			        <execution>
+			            <id>xjc</id>
+			            <goals>
+			                <goal>xjc</goal>
+			            </goals>
+			        </execution>
+			    </executions>
+			    <configuration>
+			        <!--<xjbSources>
+			            <xjbSource>src/main/resources/global.xjb</xjbSource>
+			        </xjbSources>-->
+			        <!--<sources>
+			            <source>src/main/resources/user.xsd</source>
+			        </sources>-->
+			        <!--<outputDirectory>${basedir}/src/main/java/de/rechner/openatfx/basestructure</outputDirectory>-->
+			        <clearOutputDir>false</clearOutputDir>
+			    </configuration>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -100,17 +123,37 @@
 		<dependency>
 			<groupId>org.asam</groupId>
 			<artifactId>ods</artifactId>
-			<version>5.3.0</version>
+			<version>5.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.7.36</version>
+			<version>2.0.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.14.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.jaxb</groupId>
+		    <artifactId>jaxb-runtime</artifactId>
+		    <version>4.0.5</version>
+		</dependency>
+		<dependency>
+			  <groupId>org.glassfish.corba</groupId>
+			  <artifactId>glassfish-corba-omgapi</artifactId>
+			  <version>4.2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.corba</groupId>
+			<artifactId>glassfish-corba-orb</artifactId>
+			<version>4.2.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.vintage</groupId>
@@ -125,14 +168,14 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.woodstox</groupId>
-			<artifactId>woodstox-core-asl</artifactId>
-			<version>4.4.1</version>
+			<groupId>com.fasterxml.woodstox</groupId>
+			<artifactId>woodstox-core</artifactId>
+			<version>6.6.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-slf4j-impl</artifactId>
-			<version>2.23.0</version>
+			<artifactId>log4j-slf4j2-impl</artifactId>
+			<version>2.23.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -150,7 +193,7 @@
 		<dependency>
 		    <groupId>org.mockito</groupId>
 		    <artifactId>mockito-core</artifactId>
-		    <version>2.25.1</version>
+		    <version>5.11.0</version>
 		    <scope>test</scope>
 		</dependency>
 	</dependencies>
