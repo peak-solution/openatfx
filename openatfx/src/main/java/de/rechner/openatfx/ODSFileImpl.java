@@ -69,7 +69,12 @@ class ODSFileImpl extends InstanceElementImpl implements ODSFileOperations {
      */
     public ODSWriteTransfer create() throws AoException {
         String filename = null;
-        NameValueUnit nvu = getValueByBaseName("ao_original_filename");
+        NameValueUnit nvu = null;
+        try {
+            nvu = getValueByBaseName("ao_original_filename");
+        } catch (AoException aoe) {
+            // tolerate not existing attribute
+        }
         if (null != nvu && null != nvu.value && nvu.value.flag != 0 && null != nvu.value.u) {
             filename = nvu.value.u.stringVal();
         }

@@ -4,6 +4,11 @@
 	
 
 1. Changes
+	1.5.2 (Markus Renner)
+		- tolerated AoFile elements without ao_original_filename attribute
+		- fixed instance attribute NVU without unit string after ORB change
+		- added tolerance for AVL local column values attribute <Bytestream> flag
+
 	1.5.1 (Markus Renner)
 		- instance attributes with unit names are now supported
 		- added tolerance for both instance attributes with a defined unit ID and instance attributes with a defined unit name

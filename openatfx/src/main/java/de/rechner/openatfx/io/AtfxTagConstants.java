@@ -7,7 +7,7 @@ package de.rechner.openatfx.io;
  */
 class AtfxTagConstants {
 
-    public static final String VERSION = "1.5.1";
+    public static final String VERSION = "1.5.2";
 
     public static final String ATFX_FILE = "atfx_file";
 
@@ -95,6 +95,7 @@ class AtfxTagConstants {
     public static final String VALUES_ATTR_COMPLEX64 = "A_COMPLEX64";
     public static final String VALUES_ATTR_TIMESTRING = "A_TIMESTRING";
     public static final String VALUES_ATTR_BYTEFIELD = "A_BYTEFIELD";
+    public static final String VALUES_ATTR_BYTESTREAM = "Bytestream";
     public static final String VALUES_ATTR_BLOB = "A_BLOB";
     public static final String VALUES_ATTR_EXTERNALREFERENCE = "A_EXTERNALREFERENCE";
 

@@ -833,6 +833,10 @@ class AtfxInstanceReader {
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BYTEFIELD)) {
                 value.u.bytestrSeq(parseBytestrSeq(AtfxTagConstants.VALUES_ATTR_BYTEFIELD, reader));
             }
+            // support AVL's incorrect Bytestream tag
+            else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_BYTESTREAM)) {
+                value.u.bytestrSeq(parseBytestrSeq(AtfxTagConstants.VALUES_ATTR_BYTESTREAM, reader));
+            }
             // DS_BYTE
             else if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.VALUES_ATTR_INT8)) {
                 value.u.byteSeq(AtfxParseUtil.parseByteSeq(reader.getElementText()));
@@ -894,7 +898,8 @@ class AtfxInstanceReader {
             reader.next();
             if (reader.isStartElement()) {
                 NameValueUnit nvu = new NameValueUnit();
-                nvu.unit = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_UNIT);
+                String unit = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_UNIT);
+                nvu.unit = unit == null ? "" : unit;
                 nvu.valName = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_NAME);
                 nvu.value = new TS_Value();
                 nvu.value.u = new TS_Union();
