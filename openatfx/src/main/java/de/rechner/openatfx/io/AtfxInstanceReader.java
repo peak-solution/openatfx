@@ -10,7 +10,6 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -96,7 +95,7 @@ class AtfxInstanceReader {
                                                aoSession.getEnumerationStructure(),
                                                isExtendedCompatiblityMode);
         this.isExtendedCompatiblityMode = isExtendedCompatiblityMode;
-        
+        Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
         initConfiguredExtCompFilenameStripString(aoSession);
         
         long start = System.currentTimeMillis();
@@ -113,7 +112,12 @@ class AtfxInstanceReader {
 
         // parse instances
         reader.next();
-        Map<ElemId, Map<String, T_LONGLONG[]>> relMap = parseInstanceElements(aoSession, files, modelCache, reader);
+        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
+            if (reader.isStartElement()) {
+                relMap.putAll(parseInstanceElement(aoSession, files, modelCache, reader));
+            }
+            reader.next();
+        }
 
         LOG.info("Parsed instances in " + (System.currentTimeMillis() - start) + " ms");
 
@@ -251,208 +255,179 @@ class AtfxInstanceReader {
      * @throws XMLStreamException Error parsing XML.
      * @throws AoException Error writing to application model.
      */
-    private Map<ElemId, Map<String, T_LONGLONG[]>> parseInstanceElements(AoSession aoSession, Map<String, String> files,
+    private Map<ElemId, Map<String, T_LONGLONG[]>> parseInstanceElement(AoSession aoSession, Map<String, String> files,
             ModelCache modelCache, XMLStreamReader reader) throws XMLStreamException, AoException {
-        Map<ElemId, Map<String, T_LONGLONG[]>> relMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
-        while (!(reader.isEndElement() && reader.getLocalName().equals(AtfxTagConstants.INSTANCE_DATA))) {
+        // application element name
+        String aeName = reader.getLocalName();
+        ApplElem applElem = modelCache.getApplElem(aeName);
+        if (applElem == null) {
+            throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
+                                  "ApplicationElement '" + aeName + "' not found");
+        }
+        Long aid = ODSHelper.asJLong(applElem.aid);
+        boolean ismeaq = applElem.beName.equals("AoMeasurementQuantity");
+
+        // read attributes
+        List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
+        List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
+        Map<String, T_LONGLONG[]> instRelMap = new HashMap<String, T_LONGLONG[]>();
+        InstanceElement ieExternalComponent = null;
+
+        String currentTagName = null;
+        while (!(reader.isEndElement() && reader.getLocalName().equals(aeName) && (currentTagName == null))) {
+
+            // need this 'trick' to indicate whether to parse an instance or application element to know when to end
+            if (reader.isEndElement() && currentTagName != null) {
+                currentTagName = null;
+            }
+            reader.next();
             if (reader.isStartElement()) {
-                // application element name
-                String aeName = reader.getLocalName();
-                ApplElem applElem = modelCache.getApplElem(aeName);
-                if (applElem == null) {
-                    throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0,
-                                          "ApplicationElement '" + aeName + "' not found");
+                currentTagName = reader.getLocalName();
+            }
+
+            // base attribute 'values' of 'LocalColumn'
+            if (reader.isStartElement() && modelCache.isLocalColumnValuesAttr(aeName, currentTagName)) {
+                reader.nextTag();
+                // external component
+                if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
+                    if (ieExternalComponent == null) {
+                        ieExternalComponent = createExtCompIe(aoSession);
+                    }
+                    parseLocalColumnValuesComponent(ieExternalComponent, files, modelCache, reader);
                 }
-                Long aid = ODSHelper.asJLong(applElem.aid);
-
-                // read attributes
-                List<AIDNameValueSeqUnitId> applAttrValues = new ArrayList<AIDNameValueSeqUnitId>();
-                List<NameValueUnit> instAttrValues = new ArrayList<NameValueUnit>();
-                Map<ApplRel, T_LONGLONG[]> instApplRelMap = new HashMap<>();
-                InstanceElement ieExternalComponent = null;
-
-                String currentTagName = null;
-                while (!(reader.isEndElement() && reader.getLocalName().equals(aeName) && (currentTagName == null))) {
-
-                    // need this 'trick' to indicate whether to parse an instance or application element to know when to end
-                    if (reader.isEndElement() && currentTagName != null) {
-                        currentTagName = null;
-                    }
-                    reader.next();
-                    if (reader.isStartElement()) {
-                        currentTagName = reader.getLocalName();
-                    }
-
-                    // base attribute 'values' of 'LocalColumn'
-                    if (reader.isStartElement() && modelCache.isLocalColumnValuesAttr(aeName, currentTagName)) {
-                        reader.nextTag();
-                        // external component
-                        if (reader.isStartElement() && reader.getLocalName().equals(AtfxTagConstants.COMPONENT)) {
-                            if (ieExternalComponent == null) {
-                                ieExternalComponent = createExtCompIe(aoSession);
-                            }
-                            parseLocalColumnValuesComponent(ieExternalComponent, files, modelCache, reader);
-                        }
-                        // explicit values inline XML
-                        else if (reader.isStartElement()) {
-                            TS_Value value = parseLocalColumnValues(modelCache, reader);
-                            AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
-                            valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
-                            valuesAttrValue.attr = new AIDName();
-                            valuesAttrValue.attr.aid = applElem.aid;
-                            valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
-                            valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value, isExtendedCompatiblityMode);
-                            applAttrValues.add(valuesAttrValue);
-                        }
-                    }
-
-                    // base attribute 'flags' of 'LocalColumn'
-                    else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
-                        // try to read flags from inline XML
-                        // no other way than trying with exception could be found
-                        try {
-                            ApplAttr applAttr = modelCache.getApplAttr(aid, currentTagName);
-                            AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
-                            applAttrValue.unitId = ODSHelper.asODSLongLong(0);
-                            applAttrValue.attr = new AIDName();
-                            applAttrValue.attr.aid = applElem.aid;
-                            applAttrValue.attr.aaName = currentTagName;
-                            applAttrValue.values = new TS_ValueSeq();
-                            applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
-                                                                                                      currentTagName,
-                                                                                                      applAttr.dType,
-                                                                                                      modelCache, reader), isExtendedCompatiblityMode);
-                            applAttrValues.add(applAttrValue);
-                        }
-                        // flags in external component
-                        catch (TypedXMLStreamException e) {
-                            if (ieExternalComponent == null) {
-                                ieExternalComponent = createExtCompIe(aoSession);
-                            }
-                            parseLocalColumnFlagsComponent(aoSession, ieExternalComponent, files, modelCache, reader);
-                        }
-                    }
-
-                    // application attribute value
-                    else if (reader.isStartElement() && (modelCache.getApplAttr(aid, currentTagName) != null)) {
-                        ApplAttr applAttr = modelCache.getApplAttr(aid, currentTagName);
-                        AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
-                        applAttrValue.unitId = ODSHelper.asODSLongLong(0);
-                        applAttrValue.attr = new AIDName();
-                        applAttrValue.attr.aid = applElem.aid;
-                        applAttrValue.attr.aaName = currentTagName;
-                        applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
-                                                                                                  currentTagName,
-                                                                                                  applAttr.dType, modelCache,
-                                                                                                  reader), isExtendedCompatiblityMode);
-                        applAttrValues.add(applAttrValue);
-                    }
-
-                    // application relation
-                    else if (reader.isStartElement() && (modelCache.getApplRel(aid, currentTagName) != null)) {
-                        // to tolerate incorrect atfx files (missing inverse relations is very common) the previous
-                        // reduction to reading inverse relations (for performance reasons) has been removed in favor of
-                        // tolerance to this common atfx generation mistake
-                        ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
-                        String textContent = reader.getElementText();
-                        if (textContent.length() > 0) {
-                            T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);
-                            instApplRelMap.put(applRel, relInstIids);
-                        }
-                    }
-
-                    // instance attribute
-                    else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
-                        instAttrValues = parseInstanceAttributes(reader);
-                    }
-
-                    // ACLA
-                    else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLA))) {
-                    }
-
-                    // ACLI
-                    else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLI))) {
-                    }
-
-                    // unknown
-                    else if (reader.isStartElement()) {
-                        LOG.warn("Unsupported XML tag name: " + reader.getLocalName());
-                    }
+                // explicit values inline XML
+                else if (reader.isStartElement()) {
+                    TS_Value value = parseLocalColumnValues(modelCache, reader);
+                    AIDNameValueSeqUnitId valuesAttrValue = new AIDNameValueSeqUnitId();
+                    valuesAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    valuesAttrValue.attr = new AIDName();
+                    valuesAttrValue.attr.aid = applElem.aid;
+                    valuesAttrValue.attr.aaName = modelCache.getLcValuesAaName();
+                    valuesAttrValue.values = ODSHelper.tsValue2tsValueSeq(value, isExtendedCompatiblityMode);
+                    applAttrValues.add(valuesAttrValue);
                 }
-                
-                // fix external component file url if configured
-                if (configuredExtCompFilenameStartRemoveString != null && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
-                    ApplicationElement extCompAE = aoSession.getApplicationStructure().getElementById(applElem.aid);
-                    fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "filename_url", applAttrValues);
-                    fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "flags_filename_url", applAttrValues);
-                }
+            }
 
-                // create instance element
-                if (applAttrValues.isEmpty()) { // no values
-                    return Collections.emptyMap();
+            // base attribute 'flags' of 'LocalColumn'
+            else if (reader.isStartElement() && modelCache.isLocalColumnFlagsAttr(aeName, currentTagName)) {
+                // try to read flags from inline XML
+                // no other way than trying with exception could be found
+                try {
+                    ApplAttr applAttr = modelCache.getApplAttr(aid, currentTagName);
+                    AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
+                    applAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                    applAttrValue.attr = new AIDName();
+                    applAttrValue.attr.aid = applElem.aid;
+                    applAttrValue.attr.aaName = currentTagName;
+                    applAttrValue.values = new TS_ValueSeq();
+                    applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
+                                                                                              currentTagName,
+                                                                                              applAttr.dType,
+                                                                                              modelCache, reader), isExtendedCompatiblityMode);
+                    applAttrValues.add(applAttrValue);
                 }
-                ApplElemAccess aea = aoSession.getApplElemAccess();
-                ElemId elemId = aea.insertInstances(applAttrValues.toArray(new AIDNameValueSeqUnitId[0]))[0];
-
-                // set instance attributes
-                if (!instAttrValues.isEmpty()) {
-                    InstanceElement ie = aoSession.getApplicationStructure().getInstancesById(new ElemId[] { elemId })[0];
-                    for (NameValueUnit nvu : instAttrValues) {
-                        ie.addInstanceAttribute(nvu);
+                // flags in external component
+                catch (TypedXMLStreamException e) {
+                    if (ieExternalComponent == null) {
+                        ieExternalComponent = createExtCompIe(aoSession);
                     }
-                    instanceAttributesByIidByAid.computeIfAbsent(aid, v -> new HashMap<>()).put(ODSHelper.asJLong(elemId.iid), instAttrValues);
+                    parseLocalColumnFlagsComponent(aoSession, ieExternalComponent, files, modelCache, reader);
                 }
+            }
 
-                // add external component instance, and set sequence representation to external_component
-                if (ieExternalComponent != null) {
-                    ApplicationStructure as = aoSession.getApplicationStructure();
-                    ApplicationElement aeLocalColumn = as.getElementById(elemId.aid);
-                    ApplicationRelation rel = aeLocalColumn.getRelationsByBaseName("external_component")[0];
-                    // create relation to external component
-                    InstanceElement ieLocalColumn = as.getElementById(elemId.aid).getInstanceById(elemId.iid);
-                    ieLocalColumn.createRelation(rel, ieExternalComponent);
-                    // alter sequence representation
-                    String attrSeqRep = aeLocalColumn.getAttributeByBaseName("sequence_representation").getName();
-                    int seqRepOrig = ODSHelper.getEnumVal(ieLocalColumn.getValue(attrSeqRep));
-                    int seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRepOrig);
-                    ieLocalColumn.setValue(ODSHelper.createEnumNVU(attrSeqRep, seqRep));
-                }
+            // application attribute value
+            else if (reader.isStartElement() && (modelCache.getApplAttr(aid, currentTagName) != null)) {
+                ApplAttr applAttr = modelCache.getApplAttr(aid, currentTagName);
+                AIDNameValueSeqUnitId applAttrValue = new AIDNameValueSeqUnitId();
+                applAttrValue.unitId = ODSHelper.asODSLongLong(0);
+                applAttrValue.attr = new AIDName();
+                applAttrValue.attr.aid = applElem.aid;
+                applAttrValue.attr.aaName = currentTagName;
+                applAttrValue.values = ODSHelper.tsValue2tsValueSeq(parseAttributeContent(aoSession, aid,
+                                                                                          currentTagName,
+                                                                                          applAttr.dType, modelCache,
+                                                                                          reader), isExtendedCompatiblityMode);
+                applAttrValues.add(applAttrValue);
+            }
 
-                // create relation map
-                ElemId currentElemId = new ElemId(applElem.aid, elemId.iid);
-                Map<String, T_LONGLONG[]> instRelMap = relMap.computeIfAbsent(currentElemId, v -> new HashMap<>());
-                for (Entry<ApplRel, T_LONGLONG[]> entry : instApplRelMap.entrySet()) {
-                    // set/update the relation from this side
-                    instRelMap.putAll(handleRelationMapEntry(instRelMap.computeIfAbsent(entry.getKey().arName, v -> null), entry.getKey().arName, entry.getValue()));
-                    
-                    // set/update the inverse relation
-                    for (T_LONGLONG relIid : entry.getValue()) {
-                        ElemId inverseElemId = new ElemId(entry.getKey().elem2, relIid);
-                        Map<String, T_LONGLONG[]> inverseRelMap = relMap.computeIfAbsent(inverseElemId, v -> new HashMap<>());
-                        inverseRelMap.putAll(handleRelationMapEntry(inverseRelMap.computeIfAbsent(entry.getKey().invName, v -> null), entry.getKey().invName, new T_LONGLONG[] {currentElemId.iid}));
+            // application relation
+            else if (reader.isStartElement() && (modelCache.getApplRel(aid, currentTagName) != null)) {
+                // only read the INVERSE relations for performance reasons!
+                ApplRel applRel = modelCache.getApplRel(aid, currentTagName);
+                short relMax = applRel.arRelationRange.max;
+                short invMax = applRel.invRelationRange.max;
+                if ((relMax == -1) || (relMax == 1 && invMax == 1) || (applRel.brName.equals("measurement_quantity"))
+                        || (ismeaq && applRel.brName.equals("unit"))) {
+                    String textContent = reader.getElementText();
+                    if (textContent.length() > 0) {
+                        T_LONGLONG[] relInstIids = AtfxParseUtil.parseLongLongSeq(textContent);
+                        instRelMap.put(applRel.arName, relInstIids);
                     }
                 }
             }
-            reader.next();
+
+            // instance attribute
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.INST_ATTR))) {
+                instAttrValues = parseInstanceAttributes(reader);
+            }
+
+            // ACLA
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLA))) {
+            }
+
+            // ACLI
+            else if (reader.isStartElement() && (reader.getLocalName().equals(AtfxTagConstants.SECURITY_ACLI))) {
+            }
+
+            // unknown
+            else if (reader.isStartElement()) {
+                LOG.warn("Unsupported XML tag name: " + reader.getLocalName());
+            }
         }
-        return relMap;
-    }
-    
-    private Map<String, T_LONGLONG[]> handleRelationMapEntry(T_LONGLONG[] existingIids, String relationName, T_LONGLONG[] newIids) {
-        Map<String, T_LONGLONG[]> instRelMap = new HashMap<>();
-        if (existingIids != null) {
-            Collection<Long> mergedIids = new HashSet<>();
-            // add already existing iids
-            Arrays.stream(existingIids).map(ODSHelper::asJLong).forEach(mergedIids::add);
-            // add additional new iids
-            Arrays.stream(newIids).map(ODSHelper::asJLong).forEach(mergedIids::add);
-            // set merged iids
-            instRelMap.put(relationName, mergedIids.stream().map(ODSHelper::asODSLongLong).toArray(T_LONGLONG[]::new));
-        } else {
-            // if no entry was yet created (by the inverse side) just add the iids for this relation
-            instRelMap.put(relationName, newIids);
+        
+        // fix external component file url if configured
+        if (configuredExtCompFilenameStartRemoveString != null && applElem.beName.equalsIgnoreCase("AoExternalComponent")) {
+            ApplicationElement extCompAE = aoSession.getApplicationStructure().getElementById(applElem.aid);
+            fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "filename_url", applAttrValues);
+            fixExtCompFileUrls(configuredExtCompFilenameStartRemoveString, extCompAE, "flags_filename_url", applAttrValues);
         }
-        return instRelMap;
+
+        // create instance element
+        if (applAttrValues.isEmpty()) { // no values
+            return Collections.emptyMap();
+        }
+        ApplElemAccess aea = aoSession.getApplElemAccess();
+        ElemId elemId = aea.insertInstances(applAttrValues.toArray(new AIDNameValueSeqUnitId[0]))[0];
+
+        // set instance attributes
+        if (!instAttrValues.isEmpty()) {
+            InstanceElement ie = aoSession.getApplicationStructure().getInstancesById(new ElemId[] { elemId })[0];
+            for (NameValueUnit nvu : instAttrValues) {
+                ie.addInstanceAttribute(nvu);
+            }
+            instanceAttributesByIidByAid.computeIfAbsent(aid, v -> new HashMap<>()).put(ODSHelper.asJLong(elemId.iid), instAttrValues);
+        }
+
+        // add external component instance, and set sequence representation to external_component
+        if (ieExternalComponent != null) {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeLocalColumn = as.getElementById(elemId.aid);
+            ApplicationRelation rel = aeLocalColumn.getRelationsByBaseName("external_component")[0];
+            // create relation to external component
+            InstanceElement ieLocalColumn = as.getElementById(elemId.aid).getInstanceById(elemId.iid);
+            ieLocalColumn.createRelation(rel, ieExternalComponent);
+            // alter sequence representation
+            String attrSeqRep = aeLocalColumn.getAttributeByBaseName("sequence_representation").getName();
+            int seqRepOrig = ODSHelper.getEnumVal(ieLocalColumn.getValue(attrSeqRep));
+            int seqRep = ODSHelper.seqRepComp2seqRepExtComp(seqRepOrig);
+            ieLocalColumn.setValue(ODSHelper.createEnumNVU(attrSeqRep, seqRep));
+        }
+
+        // create relation map
+        Map<ElemId, Map<String, T_LONGLONG[]>> retMap = new HashMap<ElemId, Map<String, T_LONGLONG[]>>();
+        retMap.put(new ElemId(applElem.aid, elemId.iid), instRelMap);
+
+        return retMap;
     }
     
     /**
@@ -919,8 +894,7 @@ class AtfxInstanceReader {
             reader.next();
             if (reader.isStartElement()) {
                 NameValueUnit nvu = new NameValueUnit();
-                String unit = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_UNIT);
-                nvu.unit = unit == null ? "" : unit;
+                nvu.unit = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_UNIT);
                 nvu.valName = reader.getAttributeValue(null, AtfxTagConstants.INST_ATTR_NAME);
                 nvu.value = new TS_Value();
                 nvu.value.u = new TS_Union();

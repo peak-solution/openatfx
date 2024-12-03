@@ -98,7 +98,7 @@ class ODSFileImpl extends InstanceElementImpl implements ODSFileOperations {
                 throw ex;
         }
         
-        return atfxCache.newWriteTransfer(modelPOA, instancePOA, aid, iid, filename, this);
+        return atfxCache.newWriteTransfer(modelPOA, instancePOA, aid, iid, filename, this._this());
     }
 
     /**

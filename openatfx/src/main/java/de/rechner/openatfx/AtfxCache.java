@@ -48,7 +48,7 @@ import de.rechner.openatfx.util.ODSHelper;
  * 
  * @author Christian Rechner
  */
-public class AtfxCache implements UnitMapper {
+class AtfxCache implements UnitMapper {
     private static final Logger LOG = LoggerFactory.getLogger(AtfxCache.class);
     private static final String CONTEXT_EXTENDED_COMPATIBILITYMODE = "EXTENDED_COMPATIBILITYMODE";
 
@@ -223,6 +223,7 @@ public class AtfxCache implements UnitMapper {
      * 
      * @param aid The application element id.
      * @param beName The base element name.
+     * @param aeName The application element name.
      * @param ae The application element.
      */
     public void addApplicationElement(long aid, String beName, ApplicationElement ae) {
@@ -582,7 +583,7 @@ public class AtfxCache implements UnitMapper {
     /**
      * Returns an instance element by given instance id.
      * 
-     * @param instancePOA The POA for lazy creation of the CORBA object.
+     * @param poa The POA for lazy creation of the CORBA object.
      * @param aid The application element id.
      * @param iid The instance id.
      * @return The instance element, null if not found.
@@ -709,8 +710,7 @@ public class AtfxCache implements UnitMapper {
     /**
      * Returns the environment instance.
      * 
-     * @param modelPOA
-     * @param instancePOA
+     * @param poa any valid POA
      * @return The environment instance, null if not application element derived from 'AoEnviroment' exists or no
      *         instance available.
      * @throws AoException if something went wrong
@@ -824,8 +824,8 @@ public class AtfxCache implements UnitMapper {
      * Returns a value of an instance element.
      * 
      * @param aid The application element id.
-     * @param attrNo The application attribute number.
      * @param iid The instance id.
+     * @param valName The application attribute number.
      * @return The value, null if not found.
      * @throws AoException Error getting value.
      */
@@ -1311,7 +1311,7 @@ public class AtfxCache implements UnitMapper {
      * @param aid The source application element id.
      * @param iid The source instance id.
      * @param applRel The application relation.
-     * @param otherIids The target instance element id.
+     * @param otherIid The target instance element id.
      * @throws AoException Error removing instance relation.
      */
     public void removeInstanceRelations(long aid, long iid, ApplicationRelation applRel, Collection<Long> otherIids)
@@ -1461,7 +1461,7 @@ public class AtfxCache implements UnitMapper {
         return ByteOrder.LITTLE_ENDIAN;
     }
     
-    public ODSWriteTransfer newWriteTransfer(POA modelPOA, POA instancePOA, long aid, long iid, String fileName, InstanceElementImpl fileInstance) throws AoException {
+    public ODSWriteTransfer newWriteTransfer(POA modelPOA, POA instancePOA, long aid, long iid, String fileName, InstanceElement fileInstance) throws AoException {
         if (getWriteTransfer(aid, iid) != null)
         {
             throw new AoException(ErrorCode.AO_IMPLEMENTATION_PROBLEM, SeverityFlag.ERROR, 1,
@@ -1473,7 +1473,7 @@ public class AtfxCache implements UnitMapper {
         try {
             String fileRoot = getContext().get("FILE_ROOT_EXTREF").value.u.stringVal();
             String filePath = Paths.get(fileRoot).resolve(fileName).toString();
-            OdsWriteTransfer transfer = new OdsWriteTransfer(filePath, fileInstance);
+            OdsWriteTransfer transfer = new OdsWriteTransfer(modelPOA, filePath, fileInstance);
             writeTransfer = ODSWriteTransferHelper.narrow(modelPOA.servant_to_reference(transfer));
         } catch (Throwable e) { // weird behaviour using openJDK, thus expecting exception
             LOG.error(e.getMessage(), e);

@@ -14,7 +14,7 @@ import org.asam.ods.SeverityFlag;
  * 
  * @author Christian Rechner
  */
-public class BaseAttributeImpl extends BaseAttributePOA {
+class BaseAttributeImpl extends BaseAttributePOA {
 
     private final String name;
     private final DataType dataType;
@@ -30,7 +30,7 @@ public class BaseAttributeImpl extends BaseAttributePOA {
      * @param dataType The data type.
      * @param obligatory The obligatory flag.
      * @param unique The unique flag.
-     * @param baseElement The base element.
+     * @param baseElementImpl The base element.
      * @param enumerationDefinition The enumeration definition.
      */
     public BaseAttributeImpl(String name, DataType dataType, boolean obligatory, boolean unique,

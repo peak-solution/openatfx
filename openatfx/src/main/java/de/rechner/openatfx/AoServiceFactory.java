@@ -63,8 +63,6 @@ public class AoServiceFactory {
      */
     public AoFactory newAoFactory(ORB orb) throws AoException {
         try {
-            System.setProperty("org.glassfish.gmbal.no.multipleUpperBoundsException", "true");
-            
             // get reference to rootpoa & activate the POAManager
             POA rootpoa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             rootpoa.the_POAManager().activate();
@@ -100,8 +98,6 @@ public class AoServiceFactory {
      */
     public AoFactory newAoFactory(ORB orb, IFileHandler fileHandler) throws AoException {
         try {
-            System.setProperty("org.glassfish.gmbal.no.multipleUpperBoundsException", "true");
-            
             // get reference to rootpoa & activate the POAManager
             POA rootpoa = POAHelper.narrow(orb.resolve_initial_references("RootPOA"));
             rootpoa.the_POAManager().activate();

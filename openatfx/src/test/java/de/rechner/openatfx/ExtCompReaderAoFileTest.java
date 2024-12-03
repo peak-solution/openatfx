@@ -12,12 +12,11 @@ import org.asam.ods.TS_Value;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.io.AtfxReader;
 
-@ExtendWith(GlassfishCorbaExtension.class)
+
 public class ExtCompReaderAoFileTest {
 
     private static AoSessionImpl aoSession;

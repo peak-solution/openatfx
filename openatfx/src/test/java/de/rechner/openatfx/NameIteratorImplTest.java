@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
@@ -21,7 +20,6 @@ import org.omg.PortableServer.POAHelper;
  * 
  * @author Christian Rechner
  */
-@ExtendWith(GlassfishCorbaExtension.class)
 public class NameIteratorImplTest {
 
     private static POA poa;

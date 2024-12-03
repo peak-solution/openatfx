@@ -13,12 +13,11 @@ import org.asam.ods.ApplicationStructure;
 import org.asam.ods.InstanceElement;
 import org.asam.ods.ODSFile;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
 
-@ExtendWith(GlassfishCorbaExtension.class)
+
 public class ODSFileTests {
 
     @Test

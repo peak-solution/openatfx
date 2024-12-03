@@ -886,13 +886,7 @@ public class AtfxReader {
         }
         // obligatory
         if (attributeToCreate.obligatoryStr != null && attributeToCreate.obligatoryStr.length() > 0) {
-            boolean obligatoryValueToSet = Boolean.valueOf(attributeToCreate.obligatoryStr);
-            if (aa.isObligatory() && !obligatoryValueToSet) {
-                LOG.warn("For element {} the attribute {} was defined not obligatory, but respective base atttribute is! This change is ignored, because it is not ODS compliant!",
-                         applElem.getName(), attributeToCreate.aaNameStr);
-            } else {
-                aa.setIsObligatory(obligatoryValueToSet);
-            }
+            aa.setIsObligatory(Boolean.valueOf(attributeToCreate.obligatoryStr));
         }
         // length
         if (attributeToCreate.lengthStr != null && attributeToCreate.lengthStr.length() > 0) {

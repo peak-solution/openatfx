@@ -17,20 +17,11 @@ limitations under the License.
 The place of jurisdiction for this software is Ingolstadt, Germany.
 
 Following dependencies are needed to run this library:
-- SLF4J: MIT license
-- Apache Log4j SLF4J 2.0 Binding: Apache 2 license
+- commons-logging: Apache 2 license
 - commons-math: Apache 2 license
-- commons-lang3: Apache 2 license
-- Woodstox: Apache 2 license
+- SLF4J: MIT license
+- JUnit: Eclipse Public License 1.0
+- Woodstox: LGPL
 - StAX API: BSD License
-- JAXB: EDL 1.0
-- Glassfish Corba ORB: EDL 1.0
-- JUnit: Eclipse Public License 2.0 (testing only)
-- AssertJ: Apache 2 license (testing only)
-- Mockito: MIT license (testing only)
-
-For the contained ASAM source code files
-(ODSBaseModel_asamXX.xml basemodel files under src/main/resources/,
- ODSBaseModelSpecSchema.xsd under src/main/xsd)
-and the ods-5.3.1.jar - created base on ASAM's ods531.idl file - lcoated in the
-lib folder of deployment refer to the ASAM license at www.asam.net/license.html.
+- AssertJ: Apache 2 license
+- Mockito: MIT license

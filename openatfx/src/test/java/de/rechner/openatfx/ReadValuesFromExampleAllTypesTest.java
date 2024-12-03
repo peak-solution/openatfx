@@ -18,12 +18,11 @@ import org.asam.ods.ValueMatrixMode;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import de.rechner.openatfx.util.ODSHelper;
 
-@ExtendWith(GlassfishCorbaExtension.class)
+
 public class ReadValuesFromExampleAllTypesTest {
 
     private static ORB orb;
