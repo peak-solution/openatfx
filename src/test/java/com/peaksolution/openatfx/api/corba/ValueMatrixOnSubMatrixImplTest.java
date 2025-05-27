@@ -1,0 +1,219 @@
+package com.peaksolution.openatfx.api.corba;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.net.URL;
+
+import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationStructure;
+import org.asam.ods.Column;
+import org.asam.ods.NameValueSeqUnit;
+import org.asam.ods.SubMatrix;
+import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.ValueMatrix;
+import org.asam.ods.ValueMatrixMode;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.omg.CORBA.ORB;
+
+import com.peaksolution.openatfx.AoServiceFactory;
+import com.peaksolution.openatfx.GlassfishCorbaExtension;
+import com.peaksolution.openatfx.util.ODSHelper;
+
+
+/**
+ * Test case for <code>com.peaksolution.openatfx.ValueMatrixOnSubMatrixImpl</code>.
+ * 
+ * @author Christian Rechner
+ */
+@ExtendWith(GlassfishCorbaExtension.class)
+public class ValueMatrixOnSubMatrixImplTest {
+
+    private static AoSession aoSession;
+    private static ValueMatrix vmStorage;
+    private static ValueMatrix vmCalculated;
+
+    @BeforeAll
+    public static void setUpBeforeClass() throws Exception {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        URL url = InstanceElementImplTest.class.getResource("/com/peaksolution/openatfx/example.atfx");
+        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+        ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+        ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+        SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+        vmStorage = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+        vmCalculated = sm.getValueMatrixInMode(ValueMatrixMode.CALCULATED);
+    }
+
+    @AfterAll
+    public static void tearDownAfterClass() throws Exception {
+        if (aoSession != null) {
+            aoSession.close();
+        }
+    }
+
+    @Test
+    void testGetMode() {
+        try {
+            assertEquals(ValueMatrixMode.STORAGE, vmStorage.getMode());
+            assertEquals(ValueMatrixMode.CALCULATED, vmCalculated.getMode());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetColumnCount() {
+        try {
+            assertEquals(3, vmStorage.getColumnCount());
+            assertEquals(3, vmCalculated.getColumnCount());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetRowCount() {
+        try {
+            assertEquals(167, vmStorage.getRowCount());
+            assertEquals(167, vmCalculated.getRowCount());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testListColumns() {
+        try {
+            String[] cols = vmCalculated.listColumns("*");
+            assertEquals(3, cols.length);
+            assertArrayEquals(new String[] { "LS.Right Side", "Time", "LS.Left Side" }, cols);
+
+            cols = vmStorage.listColumns("?ime");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testListIndependentColumns() {
+        try {
+            String[] cols = vmCalculated.listIndependentColumns("*");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+
+            cols = vmStorage.listIndependentColumns("?ime");
+            assertEquals(1, cols.length);
+            assertArrayEquals(new String[] { "Time" }, cols);
+
+            cols = vmStorage.listIndependentColumns("Left Side");
+            assertEquals(0, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetColumns() {
+        try {
+            Column[] cols = vmCalculated.getColumns("*");
+            assertEquals(3, cols.length);
+
+            cols = vmStorage.getColumns("?ime");
+            assertEquals(1, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetIndependentColumns() {
+        try {
+            Column[] cols = vmCalculated.getIndependentColumns("*");
+            assertEquals(1, cols.length);
+
+            cols = vmStorage.getIndependentColumns("?ime");
+            assertEquals(1, cols.length);
+
+            cols = vmStorage.getIndependentColumns("Left Side");
+            assertEquals(0, cols.length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetValueVector() {
+        try {
+            Column[] cols = vmCalculated.getColumns("*");
+            // whole array
+            TS_ValueSeq seq = vmCalculated.getValueVector(cols[0], 0, 0);
+            assertEquals(167, seq.flag.length);
+            assertEquals(167, seq.u.floatVal().length);
+
+            // part array
+            seq = vmCalculated.getValueVector(cols[0], 100, 3);
+            assertEquals(3, seq.flag.length);
+            assertEquals(3, seq.u.floatVal().length);
+
+            // part array with count overflow
+            seq = vmCalculated.getValueVector(cols[0], 100, 100);
+            assertEquals(67, seq.flag.length);
+            assertEquals(67, seq.u.floatVal().length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetValue() {
+        try {
+            Column[] cols = vmCalculated.getColumns("*");
+            // whole array
+            NameValueSeqUnit[] nvsu = vmCalculated.getValue(cols, 0, 0);
+            assertEquals(167, nvsu[0].value.flag.length);
+            assertEquals(167, nvsu[0].value.u.floatVal().length);
+            assertEquals(167, nvsu[1].value.flag.length);
+            assertEquals(167, nvsu[1].value.u.doubleVal().length);
+
+            // part array
+            nvsu = vmCalculated.getValue(cols, 100, 3);
+            assertEquals(3, nvsu[0].value.flag.length);
+            assertEquals(3, nvsu[0].value.u.floatVal().length);
+            assertEquals(3, nvsu[1].value.flag.length);
+            assertEquals(3, nvsu[1].value.u.doubleVal().length);
+
+            // part array with count overflow
+            nvsu = vmCalculated.getValue(cols, 100, 100);
+            assertEquals(67, nvsu[0].value.flag.length);
+            assertEquals(67, nvsu[0].value.u.floatVal().length);
+            assertEquals(67, nvsu[1].value.flag.length);
+            assertEquals(67, nvsu[1].value.u.doubleVal().length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testDestroy() {
+        ValueMatrix vm = null;
+        try {
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeSm = applicationStructure.getElementByName("sm");
+            SubMatrix sm = aeSm.getInstanceById(ODSHelper.asODSLongLong(33)).upcastSubMatrix();
+            vm = sm.getValueMatrixInMode(ValueMatrixMode.STORAGE);
+            vm.destroy();
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+}

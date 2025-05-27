@@ -1,0 +1,62 @@
+openATFX
+========
+
+Description
+-----------
+Pure Java library to access ASAM ODS ATFX files (ASAM transport format) via OO-API. A Java API has been added
+in openatfx version 2,which the CORBA OO-API is now using internally. External usage of the Java API is currently
+still experimental, but should mostly work already.
+
+
+Example to start a ASAM service on an ATFX file
+-----------------------------------------------
+1. A CORBA Naming service has to be started, e.g. the Oracle Java with the command "orbd.exe"
+2. Start the CORBA server with command
+   java -jar openatfx-<version>.jar
+
+
+Java code example for opening an ASAM ODS session on an ATFX file:
+-----------------------------------------------------------------
+
+CORBA OO-API:
+public static void main(String[] args) {
+    try {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        AoFactory aoFactory = AoServiceFactory.getInstance().newAoFactory(orb);
+        AoSession aoSession = aoFactory.newSession("FILENAME=" + new File("C:/file.atfx"));
+    } catch (AoException e) {
+        System.err.println(e.reason);
+    }
+}
+
+Java API:
+public static void main(String[] args) {
+	Path atfxFile = Paths.get("<pathToAtfxFile>");
+    OpenAtfx atfx = new OpenAtfx();
+    OpenAtfxAPI api = atfx.openFile(atfxFile);
+}
+
+Implementation specific ASAM ODS context parameters
+--------------------------------------------------- 
+
+INDENT_XML: 					Whether to indent the XML on output. Possible values are "TRUE" or "FALSE", default is true.
+MAX_CONDITION_RELATION_FOLLOW:	The maximum number of relation jumps checked to identify a related condition
+								instance in AoSession.getInstancesExt(), default value is 3.
+WRITE_EXTERNALCOMPONENTS:		Whether to write measurement data specifically as external components. Otherwise they may
+								be written into normal component files, which resemble the ODS write mode database in atfx
+								context. Possible values are "TRUE" or "FALSE", default is false.
+EXTENDED_COMPATIBILITYMODE:		Whether to switch on the compatibility mode for more tolerance on read atfx file, regarding
+								deviations or violations of the ODS specification. Possible values are "TRUE" or "FALSE",
+								default is false.
+ETXCOMP_FILENAME_STRIP_STRING:	If provided, strips the given String from the beginning of external component (flags-)filename
+								urls. This is helpful, if for example an atfx provider does not remove his internal file symbol
+								from those file paths.
+
+Known bugs/missing features:
+----------------------------
+- The ATFX file is read completely into memory
+- One session per file
+- Not implemented:
+  * Security 
+  * Inheritance
+  

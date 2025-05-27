@@ -1,0 +1,899 @@
+package com.peaksolution.openatfx.api.corba;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.net.URL;
+
+import org.asam.ods.AIDName;
+import org.asam.ods.AIDNameUnitId;
+import org.asam.ods.AIDNameValueSeqUnitId;
+import org.asam.ods.AggrFunc;
+import org.asam.ods.AoException;
+import org.asam.ods.AoSession;
+import org.asam.ods.ApplElemAccess;
+import org.asam.ods.ApplicationElement;
+import org.asam.ods.ApplicationStructure;
+import org.asam.ods.DataType;
+import org.asam.ods.ElemId;
+import org.asam.ods.ElemResultSetExt;
+import org.asam.ods.ErrorCode;
+import org.asam.ods.InstanceElement;
+import org.asam.ods.JoinDef;
+import org.asam.ods.NameValueSeqUnitId;
+import org.asam.ods.QueryStructureExt;
+import org.asam.ods.ResultSetExt;
+import org.asam.ods.RightsSet;
+import org.asam.ods.SelAIDNameUnitId;
+import org.asam.ods.SelItem;
+import org.asam.ods.SelOpcode;
+import org.asam.ods.SelOrder;
+import org.asam.ods.SelValueExt;
+import org.asam.ods.SetType;
+import org.asam.ods.TS_Union;
+import org.asam.ods.TS_UnionSeq;
+import org.asam.ods.TS_Value;
+import org.asam.ods.TS_ValueSeq;
+import org.asam.ods.T_LONGLONG;
+import org.asam.ods.ValueMatrix;
+import org.asam.ods.ValueMatrixMode;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.omg.CORBA.ORB;
+
+import com.peaksolution.openatfx.AoServiceFactory;
+import com.peaksolution.openatfx.util.ODSHelper;
+
+import com.peaksolution.openatfx.GlassfishCorbaExtension;
+
+
+/**
+ * Test case for <code>com.peaksolution.openatfx.ApplElemAccessImpl</code>.
+ * 
+ * @author Christian Rechner
+ */
+@ExtendWith(GlassfishCorbaExtension.class)
+public class ApplElemAccessImplTest {
+
+    private static AoSession aoSession;
+    private static ApplElemAccess applElemAccess;
+
+    @BeforeAll
+    public static void setUpBeforeClass() throws Exception {
+        ORB orb = ORB.init(new String[0], System.getProperties());
+        URL url = ApplElemAccessImplTest.class.getResource("/com/peaksolution/openatfx/example.atfx");
+        aoSession = AoServiceFactory.getInstance().newAoFactory(orb).newSession("FILENAME=" + new File(url.getFile()));
+        applElemAccess = aoSession.getApplElemAccess();
+    }
+
+    @AfterAll
+    public static void tearDownAfterClass() throws Exception {
+        aoSession.close();
+    }
+
+    @Test
+    void testInsertInstances() {
+        try {
+            // 2 instances of dsk without relations
+            T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("dsk").getId();
+            AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
+            aidSeq[0] = new AIDNameValueSeqUnitId();
+            aidSeq[0].unitId = new T_LONGLONG();
+            aidSeq[0].attr = new AIDName(aid, "iname");
+            aidSeq[0].values = new TS_ValueSeq();
+            aidSeq[0].values.flag = new short[] { 15, 15 };
+            aidSeq[0].values.u = new TS_UnionSeq();
+            aidSeq[0].values.u.stringVal(new String[] { "name1", "name2" });
+            aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].unitId = new T_LONGLONG();
+            aidSeq[1].attr = new AIDName(aid, "created");
+            aidSeq[1].values = new TS_ValueSeq();
+            aidSeq[1].values.flag = new short[] { 15, 15 };
+            aidSeq[1].values.u = new TS_UnionSeq();
+            aidSeq[1].values.u.dateVal(new String[] { "20100101", "20111111" });
+            ElemId[] elemIds = applElemAccess.insertInstances(aidSeq);
+            assertEquals(2, elemIds.length);
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testUpdateInstances() {
+        try {
+            T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("dsk").getId();
+            AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
+            AIDNameValueSeqUnitId nameAnvsui = new AIDNameValueSeqUnitId();
+            nameAnvsui.unitId = new T_LONGLONG();
+            nameAnvsui.attr = new AIDName(aid, "iname");
+            nameAnvsui.values = new TS_ValueSeq();
+            nameAnvsui.values.flag = new short[] { 15 };
+            nameAnvsui.values.u = new TS_UnionSeq();
+            nameAnvsui.values.u.stringVal(new String[] { "updateInstancesTest" });
+            aidSeq[0] = nameAnvsui;
+            aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].unitId = new T_LONGLONG();
+            aidSeq[1].attr = new AIDName(aid, "created");
+            aidSeq[1].values = new TS_ValueSeq();
+            aidSeq[1].values.flag = new short[] { 15 };
+            aidSeq[1].values.u = new TS_UnionSeq();
+            aidSeq[1].values.u.dateVal(new String[] { "20180427" });
+            ElemId[] elemIds = applElemAccess.insertInstances(aidSeq);
+
+            assertEquals(1, elemIds.length);
+            T_LONGLONG iid = elemIds[0].iid;
+
+            AIDNameValueSeqUnitId iidAnvsui = new AIDNameValueSeqUnitId();
+            iidAnvsui.unitId = new T_LONGLONG();
+            iidAnvsui.attr = new AIDName(aid, "dsk_iid");
+            iidAnvsui.values = new TS_ValueSeq();
+            iidAnvsui.values.flag = new short[] { 15 };
+            iidAnvsui.values.u = new TS_UnionSeq();
+            iidAnvsui.values.u.longlongVal(new T_LONGLONG[] { iid });
+            AIDNameValueSeqUnitId hostAnvsui = new AIDNameValueSeqUnitId();
+            hostAnvsui.unitId = new T_LONGLONG();
+            hostAnvsui.attr = new AIDName(aid, "host");
+            hostAnvsui.values = new TS_ValueSeq();
+            hostAnvsui.values.flag = new short[] { 15 };
+            hostAnvsui.values.u = new TS_UnionSeq();
+            hostAnvsui.values.u.stringVal(new String[] { "testHost" });
+            AIDNameValueSeqUnitId[] updateAidSeq = new AIDNameValueSeqUnitId[3];
+            updateAidSeq[0] = iidAnvsui;
+            updateAidSeq[1] = nameAnvsui;
+            updateAidSeq[2] = hostAnvsui;
+            applElemAccess.updateInstances(updateAidSeq);
+
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[1];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aid, "host");
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aid, "dsk_iid"), new T_LONGLONG());
+            selValue.oper = SelOpcode.EQ;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
+            qse.condSeq[0].value(selValue);
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+
+            assertEquals(1, resSetExt.length);
+            ResultSetExt result = resSetExt[0];
+            assertEquals(1, result.firstElems.length);
+            assertEquals(1, result.firstElems[0].values.length);
+            NameValueSeqUnitId resultHostNvsui = result.firstElems[0].values[0];
+            String[] resultHostValues = resultHostNvsui.value.u.stringVal();
+            assertEquals(1, resultHostValues.length);
+            assertEquals("testHost", resultHostValues[0]);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+    
+    @Test
+    void testUpdateGlobalFlag() {
+        try {
+            // initiate flobal flag with 15
+            T_LONGLONG aid = aoSession.getApplicationStructure().getElementByName("lc").getId();
+            AIDNameValueSeqUnitId[] aidSeq = new AIDNameValueSeqUnitId[2];
+            AIDNameValueSeqUnitId nameAnvsui = new AIDNameValueSeqUnitId();
+            nameAnvsui.unitId = new T_LONGLONG();
+            nameAnvsui.attr = new AIDName(aid, "iname");
+            nameAnvsui.values = new TS_ValueSeq();
+            nameAnvsui.values.flag = new short[] { 15 };
+            nameAnvsui.values.u = new TS_UnionSeq();
+            nameAnvsui.values.u.stringVal(new String[] { "updateFlagsTest" });
+            aidSeq[0] = nameAnvsui;
+            aidSeq[1] = new AIDNameValueSeqUnitId();
+            aidSeq[1].unitId = new T_LONGLONG();
+            aidSeq[1].attr = new AIDName(aid, "global_flag");
+            aidSeq[1].values = new TS_ValueSeq();
+            aidSeq[1].values.flag = new short[] { 15 };
+            aidSeq[1].values.u = new TS_UnionSeq();
+            aidSeq[1].values.u.shortVal(new short[] { 15 });
+            ElemId[] elemIds = applElemAccess.insertInstances(aidSeq);
+
+            assertEquals(1, elemIds.length);
+            T_LONGLONG iid = elemIds[0].iid;
+
+            // set global flag to 6
+            AIDNameValueSeqUnitId iidAnvsui = new AIDNameValueSeqUnitId();
+            iidAnvsui.unitId = new T_LONGLONG();
+            iidAnvsui.attr = new AIDName(aid, "lc_iid");
+            iidAnvsui.values = new TS_ValueSeq();
+            iidAnvsui.values.flag = new short[] { 15 };
+            iidAnvsui.values.u = new TS_UnionSeq();
+            iidAnvsui.values.u.longlongVal(new T_LONGLONG[] { iid });
+            AIDNameValueSeqUnitId globalFlagAnvsui = new AIDNameValueSeqUnitId();
+            globalFlagAnvsui.unitId = new T_LONGLONG();
+            globalFlagAnvsui.attr = new AIDName(aid, "global_flag");
+            globalFlagAnvsui.values = new TS_ValueSeq();
+            globalFlagAnvsui.values.flag = new short[] { 15 };
+            globalFlagAnvsui.values.u = new TS_UnionSeq();
+            globalFlagAnvsui.values.u.shortVal(new short[] { 6 });
+            AIDNameValueSeqUnitId[] updateAidSeq = new AIDNameValueSeqUnitId[3];
+            updateAidSeq[0] = iidAnvsui;
+            updateAidSeq[1] = nameAnvsui;
+            updateAidSeq[2] = globalFlagAnvsui;
+            applElemAccess.updateInstances(updateAidSeq);
+
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[1];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aid, "global_flag");
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aid, "lc_iid"), new T_LONGLONG());
+            selValue.oper = SelOpcode.EQ;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
+            qse.condSeq[0].value(selValue);
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+
+            assertEquals(1, resSetExt.length);
+            ResultSetExt result = resSetExt[0];
+            assertEquals(1, result.firstElems.length);
+            assertEquals(1, result.firstElems[0].values.length);
+            NameValueSeqUnitId resultGlobalFlagNvsui = result.firstElems[0].values[0];
+            short[] globalFlagValues = resultGlobalFlagNvsui.value.u.shortVal();
+            assertEquals(1, globalFlagValues.length);
+            assertEquals((short)6, globalFlagValues[0]);
+            
+            // remove global flag value
+            iidAnvsui = new AIDNameValueSeqUnitId();
+            iidAnvsui.unitId = new T_LONGLONG();
+            iidAnvsui.attr = new AIDName(aid, "lc_iid");
+            iidAnvsui.values = new TS_ValueSeq();
+            iidAnvsui.values.flag = new short[] { 15 };
+            iidAnvsui.values.u = new TS_UnionSeq();
+            iidAnvsui.values.u.longlongVal(new T_LONGLONG[] { iid });
+            globalFlagAnvsui = new AIDNameValueSeqUnitId();
+            globalFlagAnvsui.unitId = new T_LONGLONG();
+            globalFlagAnvsui.attr = new AIDName(aid, "global_flag");
+            globalFlagAnvsui.values = new TS_ValueSeq();
+            globalFlagAnvsui.values.flag = new short[] { 0 };
+            globalFlagAnvsui.values.u = new TS_UnionSeq();
+            globalFlagAnvsui.values.u.shortVal(new short[] { 0 });
+            updateAidSeq = new AIDNameValueSeqUnitId[3];
+            updateAidSeq[0] = iidAnvsui;
+            updateAidSeq[1] = nameAnvsui;
+            updateAidSeq[2] = globalFlagAnvsui;
+            applElemAccess.updateInstances(updateAidSeq);
+
+            qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[1];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aid, "global_flag");
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aid, "lc_iid"), new T_LONGLONG());
+            selValue.oper = SelOpcode.EQ;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_LONGLONG, String.valueOf(ODSHelper.asJLong(iid)));
+            qse.condSeq[0].value(selValue);
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+
+            assertEquals(1, resSetExt.length);
+            result = resSetExt[0];
+            assertEquals(1, result.firstElems.length);
+            assertEquals(1, result.firstElems[0].values.length);
+            resultGlobalFlagNvsui = result.firstElems[0].values[0];
+            globalFlagValues = resultGlobalFlagNvsui.value.u.shortVal();
+            assertEquals(1, resultGlobalFlagNvsui.value.flag.length);
+            assertEquals((short)0, resultGlobalFlagNvsui.value.flag[0]);
+            assertEquals(1, globalFlagValues.length);
+            assertEquals((short)0, globalFlagValues[0]);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testDeleteInstances() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            ApplicationElement aeUnt = as.getElementByName("unt");
+
+            T_LONGLONG aidUnt = aeUnt.getId();
+            T_LONGLONG[] iids = new T_LONGLONG[] { ODSHelper.asODSLongLong(36), ODSHelper.asODSLongLong(42) };
+            applElemAccess.deleteInstances(aidUnt, iids);
+
+            assertEquals(5, aeUnt.listInstances("*").getCount());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetRelInst() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidPrj = as.getElementByName("prj").getId();
+            T_LONGLONG aidTstser = as.getElementByName("tstser").getId();
+            T_LONGLONG aidMea = as.getElementByName("mea").getId();
+
+            // prj->tstser
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+            // tstser->mea
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidTstser, ODSHelper.asODSLongLong(2)),
+                                                      "mea_iid").length);
+            // mea->dts
+            assertEquals(3,
+                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dts_iid").length);
+            // mea->setup_iid
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "setup_iid").length);
+            // mea->dsk_iid
+            assertEquals(0,
+                         applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)), "dsk_iid").length);
+            // mea->audifahrzeug_iid
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "audifahrzeug_iid").length);
+            // mea->audifm_iid
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidMea, ODSHelper.asODSLongLong(22)),
+                                                      "audifm_iid").length);
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testSetRelInst() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidPrj = as.getElementByName("prj").getId();
+
+            // prj->tstser
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+            // remove
+            applElemAccess.setRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid",
+                                      new T_LONGLONG[] { ODSHelper.asODSLongLong(1) }, SetType.REMOVE);
+            assertEquals(1, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+
+            // add again
+            applElemAccess.setRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)), "tstser_iid",
+                                      new T_LONGLONG[] { ODSHelper.asODSLongLong(1) }, SetType.INSERT);
+            assertEquals(2, applElemAccess.getRelInst(new ElemId(aidPrj, ODSHelper.asODSLongLong(1)),
+                                                      "tstser_iid").length);
+
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetInstancesExt() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+            // T_LONGLONG aidDts = as.getElementByName("dts").getId();
+            // T_LONGLONG aidUnt = as.getElementByName("unt").getId();
+            // T_LONGLONG aidDevice = as.getElementByName("device").getId();
+
+            // 1: empty query
+            QueryStructureExt qse = new QueryStructureExt();
+            qse.anuSeq = new SelAIDNameUnitId[0];
+            qse.joinSeq = new JoinDef[0];
+            qse.condSeq = new SelItem[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(0, resSetExt[0].firstElems.length);
+
+            // 2. only 'SELECT' with same application element
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(16, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+
+            // 3. put in a condition
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aidMeq, "iname"), new T_LONGLONG());
+            selValue.oper = SelOpcode.CI_LIKE;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_STRING, "LS.*");
+            qse.condSeq[0].value(selValue);
+            resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(4, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            // the value of the aodt attribute
+            assertEquals(DataType.DT_FLOAT.value(), resSetExt[0].firstElems[0].values[1].value.u.enumVal()[0]);
+
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetInstancesExt_multipleSelectElements() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+            T_LONGLONG aidDts = as.getElementByName("dts").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            // prepare 'SELECT' with two application elements
+            qse.anuSeq = new SelAIDNameUnitId[3];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+            qse.anuSeq[2] = new SelAIDNameUnitId();
+            qse.anuSeq[2].attr = new AIDName(aidDts, "*"); // dts
+            qse.anuSeq[2].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[2].aggregate = AggrFunc.NONE;
+
+            // put in a condition
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            SelValueExt selValue = new SelValueExt();
+            selValue.attr = new AIDNameUnitId(new AIDName(aidMeq, "iname"), new T_LONGLONG());
+            selValue.oper = SelOpcode.CI_LIKE;
+            selValue.value = ODSHelper.string2tsValue(DataType.DT_STRING, "LS.*");
+            qse.condSeq[0].value(selValue);
+            
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            ElemResultSetExt[] erses = resSetExt[0].firstElems;
+            assertEquals(2, erses.length); // no of aes
+
+            long mqAid = ODSHelper.asJLong(aidMeq);
+            long dtsAid = ODSHelper.asJLong(aidDts);
+            long[] aids = java.util.Arrays.stream(erses).map(erse -> ODSHelper.asJLong(erse.aid)).mapToLong(l -> l)
+                                          .toArray();
+            assertThat(aids).containsExactlyInAnyOrder(mqAid, dtsAid); // aids
+
+            for (ElemResultSetExt erse : erses) {
+                long aid = ODSHelper.asJLong(erse.aid);
+                if (aid == mqAid) {
+                    for (NameValueSeqUnitId nvsui : erse.values) {
+                        if (nvsui.valName.equals("iname")) {
+                            assertThat(erse.values).hasSize(2); // no of attrs
+                            assertThat(erse.values[0].value.flag).hasSize(4); // no of rows
+                            assertThat(erse.values[0].value.u.stringVal()).containsExactlyInAnyOrder("LS.Right Side",
+                                                                                                     "LS.Left Side",
+                                                                                                     "LS.Right Side",
+                                                                                                     "LS.Left Side"); // values
+                        }
+                    }
+                } else if (aid == dtsAid) {
+                    assertThat(erse.values).hasSize(9); // no of attrs
+                    for (NameValueSeqUnitId nvsui : erse.values) {
+                        if (nvsui.valName.equals("iname")) {
+                            assertThat(nvsui.value.flag).hasSize(2); // no of rows
+                            assertThat(nvsui.value.u.stringVal()).containsExactlyInAnyOrder("Detector;rms A fast - Zusammenfassung",
+                                                                                            "1/3 Octave - Zusammenfassung"); // values
+                        }
+                    }
+                }
+            }
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetInstancesExtDT_STRING() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "iname";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.CI_EQ;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.stringVal("LS.LEFT SIDE");
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length);
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Left Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetInstancesExtDS_LONGLONG() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "aodt"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "meq_iid";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.INSET;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.longlongSeq(new T_LONGLONG[] { new T_LONGLONG(0, 94), new T_LONGLONG(0, 60) });
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetInstancesExtSelectRelationAttribute() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidMeq = as.getElementByName("meq").getId();
+
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidMeq, "iname"); // meq
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidMeq, "dts_iid"); // meq
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidMeq;
+            selValueExt.attr.attr.aaName = "meq_iid";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.INSET;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.longlongSeq(new T_LONGLONG[] { new T_LONGLONG(0, 38), new T_LONGLONG(0, 69) });
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length); // no of aes
+            assertEquals(ODSHelper.asJLong(aidMeq), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid)); // aid
+            assertEquals(2, resSetExt[0].firstElems[0].values.length); // no of attrs
+            assertEquals(2, resSetExt[0].firstElems[0].values[0].value.flag.length); // no of rows
+
+            assertEquals("LS.Right Side", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[1]); // a value
+            assertEquals("Time", resSetExt[0].firstElems[0].values[0].value.u.stringVal()[0]); // a value
+            assertEquals(32L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[1])); // a
+                                                                                                                 // value
+            assertEquals(58L, ODSHelper.asJLong(resSetExt[0].firstElems[0].values[1].value.u.longlongVal()[0])); // a
+                                                                                                                 // value
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+    
+    @Test
+    void testGetInstancesExtFlagsAttribute() {
+        try {
+            ApplicationStructure as = aoSession.getApplicationStructure();
+            T_LONGLONG aidLC = as.getElementByName("lc").getId();
+            
+            QueryStructureExt qse = new QueryStructureExt();
+
+            qse.anuSeq = new SelAIDNameUnitId[2];
+            qse.anuSeq[0] = new SelAIDNameUnitId();
+            qse.anuSeq[0].attr = new AIDName(aidLC, "iname");
+            qse.anuSeq[0].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[0].aggregate = AggrFunc.NONE;
+            qse.anuSeq[1] = new SelAIDNameUnitId();
+            qse.anuSeq[1].attr = new AIDName(aidLC, "flags");
+            qse.anuSeq[1].unitId = ODSHelper.asODSLongLong(0);
+            qse.anuSeq[1].aggregate = AggrFunc.NONE;
+
+            SelValueExt selValueExt = new SelValueExt();
+            selValueExt.attr = new AIDNameUnitId();
+            selValueExt.attr.attr = new AIDName();
+            selValueExt.attr.attr.aid = aidLC;
+            selValueExt.attr.attr.aaName = "lc_iid";
+            selValueExt.attr.unitId = new T_LONGLONG(0, 0);
+            selValueExt.oper = SelOpcode.INSET;
+            selValueExt.value = new TS_Value();
+            selValueExt.value.flag = (short) 15;
+            selValueExt.value.u = new TS_Union();
+            selValueExt.value.u.longlongSeq(new T_LONGLONG[] { new T_LONGLONG(0, 39) });
+            qse.condSeq = new SelItem[1];
+            qse.condSeq[0] = new SelItem();
+            qse.condSeq[0].value(selValueExt);
+
+            qse.joinSeq = new JoinDef[0];
+            qse.groupBy = new AIDName[0];
+            qse.orderBy = new SelOrder[0];
+
+            ResultSetExt[] resSetExt = applElemAccess.getInstancesExt(qse, 0);
+            assertEquals(1, resSetExt[0].firstElems.length);
+            assertEquals(ODSHelper.asJLong(aidLC), ODSHelper.asJLong(resSetExt[0].firstElems[0].aid));
+            assertEquals(2, resSetExt[0].firstElems[0].values.length);
+            TS_ValueSeq seq = resSetExt[0].firstElems[0].values[0].value;
+            assertEquals(1, seq.flag.length);
+            assertEquals("LS.Right Side", seq.u.stringVal()[0]);
+            
+            seq = resSetExt[0].firstElems[0].values[1].value;
+            assertEquals(167, seq.u.shortSeq()[0].length);
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+    }
+
+    @Test
+    void testGetValueMatrix() {
+        try {
+            // ValueMatrix in AoSubMatrix
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("sm");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(33));
+            ValueMatrix vm = applElemAccess.getValueMatrix(new ElemId(aeDts.getId(), ieDts.getId()));
+            assertEquals(ValueMatrixMode.CALCULATED, vm.getMode());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            // ValueMatrix in AoMeasurement
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("dts");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
+            applElemAccess.getValueMatrix(new ElemId(aeDts.getId(), ieDts.getId()));
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetValueMatrixInMode() {
+        try {
+            // ValueMatrix in AoSubMatrix
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("sm");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(33));
+            ValueMatrix vm = applElemAccess.getValueMatrixInMode(new ElemId(aeDts.getId(), ieDts.getId()),
+                                                                 ValueMatrixMode.STORAGE);
+            assertEquals(ValueMatrixMode.STORAGE, vm.getMode());
+        } catch (AoException e) {
+            fail(e.reason);
+        }
+
+        try {
+            // ValueMatrix in AoMeasurement
+            ApplicationStructure applicationStructure = aoSession.getApplicationStructure();
+            ApplicationElement aeDts = applicationStructure.getElementByName("dts");
+            InstanceElement ieDts = aeDts.getInstanceById(ODSHelper.asODSLongLong(32));
+            applElemAccess.getValueMatrixInMode(new ElemId(aeDts.getId(), ieDts.getId()), ValueMatrixMode.STORAGE);
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetAttributeRights() {
+        try {
+            applElemAccess.setAttributeRights(new T_LONGLONG(), "", new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetElementRights() {
+        try {
+            applElemAccess.setElementRights(new T_LONGLONG(), new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetInstanceRights() {
+        try {
+            applElemAccess.setInstanceRights(new T_LONGLONG(), new T_LONGLONG[0], new T_LONGLONG(), 0, RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetAttributeRights() {
+        try {
+            applElemAccess.getAttributeRights(new T_LONGLONG(), "");
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetElementRights() {
+        try {
+            applElemAccess.getElementRights(new T_LONGLONG());
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetInstanceRights() {
+        try {
+            applElemAccess.getInstanceRights(new T_LONGLONG(), new T_LONGLONG());
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetElementInitialRights() {
+        try {
+            applElemAccess.setElementInitialRights(new T_LONGLONG(), new T_LONGLONG(), 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetInstanceInitialRights() {
+        try {
+            applElemAccess.setInstanceInitialRights(new T_LONGLONG(), new T_LONGLONG[0], new T_LONGLONG(), 0, new T_LONGLONG(), RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testSetInitialRightReference() {
+        try {
+            applElemAccess.setInitialRightReference(new T_LONGLONG(), "", RightsSet.SET_RIGHT);
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetInitialRightReference() {
+        try {
+            applElemAccess.getInitialRightReference(new T_LONGLONG());
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetElementInitialRights() {
+        try {
+            applElemAccess.getElementInitialRights(new T_LONGLONG());
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+
+    @Test
+    void testGetInstanceInitialRights() {
+        try {
+            applElemAccess.getInstanceInitialRights(new T_LONGLONG(), new T_LONGLONG());
+            fail("AoException expected");
+        } catch (AoException e) {
+            assertEquals(ErrorCode.AO_NOT_IMPLEMENTED, e.errCode);
+        }
+    }
+}
