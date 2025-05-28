@@ -1,27 +1,25 @@
-openATFX
+openATFX Java Library - NOTICE
 
-Copyright 2015 Christian Rechner
+This library is based on the openATFX library by main author Christian Rechner, hosted on SourceForge, and develops this library further. This was discussed with him in advance and agreed on. This project has been modified to include additional features that are not part of the original work.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+This project includes software developed by the Apache Software Foundation (http://www.apache.org/).
 
-http://www.apache.org/licenses/LICENSE-2.0
+This product uses the following third-party libraries:
+- istack common utility code runtime: EDL 1.0
+- Jakarta Activation API: EDL 1.0
+- Jakarta XML Binding API: EDL 1.0
+- Apache Commons Lang: Apache License 2.0
+- Angus Activation Registries: EDL 1.0
+- JAXB Core: EDL 1.0
+- JAXB Runtime: EDL 1.0
+- TXW2 Runtime: EDL 1.0
+- SLF4J API Module: MIT License
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. 
+Please see the LICENSE file for more information about licensing and the THIRD-PARTY.properties for more information on the external libraries used.
 
-The place of jurisdiction for this software is Ingolstadt, Germany.
+To fix an issue with the encoding used in the ORB, openATFX overwrites two classes from the Eclipse Glassfish ORB with changed versions, using the UTF-8 encoding instead of Latin-1. These classes are:
+- com.sun.corba.ee.impl.encoding.CodeSetComponentInfo.java
+- com.sun.corba.ee.impl.encoding.EncapsOutputStream.java
+Note, that the dependencies to the Eclipse Glassfish ORB have to be provided by the runtime environment when using openATFX! See README.md or pom.xml for more details on the required libraries.
 
-Following dependencies are needed to run this library:
-- commons-logging: Apache 2 license
-- commons-math: Apache 2 license
-- SLF4J: MIT license
-- JUnit: Eclipse Public License 1.0
-- Woodstox: LGPL
-- StAX API: BSD License
-- AssertJ: Apache 2 license
-- Mockito: MIT license
+This project also includes the ASAM ODS library as jar in a local Maven repository (in folder ods-repo). Since the IDL is not public, a build process cannot be provided, but the generated jar file is not restricted.

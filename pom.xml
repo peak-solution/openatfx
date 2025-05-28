@@ -5,7 +5,7 @@
 	<groupId>com.peaksolution</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>2.0.2</version>
+	<version>2.1.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>https://github.com/peak-solution/openatfx</url>
 
@@ -24,11 +24,11 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/peak-solution/openatfx.git</url>
+		<url>https://github.com/peak-solution/openatfx</url>
 		<connection>
-			scm:git:https://github.com/peak-solution/openatfx.git/code/trunk/openatfx/</connection>
+			scm:git:git://github.com/peak-solution/openatfx.git</connection>
 		<developerConnection>
-			scm:git:https://github.com/peak-solution/openatfx.git/code/trunk/openatfx/</developerConnection>
+			scm:git:ssh://git@github.com:peak-solution/openatfx.git</developerConnection>
 	</scm>
 
 	<properties>
@@ -37,6 +37,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
+	<repositories>
+		<repository>
+			<id>local-ods-repo</id>
+			<url>file://${project.basedir}/ods-repo</url>
+		</repository>
+	</repositories>
+
 	<profiles>
 		<profile>
 			<id>owasp</id>
@@ -59,6 +66,106 @@
 								<goals>
 									<goal>aggregate</goal>
 								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>license</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>license-maven-plugin</artifactId>
+						<version>2.5.0</version>
+						<inherited>false</inherited>
+						<configuration>
+							<skipAggregateAddThirdParty>true</skipAggregateAddThirdParty>
+							<excludedScopes>system,test,provided</excludedScopes>
+							<excludeTransitiveDependencies>true</excludeTransitiveDependencies>
+							<excludedGroups>^com\.peaksolution\.transfer</excludedGroups>
+							<useMissingFile>true</useMissingFile>
+							<missingFile>src/license/THIRD-PARTY.properties</missingFile>
+							<licenseMerges>
+								<licenseMerge>Apache License 2.0|Apache 2</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache-2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache License, 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache License Version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache License, Version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache License, version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|The Apache License, Version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|Apache Software License - Version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|The Apache Software License, Version 2.0</licenseMerge>
+								<licenseMerge>Apache License 2.0|The Apache Software License, version 2.0</licenseMerge>
+								<licenseMerge>MIT License|MIT</licenseMerge>
+								<licenseMerge>MIT License|MIT license</licenseMerge>
+								<licenseMerge>MIT License|The MIT License</licenseMerge>
+								<licenseMerge>MIT License|The MIT License (MIT)</licenseMerge>
+								<licenseMerge>Eclipse Public License 2.0|Eclipse Public License - Version 2.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 2.0|Eclipse Public License v. 2.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 2.0|EPL 2.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 2.0|EPL-2.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 1.0|Eclipse Public License - Version 1.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 1.0|Eclipse Public License, Version 1.0</licenseMerge>
+								<licenseMerge>Eclipse Public License 1.0|Eclipse Public License - v 1.0</licenseMerge>
+								<licenseMerge>CDDL + GPLv2 with classpath exception|CDDL/GPLv2+CE</licenseMerge>
+								<licenseMerge>Common Development and Distribution License (CDDL) v1.0|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0</licenseMerge>
+								<licenseMerge>Common Development and Distribution License (CDDL) v1.0|CDDL 1.0</licenseMerge>
+								<licenseMerge>BSD|BSD License</licenseMerge>
+								<licenseMerge>BSD|The BSD License</licenseMerge>
+								<licenseMerge>BSD 3-Clause|3-Clause BSD License</licenseMerge>
+								<licenseMerge>BSD 3-Clause|BSD-3-Clause</licenseMerge>
+								<licenseMerge>EDL 1.0|Eclipse Distribution License - v 1.0</licenseMerge>
+							</licenseMerges>
+							<includedLicenses>
+								<includedLicense>Apache License 2.0</includedLicense>
+								<includedLicense>Eclipse Public License 2.0</includedLicense>
+								<includedLicense>Eclipse Public License 1.0</includedLicense>
+								<includedLicense>EDL 1.0</includedLicense>
+								<includedLicense>MIT License</includedLicense>
+								<includedLicense>CDDL + GPLv2 with classpath exception</includedLicense>
+								<includedLicense>COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0</includedLicense>
+								<includedLicense>Common Development and Distribution License (CDDL) v1.0</includedLicense>
+								<includedLicense>CDDL 1.0</includedLicense>
+								<includedLicense>CDDL 1.1</includedLicense>
+								<includedLicense>Bouncy Castle Licence</includedLicense>
+								<includedLicense>Oracle Free Use Terms and Conditions (FUTC)</includedLicense>
+								<includedLicense>General transfer conditions for software - Peak Solution GmbH</includedLicense>
+								<includedLicense>Peak purchased license</includedLicense>
+								<includedLicense>BSD</includedLicense>
+								<includedLicense>BSD License</includedLicense>
+								<includedLicense>The BSD License</includedLicense>
+								<includedLicense>Modified BSD</includedLicense>
+								<includedLicense>BSD 2-Clause</includedLicense>
+								<includedLicense>BSD 3-Clause</includedLicense>
+								<includedLicense>The New BSD License</includedLicense>
+								<includedLicense>Public Domain</includedLicense>
+								<includedLicense>GNU Lesser General Public License</includedLicense>
+							</includedLicenses>
+							<failOnBlacklist>true</failOnBlacklist>
+							<failOnMissing>true</failOnMissing>
+						</configuration>
+						<executions>
+							<execution>
+								<id>csv</id>
+								<goals>
+									<goal>add-third-party</goal>
+								</goals>
+								<phase>generate-resources</phase>
+								<configuration>
+									<fileTemplate>src/license/license-as-csv.ftl</fileTemplate>
+									<thirdPartyFilename>licenses.csv</thirdPartyFilename>
+								</configuration>
+							</execution>
+							<execution>
+								<id>txt</id>
+								<goals>
+									<goal>add-third-party</goal>
+								</goals>
+								<phase>generate-resources</phase>
 							</execution>
 						</executions>
 					</plugin>
@@ -168,19 +275,22 @@
 		    <version>4.0.5</version>
 		</dependency>
 		<dependency>
-			  <groupId>org.glassfish.corba</groupId>
-			  <artifactId>glassfish-corba-omgapi</artifactId>
-			  <version>5.0.0</version>
+			<groupId>org.glassfish.corba</groupId>
+			<artifactId>glassfish-corba-omgapi</artifactId>
+			<version>5.0.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.corba</groupId>
 			<artifactId>glassfish-corba-orb</artifactId>
 			<version>5.0.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.main.admin</groupId>
 			<artifactId>monitoring-core</artifactId>
 			<version>8.0.0-JDK17-M10</version>
+			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<groupId>org.glassfish.gmbal</groupId>
@@ -192,6 +302,7 @@
 			<groupId>org.glassfish.gmbal</groupId>
 			<artifactId>gmbal</artifactId>
 			<version>4.1.0</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.vintage</groupId>
