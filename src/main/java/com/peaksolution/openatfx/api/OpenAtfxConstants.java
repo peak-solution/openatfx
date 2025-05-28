@@ -44,7 +44,7 @@ public class OpenAtfxConstants {
     public static final String CONTEXT_EXTENDED_COMPATIBILITYMODE = "EXTENDED_COMPATIBILITYMODE";
     public static final String CONTEXT_EXTCOMP_FILENAME_STRIP_STRING = "ETXCOMP_FILENAME_STRIP_STRING";
     public static final String CONTEXT_EXT_COMP_SEGSIZE = "EXT_COMP_SEGSIZE";
-    public static final long DEF_EXT_COMP_SEGSIZE = 1024 * 1024 * 500; // 500MB
+    public static final long DEF_EXT_COMP_SEGSIZE = 1024L * 1024 * 500; // 500MB
     public static final String CONTEXT_INDENT_XML = "INDENT_XML";
     public static final String CONTEXT_WRITE_EXTERNALCOMPONENTS = "WRITE_EXTERNALCOMPONENTS";
     public static final String CONTEXT_TRIM_STRING_VALUES = "TRIM_STRING_VALUES";

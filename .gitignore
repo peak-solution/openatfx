@@ -1,1 +1,10 @@
-/target/
+# Java
+*.class
+*.log
+*.jar
+target/
+
+# IDE-specific files
+.idea/
+*.iml
+*.project
