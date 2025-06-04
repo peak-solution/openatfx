@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.peaksolution</groupId>
+	<groupId>com.peak-solution</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>2.1.0</version>
+	<version>3.0.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>https://github.com/peak-solution/openatfx</url>
 
@@ -35,13 +35,14 @@
 		<maven.compiler.release>17</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
-	<repositories>
+
+	<distributionManagement>
 		<repository>
-			<id>local-ods-repo</id>
-			<url>file://${project.basedir}/ods-repo</url>
+			<id>ossrh</id>
+			<name>OSSRH Repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
-	</repositories>
+	</distributionManagement>
 
 	<profiles>
 		<profile>
@@ -192,14 +193,28 @@
 			        <clearOutputDir>false</clearOutputDir>
 			    </configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>3.2.7</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.asam</groupId>
-			<artifactId>ods</artifactId>
-			<version>5.3.1</version>
+			<groupId>com.peak-solution</groupId>
+			<artifactId>ods-corba-api</artifactId>
+			<version>5.3.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

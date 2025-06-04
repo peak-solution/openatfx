@@ -24,11 +24,10 @@ public class CustomAtfxReaderTest {
     
     @BeforeAll
     public static void setUpBeforeClass() throws Exception {
-        Path atfxFile = Paths.get("C:\\import\\bmw\\BMWMDM-1104\\EEX1_HBP_KE_25000026_EMI_20250124.475.atfx");
+        Path atfxFile = Paths.get("<filePath>");
         AtfxReader reader = new AtfxReader(new LocalFileHandler(), atfxFile, false, null);
         baseModelVersionNr = 35; // the current model version of the example.atfx file
-        
-        
+
         IFileHandler fileHandler = new LocalFileHandler();
         try (InputStream in = fileHandler.getFileStream(atfxFile)) {
             XMLInputFactory inputFactory = XMLInputFactory.newInstance();

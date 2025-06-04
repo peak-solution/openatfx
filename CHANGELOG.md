@@ -2,7 +2,7 @@
 
 Changelog of openATFX Java library.
 
-## [Unreleased]
+## [Template]
 ### Added
 
 ### Changed
@@ -10,6 +10,17 @@ Changelog of openATFX Java library.
 ### Fixed
 
 ### Deprecated/Removed
+
+---
+
+## [Unreleased 3.0.0]
+### Changed
+- changed maven group id to com.peak-solution for preparation to publish on Maven central
+- changed dependency to Peak Solution's openSource ods-corba-api jar and removed local jar
+
+### Deprecated/Removed
+- removed IDE-related files
+- cleaned up repository content 
 
 ---
 
