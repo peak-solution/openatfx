@@ -77,3 +77,10 @@ public static void main(String[] args) {
 	}
 }
 ```
+
+## GPG Key
+
+This key is used for signing of releases:
+**Key ID**: `0x06C84BD97E83C4FD`  
+**Fingerprint**: `FDDE 0EF7 B130 2B9E C17B  D3C9 06C8 4BD9 7E83 C4FD`  
+**Keyserver**: `https://keys.openpgp.org`
