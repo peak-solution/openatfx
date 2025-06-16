@@ -1,5 +1,6 @@
 package com.peaksolution.openatfx.api.corba;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import java.nio.file.Path;
@@ -31,7 +32,7 @@ public class CustomCorbaAtfxReaderTest {
   @BeforeAll
   public static void setUpBeforeClass() throws Exception {
       ORB orb = ORB.init(new String[0], System.getProperties());
-      Path atfxFile = Paths.get("C:\\import\\bmw\\BMWMDM-1104\\EEX1_HBP_KE_25000026_EMI_20250124.475.atfx");
+      Path atfxFile = Paths.get("<filePath>");
       aoSession = AoServiceFactory.getInstance().newAoSession(orb, atfxFile.toFile(), ODSHelper.createBooleanNV(OpenAtfxConstants.CONTEXT_TRIM_STRING_VALUES, false));
   }
 
@@ -50,9 +51,7 @@ public class CustomCorbaAtfxReaderTest {
           ApplicationElement element = applicationStructure.getElementByName("LocalColumn");
           ApplicationRelation[] rels = element.getRelationsByBaseName("measurement_quantity");
           InstanceElementIterator iter = element.getInstances("*");
-          for (int i = 0; i < iter.getCount(); i++) {
-              System.out.println("Element name: " + iter.nextOne().getValue("LMS_Actual_sensitivity").value.u.stringVal() + "Ende");
-          }
+          assertThat(iter.getCount()).isNotZero();
       } catch (AoException e) {
           fail(e.reason);
       }

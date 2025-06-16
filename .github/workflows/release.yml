@@ -1,0 +1,65 @@
+name: Build and Publish Maven Project
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Run tests (and validate build)
+        run: mvn clean verify -P license,owasp
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Maven
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+          server-username: MAVEN_USER
+          server-password: MAVEN_PW
+          server-id: central
+
+      - name: Import GPG private key
+        run: |
+          mkdir -p ~/.gnupg
+          echo "$MAVEN_GPG_KEY" | gpg --batch --import
+          echo "$MAVEN_GPG_PASSPHRASE" | gpg --batch --passphrase-fd 0 --import-ownertrust
+          gpg --list-secret-keys --keyid-format LONG
+        env:
+          MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
+
+      - name: Build (no tests) and deploy
+        run: mvn clean deploy -B -Prelease -DskipTests -Dgpg.useagent=true assembly:single
+        env:
+          MAVEN_USER: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PW: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
+
+      - name: Upload ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/*.zip

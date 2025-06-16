@@ -2,12 +2,20 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.peaksolution</groupId>
+	<groupId>com.peak-solution</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>2.1.0</version>
+	<version>3.0.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>https://github.com/peak-solution/openatfx</url>
+
+	<properties>
+		<project.version>3.0.0</project.version>
+		<api.spec.version>1.0.0</api.spec.version>
+		<maven.compiler.release>17</maven.compiler.release>
+		<project.encoding>UTF-8</project.encoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<developers>
 		<developer>
@@ -26,23 +34,9 @@
 	<scm>
 		<url>https://github.com/peak-solution/openatfx</url>
 		<connection>
-			scm:git:git://github.com/peak-solution/openatfx.git</connection>
-		<developerConnection>
-			scm:git:ssh://git@github.com:peak-solution/openatfx.git</developerConnection>
+			scm:git:https://github.com/peak-solution/openatfx.git</connection>
 	</scm>
-
-	<properties>
-		<maven.compiler.release>17</maven.compiler.release>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-	
-	<repositories>
-		<repository>
-			<id>local-ods-repo</id>
-			<url>file://${project.basedir}/ods-repo</url>
-		</repository>
-	</repositories>
-
+  
 	<profiles>
 		<profile>
 			<id>owasp</id>
@@ -51,7 +45,7 @@
 					<plugin>
 						<groupId>org.owasp</groupId>
 						<artifactId>dependency-check-maven</artifactId>
-						<version>12.1.0</version>
+						<version>12.1.3</version>
 						<configuration>
 							<failBuildOnCVSS>4</failBuildOnCVSS>
 							<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
@@ -81,10 +75,9 @@
 							<excludedScopes>system,test,provided</excludedScopes>
 							<excludeTransitiveDependencies>true</excludeTransitiveDependencies>
 							<excludedGroups>^com\.peaksolution\.transfer</excludedGroups>
-							<useMissingFile>true</useMissingFile>
-							<missingFile>src/license/THIRD-PARTY.properties</missingFile>
 							<licenseMerges>
 								<licenseMerge>EDL 1.0|Eclipse Distribution License - v 1.0</licenseMerge>
+								<licenseMerge>Apache-2.0|Apache License, Version 2.0</licenseMerge>
 							</licenseMerges>
 							<includedLicenses>
 								<includedLicense>Apache-2.0</includedLicense>
@@ -119,13 +112,70 @@
 				</plugins>
 			</build>
 		</profile>
+		<profile>
+			<id>release</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.3.1</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>3.2.7</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<keyname>06C84BD97E83C4FD</keyname>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.7.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>central</publishingServerId>
+							<autoPublish>false</autoPublish>
+							<deploymentName>openATFX ${project.version}</deploymentName>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+
+			<distributionManagement>
+				<repository>
+					<id>ossrh</id>
+					<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+				</repository>
+			</distributionManagement>
+		</profile>
 	</profiles>
 
 	<build>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
+				<version>3.14.0</version>
 				<configuration>
 					<source>17</source>
 					<target>17</target>
@@ -134,7 +184,7 @@
 			<!-- create executable jar -->
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.1</version>
+				<version>3.4.2</version>
 				<configuration>
 					<archive>
 						<index>true</index>
@@ -148,7 +198,7 @@
 			<!-- generate JavaDoc -->
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.6.3</version>
+				<version>3.11.2</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
@@ -171,7 +221,7 @@
 			<!-- workaround for -->
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.2.5</version>
+				<version>3.5.3</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
 				</configuration>
@@ -179,7 +229,7 @@
 			<plugin>
 			    <groupId>org.codehaus.mojo</groupId>
 			    <artifactId>jaxb2-maven-plugin</artifactId>
-			    <version>3.2.0</version>
+			    <version>3.3.0</version>
 			    <executions>
 			        <execution>
 			            <id>xjc</id>
@@ -197,9 +247,9 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.asam</groupId>
-			<artifactId>ods</artifactId>
-			<version>5.3.1</version>
+			<groupId>com.peak-solution</groupId>
+			<artifactId>ods-corba-api</artifactId>
+			<version>5.3.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -236,7 +286,7 @@
 		<dependency>
 			<groupId>org.glassfish.main.admin</groupId>
 			<artifactId>monitoring-core</artifactId>
-			<version>8.0.0-JDK17-M10</version>
+			<version>8.0.0-JDK17-M12</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>

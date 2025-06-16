@@ -2,14 +2,19 @@
 
 Changelog of openATFX Java library.
 
-## [Unreleased]
+---
+
+## [Unreleased 3.0.0]
 ### Added
+- GitHub Action for Release workflow
 
 ### Changed
-
-### Fixed
+- changed maven group id to com.peak-solution for preparation to publish on Maven central
+- changed dependency to Peak Solution's openSource ods-corba-api jar 5.3.1.3
 
 ### Deprecated/Removed
+- removed IDE-related files
+- cleaned up repository content 
 
 ---
 
@@ -51,6 +56,17 @@ Changelog of openATFX Java library.
 - made ODS context names accepted case-insensitively
 - getValueSeq() now works with attribute name '*'
 - corrected IFileHandler handling throughout APIs (supports again openatfx mdf library access)
+
+---
+
+## [Template]
+### Added
+
+### Changed
+
+### Fixed
+
+### Deprecated/Removed
 
 ---
 
