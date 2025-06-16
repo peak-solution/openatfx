@@ -59,19 +59,3 @@ jobs:
           MAVEN_PW: ${{ secrets.OSSRH_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
-
-      - name: Tag version and push to trigger upload workflow
-        run: |
-          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          TAG_NAME="v$VERSION"
-          echo "Tagging release with $TAG_NAME"
-
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-          # Stelle sicher, dass der Commit auch da ist (für detached HEAD Workflows)
-          git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
-          git checkout main
-
-          git tag "$TAG_NAME"
-          git push origin "$TAG_NAME"
