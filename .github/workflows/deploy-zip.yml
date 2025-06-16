@@ -20,3 +20,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: target/*.zip
+          tag_name: v${{ github.ref_name }}
+          name: "Release ${{ github.ref_name }}"
+          body: "Release tag for openATFX ${{ github.ref_name }} created by GitHub Action"
