@@ -36,7 +36,7 @@
 		<connection>
 			scm:git:https://github.com/peak-solution/openatfx.git</connection>
 	</scm>
-  
+
 	<profiles>
 		<profile>
 			<id>owasp</id>
