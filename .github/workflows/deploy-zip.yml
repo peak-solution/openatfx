@@ -1,0 +1,21 @@
+name: Upload ZIP Release
+
+on:
+  push:
+    tags:
+      - 'upload-zip-*'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build ZIP
+        run: mvn clean install -DskipTests -Passembly
+
+      - name: Upload ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/*.zip
