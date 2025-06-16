@@ -3,7 +3,7 @@ name: Upload ZIP Release
 on:
   push:
     tags:
-      - 'upload-zip-*'
+      - 'v*'
 
 jobs:
   upload:
