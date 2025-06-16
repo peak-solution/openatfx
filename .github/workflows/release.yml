@@ -2,8 +2,8 @@ name: Build and Publish Maven Project
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,9 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,12 +48,11 @@ jobs:
           mkdir -p ~/.gnupg
           echo "$MAVEN_GPG_KEY" | gpg --batch --import
           echo "$MAVEN_GPG_PASSPHRASE" | gpg --batch --passphrase-fd 0 --import-ownertrust
-          gpg --list-secret-keys --keyid-format LONG
         env:
           MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
 
-      - name: Build (no tests) and deploy
+      - name: Build and deploy
         run: mvn clean deploy -B -Prelease -DskipTests -Dgpg.useagent=true assembly:single
         env:
           MAVEN_USER: ${{ secrets.OSSRH_USERNAME }}
@@ -59,7 +60,18 @@ jobs:
           MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
 
-      - name: Upload ZIP
-        uses: softprops/action-gh-release@v2
-        with:
-          files: target/*.zip
+      - name: Tag version and push to trigger upload workflow
+        run: |
+          VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          TAG_NAME="v$VERSION"
+          echo "Tagging release with $TAG_NAME"
+
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Stelle sicher, dass der Commit auch da ist (für detached HEAD Workflows)
+          git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+          git checkout main
+
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
