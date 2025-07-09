@@ -7,8 +7,6 @@ package com.peaksolution.openatfx.io;
  */
 public class AtfxTagConstants {
 
-    public static final String VERSION = "3.1.1";
-    
     public static final String BA_ID = "id";
     public static final String BA_NAME = "name";
     public static final String BA_MIME_TYPE = "mime_type";
