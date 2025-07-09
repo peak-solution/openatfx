@@ -1,10 +1,10 @@
 package com.peaksolution.openatfx.api;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class BaseModelFactory {
     private static final Logger LOG = LoggerFactory.getLogger(BaseModelFactory.class);
@@ -23,27 +23,31 @@ public class BaseModelFactory {
     
     public AtfxBaseModel getBaseModel(String baseModelVersionString) {
         String baseModelVersion = prepareBaseModelVersionString(baseModelVersionString);
+        int versionNumber = getVersionNumberFromString(baseModelVersion);
 
         AtfxBaseModel baseModel = this.baseModelCache.get(baseModelVersion);
         if (baseModel != null) {
             return baseModel;
         }
-        
-        BaseModelReader modelReader = getBaseModelReader(baseModelVersion);
+
+        int modelVersion = checkBaseModelVersion(versionNumber);
+        String correctedModelVersionString = baseModelVersion.replace(String.valueOf(versionNumber), String.valueOf(modelVersion));
+        BaseModelReader modelReader = getBaseModelReader(modelVersion);
         long start = System.currentTimeMillis();
-        baseModel = modelReader.getBaseModel(baseModelVersion);
-        LOG.info("Read base model '" + baseModelVersion + "' in " + (System.currentTimeMillis() - start) + "ms");
+        LOG.info("Reading base model for version {}...", correctedModelVersionString);
+        baseModel = modelReader.getBaseModel(correctedModelVersionString);
+        LOG.info("Read base model '{}' in {}ms", correctedModelVersionString, System.currentTimeMillis() - start);
         
         this.baseModelCache.put(baseModelVersion, baseModel);
         return baseModel;
     }
-    
+
     /**
      * @param baseModelVersionString
      * @return
      */
     private String prepareBaseModelVersionString(String baseModelVersionString) {
-        LOG.debug("Received baseModel version " + baseModelVersionString + " to initialize base model");
+        LOG.debug("Received baseModel version {} to initialize base model", baseModelVersionString);
         // tolerate base model version being specified as two digit number
         String baseModelVersion = baseModelVersionString.trim();
         if (baseModelVersion.length() == 2) {
@@ -52,34 +56,38 @@ public class BaseModelFactory {
         // tolerate upper case string
         return baseModelVersion.toLowerCase();
     }
-    
-    /**
-     * @param baseModelVersion
-     * @return
-     */
-    private BaseModelReader getBaseModelReader(String baseModelVersion) {
-        // transform version to number for easier check 
+
+    private int getVersionNumberFromString(String baseModelVersion) {
         int versionNumber = 0;
         if (baseModelVersion.length() == 6) {
             String versionNumberString = baseModelVersion.substring(baseModelVersion.length() - 2);
             try {
-                versionNumber = Integer.valueOf(versionNumberString);
+                versionNumber = Integer.parseInt(versionNumberString);
             } catch (NumberFormatException ex) {
                 // tolerate if last two characters are no number
             }
         }
+        return versionNumber;
+    }
 
+    private int checkBaseModelVersion(int baseModelVersion) {
         // check model version to be 29 or higher
         // use the model with the best compatibility as fallback, in case a lower model as supported was configured,
         // ODS should be backward compatible
+        int versionNumber = baseModelVersion;
         if (versionNumber > 0 && versionNumber < 29) {
-            LOG.warn("Configured base model " + baseModelVersion + " is not supported, trying to fallback to version 30!");
-            LOG.info("Base model version " + versionNumber
-                    + " was configured, but as fallback the most compatible version 30 will be used!");
-            baseModelVersion = "asam30.xml";
+            LOG.warn("Configured base model {} is not supported, trying to fallback to version 30!", versionNumber);
+            LOG.info("Base model version {} was configured, but as fallback the most compatible version 30 will be used!", versionNumber);
             versionNumber = 30;
         }
-        
+        return versionNumber;
+    }
+    
+    /**
+     * @param versionNumber
+     * @return
+     */
+    private BaseModelReader getBaseModelReader(int versionNumber) {
         // use respective reader to parse the base model from file
         BaseModelReader modelReader = null;
         if (versionNumber >= 34) {
