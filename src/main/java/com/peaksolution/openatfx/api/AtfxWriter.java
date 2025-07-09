@@ -224,7 +224,7 @@ public class AtfxWriter {
         writeElement(streamWriter, AtfxTagConstants.EXPORTED_BY, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORTER, "openATFX");
         writeElement(streamWriter, AtfxTagConstants.EXPORT_DATETIME, ODSHelper.getCurrentODSDate());
-        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, AtfxTagConstants.VERSION);
+        writeElement(streamWriter, AtfxTagConstants.EXPORTER_VERSION, getClass().getPackage().getImplementationVersion());
         streamWriter.writeEndElement();
     }
 

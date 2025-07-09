@@ -4,6 +4,16 @@ Changelog of openATFX Java library.
 
 ---
 
+## [3.2.0 - UNRELEASED]
+### Changed
+- added default Manifest entries during build (including Implementation-Version) and took version for atfx header from there instead of the constant used so far
+
+### Fixed
+
+---
+
+---
+
 ## [3.1.1]
 ### Fixed
 - fixed file paths handling in ExtCompReader to work for Linux as well, when file paths in the atfx file are defined with backslashes
