@@ -4,7 +4,20 @@ Changelog of openATFX Java library.
 
 ---
 
-## [Unreleased 3.0.0]
+## [3.1.1]
+### Fixed
+- fixed file paths handling in ExtCompReader to work for Linux as well, when file paths in the atfx file are defined with backslashes
+- fixed reading of fallback datamodel (30) when source version is < 29
+
+---
+
+## [3.1.0]
+### Changed
+- does not throw not-implemented-exception anymore when Blob value is read from atfx, but a warning is logged now (tolerates PAK setup/setting attribute to allow reading PAK atfx files, not reading the BLOB value, though)
+
+---
+
+## [3.0.0]
 ### Added
 - GitHub Action for Release workflow
 

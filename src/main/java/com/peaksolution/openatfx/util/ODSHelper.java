@@ -1,65 +1,31 @@
 package com.peaksolution.openatfx.util;
 
+import com.peaksolution.openatfx.api.*;
+import org.apache.commons.lang3.ArrayUtils;
+import org.asam.ods.*;
+import org.asam.ods.Blob;
+import org.asam.ods.DataType;
+import org.asam.ods.NameValueUnit;
+import org.asam.ods.Relationship;
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.CORBA.Policy;
+import org.omg.PortableServer.*;
+import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
+import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
+import org.omg.PortableServer.POAPackage.InvalidPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.asam.ods.AIDName;
-import org.asam.ods.AggrFunc;
-import org.asam.ods.AoException;
-import org.asam.ods.Blob;
-import org.asam.ods.DataType;
-import org.asam.ods.ErrorCode;
-import org.asam.ods.NameValue;
-import org.asam.ods.NameValueUnit;
-import org.asam.ods.RelationType;
-import org.asam.ods.Relationship;
-import org.asam.ods.SelAIDNameUnitId;
-import org.asam.ods.SeverityFlag;
-import org.asam.ods.TS_Union;
-import org.asam.ods.TS_UnionSeq;
-import org.asam.ods.TS_Value;
-import org.asam.ods.TS_ValueSeq;
-import org.asam.ods.T_COMPLEX;
-import org.asam.ods.T_DCOMPLEX;
-import org.asam.ods.T_ExternalReference;
-import org.asam.ods.T_LONGLONG;
-import org.omg.CORBA.ORB;
-import org.omg.CORBA.Policy;
-import org.omg.CORBA.ORBPackage.InvalidName;
-import org.omg.PortableServer.IdAssignmentPolicyValue;
-import org.omg.PortableServer.IdUniquenessPolicyValue;
-import org.omg.PortableServer.ImplicitActivationPolicyValue;
-import org.omg.PortableServer.LifespanPolicyValue;
-import org.omg.PortableServer.POA;
-import org.omg.PortableServer.POAHelper;
-import org.omg.PortableServer.RequestProcessingPolicyValue;
-import org.omg.PortableServer.ServantRetentionPolicyValue;
-import org.omg.PortableServer.ThreadPolicyValue;
-import org.omg.PortableServer.POAManagerPackage.AdapterInactive;
-import org.omg.PortableServer.POAPackage.AdapterAlreadyExists;
-import org.omg.PortableServer.POAPackage.InvalidPolicy;
-
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.Instance;
-import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
-import com.peaksolution.openatfx.api.OpenAtfxConstants;
-import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.SingleValue;
 
 
 /**
@@ -68,10 +34,11 @@ import com.peaksolution.openatfx.api.SingleValue;
  * @author Christian Rechner
  */
 public abstract class ODSHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(ODSHelper.class);
 
     // prepare dateformats to avoid instantiation a single object everting
     // parsing a date.
-    private static Map<Integer, DateFormat> ODS_DATEFORMATS = new HashMap<>();
+    private final static Map<Integer, DateFormat> ODS_DATEFORMATS = new HashMap<>();
     static {
         ODS_DATEFORMATS.put(4, new SimpleDateFormat("yyyy"));
         ODS_DATEFORMATS.put(6, new SimpleDateFormat("yyyyMM"));
@@ -108,7 +75,7 @@ public abstract class ODSHelper {
      */
     public static synchronized Date asJDate(String odsDate) {
         try {
-            if (odsDate == null || odsDate.length() < 1) {
+            if (odsDate == null || odsDate.isEmpty()) {
                 return null;
             }
             DateFormat format = ODS_DATEFORMATS.get(odsDate.length());
@@ -220,7 +187,7 @@ public abstract class ODSHelper {
         nv.valName = valName;
         nv.value = new TS_Value();
         nv.value.u = new TS_Union();
-        if (value == null || value.length() < 1) {
+        if (value == null || value.isEmpty()) {
             nv.value.flag = 0;
             nv.value.u.stringVal("");
         } else {
@@ -3727,8 +3694,8 @@ public abstract class ODSHelper {
     }
 
     private static Blob mapBlob(com.peaksolution.openatfx.api.Blob blobVal) {
-        throw new OpenAtfxException(ErrorCode.AO_IMPLEMENTATION_PROBLEM,
-                                    "Mapping of Blob to ODS Blob not yet implemented!");
+        LOG.warn("Mapping of Blob to ODS Blob not yet implemented! Value of length {} will be ignored.", blobVal.getLength());
+        return null;
     }
 
     public static com.peaksolution.openatfx.api.SingleValue mapUnion(TS_Value value) {

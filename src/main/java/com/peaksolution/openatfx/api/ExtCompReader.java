@@ -1,29 +1,24 @@
 package com.peaksolution.openatfx.api;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.peaksolution.openatfx.util.BufferedRandomAccessFile;
+import com.peaksolution.openatfx.util.ODSHelper;
+import org.asam.ods.ErrorCode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import org.asam.ods.ErrorCode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.peaksolution.openatfx.util.BufferedRandomAccessFile;
-import com.peaksolution.openatfx.util.ODSHelper;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 
 /**
@@ -209,7 +204,7 @@ public class ExtCompReader {
         Instance extCompInstance = api.getInstanceById(aidExtComp, iidExtComp);
 
         // get filename
-        File extCompFile = getExtCompFile(extCompInstance, false);
+        Path extCompFile = getExtCompFile(extCompInstance, false);
 
         // get value type
         extCompInstance.doesAttributeExist(null, VALUE_TYPE, true);
@@ -267,7 +262,7 @@ public class ExtCompReader {
         int valuesperblock = valuesPerBlockNvu.getValue().longVal();
 
         // read values
-        try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE)) {
+        try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile.toFile(), "r", BUFFER_SIZE)) {
             raf.seek(startOffset);
 
             // initialize buffer
@@ -366,7 +361,7 @@ public class ExtCompReader {
         Instance extComp = api.getInstanceById(aidExtComp, iidExtComp);
 
         // get values File
-        File extCompFile = getExtCompFile(extComp, false);
+        Path extCompFile = getExtCompFile(extComp, false);
 
         // get datatype
         NameValueUnit vtNvu = extComp.getValueByBaseName(VALUE_TYPE);
@@ -395,7 +390,7 @@ public class ExtCompReader {
         byte[] backingBuffer = new byte[componentLength];
         List<String> list = new ArrayList<>();
         Charset charset = valueType == 12 ? ISO_8859_1 : UTF_8;
-        try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile, "r", BUFFER_SIZE)) {
+        try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile.toFile(), "r", BUFFER_SIZE)) {
             raf.seek(startOffset);
             raf.read(backingBuffer, 0, backingBuffer.length);
 
@@ -456,11 +451,11 @@ public class ExtCompReader {
         for (Instance currentEc : extComps) {
             long iidExtComp = currentEc.getIid();
             // get flags file
-            File flagsFile = getExtCompFile(currentEc, true);
+            Path flagsFile = getExtCompFile(currentEc, true);
             if (flagsFile == null) {
                 return null;
             }
-            flagsFileNames.add(flagsFile.getName());
+            flagsFileNames.add(flagsFile.getFileName().toString());
 
             // read start offset, may be DT_LONG or DT_LONGLONG
             long flagsStartOffset = 0;
@@ -492,13 +487,13 @@ public class ExtCompReader {
         return new SingleValue(DataType.DS_SHORT, overallFlags);
     }
 
-    private List<Short> readFlagsFromFile(File flagsFile, long flagsStartOffset, int componentLength,
+    private List<Short> readFlagsFromFile(Path flagsFile, long flagsStartOffset, int componentLength,
             ByteOrder byteOrder) throws OpenAtfxException {
         List<Short> flags = new ArrayList<>();
 
         byte[] backingBuffer = new byte[2];
         // open source channel and read flag values
-        try (RandomAccessFile raf = new BufferedRandomAccessFile(flagsFile, "r", BUFFER_SIZE)) {
+        try (RandomAccessFile raf = new BufferedRandomAccessFile(flagsFile.toFile(), "r", BUFFER_SIZE)) {
             raf.seek(flagsStartOffset);
             for (int i = 0; i < componentLength; i++) {
                 raf.read(backingBuffer, 0, backingBuffer.length);
@@ -524,7 +519,7 @@ public class ExtCompReader {
      *         identified
      * @throws OpenAtfxException
      */
-    private File getExtCompFile(Instance extComp, boolean requestFlags) {
+    private Path getExtCompFile(Instance extComp, boolean requestFlags) {
         String attrName = null;
         String fileRelBaseName = null;
         if (requestFlags) {
@@ -536,7 +531,7 @@ public class ExtCompReader {
         }
 
         NameValueUnit fileNvu = extComp.getValueByBaseName(attrName);
-        File extCompFile = null;
+        Path extCompFile = null;
         String location = null;
         if (fileNvu == null || !fileNvu.hasValidValue()) {
             // if no valid file reference is found, find the related AoFile if one exists
@@ -563,10 +558,9 @@ public class ExtCompReader {
             return null;
         }
         
-        extCompFile = new File(location);
-        if (!extCompFile.exists()) {
-            File fileRoot = new File(api.getContext().get(OpenAtfxConstants.CONTEXT_FILE_ROOT).getValue().stringVal());
-            extCompFile = new File(fileRoot, location);
+        extCompFile = Paths.get(location);
+        if (!extCompFile.toFile().exists()) {
+            extCompFile = Paths.get(api.getContext().get(OpenAtfxConstants.CONTEXT_FILE_ROOT).getValue().stringVal(), location);
         }
         return extCompFile;
     }
