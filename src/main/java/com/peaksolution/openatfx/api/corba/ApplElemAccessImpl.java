@@ -575,11 +575,13 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 if (condition == null) {
                     continue;
                 }
-                // only support conditions of type D?_STRING, D?_LONGLONG or D?_ENUM
+                // only support conditions of type D?_STRING, D?_LONG, D?_LONGLONG or D?_ENUM
                 if (condition.value.u.discriminator() != DataType.DT_STRING
                         && condition.value.u.discriminator() != DataType.DS_STRING
                         && condition.value.u.discriminator() != DataType.DT_LONGLONG
                         && condition.value.u.discriminator() != DataType.DS_LONGLONG
+                        && condition.value.u.discriminator() != DataType.DT_LONG
+                        && condition.value.u.discriminator() != DataType.DS_LONG
                         && condition.value.u.discriminator() != DataType.DT_ENUM
                         && condition.value.u.discriminator() != DataType.DS_ENUM) {
                     throw new AoException(ErrorCode.AO_NOT_IMPLEMENTED, SeverityFlag.ERROR, 0, "Condition DataType '"

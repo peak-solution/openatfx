@@ -112,20 +112,26 @@ public class QueryConditionHelper {
         long[] longSeqVal = null;
         Integer intVal = null;
         int[] intSeqVal = null;
-        if (condition.value.u.discriminator() == DataType.DT_STRING) {
+        DataType conditionDT = condition.value.u.discriminator();
+        if (conditionDT == DataType.DT_STRING) {
             stringVal = condition.value.u.stringVal();
-        } else if (condition.value.u.discriminator() == DataType.DS_STRING) {
+        } else if (conditionDT == DataType.DS_STRING) {
             stringSeqVal = condition.value.u.stringSeq();
             Arrays.sort(stringSeqVal); // sort so find method works
-        } else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
+        } else if (conditionDT == DataType.DT_LONG) {
+            intVal = condition.value.u.longVal();
+        } else if (conditionDT == DataType.DS_LONG) {
+            longSeqVal = Arrays.stream(condition.value.u.longSeq()).mapToLong(i -> i).toArray();
+            Arrays.sort(longSeqVal); // sort so find method works
+        } else if (conditionDT == DataType.DT_LONGLONG) {
             longVal = condition.value.u.longlongVal();
-        } else if (condition.value.u.discriminator() == DataType.DS_LONGLONG) {
+        } else if (conditionDT == DataType.DS_LONGLONG) {
             T_LONGLONG[] longLongSeqVal = condition.value.u.longlongSeq();
             longSeqVal = ODSHelper.asJLong(longLongSeqVal);
             Arrays.sort(longSeqVal); // sort so find method works
-        } else if (condition.value.u.discriminator() == DataType.DT_ENUM) {
+        } else if (conditionDT == DataType.DT_ENUM) {
             intVal = condition.value.u.enumVal();
-        } else if (condition.value.u.discriminator() == DataType.DS_ENUM) {
+        } else if (conditionDT == DataType.DS_ENUM) {
             intSeqVal = condition.value.u.enumSeq();
             Arrays.sort(intSeqVal); // sort so find method works
         }
@@ -138,7 +144,7 @@ public class QueryConditionHelper {
                 if (checkConditionOnRelatedInstances(iid, conditionAid, condition)) {
                     filteredIids.add(iid);
                 }
-            } else if (condition.value.u.discriminator() == DataType.DT_STRING) {
+            } else if (conditionDT == DataType.DT_STRING) {
                 Instance instance = api.getInstanceById(aid, iid);
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if (value != null) {
@@ -158,7 +164,7 @@ public class QueryConditionHelper {
                         filteredIids.add(iid);
                     }
                 }
-            } else if (condition.value.u.discriminator() == DataType.DS_STRING) {
+            } else if (conditionDT == DataType.DS_STRING) {
                 Instance instance = api.getInstanceById(aid, iid);
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if ((condition.oper == SelOpcode.INSET
@@ -167,8 +173,29 @@ public class QueryConditionHelper {
                                 && Arrays.binarySearch(stringSeqVal, value.getValue().stringVal()) < 0) {
                     filteredIids.add(iid);
                 }
-
-            } else if (condition.value.u.discriminator() == DataType.DT_LONGLONG) {
+            } else if (conditionDT == DataType.DT_LONG) {
+              Integer attrNo = element.getAttrNoByName(condition.attr.attr.aaName);
+              boolean addToFilter = false;
+              if (attrNo == null) {
+                // is a relation condition
+                AtfxRelation ar = element.getRelationByName(condition.attr.attr.aaName);
+                List<Long> longlongVals = api.getRelatedInstanceIds(aid, iid, ar);
+                addToFilter = longlongVals.size() == 1 && longlongVals.get(0).equals(Long.valueOf(intVal));
+              } else {
+                // is an attribute condition
+                Instance instance = api.getInstanceById(aid, iid);
+                NameValueUnit value = instance.getValue(attrNo);
+                if (value != null) {
+                  addToFilter = intVal.equals(value.getValue().longVal());
+                }
+              }
+              if (isNegatedOpcode(condition.oper)) {
+                addToFilter = !addToFilter;
+              }
+              if (addToFilter) {
+                filteredIids.add(iid);
+              }
+            } else if (conditionDT == DataType.DT_LONGLONG) {
                 Integer attrNo = element.getAttrNoByName(condition.attr.attr.aaName);
                 boolean addToFilter = false;
                 if (attrNo == null) {
@@ -190,7 +217,7 @@ public class QueryConditionHelper {
                 if (addToFilter) {
                     filteredIids.add(iid);
                 }
-            } else if ((condition.value.u.discriminator() == DataType.DS_LONGLONG)
+            } else if ((conditionDT == DataType.DS_LONGLONG || conditionDT == DataType.DS_LONG)
                     && (condition.oper == SelOpcode.INSET)) {
                 Integer attrNo = element.getAttrNoByName(condition.attr.attr.aaName);
                 if (attrNo == null) {
@@ -207,14 +234,19 @@ public class QueryConditionHelper {
                     // is an attribute condition
                     Instance instance = api.getInstanceById(aid, iid);
                     NameValueUnit value = instance.getValue(attrNo);
-                    long searchValue = value.getValue().longlongVal();
+                    long searchValue;
+                    if (conditionDT == DataType.DS_LONG) {
+                      searchValue = value.getValue().longVal();
+                    } else {
+                      searchValue = value.getValue().longlongVal();
+                    }
                     if ((condition.oper == SelOpcode.INSET && Arrays.binarySearch(longSeqVal, searchValue) > -1)
                             || condition.oper == SelOpcode.NOTINSET
                                     && Arrays.binarySearch(longSeqVal, searchValue) < 0) {
                         filteredIids.add(iid);
                     }
                 }
-            } else if (condition.value.u.discriminator() == DataType.DT_ENUM) {
+            } else if (conditionDT == DataType.DT_ENUM) {
                 Instance instance = api.getInstanceById(aid, iid);
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if (value != null) {
@@ -225,7 +257,7 @@ public class QueryConditionHelper {
                         filteredIids.add(iid);
                     }
                 }
-            } else if (condition.value.u.discriminator() == DataType.DS_ENUM) {
+            } else if (conditionDT == DataType.DS_ENUM) {
                 Instance instance = api.getInstanceById(aid, iid);
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if ((condition.oper == SelOpcode.INSET

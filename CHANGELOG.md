@@ -4,13 +4,12 @@ Changelog of openATFX Java library.
 
 ---
 
-## [3.2.0 - UNRELEASED]
+## [3.1.2]
 ### Changed
 - added default Manifest entries during build (including Implementation-Version) and took version for atfx header from there instead of the constant used so far
 
 ### Fixed
-
----
+- fixed support for older iids of type DT_LONG
 
 ---
 
