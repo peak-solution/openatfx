@@ -51,7 +51,7 @@
 							<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
 							<ossIndexUsername>${env.SONATYPE_USER}</ossIndexUsername>
 							<ossIndexPassword>${env.SONATYPE_PWD}</ossIndexPassword>
-                            <nvdApiKeyEnvironmentVariable>${env.NVD_API_KEY}</nvdApiKeyEnvironmentVariable>
+                            <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
 						</configuration>
 						<executions>
 							<execution>
