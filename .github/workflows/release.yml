@@ -61,4 +61,4 @@ jobs:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
           SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
           SONATYPE_PWD: ${{ secrets.SONATYPE_PWD }}
-          
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
