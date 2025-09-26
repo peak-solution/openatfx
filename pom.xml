@@ -49,6 +49,8 @@
 						<configuration>
 							<failBuildOnCVSS>4</failBuildOnCVSS>
 							<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+							<ossIndexUsername>${env.SONATYPE_USER}</ossIndexUsername>
+							<ossIndexPassword>${env.SONATYPE_PWD}</ossIndexPassword>
 						</configuration>
 						<executions>
 							<execution>
