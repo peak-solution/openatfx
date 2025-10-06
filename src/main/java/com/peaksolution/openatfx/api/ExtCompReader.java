@@ -385,29 +385,27 @@ public class ExtCompReader {
         int valueType = vtNvu.getValue().enumVal();
         if (valueType != 13 && valueType != 18 && valueType != 33) {
             throw new OpenAtfxException(ErrorCode.AO_NOT_IMPLEMENTED,
-                                        "Unsupported 'value_type' for data type DT_BYTESTR: " + valueType);
+                    "Unsupported 'value_type' for data type DT_BYTESTR: " + valueType);
         }
 
-        int componentLength = (int)extractLong(extComp, COMPONENT_LENGTH);
-        long startOffset = extractLong(extComp, START_OFFSET);
-        long valuesperblock = extractLong(extComp, VALUESPERBLOCK);
-        long value_offset = extractLong(extComp, VALUE_OFFSET);
-        boolean byteorder_leo = 33 == valueType;
-        
+        final long startOffset = extractLong(extComp, START_OFFSET);
+        final int componentLength = extractInt(extComp, COMPONENT_LENGTH);
+        final int valuesperblock = extractInt(extComp, VALUESPERBLOCK);
+        final int value_offset = extractInt(extComp, VALUE_OFFSET);
+        final boolean byteorder_leo = (33 == valueType);
+
         // read values
-        ByteBuffer backingBuffer = ByteBuffer.allocate(componentLength);
         List<byte[]> list = new ArrayList<>();
         try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile.toFile(), "r", BUFFER_SIZE)) {
+            ByteBuffer backingBuffer = ByteBuffer.allocate(componentLength);
             raf.getChannel().read(backingBuffer, startOffset);
-            backingBuffer.flip();
 
-            appendBytestrValues(backingBuffer, byteorder_leo, valuesperblock, value_offset, list);
+            appendBytestrValues(backingBuffer.flip(), byteorder_leo, valuesperblock, value_offset, list);
 
             if (LOG.isInfoEnabled()) {
-                NameValueUnit furlNvu = extComp.getValueByBaseName(FILENAME_URL);
-                String filenameUrl = furlNvu.getValue().stringVal();
-                LOG.info("Read {} string values from component file '{}' in {}ms [value_type={}]", list.size(),
-                         filenameUrl, System.currentTimeMillis() - start, ODSHelper.valueType2String(valueType));
+                LOG.info("Read {} bytestr values from component file '{}' in {}ms [value_type={}]", list.size(),
+                        extractString(extComp, FILENAME_URL), System.currentTimeMillis() - start,
+                        ODSHelper.valueType2String(valueType));
             }
             return list;
         } catch (IOException e) {
@@ -446,6 +444,10 @@ public class ExtCompReader {
         }
     }
 
+    private int extractInt(Instance extComp, String attributeBaseName) {
+        return (int)extractLong(extComp, attributeBaseName);
+    }
+
     private long extractLong(Instance extComp, String attributeBaseName) {
         long returnValue = 0;
         NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
@@ -457,6 +459,16 @@ public class ExtCompReader {
             }
         }
         return returnValue;
+    }
+
+    private String extractString(Instance extComp, String attributeBaseName) {
+        NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
+        if (valperblockNvu != null && valperblockNvu.hasValidValue()) {
+            if (valperblockNvu.getValue().discriminator() == DataType.DT_STRING) {
+                return valperblockNvu.getValue().stringVal();
+            }
+        }
+        return "";
     }
 
     private Collection<String> readStringValues(long iidExtComp) {
