@@ -392,15 +392,16 @@ public class ExtCompReader {
         final int componentLength = extractInt(extComp, COMPONENT_LENGTH);
         final int valuesperblock = extractInt(extComp, VALUESPERBLOCK);
         final int value_offset = extractInt(extComp, VALUE_OFFSET);
-        final boolean byteorder_leo = (33 == valueType);
+        final boolean byte_order_leo = (33 == valueType);
 
-        // read values
         List<byte[]> list = new ArrayList<>();
         try (RandomAccessFile raf = new BufferedRandomAccessFile(extCompFile.toFile(), "r", BUFFER_SIZE)) {
             ByteBuffer backingBuffer = ByteBuffer.allocate(componentLength);
+            // make sure length is correctly read
+            backingBuffer.order(byte_order_leo ? ByteOrder.LITTLE_ENDIAN : ByteOrder.BIG_ENDIAN);
             raf.getChannel().read(backingBuffer, startOffset);
 
-            appendBytestrValues(backingBuffer.flip(), byteorder_leo, valuesperblock, value_offset, list);
+            readBytestrValuesfromBuffer(backingBuffer.flip(), valuesperblock, value_offset, list);
 
             if (LOG.isInfoEnabled()) {
                 LOG.info("Read {} bytestr values from component file '{}' in {}ms [value_type={}]", list.size(),
@@ -413,42 +414,37 @@ public class ExtCompReader {
         }
     }
 
-    private void appendBytestrValues(ByteBuffer backingBuffer, boolean byteorder_leo, long valuesperblock,
-            long value_offset, List<byte[]> list) {
+    private static void readBytestrValuesfromBuffer(ByteBuffer backingBuffer, int valuesperblock, int value_offset,
+            List<byte[]> target_list) {
 
         // Set position to value_offset
-        backingBuffer.position((int)value_offset);
+        backingBuffer.position(value_offset);
 
-        for (long i = 0; i < valuesperblock; i += 1) {
-            // Check if we have enough bytes remaining
-            if (backingBuffer.remaining() < 4) {
-                break;
-            }
-
+        for (int indexInBlock = 0; indexInBlock < valuesperblock; indexInBlock += 1) {
             // first four bytes contain the length of the bytestr coded with leo or beo
-            // ByteBuffer already has the correct byte order set
-            int bytestr_length = backingBuffer.getInt();
-            if (byteorder_leo) {
-                bytestr_length = Integer.reverseBytes(bytestr_length);
-            }
-            
-            // Check if we have enough bytes remaining for the bytestr data
-            if (backingBuffer.remaining() < bytestr_length) {
+            if (backingBuffer.remaining() < 4) {
+                LOG.warn("Not enough bytes remaining to read length of bytestr value {}, stopping read.", indexInBlock);
                 break;
             }
-            
+            int bytestr_length = backingBuffer.getInt();
+
             // extract the bytestr data
-            byte[] bytestr = new byte[(int)bytestr_length];
+            if (backingBuffer.remaining() < bytestr_length) {
+                LOG.warn("Not enough bytes remaining to read bytestr value {} of length {}, stopping read.",
+                        indexInBlock, bytestr_length);
+                break;
+            }
+            byte[] bytestr = new byte[bytestr_length];
             backingBuffer.get(bytestr);
-            list.add(bytestr);
+            target_list.add(bytestr);
         }
     }
 
-    private int extractInt(Instance extComp, String attributeBaseName) {
-        return (int)extractLong(extComp, attributeBaseName);
+    private static int extractInt(Instance extComp, String attributeBaseName) {
+        return (int) extractLong(extComp, attributeBaseName);
     }
 
-    private long extractLong(Instance extComp, String attributeBaseName) {
+    private static long extractLong(Instance extComp, String attributeBaseName) {
         long returnValue = 0;
         NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
         if (valperblockNvu != null && valperblockNvu.hasValidValue()) {
@@ -461,7 +457,7 @@ public class ExtCompReader {
         return returnValue;
     }
 
-    private String extractString(Instance extComp, String attributeBaseName) {
+    private static String extractString(Instance extComp, String attributeBaseName) {
         NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
         if (valperblockNvu != null && valperblockNvu.hasValidValue()) {
             if (valperblockNvu.getValue().discriminator() == DataType.DT_STRING) {
