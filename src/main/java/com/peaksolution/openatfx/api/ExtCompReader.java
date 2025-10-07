@@ -359,11 +359,8 @@ public class ExtCompReader {
             }
 
             if (LOG.isInfoEnabled()) {
-                extCompInstance.doesAttributeExist(null, FILENAME_URL, true);
-                NameValueUnit fileNameUrlNvu = extCompInstance.getValueByBaseName(FILENAME_URL);
-                String filenameUrl = fileNameUrlNvu.getValue().stringVal();
                 LOG.info("Read {} numeric values from component file '{}' in {}ms [value_type={}]", list.size(),
-                         filenameUrl, System.currentTimeMillis() - start, ODSHelper.valueType2String(valueType));
+                        extractString(extCompInstance, FILENAME_URL), System.currentTimeMillis() - start, ODSHelper.valueType2String(valueType));
             }
             return list;
         } catch (IOException e) {
@@ -516,10 +513,8 @@ public class ExtCompReader {
             }
 
             if (LOG.isInfoEnabled()) {
-                NameValueUnit furlNvu = extComp.getValueByBaseName(FILENAME_URL);
-                String filenameUrl = furlNvu.getValue().stringVal();
                 LOG.info("Read {} string values from component file '{}' in {}ms [value_type={}]", list.size(),
-                         filenameUrl, System.currentTimeMillis() - start, ODSHelper.valueType2String(valueType));
+                        extractString(extComp, FILENAME_URL), System.currentTimeMillis() - start, ODSHelper.valueType2String(valueType));
             }
             return list;
         } catch (IOException e) {
