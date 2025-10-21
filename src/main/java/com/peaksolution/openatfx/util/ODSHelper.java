@@ -2589,6 +2589,8 @@ public abstract class ODSHelper {
             return "dt_bit_float";
         } else if (e == 32) {
             return "dt_bit_float_beo";
+        } else if (e == 33) {
+            return "dt_bytestr_leo";
         }
         throw new IllegalArgumentException("Unknown ODS value type enum: " + e);
     }

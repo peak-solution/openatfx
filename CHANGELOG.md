@@ -5,11 +5,17 @@ Changelog of openATFX Java library.
 ---
 
 ## [3.1.2]
+### Added
+- added `dt_bytrestr`, `dt_bytrestr_leo` and `dt_bytestr_beo` support to `ExtCompReader` to allow reading of
+  these value types from atfx files binary components.
+
 ### Changed
 - added default Manifest entries during build (including Implementation-Version) and took version for atfx header from there instead of the constant used so far
 
 ### Fixed
 - fixed support for older iids of type DT_LONG
+- avoid endless loop when `valuesperblock` attribute is not given or 0 in `ExtCompReader`. Throw an exception
+  instead.
 
 ---
 
