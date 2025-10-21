@@ -39,7 +39,7 @@ public class LocalFileHandler implements IFileHandler {
      */
     @Override
     public String getFileRoot(Path path) throws IOException {
-        return path.toAbsolutePath().getParent().toString().replace("\\\\", "/");
+        return path.toAbsolutePath().getParent().toString();
     }
 
     /**
