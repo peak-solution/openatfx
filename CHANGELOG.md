@@ -4,6 +4,12 @@ Changelog of openATFX Java library.
 
 ---
 
+## [3.2.1]
+### Fixed
+- fixed the GenerationParameters NVU for SeqReps, where they are equal to the Values. Avoids error writing Values attribute two times to atfx file.
+
+---
+
 ## [3.2.0]
 ### Added
 - added `dt_bytrestr`, `dt_bytrestr_leo` and `dt_bytestr_beo` support to `ExtCompReader` to allow reading of
@@ -17,7 +23,6 @@ Changelog of openATFX Java library.
 ---
 
 ## [3.1.2]
-
 ### Changed
 - added default Manifest entries during build (including Implementation-Version) and took version for atfx header from there instead of the constant used so far
 

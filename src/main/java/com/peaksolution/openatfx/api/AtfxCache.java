@@ -1,28 +1,18 @@
 package com.peaksolution.openatfx.api;
 
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.peaksolution.openatfx.io.AtfxTagConstants;
+import com.peaksolution.openatfx.util.ODSHelper;
 import org.asam.ods.AoException;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.RelationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.peaksolution.openatfx.io.AtfxTagConstants;
-import com.peaksolution.openatfx.util.ODSHelper;
+import java.nio.ByteOrder;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -644,7 +634,7 @@ class AtfxCache {
      * Adds an instance element to the instance cache.
      * 
      * @param aid The application element id.
-     * @param iid The instance id.
+     * @param nvus The attribute values for the instance.
      * @return The created instance.
      */
     public Instance addInstance(long aid, Collection<NameValueUnit> nvus) {
@@ -668,8 +658,7 @@ class AtfxCache {
 
     /**
      * Returns an instance element by given instance id.
-     * 
-     * @param instancePOA The POA for lazy creation of the CORBA object.
+     *
      * @param aid The application element id.
      * @param iid The instance id.
      * @return The instance element.
@@ -776,9 +765,7 @@ class AtfxCache {
 
     /**
      * Returns the environment instance.
-     * 
-     * @param modelPOA
-     * @param instancePOA
+     *
      * @return The environment instance, null if not application element derived from 'AoEnviroment' exists or no
      *         instance available.
      * @throws OpenAtfxException if something went wrong
@@ -942,7 +929,7 @@ class AtfxCache {
                     Attribute genParamsAttr = element.getAttributeByBaseName(AtfxTagConstants.LC_GEN_PARAMS);
                     return new NameValueUnit(genParamsAttr.getName(), DataType.DS_DOUBLE, null);
                 }
-                return convertToGenerationParameters(valuesNvu);
+                return convertToGenerationParameters(attr, valuesNvu);
             }
         }
 
@@ -1444,10 +1431,13 @@ class AtfxCache {
         return null;
     }
     
-    private NameValueUnit convertToGenerationParameters(NameValueUnit source) {
+    private NameValueUnit convertToGenerationParameters(Attribute attr, NameValueUnit source) {
+        NameValueUnit nvu = new NameValueUnit(source, source.getValue());
+        nvu.setValName(attr.getName());
+
         DataType sourceDt = source.getValue().discriminator();
         if (DataType.DS_DOUBLE == sourceDt) {
-            return source;
+            return nvu;
         }
         
         SingleValue value = new SingleValue();
@@ -1482,7 +1472,8 @@ class AtfxCache {
                     + "' to datatype '" + DataType.DS_DOUBLE + "'");
         }
         value.doubleSeq(ar);
-        return new NameValueUnit(source, value);
+        nvu.setValue(value);
+        return nvu;
     }
     
     private NameValueUnit convertToNameValueUnit(Attribute attr, SingleValue value) {
