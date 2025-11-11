@@ -37,7 +37,13 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
     }
 
     public void init(Collection<NameValueUnit> context) {
-        ExtCompReader extCompReader = new ExtCompReader(this);
+        boolean convertWindowsPaths = false;
+        for (NameValueUnit contextValue : context) {
+          if (contextValue != null && contextValue.hasValidValue() && contextValue.getValName().equals(OpenAtfxConstants.CONTEXT_CONVERT_WINDOWS_PATHS)) {
+            convertWindowsPaths = Boolean.parseBoolean(contextValue.getValue().stringVal());
+          }
+        }
+        ExtCompReader extCompReader = new ExtCompReader(this, convertWindowsPaths);
         ExtCompWriter extCompWriter = new ExtCompWriter(this);
 
         this.atfxCache = new AtfxCache(baseModel, extCompReader, extCompWriter);

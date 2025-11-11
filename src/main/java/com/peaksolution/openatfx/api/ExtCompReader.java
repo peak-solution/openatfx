@@ -39,9 +39,15 @@ public class ExtCompReader {
     private static final int BUFFER_SIZE = 32768;
 
     private final OpenAtfxAPIImplementation api;
+    private final boolean convertWindowsPaths;
 
     public ExtCompReader(OpenAtfxAPIImplementation api) {
+      this(api, false);
+    }
+
+    public ExtCompReader(OpenAtfxAPIImplementation api, boolean convertWindowsPaths) {
         this.api = api;
+        this.convertWindowsPaths = convertWindowsPaths;
     }
 
     public SingleValue readValues(long iidLc, DataType targetDataType) throws OpenAtfxException {
@@ -665,7 +671,11 @@ public class ExtCompReader {
             // handle empty value, for example because no flags file is set
             return null;
         }
-        
+
+        if (convertWindowsPaths) {
+          location = location.replace('\\', '/');
+        }
+
         extCompFile = Paths.get(location);
         if (!extCompFile.toFile().exists()) {
             extCompFile = Paths.get(api.getContext().get(OpenAtfxConstants.CONTEXT_FILE_ROOT).getValue().stringVal(), location);
