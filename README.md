@@ -36,6 +36,8 @@ openATFX uses context properties to adjust its configuration. In the case of ODS
 - TRIM_STRING_VALUES:
   If set to true, will remove leading and trailing whitespaces of read String values
   (no sequences, yet) from atfx file and the same before writing any String values to an atfx file.
+- CONVERT_WINDOWS_PATHS:
+  If set to true, will convert external component paths with \ to paths with /. It will be a simple replacement, no further logic contained
 
 ## Eclipse Glassfish ORB Dependency
 

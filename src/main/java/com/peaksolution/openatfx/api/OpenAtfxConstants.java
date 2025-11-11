@@ -48,5 +48,6 @@ public class OpenAtfxConstants {
     public static final String CONTEXT_INDENT_XML = "INDENT_XML";
     public static final String CONTEXT_WRITE_EXTERNALCOMPONENTS = "WRITE_EXTERNALCOMPONENTS";
     public static final String CONTEXT_TRIM_STRING_VALUES = "TRIM_STRING_VALUES";
+    public static final String CONTEXT_CONVERT_WINDOWS_PATHS = "CONVERT_WINDOWS_PATHS";
     
 }

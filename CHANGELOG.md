@@ -4,6 +4,12 @@ Changelog of openATFX Java library.
 
 ---
 
+## [3.2.2]
+### ADDED
+- added context parameter CONVERT_WINDOWS_PATHS to force replacement of \ by / in file paths (external component), if atfx file contains Windows style paths (actually not ODS compliant)
+
+---
+
 ## [3.2.1]
 ### Fixed
 - fixed the GenerationParameters NVU for SeqReps, where they are equal to the Values. Avoids error writing Values attribute two times to atfx file.
