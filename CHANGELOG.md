@@ -4,6 +4,13 @@ Changelog of openATFX Java library.
 
 ---
 
+## [3.2.3]
+### CHANGED
+- Deactivated GMBAL for Glassfish ORB, removed indirect dependencies to Grizzly server
+- Updated dependency versions
+
+---
+
 ## [3.2.2]
 ### ADDED
 - added context parameter CONVERT_WINDOWS_PATHS to force replacement of \ by / in file paths (external component), if atfx file contains Windows style paths (actually not ODS compliant)
