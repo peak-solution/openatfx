@@ -81,6 +81,7 @@
 							<licenseMerges>
 								<licenseMerge>EDL 1.0|Eclipse Distribution License - v 1.0</licenseMerge>
 								<licenseMerge>Apache-2.0|Apache License, Version 2.0</licenseMerge>
+								<licenseMerge>MIT License|MIT</licenseMerge>
 							</licenseMerges>
 							<includedLicenses>
 								<includedLicense>Apache-2.0</includedLicense>
