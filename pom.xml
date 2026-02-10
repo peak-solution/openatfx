@@ -5,7 +5,7 @@
 	<groupId>com.peak-solution</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>3.2.2</version>
+	<version>3.2.3</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>https://github.com/peak-solution/openatfx</url>
 
@@ -258,22 +258,22 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>2.0.13</version>
+			<version>2.0.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.18.0</version>
+			<version>3.20.0</version>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.xml.bind</groupId>
 			<artifactId>jakarta.xml.bind-api</artifactId>
-			<version>4.0.2</version>
+			<version>4.0.5</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.glassfish.jaxb</groupId>
 		    <artifactId>jaxb-runtime</artifactId>
-		    <version>4.0.5</version>
+		    <version>4.0.6</version>
 		</dependency>
 		<dependency>
 			<groupId>org.glassfish.corba</groupId>
@@ -288,18 +288,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.glassfish.main.admin</groupId>
-			<artifactId>monitoring-core</artifactId>
-			<version>8.0.0-JDK17-M12</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>org.glassfish.gmbal</groupId>
-					<artifactId>gmbal</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>org.glassfish.gmbal</groupId>
 			<artifactId>gmbal</artifactId>
 			<version>4.1.0</version>
@@ -308,25 +296,25 @@
 		<dependency>
 			<groupId>org.junit.vintage</groupId>
 			<artifactId>junit-vintage-engine</artifactId>
-			<version>5.10.2</version>
+			<version>6.0.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.10.2</version>
+			<version>6.0.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 		    <groupId>org.junit.jupiter</groupId>
 		    <artifactId>junit-jupiter-params</artifactId>
-		    <version>5.10.2</version>
+		    <version>6.0.2</version>
 		    <scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j2-impl</artifactId>
-			<version>2.23.1</version>
+			<version>2.25.3</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -338,13 +326,13 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.25.3</version>
+			<version>3.27.7</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 		    <groupId>org.mockito</groupId>
 		    <artifactId>mockito-core</artifactId>
-		    <version>5.11.0</version>
+		    <version>5.21.0</version>
 		    <scope>test</scope>
 		</dependency>
 	</dependencies>
