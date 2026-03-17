@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import com.peaksolution.openatfx.ExtCompReaderAoFileTest;
 import com.peaksolution.openatfx.LocalFileHandler;
 import com.peaksolution.openatfx.OpenAtfx;
 
@@ -279,5 +281,66 @@ class AtfxWriterTest {
         
         api.writeAtfx(atfxFile.toFile());
         assertThat(atfxFile.toFile()).isNotEmpty();
+    }
+    
+    @Test
+    void testFileNameUrlNotWrittenWithAoFile(@TempDir Path tempDir) throws Exception {
+        // Create a temporary ATFX file
+        String[] files = {"external_with_flags_aofile.atfx", "external_with_flags.bda", "external_with_flags_flags_extract.btf"};
+        for (String file : files) {
+            Files.copy(ExtCompReaderAoFileTest.class.getResourceAsStream("/com/peaksolution/openatfx/" + file), tempDir.resolve(file));
+        }
+        final Path tempAtfxFile = tempDir.resolve("external_with_flags_aofile.atfx");
+        assertThat(Files.exists(tempAtfxFile)).isTrue();
+        final Path tempAtfxFileOut = tempDir.resolve("out.atfx");
+        assertThat(Files.exists(tempAtfxFileOut)).isFalse();
+        
+        assertThat(hasXmlNodes(tempAtfxFile, "//ns:instance_data/ns:ExternalComponent/ns:ValuesFile")).isTrue();
+        assertThat(hasXmlNodes(tempAtfxFile, "//ns:instance_data/ns:ExternalComponent/ns:FilenameURL")).isFalse();
+        
+        final OpenAtfx openAtfx = new OpenAtfx();
+        final OpenAtfxAPI api = openAtfx.openFile(tempAtfxFile);
+        api.setContext(new NameValueUnit(OpenAtfxConstants.CONTEXT_WRITE_EXTERNALCOMPONENTS, DataType.DT_STRING, "TRUE"));
+        api.writeAtfx(tempAtfxFileOut.toFile());
+        
+        assertThat(hasXmlNodes(tempAtfxFileOut, "//ns:instance_data/ns:ExternalComponent/ns:ValuesFile")).isTrue();
+        assertThat(hasXmlNodes(tempAtfxFileOut, "//ns:instance_data/ns:ExternalComponent/ns:FilenameURL")).isFalse();
+    }
+    
+    /**
+     * Checks if any element matching the XPath expression exists in the given ATFX XML file.
+     * This method is namespace-aware and uses XPath for robust querying.
+     * The namespace is resolved from the document root.
+     *
+     * @param atfxFile Path to the ATFX XML file
+     * @param xpathStr The XPath expression to evaluate (use ns: prefix for elements)
+     * @return true if any element matching the XPath is found, false otherwise
+     */
+    public static boolean hasXmlNodes(Path atfxFile, String xpathStr) throws Exception {
+        try (InputStream xmlInput = Files.newInputStream(atfxFile)) {
+            javax.xml.parsers.DocumentBuilderFactory dbFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+            dbFactory.setNamespaceAware(true);
+            org.w3c.dom.Document doc = dbFactory.newDocumentBuilder().parse(xmlInput);
+            javax.xml.xpath.XPathFactory xPathfactory = javax.xml.xpath.XPathFactory.newInstance();
+            javax.xml.xpath.XPath xpath = xPathfactory.newXPath();
+            
+            // Extract namespace from the root element
+            String namespaceUri = doc.getDocumentElement().getNamespaceURI();
+            
+            javax.xml.namespace.NamespaceContext ctx = new javax.xml.namespace.NamespaceContext() {
+                public String getNamespaceURI(String prefix) {
+                    if ("ns".equals(prefix)) {
+                        return namespaceUri;
+                    }
+                    return javax.xml.XMLConstants.NULL_NS_URI;
+                }
+                public String getPrefix(String uri) { return null; }
+                public java.util.Iterator<String> getPrefixes(String uri) { return null; }
+            };
+            xpath.setNamespaceContext(ctx);
+            javax.xml.xpath.XPathExpression expr = xpath.compile(xpathStr);
+            org.w3c.dom.NodeList nodes = (org.w3c.dom.NodeList) expr.evaluate(doc, javax.xml.xpath.XPathConstants.NODESET);
+            return nodes.getLength() > 0;
+        }
     }
 }
