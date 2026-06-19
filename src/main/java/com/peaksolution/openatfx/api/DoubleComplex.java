@@ -19,18 +19,12 @@ public class DoubleComplex
   
   public static DoubleComplex[] getDoubleComplexValues(List<Double> values)
   {
-    DoubleComplex[] complexArray = new DoubleComplex[values.size()];
-    double r = 0;
-    for (int i = 0; i < values.size(); i++)
+    int pairCount = values.size() / 2;
+    DoubleComplex[] complexArray = new DoubleComplex[pairCount];
+    for (int i = 0; i < pairCount; i++)
     {
-      if ((i + 1) % 2 == 0)
-      {
-        r = values.get(i);
-      }
-      else
-      {
-        complexArray[(i + 1) / 2] = new DoubleComplex(r, values.get(i));
-      }
+      int valueIndex = i * 2;
+      complexArray[i] = new DoubleComplex(values.get(valueIndex), values.get(valueIndex + 1));
     }
     return complexArray;
   }

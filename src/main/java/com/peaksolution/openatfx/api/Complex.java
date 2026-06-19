@@ -19,18 +19,12 @@ public class Complex
   
   public static Complex[] getComplexValues(List<Float> values)
   {
-    Complex[] complexArray = new Complex[values.size()];
-    float r = 0;
-    for (int i = 0; i < values.size(); i++)
+    int pairCount = values.size() / 2;
+    Complex[] complexArray = new Complex[pairCount];
+    for (int i = 0; i < pairCount; i++)
     {
-      if ((i + 1) % 2 == 0)
-      {
-        r = values.get(i);
-      }
-      else
-      {
-        complexArray[(i + 1) / 2] = new Complex(r, values.get(i));
-      }
+      int valueIndex = i * 2;
+      complexArray[i] = new Complex(values.get(valueIndex), values.get(valueIndex + 1));
     }
     return complexArray;
   }
