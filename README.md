@@ -64,7 +64,7 @@ public static void main(String[] args) {
 ```
 
 ## Use of Java API
-The Java API is made ready to the degree, that it works as the main data access layer called via the CORBA OO-API. While already being available and usable directly by clients to avoid all the CORBA overhead, the documentation and also the functionality may not be complete, yet. You are welcome to use it and provide any feedback that helps improve it further!
+The Java API is made ready to the degree, that it works as the main data access layer called via the CORBA OO-API. While already being available and usable directly by clients to avoid all the CORBA overhead, the documentation and also the functionality may not be complete, yet. You are welcome to use it and provide any feedback that helps improve it further! For the classes in this interface the com.peak-solution.datamodel library is used (OSS, available on GitHub and Maven Central). Any caller to the OpenAtfx Java API may use this library and its classes to handle the responses from openAtfx.
 
 Code example:
 

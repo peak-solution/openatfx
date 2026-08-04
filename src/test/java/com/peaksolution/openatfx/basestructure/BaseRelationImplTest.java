@@ -15,7 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import com.peaksolution.openatfx.GlassfishCorbaExtension;
-import com.peaksolution.openatfx.api.BaseModel;
+import com.peaksolution.datamodel.BaseModel;
 import com.peaksolution.openatfx.api.BaseModelFactory;
 import com.peaksolution.openatfx.api.OpenAtfxAPI;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;

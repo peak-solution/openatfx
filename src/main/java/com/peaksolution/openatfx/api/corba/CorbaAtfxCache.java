@@ -53,13 +53,13 @@ import com.peaksolution.openatfx.IFileHandler;
 import com.peaksolution.openatfx.api.AtfxAttribute;
 import com.peaksolution.openatfx.api.AtfxElement;
 import com.peaksolution.openatfx.api.AtfxRelation;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.Instance;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Instance;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
-import com.peaksolution.openatfx.api.SingleValue;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.SingleValue;
 import com.peaksolution.openatfx.util.ODSHelper;
 
 
@@ -144,7 +144,7 @@ public class CorbaAtfxCache {
      * enumeration definitions
      ***********************************************************************************/
     
-    private EnumerationDefinition transformToEnumerationDefinition(com.peaksolution.openatfx.api.EnumerationDefinition newEnum) throws AoException {
+    private EnumerationDefinition transformToEnumerationDefinition(com.peaksolution.datamodel.EnumerationDefinition newEnum) throws AoException {
         EnumerationDefinitionImpl enumDefImpl = new EnumerationDefinitionImpl(newEnum);
         EnumerationDefinition enumDef;
         try {
@@ -156,7 +156,7 @@ public class CorbaAtfxCache {
         return enumDef;
     }
     
-    public EnumerationDefinition mapEnumeration(com.peaksolution.openatfx.api.EnumerationDefinition atfxEnum) throws AoException {
+    public EnumerationDefinition mapEnumeration(com.peaksolution.datamodel.EnumerationDefinition atfxEnum) throws AoException {
         return transformToEnumerationDefinition(atfxEnum);
     }
     
@@ -366,9 +366,9 @@ public class CorbaAtfxCache {
     public void updateApplicationAttributeDataType(AtfxAttribute attribute, DataType aaDataType) throws AoException {
         // clear for existing instance values
         try {
-            com.peaksolution.openatfx.api.DataType dt = ODSHelper.mapDataType(aaDataType);
+            com.peaksolution.datamodel.DataType dt = ODSHelper.mapDataType(aaDataType);
             for (Instance instance : this.api.getInstances(attribute.getAid())) {
-                new com.peaksolution.openatfx.api.NameValueUnit(attribute.getName(), dt, null, getUnitName(attribute.getUnitId()));
+                new com.peaksolution.datamodel.NameValueUnit(attribute.getName(), dt, null, getUnitName(attribute.getUnitId()));
                 this.api.setAttributeValues(attribute.getAid(), instance.getIid(), Arrays.asList());
             }
             attribute.setDataType(dt);
@@ -892,10 +892,10 @@ public class CorbaAtfxCache {
 
         // datatype
         boolean lcValuesAttr = isLocalColumnValuesAttr(element, aa.getBaseName());
-        com.peaksolution.openatfx.api.DataType dt = aa.getDataType();
+        com.peaksolution.datamodel.DataType dt = aa.getDataType();
 
         List<TS_Value> list = new ArrayList<>();
-        com.peaksolution.openatfx.api.DataType dtForValuesConsistencyCheck = null;
+        com.peaksolution.datamodel.DataType dtForValuesConsistencyCheck = null;
         for (Instance currentInstance : api.getInstances(aid, iids)) {
             dt = lcValuesAttr ? api.getDataTypeForLocalColumnValues(currentInstance.getIid()) : aa.getDataType();
             if (lcValuesAttr)
@@ -910,7 +910,7 @@ public class CorbaAtfxCache {
                                                 "Invalid query, please make sure you queried only local column values of the same datatype!");
                 }
             }
-            com.peaksolution.openatfx.api.NameValueUnit nvu = currentInstance.getValue(attrName);
+            com.peaksolution.datamodel.NameValueUnit nvu = currentInstance.getValue(attrName);
             list.add(ODSHelper.mapTSValue(nvu == null ? new SingleValue(dt) : nvu.getValue()));
         }
 
@@ -1157,11 +1157,11 @@ public class CorbaAtfxCache {
      * @throws AoException
      */
     public BaseRelation getBaseRelation(AtfxRelation relation) throws AoException {
-        com.peaksolution.openatfx.api.BaseRelation atfxBaseRelation = relation.getBaseRelation();
+        com.peaksolution.datamodel.BaseRelation atfxBaseRelation = relation.getBaseRelation();
         if (atfxBaseRelation != null) {
             // iterate over all elem2s of the base relation if more than one
             if (atfxBaseRelation.getElem2().size() > 1) {
-                for (com.peaksolution.openatfx.api.BaseElement baseElement2 : atfxBaseRelation.getElem2()) {
+                for (com.peaksolution.datamodel.BaseElement baseElement2 : atfxBaseRelation.getElem2()) {
                     // filter the base element 2 that matches the actual relation's base element 2
                     if (relation.getAtfxElement2().getType().equalsIgnoreCase(baseElement2.getType())) {
                         // identify all relations between the exact two base elements of the actual relation

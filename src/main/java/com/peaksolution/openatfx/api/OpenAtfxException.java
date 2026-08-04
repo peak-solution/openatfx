@@ -18,6 +18,19 @@ public class OpenAtfxException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
+    /**
+     * Creates an exception wrapping a cause (e.g. a shared {@code datamodel} {@code ModelException}),
+     * mapping it onto an openATFX {@link ErrorCode}.
+     *
+     * @param errorCode the ODS error code.
+     * @param message the error message.
+     * @param cause the underlying cause.
+     */
+    public OpenAtfxException(ErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
+
     public ErrorCode getError() {
         return errorCode;
     }

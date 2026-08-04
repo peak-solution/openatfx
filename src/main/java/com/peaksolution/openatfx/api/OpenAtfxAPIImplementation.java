@@ -1,4 +1,16 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.BaseModel;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import java.io.File;
 import java.nio.ByteOrder;
@@ -39,7 +51,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
     public void init(Collection<NameValueUnit> context) {
         boolean convertWindowsPaths = false;
         for (NameValueUnit contextValue : context) {
-          if (contextValue != null && contextValue.hasValidValue() && contextValue.getValName().equals(OpenAtfxConstants.CONTEXT_CONVERT_WINDOWS_PATHS)) {
+          if (contextValue != null && contextValue.isValid() && contextValue.getValName().equals(OpenAtfxConstants.CONTEXT_CONVERT_WINDOWS_PATHS)) {
             convertWindowsPaths = Boolean.parseBoolean(contextValue.getValue().stringVal());
           }
         }
@@ -492,8 +504,8 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
         AtfxRelation createdRelation = atfxCache.addModelRelation(relationName, baseRelation, fromElement.getId(),
                                                                         toElement == null ? 0 : toElement.getId(),
                                                                         baseRelation.getRelationship(),
-                                                                        baseRelation.getRelationRange().min,
-                                                                        baseRelation.getRelationRange().max,
+                                                                        (short) baseRelation.getRelationRange().getMin(),
+                                                                        (short) baseRelation.getRelationRange().getMax(),
                                                                         inverseRelationName);
 
         if (toElement != null) {
@@ -511,8 +523,8 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
             }
             atfxCache.addModelRelation(inverseRelationName, inverseBaseRelation, toElement.getId(),
                                              fromElement.getId(), inverseBaseRelation.getRelationship(),
-                                             inverseBaseRelation.getRelationRange().min,
-                                             inverseBaseRelation.getRelationRange().max, relationName);
+                                             (short) inverseBaseRelation.getRelationRange().getMin(),
+                                             (short) inverseBaseRelation.getRelationRange().getMax(), relationName);
         }
 
         return createdRelation;
@@ -878,7 +890,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
     
     public boolean isExtendedCompatibilityMode() {
         NameValueUnit nvu = getContext(OpenAtfxConstants.CONTEXT_EXTENDED_COMPATIBILITYMODE);
-        if (nvu != null && nvu.hasValidValue()) {
+        if (nvu != null && nvu.isValid()) {
             DataType dt = nvu.getValue().discriminator();
             if (DataType.DT_STRING == dt) {
                 return Boolean.parseBoolean(nvu.getValue().stringVal());

@@ -22,7 +22,7 @@ import com.peaksolution.openatfx.util.PatternUtil;
  */
 class BaseElementImpl extends BaseElementPOA {
 
-    private final com.peaksolution.openatfx.api.BaseElement delegate;
+    private final com.peaksolution.datamodel.BaseElement delegate;
     private final List<BaseAttribute> baseAttributes;
     private final List<BaseRelation> baseRelations;
 
@@ -31,7 +31,7 @@ class BaseElementImpl extends BaseElementPOA {
      * 
      * @param delegate The atfx model element delegate.
      */
-    public BaseElementImpl(OpenAtfxAPI api, com.peaksolution.openatfx.api.BaseElement delegate) {
+    public BaseElementImpl(OpenAtfxAPI api, com.peaksolution.datamodel.BaseElement delegate) {
         this.delegate = delegate;
         this.baseAttributes = new ArrayList<BaseAttribute>();
         this.baseRelations = new ArrayList<BaseRelation>();
@@ -79,7 +79,7 @@ class BaseElementImpl extends BaseElementPOA {
      * @see org.asam.ods.BaseElementOperations#listAttributes(java.lang.String)
      */
     public String[] listAttributes(String baPattern) throws AoException {
-        return delegate.getAttributes(baPattern).stream().map(com.peaksolution.openatfx.api.BaseAttribute::getName)
+        return delegate.getAttributes(baPattern).stream().map(com.peaksolution.datamodel.BaseAttribute::getName)
                        .toArray(String[]::new);
     }
 

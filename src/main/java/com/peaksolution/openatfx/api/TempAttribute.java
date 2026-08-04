@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.DataType;
 
 import java.util.Objects;
 

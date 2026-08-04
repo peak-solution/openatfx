@@ -1,34 +1,22 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.DefaultRelation;
+import com.peaksolution.datamodel.RelationType;
+import com.peaksolution.datamodel.Relationship;
 
-import org.asam.ods.RelationRange;
-import org.asam.ods.RelationType;
-
-public class AtfxRelation implements Relation {
-    private int relNo;
-    private AtfxElement from;
-    private AtfxElement to;
-    private BaseRelation baseRelation;
-    private String inverseName = "";
+public class AtfxRelation extends DefaultRelation {
     private int inverseRelNo;
-    private Relationship relationship;
-    // default values as specified in ASAM ODS specification CH10
-    private String relationName = OpenAtfxConstants.DEF_RELNAME_EMPTY;
-    private short rangeMin = -2;
-    private short rangeMax = -2;
-    private RelationType relationType = RelationType.INFO;
 
     public AtfxRelation(int tempRelNo) {
-        this.relNo = tempRelNo;
+        super(tempRelNo, OpenAtfxConstants.DEF_RELNAME_EMPTY);
     }
     
     public AtfxRelation(AtfxElement from, AtfxElement to, BaseRelation baseRelation, String relationName, String inverseName,
             short rangeMin, short rangeMax, Relationship relationship, RelationType relationType) {
-        this.from = from;
-        this.to = to;
+        super(0, relationName != null ? relationName : OpenAtfxConstants.DEF_RELNAME_EMPTY);
+        setElement1(from);
+        setElement2(to);
         setBaseRelation(baseRelation);
-        if (relationName != null) {
-            this.relationName = relationName;
-        }
         if (inverseName != null) {
             if (to != null) {
                 AtfxRelation invRel = to.getRelationByName(inverseName);
@@ -36,38 +24,34 @@ public class AtfxRelation implements Relation {
                     this.inverseRelNo = invRel.getRelNo();
                 }
             }
-            this.inverseName = inverseName;
+            setInverseRelationName(inverseName);
         }
         if (rangeMin != -2) {
-            this.rangeMin = rangeMin;
+            setRelationRangeMin(rangeMin);
         }
         if (rangeMax != -2) {
-            this.rangeMax = rangeMax;
+            setRelationRangeMax(rangeMax);
         }
-        this.relationship = relationship;
+        setRelationship(relationship);
         if (relationType != null) {
-            this.relationType = relationType;
+            setRelationType(relationType);
         }
     }
-    
-    public void setRelNo(int relNo) {
-        this.relNo = relNo;
-    }
-    
-    @Override
-    public int getRelNo() {
-        return relNo;
+
+    void setInverseRelNo(int invRelNo) {
+        this.inverseRelNo = invRelNo;
     }
     
     @Override
     public AtfxRelation getInverseRelation() {
+        AtfxElement to = getAtfxElement2();
         if (to == null) {
             return null;
         }
         
         AtfxRelation rel = to.getRelationByNo(inverseRelNo);
         if (rel == null) {
-            rel = to.getRelationByName(inverseName);
+            rel = to.getRelationByName(getInverseRelationName());
             if (rel != null) {
                 this.inverseRelNo = rel.getRelNo();
             }
@@ -75,138 +59,35 @@ public class AtfxRelation implements Relation {
         
         return rel;
     }
-    
-    @Override
-    public void setBaseRelation(BaseRelation baseRel) {
-        // set default values for base relation
-        if (baseRel != null) {
-            // only set the relation range if there is none set
-            if (getRelationRangeMin() == -2 && getRelationRangeMax() == -2) {
-                RelationRange relRange = baseRel.getRelationRange();
-                setRelationRangeMin(relRange.min);
-                setRelationRangeMax(relRange.max);
-            }
-            setRelationType(baseRel.getRelationType());
-            setRelationship(baseRel.getRelationship());
-        } else {
-            setRelationType(RelationType.INFO);
-        }
 
-        this.baseRelation = baseRel;
-    }
-
-    @Override
-    public BaseRelation getBaseRelation() {
-        return baseRelation;
-    }
-    
-    public void setRelationName(String newRelationName) {
-        this.relationName = newRelationName;
-    }
-
-    @Override
-    public String getRelationName() {
-        return relationName;
-    }
-    
-    @Override
-    public String getBaseName() {
-        if (baseRelation != null) {
-            return baseRelation.getName();
-        }
-        return null;
-    }
-    
-    @Override
-    public void setElement1(Element element1) {
-        this.from = (AtfxElement)element1;
-    }
-
-    @Override
-    public Element getElement1() {
-        return from;
-    }
-    
     public AtfxElement getAtfxElement1() {
-        return from;
+        return (AtfxElement) getElement1();
     }
 
     @Override
-    public void setElement2(Element element2) {
-        this.to = (AtfxElement)element2;
+    public long getElement1Id() {
+        AtfxElement from = getAtfxElement1();
+        return from == null ? -1 : from.getId();
     }
-    
-    @Override
-    public Element getElement2() throws OpenAtfxException {
-        return to;
-    }
-    
+
     public AtfxElement getAtfxElement2() {
-        return to;
-    }
-    
-    void setInverseRelNo(int invRelNo) {
-        this.inverseRelNo = invRelNo;
-    }
-    
-    void setInverseRelationName(String inverseName) {
-        if (inverseName == null) {
-            this.inverseName = "";
-        } else {
-            this.inverseName = inverseName;
-        }
+        return (AtfxElement) getElement2();
     }
 
     @Override
-    public String getInverseRelationName() {
-        return inverseName;
-    }
-
-    @Override
-    public void setRelationRangeMin(short min) {
-        this.rangeMin = min;
-    }
-    
-    @Override
-    public short getRelationRangeMin() {
-        return rangeMin;
-    }
-    
-    @Override
-    public void setRelationRangeMax(short max) {
-        this.rangeMax = max;
-    }
-
-    @Override
-    public short getRelationRangeMax() {
-        return rangeMax;
-    }
-    
-    public void setRelationship(Relationship relationship) {
-        this.relationship = relationship;
-    }
-
-    @Override
-    public Relationship getRelationship() {
-        return relationship;
-    }
-    
-    @Override
-    public void setRelationType(RelationType relType) {
-        relationType = relType;
-    }
-
-    @Override
-    public RelationType getRelationType() {
-        return relationType;
+    public long getElement2Id() {
+        AtfxElement to = getAtfxElement2();
+        return to == null ? -1 : to.getId();
     }
 
     @Override
     public String toString() {
+        BaseRelation baseRelation = getBaseRelation();
         String baseRelationString = baseRelation == null ? "" : baseRelation.getName();
+        AtfxElement to = getAtfxElement2();
         String toString = to == null ? "" : to.toString();
-        return "Relation [relationName=" + relationName + ", baseRelationName=" + baseRelationString + ", from="
-                + from + ", to=" + toString + ", inverseName=" + inverseName + ", rangeMin=" + rangeMin
-                + ", rangeMax=" + rangeMax + "]";
+        return "Relation [relationName=" + getRelationName() + ", baseRelationName=" + baseRelationString + ", from="
+                + getAtfxElement1() + ", to=" + toString + ", inverseName=" + getInverseRelationName() + ", rangeMin="
+                + getRelationRangeMin() + ", rangeMax=" + getRelationRangeMax() + "]";
     }
 }

@@ -1,4 +1,18 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
+
+import com.peaksolution.datamodel.Blob;
+import com.peaksolution.datamodel.Complex;
+import com.peaksolution.datamodel.DoubleComplex;
+import com.peaksolution.datamodel.ExternalReference;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -76,7 +90,7 @@ class AtfxParser {
         long start = System.currentTimeMillis();
         
         NameValueUnit nvu = api.getContext(OpenAtfxConstants.CONTEXT_TRIM_STRING_VALUES);
-        if (nvu != null && nvu.hasValidValue()) {
+        if (nvu != null && nvu.isValid()) {
             trimStringValues = Boolean.parseBoolean(nvu.getValue().stringVal());
         }
 

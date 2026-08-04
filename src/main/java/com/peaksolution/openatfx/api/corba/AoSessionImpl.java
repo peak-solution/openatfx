@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,13 +62,12 @@ import org.slf4j.LoggerFactory;
 import com.peaksolution.openatfx.IFileHandler;
 import com.peaksolution.openatfx.LocalFileHandler;
 import com.peaksolution.openatfx.api.AtfxWriter;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.NameValueUnit;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Element;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxConstants;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 import com.peaksolution.openatfx.util.ODSHelper;
 import com.peaksolution.openatfx.util.PatternUtil;
 
@@ -297,7 +297,7 @@ class AoSessionImpl extends AoSessionPOA {
      */
     public void setContext(NameValue contextVariable) throws AoException {
         DataType odsDataType = contextVariable.value.u.discriminator();
-        com.peaksolution.openatfx.api.DataType dt = com.peaksolution.openatfx.api.DataType.fromString(ODSHelper.dataType2String(odsDataType));
+        com.peaksolution.datamodel.DataType dt = com.peaksolution.datamodel.DataType.fromString(ODSHelper.dataType2String(odsDataType));
         
         Object value = null;
         switch (dt) {
@@ -573,7 +573,7 @@ class AoSessionImpl extends AoSessionPOA {
                     applRel.elem2 = ODSHelper.asODSLongLong(relatedElem.getId());
                     applRel.brName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getName();
                     applRel.arRelationRange = new RelationRange(ar.getRelationRangeMin(), ar.getRelationRangeMax());
-                    applRel.arRelationType = ar.getRelationType();
+                    applRel.arRelationType = ODSHelper.mapRelationType(ar.getRelationType());
                     applRel.invName = ar.getInverseRelationName();
                     applRel.invBrName = ar.getBaseRelation() == null ? "" : ar.getBaseRelation().getInverseName(relatedElem.getType());
                     Relation inverseRel = ar.getInverseRelation();

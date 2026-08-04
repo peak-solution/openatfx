@@ -1,4 +1,6 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Element;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
@@ -72,7 +74,7 @@ public class QueryConditionHelperTest {
         }
         assertThat(api).isNotNull();
 
-        api.setContext(new NameValueUnit("FILE_ROOT", com.peaksolution.openatfx.api.DataType.DT_STRING, fileRoot));
+        api.setContext(new NameValueUnit("FILE_ROOT", com.peaksolution.datamodel.DataType.DT_STRING, fileRoot));
 
         Element measurementElem = api.getElementByName("dts");
         measurementElement = api.getAtfxElement(measurementElem.getId());
@@ -88,7 +90,7 @@ public class QueryConditionHelperTest {
 
         noneBaseFCRel = Mockito.mock(AtfxRelation.class);
         Mockito.when(noneBaseFCRel.getBaseRelation()).thenReturn(null);
-        Mockito.when(noneBaseFCRel.getRelationType()).thenReturn(RelationType.FATHER_CHILD);
+        Mockito.when(noneBaseFCRel.getRelationType()).thenReturn(com.peaksolution.datamodel.RelationType.FATHER_CHILD);
         Mockito.when(noneBaseFCRel.getRelationName()).thenReturn("noneBaseFCRel");
     }
 

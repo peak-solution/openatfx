@@ -1,4 +1,10 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -10,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.asam.ods.ErrorCode;
-import org.asam.ods.RelationRange;
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationRange;
+import com.peaksolution.datamodel.RelationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,9 +186,9 @@ public class NewBaseModelReader implements BaseModelReader {
             for (Relation relation : element.getRelation()) {
                 BaseElement elementImpl = baseElements.get(element.getName());
 
-                RelationRange relationRange = new RelationRange();
-                relationRange.min = ODSHelper.string2relRange(relation.getMinOccurs());
-                relationRange.max = ODSHelper.string2relRange(relation.getMaxOccurs());
+                RelationRange relationRange = new RelationRange(
+                        ODSHelper.string2relRange(relation.getMinOccurs()),
+                        ODSHelper.string2relRange(relation.getMaxOccurs()));
                 relationRanges.computeIfAbsent(elementImpl, v -> new HashMap<>()).put(relation.getName(),
                                                                                       relationRange);
 

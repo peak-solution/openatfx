@@ -1,4 +1,10 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,8 +22,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.asam.ods.ErrorCode;
-import org.asam.ods.RelationRange;
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationRange;
+import com.peaksolution.datamodel.RelationType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -325,17 +331,17 @@ public class OldBaseModelReader implements BaseModelReader {
             }
             boolean mandatory = currentElementsMandatoryRelNames.contains(relationName.toLowerCase());
 
-            RelationRange relationRange = new RelationRange();
-            relationRange.min = ODSHelper.string2relRange(baseRelationElem.getAttribute("relationRangeMin"));
-            relationRange.max = ODSHelper.string2relRange(baseRelationElem.getAttribute("relationRangeMax"));
-            RelationRange inverseRelationRange = new RelationRange();
-            inverseRelationRange.min = ODSHelper.string2relRange(baseRelationElem.getAttribute("inverseRelationRangeMin"));
-            inverseRelationRange.max = ODSHelper.string2relRange(baseRelationElem.getAttribute("inverseRelationRangeMax"));
+            RelationRange relationRange = new RelationRange(
+                    ODSHelper.string2relRange(baseRelationElem.getAttribute("relationRangeMin")),
+                    ODSHelper.string2relRange(baseRelationElem.getAttribute("relationRangeMax")));
+            RelationRange inverseRelationRange = new RelationRange(
+                    ODSHelper.string2relRange(baseRelationElem.getAttribute("inverseRelationRangeMin")),
+                    ODSHelper.string2relRange(baseRelationElem.getAttribute("inverseRelationRangeMax")));
 
             Relationship relationship = Relationship.valueOf(baseRelationElem.getAttribute("relationship"));
             Relationship inverseRelationship = Relationship.valueOf(baseRelationElem.getAttribute("inverseRelationship"));
 
-            RelationType relationType = ODSHelper.string2relationType(baseRelationElem.getAttribute("relationType"));
+            RelationType relationType = ODSHelper.mapRelationType(ODSHelper.string2relationType(baseRelationElem.getAttribute("relationType")));
 
             Collection<BaseElement> elements2 = new ArrayList<>();
             elements2.add(elem2);

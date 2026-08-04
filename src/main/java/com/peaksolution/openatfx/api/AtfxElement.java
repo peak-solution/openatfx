@@ -1,4 +1,12 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +18,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.asam.ods.ErrorCode;
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationType;
 
 import com.peaksolution.openatfx.util.PatternUtil;
 

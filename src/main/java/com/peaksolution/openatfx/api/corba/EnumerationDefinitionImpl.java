@@ -3,7 +3,7 @@ package com.peaksolution.openatfx.api.corba;
 import org.asam.ods.AoException;
 import org.asam.ods.EnumerationDefinitionPOA;
 
-import com.peaksolution.openatfx.api.EnumerationDefinition;
+import com.peaksolution.datamodel.EnumerationDefinition;
 import com.peaksolution.openatfx.api.OpenAtfxException;
 
 

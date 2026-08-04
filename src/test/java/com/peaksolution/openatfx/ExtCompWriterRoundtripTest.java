@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -21,15 +22,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.omg.CORBA.ORB;
 
-import com.peaksolution.openatfx.api.BaseRelation;
-import com.peaksolution.openatfx.api.Complex;
-import com.peaksolution.openatfx.api.DoubleComplex;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.Instance;
-import com.peaksolution.openatfx.api.NameValueUnit;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.Complex;
+import com.peaksolution.datamodel.DoubleComplex;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Instance;
 import com.peaksolution.openatfx.api.OpenAtfxAPI;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 
 @ExtendWith(GlassfishCorbaExtension.class)
 class ExtCompWriterRoundtripTest {
@@ -46,8 +46,8 @@ class ExtCompWriterRoundtripTest {
         Element mqElement = api.createElement("AoMeasurementQuantity", "MeaQuantity");
         Element lcElement = api.createElement("AoLocalColumn", "LocalColumn");
         Element ecElement = api.createElement("AoExternalComponent", "ExternalComponent");
-        com.peaksolution.openatfx.api.Attribute globalFlagAttribute = api.createAttribute(lcElement.getId(),
-            "GlobalFlag", "global_flag", com.peaksolution.openatfx.api.DataType.DT_SHORT, 1, 0, null, false,
+        com.peaksolution.datamodel.Attribute globalFlagAttribute = api.createAttribute(lcElement.getId(),
+            "GlobalFlag", "global_flag", com.peaksolution.datamodel.DataType.DT_SHORT, 1, 0, null, false,
             false, false);
 
         BaseRelation lcMqBaseRel = api.getBaseRelation("aolocalcolumn", "aomeasurementquantity");
@@ -58,9 +58,9 @@ class ExtCompWriterRoundtripTest {
         Relation ecLcRel = api.createRelation(ecElement, lcElement, ecLcBaseRel, "LocalColumn", "ExternalComponents",
                 (short) 1, (short) 1);
 
-        Instance mqComplex = createMq(api, mqElement, com.peaksolution.openatfx.api.DataType.DT_COMPLEX.ordinal(),
+        Instance mqComplex = createMq(api, mqElement, com.peaksolution.datamodel.DataType.DT_COMPLEX.ordinal(),
             "MqComplex");
-        Instance mqDComplex = createMq(api, mqElement, com.peaksolution.openatfx.api.DataType.DT_DCOMPLEX.ordinal(),
+        Instance mqDComplex = createMq(api, mqElement, com.peaksolution.datamodel.DataType.DT_DCOMPLEX.ordinal(),
             "MqDComplex");
 
         Complex[] complexExpected = new Complex[] {
@@ -75,9 +75,9 @@ class ExtCompWriterRoundtripTest {
         };
 
         Instance lcComplex = createLc(api, lcElement, globalFlagAttribute.getName(), "LC_COMPLEX",
-            com.peaksolution.openatfx.api.DataType.DS_COMPLEX, complexExpected);
+            com.peaksolution.datamodel.DataType.DS_COMPLEX, complexExpected);
         Instance lcDComplex = createLc(api, lcElement, globalFlagAttribute.getName(), "LC_DCOMPLEX",
-            com.peaksolution.openatfx.api.DataType.DS_DCOMPLEX, dcomplexExpected);
+            com.peaksolution.datamodel.DataType.DS_DCOMPLEX, dcomplexExpected);
 
         api.setRelatedInstances(lcElement.getId(), lcComplex.getIid(), lcMqRel.getRelationName(),
                 Arrays.asList(mqComplex.getIid()), SetType.UPDATE);
@@ -145,17 +145,17 @@ class ExtCompWriterRoundtripTest {
     private Instance createMq(OpenAtfxAPI api, Element mqElement, int dataTypeOrdinal, String name)
             throws OpenAtfxException {
         Collection<NameValueUnit> values = new ArrayList<>();
-        values.add(new NameValueUnit("name", com.peaksolution.openatfx.api.DataType.DT_STRING, name));
+        values.add(new NameValueUnit("name", com.peaksolution.datamodel.DataType.DT_STRING, name));
         values.add(new NameValueUnit(mqElement.getAttributeByBaseName("datatype").getName(),
-                com.peaksolution.openatfx.api.DataType.DT_ENUM, dataTypeOrdinal));
+                com.peaksolution.datamodel.DataType.DT_ENUM, dataTypeOrdinal));
         return api.createInstance(mqElement.getId(), values);
     }
 
     private Instance createLc(OpenAtfxAPI api, Element lcElement, String globalFlagAttributeName, String name,
-            com.peaksolution.openatfx.api.DataType dsType, Object value) throws OpenAtfxException {
+            com.peaksolution.datamodel.DataType dsType, Object value) throws OpenAtfxException {
         Collection<NameValueUnit> values = new ArrayList<>();
-        values.add(new NameValueUnit("name", com.peaksolution.openatfx.api.DataType.DT_STRING, name));
-        values.add(new NameValueUnit(globalFlagAttributeName, com.peaksolution.openatfx.api.DataType.DT_SHORT,
+        values.add(new NameValueUnit("name", com.peaksolution.datamodel.DataType.DT_STRING, name));
+        values.add(new NameValueUnit(globalFlagAttributeName, com.peaksolution.datamodel.DataType.DT_SHORT,
                 (short) 15));
         values.add(new NameValueUnit(lcElement.getAttributeByBaseName("values").getName(), dsType, value));
         return api.createInstance(lcElement.getId(), values);
@@ -164,7 +164,7 @@ class ExtCompWriterRoundtripTest {
     private Instance createEc(OpenAtfxAPI api, Element ecElement, String name) throws OpenAtfxException {
         Collection<NameValueUnit> values = new ArrayList<>();
         values.add(new NameValueUnit(ecElement.getAttributeByBaseName("name").getName(),
-                com.peaksolution.openatfx.api.DataType.DT_STRING, name));
+                com.peaksolution.datamodel.DataType.DT_STRING, name));
         return api.createInstance(ecElement.getId(), values);
     }
 

@@ -4,6 +4,10 @@ Changelog of openATFX Java library.
 
 ---
 
+## [4.0.0]
+### CHANGED
+- refactored openatfx to reuse the datamodel and classes of com.peak-solution.datamodel, a shared model library used by other Peak Solution software and available on GitHub or Maven Central. This will require clients to update their result handling to the new classes of this shared model, which should be very similar to the old classes, though.
+
 ## [3.2.3]
 ### CHANGED
 - Deactivated GMBAL for Glassfish ORB, removed indirect dependencies to Grizzly server

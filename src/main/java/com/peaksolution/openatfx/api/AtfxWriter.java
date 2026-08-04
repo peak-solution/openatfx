@@ -1,4 +1,15 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
+
+import com.peaksolution.datamodel.ExternalReference;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -61,7 +72,7 @@ public class AtfxWriter {
         long start = System.currentTimeMillis();
         
         NameValueUnit nvu = api.getContext(OpenAtfxConstants.CONTEXT_TRIM_STRING_VALUES);
-        if (nvu != null && nvu.hasValidValue()) {
+        if (nvu != null && nvu.isValid()) {
             trimStringValues = nvu.getValue().booleanVal();
         }
         
@@ -496,7 +507,7 @@ public class AtfxWriter {
         streamWriter.writeStartElement(ie.getElementName());
 
         // write application attribute data
-        Collection<Attribute> attributes = ie.getElement().getAttributes();
+        Collection<? extends Attribute> attributes = ie.getElement().getAttributes();
 
         long aid = ie.getAid();
         
@@ -635,14 +646,14 @@ public class AtfxWriter {
 
         // bitcount
         NameValueUnit bitCountNvu = ieExtComp.getValueByBaseName("ao_bit_count");
-        if (bitCountNvu != null && bitCountNvu.hasValidValue()) {
+        if (bitCountNvu != null && bitCountNvu.isValid()) {
             writeElement(streamWriter, AtfxTagConstants.COMPONENT_BITCOUNT,
                          String.valueOf(bitCountNvu.getValue().shortVal()));
         }
 
         // bitoffset
         NameValueUnit bitOffsetNvu = ieExtComp.getValueByBaseName("ao_bit_offset");
-        if (bitOffsetNvu != null && bitOffsetNvu.hasValidValue()) {
+        if (bitOffsetNvu != null && bitOffsetNvu.isValid()) {
             writeElement(streamWriter, AtfxTagConstants.COMPONENT_BITOFFSET,
                          String.valueOf(bitOffsetNvu.getValue().shortVal()));
         }
@@ -719,7 +730,7 @@ public class AtfxWriter {
         if (dataType == DataType.DT_STRING) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_ASCIISTRING);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(value.stringVal());
             }
             streamWriter.writeEndElement();
@@ -731,7 +742,7 @@ public class AtfxWriter {
             if (unitIdString != null && !unitIdString.equals("")) {
                 streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
             }
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createFloatString(value.floatVal()));
             }
             streamWriter.writeEndElement();
@@ -743,7 +754,7 @@ public class AtfxWriter {
             if (unitIdString != null && !unitIdString.equals("")) {
                 streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
             }
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createDoubleString(value.doubleVal()));
             }
             streamWriter.writeEndElement();
@@ -752,7 +763,7 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_BYTE) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_INT8);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createByteString(value.byteVal()));
             }
             streamWriter.writeEndElement();
@@ -764,7 +775,7 @@ public class AtfxWriter {
             if (unitIdString != null && !unitIdString.equals("")) {
                 streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
             }
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createShortString(value.shortVal()));
             }
             streamWriter.writeEndElement();
@@ -776,7 +787,7 @@ public class AtfxWriter {
             if (unitIdString != null && !unitIdString.equals("")) {
                 streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
             }
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createLongString(value.longVal()));
             }
             streamWriter.writeEndElement();
@@ -788,7 +799,7 @@ public class AtfxWriter {
             if (unitIdString != null && !unitIdString.equals("")) {
                 streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_UNIT, unitIdString);
             }
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(AtfxExportUtil.createLongLongString(value.longlongVal()));
             }
             streamWriter.writeEndElement();
@@ -797,7 +808,7 @@ public class AtfxWriter {
         else if (dataType == DataType.DT_DATE) {
             streamWriter.writeStartElement(AtfxTagConstants.INST_ATTR_TIME);
             streamWriter.writeAttribute(AtfxTagConstants.INST_ATTR_NAME, attrName);
-            if (instAttrValue.hasValidValue()) {
+            if (instAttrValue.isValid()) {
                 streamWriter.writeCharacters(value.dateVal());
             }
             streamWriter.writeEndElement();
@@ -822,7 +833,7 @@ public class AtfxWriter {
      */
     private void writeApplAttrValue(OpenAtfxAPI api, XMLStreamWriter streamWriter, Attribute attr,
             NameValueUnit nvu) throws XMLStreamException {
-        if (!nvu.hasValidValue()) {
+        if (!nvu.isValid()) {
             return;
         }
 

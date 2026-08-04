@@ -1,4 +1,11 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.DataType;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -14,7 +21,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import org.asam.ods.ErrorCode;
-import org.asam.ods.RelationRange;
+import com.peaksolution.datamodel.RelationRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -602,9 +609,9 @@ class AtfxReader {
             if (relationRange != null) {
                 // initialize range from base relation
                 if (isMinimum) {
-                    rangeValue = relationRange.min;
+                    rangeValue = (short) relationRange.getMin();
                 } else {
-                    rangeValue = relationRange.max;
+                    rangeValue = (short) relationRange.getMax();
                 }
             }
             // otherwise initialize with default values

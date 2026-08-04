@@ -1,9 +1,5 @@
 package com.peaksolution.openatfx.util;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
-import java.util.regex.Pattern;
-
 
 /**
  * Utility class for ODS string pattern matches.
@@ -27,13 +23,7 @@ public abstract class PatternUtil {
      * @return true if matches, otherwise false
      */
     public static boolean nameFilterMatchCI(String value, String pattern) {
-        if (pattern.equals("*")) {
-            return true;
-        }
-
-        String regex = wildcardToRegex(pattern);
-        Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-        return p.matcher(value).matches();
+        return com.peaksolution.datamodel.util.PatternUtil.nameFilterMatchCI(value, pattern);
     }
 
     /**
@@ -46,55 +36,7 @@ public abstract class PatternUtil {
      * @return true if matches, otherwise false
      */
     public static boolean nameFilterMatch(String value, String pattern) {
-        if (pattern.equals("*")) {
-            return true;
-        }
-
-        String regex = wildcardToRegex(pattern);
-        return Pattern.matches(regex, value);
-    }
-
-    /**
-     * Converts given string containing wildcards (* or ?) to its corresponding regular expression.
-     * 
-     * @param wildcard the string
-     * @return the regular expression
-     */
-    private static String wildcardToRegex(String wildcard) {
-        StringBuffer s = new StringBuffer(wildcard.length());
-        s.append('^');
-        for (int i = 0, is = wildcard.length(); i < is; i++) {
-            char c = wildcard.charAt(i);
-            switch (c) {
-                case '*':
-                    s.append(".*");
-                break;
-                case '?':
-                    s.append(".");
-                break;
-                // escape special regexp-characters
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '$':
-                case '^':
-                case '.':
-                case '{':
-                case '}':
-                case '|':
-                case '+':
-                case '\\':
-                    s.append("\\");
-                    s.append(c);
-                break;
-                default:
-                    s.append(c);
-                break;
-            }
-        }
-        s.append('$');
-        return (s.toString());
+        return com.peaksolution.datamodel.util.PatternUtil.nameFilterMatch(value, pattern);
     }
 
     /**
@@ -113,26 +55,7 @@ public abstract class PatternUtil {
      * @return The escaped string.
      */
     public static String escapeNameForASAMPath(String name) {
-        final StringBuilder result = new StringBuilder();
-        final StringCharacterIterator iterator = new StringCharacterIterator(name);
-        char character = iterator.current();
-        while (character != CharacterIterator.DONE) {
-            if (character == '[') {
-                result.append("\\[");
-            } else if (character == ']') {
-                result.append("\\]");
-            } else if (character == ';') {
-                result.append("\\;");
-            } else if (character == '/') {
-                result.append("\\/");
-            } else if (character == '\\') {
-                result.append("\\\\");
-            } else {
-                result.append(character);
-            }
-            character = iterator.next();
-        }
-        return result.toString();
+        return com.peaksolution.datamodel.util.PatternUtil.escapeNameForASAMPath(name);
     }
 
     /**
@@ -151,12 +74,7 @@ public abstract class PatternUtil {
      * @return The escaped string.
      */
     public static String unEscapeNameForASAMPath(String name) {
-        name = name.replace("\\[", "[");
-        name = name.replace("\\]", "]");
-        name = name.replace("\\;", ";");
-        name = name.replace("\\/", "/");
-        name = name.replace("\\\\", "\\");
-        return name;
+        return com.peaksolution.datamodel.util.PatternUtil.unEscapeNameForASAMPath(name);
     }
 
 }

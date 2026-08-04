@@ -2,8 +2,8 @@ package com.peaksolution.openatfx.io;
 
 import org.asam.ods.ErrorCode;
 
-import com.peaksolution.openatfx.api.Complex;
-import com.peaksolution.openatfx.api.DoubleComplex;
+import com.peaksolution.datamodel.Complex;
+import com.peaksolution.datamodel.DoubleComplex;
 import com.peaksolution.openatfx.api.OpenAtfxException;
 
 

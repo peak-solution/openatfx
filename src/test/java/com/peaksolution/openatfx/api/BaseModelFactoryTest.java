@@ -1,4 +1,11 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.BaseModel;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -348,10 +355,10 @@ class BaseModelFactoryTest {
                 assertThat(rel.getRelationship()).isEqualTo(Relationship.CHILD);
                 assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.FATHER);
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.FATHER_CHILD);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) 1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) 1);
             } else if ("test".equals(relName)) {
                 testRelationFound = true;
                 BaseElement[] testElements = model.getElements("aotest");
@@ -362,10 +369,10 @@ class BaseModelFactoryTest {
                 assertThat(rel.getRelationship()).isEqualTo(Relationship.FATHER);
                 assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.CHILD);
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.FATHER_CHILD);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 1);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) 1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) -1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 1);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) 1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) -1);
             } else if ("measurement_quantities".equals(relName)) {
                 BaseElement[] meaQuElements = model.getElements("aomeasurementquantity");
                 assertThat(rel.getElem2()).containsExactlyInAnyOrder(meaQuElements);
@@ -374,10 +381,10 @@ class BaseModelFactoryTest {
                 assertThat(rel.getRelationship()).isEqualTo(Relationship.CHILD);
                 assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.FATHER);
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.FATHER_CHILD);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 1);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) 1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 1);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) 1);
             } else if ("submatrices".equals(relName)) {
                 BaseElement[] matrixElements = model.getElements("aosubmatrix");
                 assertThat(rel.getElem2()).containsExactlyInAnyOrder(matrixElements);
@@ -386,10 +393,10 @@ class BaseModelFactoryTest {
                 assertThat(rel.getRelationship()).isEqualTo(Relationship.CHILD);
                 assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.FATHER);
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.FATHER_CHILD);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 1);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) 1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 1);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) 1);
             } else if ("units_under_test".equals(relName)) {
                 BaseElement[] uutElements = model.getElements("aounitundertest");
                 BaseElement[] uutPartElements = model.getElements("aounitundertestpart");
@@ -404,10 +411,10 @@ class BaseModelFactoryTest {
                     assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.INFO_REL);
                 }
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.INFO);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) -1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) -1);
             } else if ("sequences".equals(relName)) {
                 BaseElement[] tsElements = model.getElements("aotestsequence");
                 BaseElement[] tsPartElements = model.getElements("aotestsequencepart");
@@ -422,10 +429,10 @@ class BaseModelFactoryTest {
                     assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.INFO_REL);
                 }
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.INFO);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) -1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) -1);
             } else if ("equipments".equals(relName)) {
                 BaseElement[] teElements = model.getElements("aotestequipment");
                 BaseElement[] tePartElements = model.getElements("aotestequipmentpart");
@@ -441,10 +448,10 @@ class BaseModelFactoryTest {
                     assertThat(rel.getInverseRelationship()).isEqualTo(Relationship.INFO_REL);
                 }
                 assertThat(rel.getRelationType()).isEqualTo(RelationType.INFO);
-                assertThat(rel.getRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getRelationRange().max).isEqualTo((short) -1);
-                assertThat(rel.getInverseRelationRange().min).isEqualTo((short) 0);
-                assertThat(rel.getInverseRelationRange().max).isEqualTo((short) -1);
+                assertThat(rel.getRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getRelationRange().getMax()).isEqualTo((short) -1);
+                assertThat(rel.getInverseRelationRange().getMin()).isEqualTo((short) 0);
+                assertThat(rel.getInverseRelationRange().getMax()).isEqualTo((short) -1);
             }
         }
         assertThat(testRelationFound).isTrue();

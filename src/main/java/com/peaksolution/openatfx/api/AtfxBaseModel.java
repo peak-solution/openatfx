@@ -1,4 +1,8 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.BaseModel;
+import com.peaksolution.datamodel.EnumerationDefinition;
 
 import java.util.ArrayList;
 import java.util.Collection;

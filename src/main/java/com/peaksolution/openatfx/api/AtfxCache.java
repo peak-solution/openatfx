@@ -1,10 +1,23 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseAttribute;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.BaseModel;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
 
 import com.peaksolution.openatfx.io.AtfxTagConstants;
 import com.peaksolution.openatfx.util.ODSHelper;
 import org.asam.ods.AoException;
 import org.asam.ods.ErrorCode;
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -912,7 +925,7 @@ class AtfxCache {
         
         // read values from memory
         NameValueUnit nvu = instance.getValueInternal(attrNo);
-        boolean isValid = nvu != null && nvu.hasValidValue();
+        boolean isValid = nvu != null && nvu.isValid();
         
         // read generation parameters from values if null
         if (!isValid && attr.isLocalColumnGenParamsAttr()) {

@@ -1,4 +1,6 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.Complex;
+import com.peaksolution.datamodel.DoubleComplex;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

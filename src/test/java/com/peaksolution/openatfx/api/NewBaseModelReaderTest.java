@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.EnumerationDefinition;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
