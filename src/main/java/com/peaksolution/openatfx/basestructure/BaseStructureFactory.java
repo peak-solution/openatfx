@@ -41,7 +41,7 @@ import org.omg.PortableServer.POAPackage.WrongPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.peaksolution.openatfx.api.BaseModel;
+import com.peaksolution.datamodel.BaseModel;
 import com.peaksolution.openatfx.api.OpenAtfxAPI;
 import com.peaksolution.openatfx.util.ODSHelper;
 
@@ -101,7 +101,7 @@ public class BaseStructureFactory {
         try {
             // base enums
             Map<String, EnumerationDefinition> enumDefs = new HashMap<>();
-            for (com.peaksolution.openatfx.api.EnumerationDefinition currentEnum : baseModel.getEnumerations()) {
+            for (com.peaksolution.datamodel.EnumerationDefinition currentEnum : baseModel.getEnumerations()) {
                 int index = currentEnum.getIndex();
                 String name = currentEnum.getName();
                 BaseEnumerationDefinitionImpl impl = new BaseEnumerationDefinitionImpl(index, name);
@@ -117,7 +117,7 @@ public class BaseStructureFactory {
             // base elements
             Map<String, BaseElementImpl> baseElements = new HashMap<>();
             BaseStructureImpl baseStructureImpl = new BaseStructureImpl(baseModel.getVersion());
-            for (com.peaksolution.openatfx.api.BaseElement currentElement : baseModel.getElements("*")) {
+            for (com.peaksolution.datamodel.BaseElement currentElement : baseModel.getElements("*")) {
                 BaseElementImpl baseElementImpl = new BaseElementImpl(api, currentElement);
                 BaseElement baseElement = BaseElementHelper.narrow(poa.servant_to_reference(baseElementImpl));
 
@@ -152,12 +152,12 @@ public class BaseStructureFactory {
      * @throws ServantNotActive
      */
     private BaseAttribute[] parseBaseAttributes(POA poa, Map<String, EnumerationDefinition> enumDefs,
-            BaseElement baseElement, com.peaksolution.openatfx.api.BaseElement atfxBaseElement)
+            BaseElement baseElement, com.peaksolution.datamodel.BaseElement atfxBaseElement)
             throws AoException, WrongPolicy, ServantNotActive {
         List<BaseAttribute> list = new ArrayList<>();
 
-        for (com.peaksolution.openatfx.api.BaseAttribute currentAttr : atfxBaseElement.getAttributes("*")) {
-            com.peaksolution.openatfx.api.DataType dataType = currentAttr.getDataType();
+        for (com.peaksolution.datamodel.BaseAttribute currentAttr : atfxBaseElement.getAttributes("*")) {
+            com.peaksolution.datamodel.DataType dataType = currentAttr.getDataType();
             DataType odsDataType = ODSHelper.string2dataType(dataType.name());
             EnumerationDefinition enumDef = null;
 
@@ -189,12 +189,12 @@ public class BaseStructureFactory {
      * @throws ServantNotActive
      */
     private void parseBaseRelations(POA poa, Map<String, BaseElementImpl> baseElements,
-            com.peaksolution.openatfx.api.BaseElement[] atfxBaseElements) throws WrongPolicy, ServantNotActive {
-        for (com.peaksolution.openatfx.api.BaseElement atfxBaseElement : atfxBaseElements) {
-            for (com.peaksolution.openatfx.api.BaseRelation currentRelation : atfxBaseElement.getRelations()) {
+            com.peaksolution.datamodel.BaseElement[] atfxBaseElements) throws WrongPolicy, ServantNotActive {
+        for (com.peaksolution.datamodel.BaseElement atfxBaseElement : atfxBaseElements) {
+            for (com.peaksolution.datamodel.BaseRelation currentRelation : atfxBaseElement.getRelations()) {
                 BaseElementImpl elemImpl1 = baseElements.get(currentRelation.getElem1().getType());
                 BaseElement elem1 = BaseElementHelper.narrow(poa.servant_to_reference(elemImpl1));
-                for (com.peaksolution.openatfx.api.BaseElement atfxBaseElement2 : currentRelation.getElem2()) {
+                for (com.peaksolution.datamodel.BaseElement atfxBaseElement2 : currentRelation.getElem2()) {
                     BaseElementImpl elemImpl2 = baseElements.get(atfxBaseElement2.getType());
                     BaseElement elem2 = BaseElementHelper.narrow(poa.servant_to_reference(elemImpl2));
 
@@ -205,10 +205,10 @@ public class BaseStructureFactory {
 
                     BaseRelationImpl baseRelationImpl = new BaseRelationImpl(elem1, elem2, currentRelation.getName(),
                                                                              currentRelation.getInverseName(atfxBaseElement2.getType()),
-                                                                             currentRelation.getRelationRange(),
-                                                                             currentRelation.getInverseRelationRange(),
+                                                                             ODSHelper.mapRelationRange(currentRelation.getRelationRange()),
+                                                                             ODSHelper.mapRelationRange(currentRelation.getInverseRelationRange()),
                                                                              relationship, inverseRelationship,
-                                                                             currentRelation.getRelationType());
+                                                                             ODSHelper.mapRelationType(currentRelation.getRelationType()));
                     BaseRelation baseRelation = BaseRelationHelper.narrow(poa.servant_to_reference(baseRelationImpl));
                     elemImpl1.addBaseRelation(baseRelation);
                 }

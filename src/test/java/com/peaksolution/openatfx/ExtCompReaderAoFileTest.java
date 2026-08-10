@@ -18,7 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.omg.CORBA.ORB;
 
 import com.peaksolution.openatfx.api.ExtCompReader;
-import com.peaksolution.openatfx.api.SingleValue;
+import com.peaksolution.datamodel.SingleValue;
 import com.peaksolution.openatfx.api.corba.CorbaAtfxReader;
 
 @ExtendWith(GlassfishCorbaExtension.class)

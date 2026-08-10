@@ -1,4 +1,8 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
 
 import java.io.IOException;
 import java.io.InputStream;

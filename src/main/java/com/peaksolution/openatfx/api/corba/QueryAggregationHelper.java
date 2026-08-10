@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,13 +19,12 @@ import org.asam.ods.TS_Value;
 import org.asam.ods.TS_ValueSeq;
 import org.asam.ods.T_LONGLONG;
 
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Instance;
-import com.peaksolution.openatfx.api.NameValueUnit;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Instance;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
-import com.peaksolution.openatfx.api.SingleValue;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.SingleValue;
 import com.peaksolution.openatfx.util.ODSHelper;
 
 public class QueryAggregationHelper {
@@ -65,7 +65,7 @@ public class QueryAggregationHelper {
                 List<Long> relIids = api.getRelatedInstanceIds(aid, filteredIids, ar);
                 List<TS_Value> values = new ArrayList<>();
                 for (Long relIid : relIids) {
-                    SingleValue val = new SingleValue(com.peaksolution.openatfx.api.DataType.DT_LONGLONG, relIid);
+                    SingleValue val = new SingleValue(com.peaksolution.datamodel.DataType.DT_LONGLONG, relIid);
                     values.add(ODSHelper.mapTSValue(val));
                 }
                 TS_ValueSeq valueSeq = ODSHelper.tsValue2tsValueSeq(values.toArray(new TS_Value[0]), DataType.DT_LONGLONG);

@@ -1,21 +1,13 @@
 package com.peaksolution.openatfx.api;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import com.peaksolution.datamodel.DefaultEnumerationDefinition;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.ModelException;
 
 import org.asam.ods.ErrorCode;
 
 
-public class AtfxEnumeration implements EnumerationDefinition {
+public class AtfxEnumeration extends DefaultEnumerationDefinition {
 
-    private final int index;
-    private String name;
-    private final SortedMap<Long, String> itemToNameMap;
-    private final Map<String, Long> nameToItemMap;
-    
     private AtfxCache atfxCache;
 
     /**
@@ -25,10 +17,7 @@ public class AtfxEnumeration implements EnumerationDefinition {
      * @param name The name.
      */
     public AtfxEnumeration(int index, String name) {
-        this.index = index;
-        this.name = name;
-        this.itemToNameMap = new TreeMap<>();
-        this.nameToItemMap = new HashMap<>();
+        super(index, name);
     }
     
     /**
@@ -39,19 +28,10 @@ public class AtfxEnumeration implements EnumerationDefinition {
      * @param atfxCache The AtfxCache.
      */
     public AtfxEnumeration(int index, String name, AtfxCache atfxCache) {
-        this.index = index;
-        this.name = name;
+        super(index, name);
         this.atfxCache = atfxCache;
-        this.itemToNameMap = new TreeMap<>();
-        this.nameToItemMap = new HashMap<>();
     }
 
-    @Override
-    public void addItem(long item, String name) {
-        this.itemToNameMap.put(item, name);
-        this.nameToItemMap.put(name, item);
-    }
-    
     @Override
     public void addItem(String itemName) {
         // check item name length
@@ -59,21 +39,10 @@ public class AtfxEnumeration implements EnumerationDefinition {
             throw new OpenAtfxException(ErrorCode.AO_BAD_PARAMETER, "itemName must not be empty");
         }
         // check for existing item name
-        if (nameToItemMap.get(itemName) != null) {
+        if (hasItem(itemName)) {
             throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND, "Enumeration item '" + itemName + "' already exists");
         }
-        int idx = nameToItemMap.size();
-        addItem(idx, itemName);
-    }
-
-    @Override
-    public int getIndex() {
-        return this.index;
-    }
-
-    @Override
-    public String getName() {
-        return this.name;
+        addItem(itemCount(), itemName);
     }
 
     @Override
@@ -83,7 +52,7 @@ public class AtfxEnumeration implements EnumerationDefinition {
             throw new OpenAtfxException(ErrorCode.AO_BAD_PARAMETER, "name must not be empty");
         }
         // check for name equality
-        if (this.name.equals(name)) {
+        if (getName().equals(name)) {
             return;
         }
         // check for existing enum name
@@ -92,47 +61,26 @@ public class AtfxEnumeration implements EnumerationDefinition {
             throw new OpenAtfxException(ErrorCode.AO_BAD_PARAMETER,
                                         "Cannot set name, since another enumeration with name '" + name + "' already exists!");
         }
-        this.name = name;
+        super.setName(name);
     }
 
-    @Override
-    public String[] listItemNames() {
-        return this.itemToNameMap.values().toArray(new String[0]);
-    }
-
-    @Override
-    public long getItem(String itemName) {
-        return getItem(itemName, true);
-    }
-    
     @Override
     public long getItem(String itemName, boolean checkCaseSensitive) {
-        Long item = null;
-        if (checkCaseSensitive) {
-            item = this.nameToItemMap.get(itemName);
-        } else {
-            for (Entry<String, Long> entry : nameToItemMap.entrySet()) {
-                if (entry.getKey().equalsIgnoreCase(itemName)) {
-                    item = entry.getValue();
-                    break;
-                }
-            }
-        }
-        
-        if (item == null) {
+        try {
+            return super.getItem(itemName, checkCaseSensitive);
+        } catch (ModelException e) {
             throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND, "Enumeration item '" + itemName
-                    + "' not found for enumeration '" + this.name + "' (checked case sensitive=" + checkCaseSensitive + ")");
+                    + "' not found for enumeration '" + getName() + "' (checked case sensitive=" + checkCaseSensitive + ")", e);
         }
-        return item;
     }
 
     @Override
     public String getItemName(long item) {
-        String itemName = this.itemToNameMap.get(item);
-        if (itemName == null) {
-            throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND, "Enumeration item '" + item + "' not found");
+        try {
+            return super.getItemName(item);
+        } catch (ModelException e) {
+            throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND, "Enumeration item '" + item + "' not found", e);
         }
-        return itemName;
     }
     
     @Override
@@ -142,19 +90,15 @@ public class AtfxEnumeration implements EnumerationDefinition {
             throw new OpenAtfxException(ErrorCode.AO_BAD_PARAMETER, "newItemName must not be empty");
         }
         // check if old item exists
-        if (!this.nameToItemMap.containsKey(oldItemName)) {
+        if (!hasItem(oldItemName)) {
             throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND, "Enumeration item '" + oldItemName
                     + "' not found");
         }
-        // rename
-        long item = this.nameToItemMap.get(oldItemName);
-        this.nameToItemMap.remove(oldItemName);
-        this.itemToNameMap.put(item, newItemName);
-        this.nameToItemMap.put(newItemName, item);
+        super.renameItem(oldItemName, newItemName);
     }
 
     @Override
     public String toString() {
-        return "AtfxEnumeration [name=" + name + "]";
+        return "AtfxEnumeration [name=" + getName() + "]";
     }
 }

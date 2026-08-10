@@ -1,4 +1,14 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.Complex;
+import com.peaksolution.datamodel.DoubleComplex;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
 
 import com.peaksolution.openatfx.util.BufferedRandomAccessFile;
 import com.peaksolution.openatfx.util.ODSHelper;
@@ -65,7 +75,7 @@ public class ExtCompReader {
         Instance lcInstance = api.getInstanceById(lcElement.getId(), iidLc);
         if (lcInstance != null) {
             NameValueUnit valRawDatatype = lcInstance.getValue("raw_datatype");
-            if (valRawDatatype != null && valRawDatatype.hasValidValue()) {
+            if (valRawDatatype != null && valRawDatatype.isValid()) {
                 int val = valRawDatatype.getValue().enumVal();
                 if (val == 1) { // DT_STRING
                     rawDataType = DataType.DS_STRING;
@@ -450,7 +460,7 @@ public class ExtCompReader {
     private static long extractLong(Instance extComp, String attributeBaseName) {
         long returnValue = 0;
         NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
-        if (valperblockNvu != null && valperblockNvu.hasValidValue()) {
+        if (valperblockNvu != null && valperblockNvu.isValid()) {
             if (valperblockNvu.getValue().discriminator() == DataType.DT_LONG) {
                 returnValue = valperblockNvu.getValue().longVal();
             } else if (valperblockNvu.getValue().discriminator() == DataType.DT_LONGLONG) {
@@ -462,7 +472,7 @@ public class ExtCompReader {
 
     private static String extractString(Instance extComp, String attributeBaseName) {
         NameValueUnit valperblockNvu = extComp.getValueByBaseName(attributeBaseName);
-        if (valperblockNvu != null && valperblockNvu.hasValidValue()) {
+        if (valperblockNvu != null && valperblockNvu.isValid()) {
             if (valperblockNvu.getValue().discriminator() == DataType.DT_STRING) {
                 return valperblockNvu.getValue().stringVal();
             }
@@ -647,7 +657,7 @@ public class ExtCompReader {
         NameValueUnit fileNvu = extComp.getValueByBaseName(attrName);
         Path extCompFile = null;
         String location = null;
-        if (fileNvu == null || !fileNvu.hasValidValue()) {
+        if (fileNvu == null || !fileNvu.isValid()) {
             // if no valid file reference is found, find the related AoFile if one exists
             Relation relFile = api.getRelationByBaseName(extComp.getAid(), fileRelBaseName);
             if (relFile == null) {

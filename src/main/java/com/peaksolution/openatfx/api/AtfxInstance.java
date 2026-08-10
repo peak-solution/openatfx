@@ -1,4 +1,11 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -170,7 +177,7 @@ public class AtfxInstance implements Instance {
                                             "DataType is no allowed for InstanceAttributes: " + dt);
             }
 
-            if (nvu.hasValidValue()) {
+            if (nvu.isValid()) {
                 instanceAttrValues.put(nvu.getValName(), nvu);
             } else {
                 instanceAttrValues.remove(nvu.getValName());
@@ -209,7 +216,7 @@ public class AtfxInstance implements Instance {
         
         if (attrNo != null) {
             NameValueUnit nvu = attrValuesByAttrNo.get(attrNo);
-            if (nvu != null && nvu.hasValidValue()) {
+            if (nvu != null && nvu.isValid()) {
                 return true;
             }
         }

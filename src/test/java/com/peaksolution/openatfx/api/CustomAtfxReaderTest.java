@@ -1,4 +1,8 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.DataType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

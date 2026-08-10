@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,6 @@ import org.omg.PortableServer.POAPackage.ServantNotActive;
 import org.omg.PortableServer.POAPackage.WrongPolicy;
 
 import com.peaksolution.openatfx.api.AtfxInstance;
-import com.peaksolution.openatfx.api.NameValueUnit;
 
 
 /**

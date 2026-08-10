@@ -1,4 +1,14 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseElement;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.BaseModel;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.DataType;
 
 import java.io.File;
 import java.nio.ByteOrder;

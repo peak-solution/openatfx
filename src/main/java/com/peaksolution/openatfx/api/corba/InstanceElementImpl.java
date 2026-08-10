@@ -43,8 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.peaksolution.openatfx.api.AtfxInstance;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.DataType;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.DataType;
 import com.peaksolution.openatfx.api.OpenAtfxException;
 import com.peaksolution.openatfx.util.ODSHelper;
 import com.peaksolution.openatfx.util.PatternUtil;
@@ -153,7 +153,7 @@ class InstanceElementImpl extends InstanceElementPOA {
         // set value
         try {
             Attribute nameAttr = delegate.getElement().getAttributeByBaseName("name");
-            delegate.setAttributeValue(new com.peaksolution.openatfx.api.NameValueUnit(nameAttr.getName(), DataType.DT_STRING, iaName));
+            delegate.setAttributeValue(new com.peaksolution.datamodel.NameValueUnit(nameAttr.getName(), DataType.DT_STRING, iaName));
         } catch (OpenAtfxException e) {
             throw e.toAoException();
         }
@@ -178,7 +178,7 @@ class InstanceElementImpl extends InstanceElementPOA {
             }
             // instance attributes
             if (aType != AttrType.APPLATTR_ONLY) {
-                for (com.peaksolution.openatfx.api.NameValueUnit nvu : delegate.getInstanceAttributes()) {
+                for (com.peaksolution.datamodel.NameValueUnit nvu : delegate.getInstanceAttributes()) {
                     String attrName = nvu.getValName();
                     if (PatternUtil.nameFilterMatch(attrName, iaPattern)) {
                         list.add(attrName);
@@ -205,9 +205,9 @@ class InstanceElementImpl extends InstanceElementPOA {
                 int attrNo = delegate.getElement().getAttrNoByName(aaName);
                 Blob blob = null;
                 // create not yet existing ODS blob and cache it
-                com.peaksolution.openatfx.api.NameValueUnit existingBlobNvu = delegate.getValue(attrNo);
+                com.peaksolution.datamodel.NameValueUnit existingBlobNvu = delegate.getValue(attrNo);
                 if (existingBlobNvu != null && existingBlobNvu.isValid()) {
-                    com.peaksolution.openatfx.api.Blob orgBlob = existingBlobNvu.getValue().blobVal();
+                    com.peaksolution.datamodel.Blob orgBlob = existingBlobNvu.getValue().blobVal();
                     blob = corbaCache.getSessionImpl().createBlob();
                     blob.setHeader(orgBlob.getHeader());
                     blob.set(orgBlob.get(0, orgBlob.getLength()));
@@ -216,7 +216,7 @@ class InstanceElementImpl extends InstanceElementPOA {
                 nvu.value.u.blobVal(blob);
             } else {
                 // this may be a non-blob application or instance attribute
-                com.peaksolution.openatfx.api.NameValueUnit delegateNvu = delegate.getValue(aaName);
+                com.peaksolution.datamodel.NameValueUnit delegateNvu = delegate.getValue(aaName);
                 if (delegateNvu == null) {
                     throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "Attribute '" + aaName
                                           + "' not found");
@@ -326,13 +326,13 @@ class InstanceElementImpl extends InstanceElementPOA {
      */
     public void removeInstanceAttribute(String attrName) throws AoException {
         try {
-            com.peaksolution.openatfx.api.NameValueUnit nvu = delegate.getInstanceAttribute(attrName);
+            com.peaksolution.datamodel.NameValueUnit nvu = delegate.getInstanceAttribute(attrName);
             if (nvu == null) {
                 throw new AoException(ErrorCode.AO_NOT_FOUND, SeverityFlag.ERROR, 0, "InstanceAttribute '" + attrName
                                       + "' not found at " + delegate);
             }
             
-            delegate.setInstanceValue(new com.peaksolution.openatfx.api.NameValueUnit(attrName, nvu.getValue().discriminator(), null));
+            delegate.setInstanceValue(new com.peaksolution.datamodel.NameValueUnit(attrName, nvu.getValue().discriminator(), null));
         } catch (OpenAtfxException e) {
             throw e.toAoException();
         }

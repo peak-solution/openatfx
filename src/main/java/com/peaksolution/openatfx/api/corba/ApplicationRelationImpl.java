@@ -9,9 +9,9 @@ import org.asam.ods.RelationType;
 import org.asam.ods.Relationship;
 
 import com.peaksolution.openatfx.api.AtfxRelation;
-import com.peaksolution.openatfx.api.Element;
+import com.peaksolution.datamodel.Element;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 import com.peaksolution.openatfx.util.ODSHelper;
 
 
@@ -219,7 +219,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public Relationship getRelationship() throws AoException {
         try {
-            com.peaksolution.openatfx.api.Relationship relship = delegate.getRelationship();
+            com.peaksolution.datamodel.Relationship relship = delegate.getRelationship();
             if (relship != null) {
                 return Relationship.from_int(relship.ordinal());
             }
@@ -254,7 +254,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public RelationType getRelationType() throws AoException {
         try {
-            return delegate.getRelationType();
+            return ODSHelper.mapRelationType(delegate.getRelationType());
         } catch (OpenAtfxException oae) {
             throw oae.toAoException();
         }
@@ -267,7 +267,7 @@ class ApplicationRelationImpl extends ApplicationRelationPOA {
      */
     public void setRelationType(RelationType arRelationType) throws AoException {
         try {
-            delegate.setRelationType(arRelationType);
+            delegate.setRelationType(ODSHelper.mapRelationType(arRelationType));
         } catch (OpenAtfxException oae) {
             throw oae.toAoException();
         }

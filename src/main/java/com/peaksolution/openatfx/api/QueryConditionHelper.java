@@ -1,4 +1,7 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Relationship;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +14,6 @@ import java.util.Set;
 import org.asam.ods.DataType;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.JoinDef;
-import org.asam.ods.RelationType;
 import org.asam.ods.SelOpcode;
 import org.asam.ods.SelValueExt;
 import org.asam.ods.T_LONGLONG;
@@ -149,8 +151,8 @@ public class QueryConditionHelper {
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if (value != null) {
                     boolean addToFilter = false;
-                    if ((condition.oper == SelOpcode.IS_NULL && !value.hasValidValue())
-                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.hasValidValue())) {
+                    if ((condition.oper == SelOpcode.IS_NULL && !value.isValid())
+                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.isValid())) {
                         addToFilter = true;
                     } else if (isCIOpcode(condition.oper)) {
                         addToFilter = PatternUtil.nameFilterMatchCI(value.getValue().stringVal(), stringVal);
@@ -250,9 +252,9 @@ public class QueryConditionHelper {
                 Instance instance = api.getInstanceById(aid, iid);
                 NameValueUnit value = instance.getValue(condition.attr.attr.aaName);
                 if (value != null) {
-                    if ((condition.oper == SelOpcode.IS_NULL && !value.hasValidValue())
-                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.hasValidValue())
-                            || (value.getValue().enumVal() >= 0 && value.hasValidValue() && intVal != null
+                    if ((condition.oper == SelOpcode.IS_NULL && !value.isValid())
+                            || (condition.oper == SelOpcode.IS_NOT_NULL && value.isValid())
+                            || (value.getValue().enumVal() >= 0 && value.isValid() && intVal != null
                                     && value.getValue().enumVal() == intVal)) {
                         filteredIids.add(iid);
                     }
@@ -584,7 +586,7 @@ public class QueryConditionHelper {
     protected AtfxRelation findFatherChildRelation(List<AtfxRelation> relations) throws OpenAtfxException {
         List<AtfxRelation> foundFatherChildRelations = new ArrayList<>();
         for (AtfxRelation ar : relations) {
-            if (ar.getRelationType() == RelationType.FATHER_CHILD) {
+            if (ar.getRelationType() == com.peaksolution.datamodel.RelationType.FATHER_CHILD) {
                 foundFatherChildRelations.add(ar);
             }
         }
