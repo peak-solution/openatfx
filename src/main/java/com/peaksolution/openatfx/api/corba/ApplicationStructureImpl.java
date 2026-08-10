@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.Attribute;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,10 +30,10 @@ import org.slf4j.LoggerFactory;
 
 import com.peaksolution.openatfx.api.AtfxElement;
 import com.peaksolution.openatfx.api.AtfxRelation;
-import com.peaksolution.openatfx.api.Element;
+import com.peaksolution.datamodel.Element;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 import com.peaksolution.openatfx.util.ODSHelper;
 import com.peaksolution.openatfx.util.PatternUtil;
 
@@ -69,7 +70,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
         try {
             // load enumerations
             for (String enumName : api.listEnumerationNames(true)) {
-                com.peaksolution.openatfx.api.EnumerationDefinition enumDef = api.getEnumerationDefinition(enumName);
+                com.peaksolution.datamodel.EnumerationDefinition enumDef = api.getEnumerationDefinition(enumName);
                 corbaCache.mapEnumeration(enumDef);
             }
             
@@ -110,7 +111,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
      */
     public EnumerationDefinition createEnumerationDefinition(String enumName) throws AoException {
         try {
-            com.peaksolution.openatfx.api.EnumerationDefinition existingEnumDef = api.getEnumerationDefinition(enumName);
+            com.peaksolution.datamodel.EnumerationDefinition existingEnumDef = api.getEnumerationDefinition(enumName);
             // check for existing enum name
             if (existingEnumDef != null) {
                 throw new AoException(ErrorCode.AO_BAD_PARAMETER, SeverityFlag.ERROR, 0,
@@ -118,7 +119,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
             }
             
             // create enumeration definition
-            com.peaksolution.openatfx.api.EnumerationDefinition createdEnum = api.createEnumeration(enumName);
+            com.peaksolution.datamodel.EnumerationDefinition createdEnum = api.createEnumeration(enumName);
             return corbaCache.mapEnumeration(createdEnum);
         } catch (OpenAtfxException oae) {
             throw oae.toAoException();
@@ -268,7 +269,7 @@ class ApplicationStructureImpl extends ApplicationStructurePOA {
                 // handle special case with environment or self as father
                 boolean skip = false;
                 for (Relation currentRelation : currentElement.getRelations()) {
-                    if (com.peaksolution.openatfx.api.Relationship.FATHER == currentRelation.getRelationship()
+                    if (com.peaksolution.datamodel.Relationship.FATHER == currentRelation.getRelationship()
                             && ("AoEnvironment".equalsIgnoreCase(currentRelation.getElement2().getType())
                                     || currentElement.getName().equalsIgnoreCase(currentRelation.getElement2().getName()))) {
                         skip = true;

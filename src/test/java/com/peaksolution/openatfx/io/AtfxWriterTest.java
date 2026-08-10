@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.io;
+import com.peaksolution.datamodel.DataType;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

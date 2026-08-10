@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,16 +50,15 @@ import org.omg.PortableServer.POA;
 
 import com.peaksolution.openatfx.api.AtfxElement;
 import com.peaksolution.openatfx.api.AtfxRelation;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.Instance;
-import com.peaksolution.openatfx.api.NameValueUnit;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Instance;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxConstants;
 import com.peaksolution.openatfx.api.OpenAtfxException;
 import com.peaksolution.openatfx.api.QueryConditionHelper;
-import com.peaksolution.openatfx.api.Relation;
-import com.peaksolution.openatfx.api.SingleValue;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.SingleValue;
 import com.peaksolution.openatfx.util.ODSHelper;
 
 
@@ -170,7 +170,7 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                     
                     if (iid > 0) {
                         Attribute idAttr = element.getAttributeByBaseName("id");
-                        values.add(new NameValueUnit(idAttr.getName(), com.peaksolution.openatfx.api.DataType.DT_LONGLONG, iid));
+                        values.add(new NameValueUnit(idAttr.getName(), com.peaksolution.datamodel.DataType.DT_LONGLONG, iid));
                     }
     
                     // collect instance values or relations
@@ -707,9 +707,9 @@ class ApplElemAccessImpl extends ApplElemAccessPOA {
                 	    
                 	    if (attribute == null) {
                 	        boolean isSequenceValue = relation.getRelationRangeMax() == -1;
-                	        com.peaksolution.openatfx.api.DataType dt = com.peaksolution.openatfx.api.DataType.DT_LONGLONG;
+                	        com.peaksolution.datamodel.DataType dt = com.peaksolution.datamodel.DataType.DT_LONGLONG;
                 	        if (isSequenceValue) {
-                	            dt = com.peaksolution.openatfx.api.DataType.DS_LONGLONG;
+                	            dt = com.peaksolution.datamodel.DataType.DS_LONGLONG;
                 	        }
                 	        List<TS_Value> values = new ArrayList<>();
                 	        for (Long iid : filteredIids) {

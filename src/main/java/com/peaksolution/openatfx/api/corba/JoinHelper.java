@@ -28,8 +28,8 @@ import org.asam.ods.T_LONGLONG;
 
 import com.peaksolution.openatfx.api.AtfxElement;
 import com.peaksolution.openatfx.api.AtfxRelation;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Element;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxException;
 import com.peaksolution.openatfx.util.ODSHelper;

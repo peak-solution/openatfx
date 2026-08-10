@@ -1,6 +1,10 @@
 package com.peaksolution.openatfx.util;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Instance;
 
 import com.peaksolution.openatfx.api.*;
+import com.peaksolution.datamodel.SingleValue;
 import org.apache.commons.lang3.ArrayUtils;
 import org.asam.ods.*;
 import org.asam.ods.Blob;
@@ -2952,6 +2956,62 @@ public abstract class ODSHelper {
         throw new IllegalArgumentException("Unknown RelationType: " + str);
     }
 
+    /**
+     * Maps a CORBA {@code org.asam.ods.RelationType} to the shared datamodel relation type.
+     */
+    public static com.peaksolution.datamodel.RelationType mapRelationType(RelationType relationType) {
+        if (relationType == null) {
+            return null;
+        }
+        if (relationType == RelationType.FATHER_CHILD) {
+            return com.peaksolution.datamodel.RelationType.FATHER_CHILD;
+        } else if (relationType == RelationType.INFO) {
+            return com.peaksolution.datamodel.RelationType.INFO;
+        } else if (relationType == RelationType.INHERITANCE) {
+            return com.peaksolution.datamodel.RelationType.INHERITANCE;
+        }
+        throw new IllegalArgumentException("Unknown RelationType: " + relationType);
+    }
+
+    /**
+     * Maps a shared datamodel relation type to the CORBA {@code org.asam.ods.RelationType}.
+     */
+    public static RelationType mapRelationType(com.peaksolution.datamodel.RelationType relationType) {
+        if (relationType == null) {
+            return null;
+        }
+        switch (relationType) {
+            case FATHER_CHILD:
+                return RelationType.FATHER_CHILD;
+            case INFO:
+                return RelationType.INFO;
+            case INHERITANCE:
+                return RelationType.INHERITANCE;
+            default:
+                throw new IllegalArgumentException("Unknown RelationType: " + relationType);
+        }
+    }
+
+    /**
+     * Maps a CORBA {@code org.asam.ods.RelationRange} to the shared datamodel relation range.
+     */
+    public static com.peaksolution.datamodel.RelationRange mapRelationRange(RelationRange relationRange) {
+        if (relationRange == null) {
+            return null;
+        }
+        return new com.peaksolution.datamodel.RelationRange(relationRange.min, relationRange.max);
+    }
+
+    /**
+     * Maps a shared datamodel relation range to the CORBA {@code org.asam.ods.RelationRange}.
+     */
+    public static RelationRange mapRelationRange(com.peaksolution.datamodel.RelationRange relationRange) {
+        if (relationRange == null) {
+            return null;
+        }
+        return new RelationRange((short) relationRange.getMin(), (short) relationRange.getMax());
+    }
+
     public static String anuSeq2string(SelAIDNameUnitId[] nvu) {
         StringBuilder builder = new StringBuilder();
         builder.append("[");
@@ -3538,15 +3598,15 @@ public abstract class ODSHelper {
         return dt;
     }
 
-    public static com.peaksolution.openatfx.api.Relationship mapRelationship(Relationship relationship) {
-        return com.peaksolution.openatfx.api.Relationship.valueOf(relationship2string(relationship));
+    public static com.peaksolution.datamodel.Relationship mapRelationship(Relationship relationship) {
+        return com.peaksolution.datamodel.Relationship.valueOf(relationship2string(relationship));
     }
 
-    public static com.peaksolution.openatfx.api.DataType mapDataType(DataType dt) {
-        return com.peaksolution.openatfx.api.DataType.values()[dt.value()];
+    public static com.peaksolution.datamodel.DataType mapDataType(DataType dt) {
+        return com.peaksolution.datamodel.DataType.values()[dt.value()];
     }
 
-    public static DataType mapDataType(com.peaksolution.openatfx.api.DataType dt) {
+    public static DataType mapDataType(com.peaksolution.datamodel.DataType dt) {
         return DataType.from_int(dt.ordinal());
     }
 
@@ -3580,23 +3640,23 @@ public abstract class ODSHelper {
         return mapped;
     }
 
-    public static com.peaksolution.openatfx.api.Complex mapComplex(T_COMPLEX complexVal) {
-        return new com.peaksolution.openatfx.api.Complex(complexVal.r, complexVal.i);
+    public static com.peaksolution.datamodel.Complex mapComplex(T_COMPLEX complexVal) {
+        return new com.peaksolution.datamodel.Complex(complexVal.r, complexVal.i);
     }
 
-    public static T_COMPLEX mapComplex(com.peaksolution.openatfx.api.Complex complexVal) {
+    public static T_COMPLEX mapComplex(com.peaksolution.datamodel.Complex complexVal) {
         return new T_COMPLEX(complexVal.getR(), complexVal.getI());
     }
 
-    public static com.peaksolution.openatfx.api.Complex[] mapComplexSeq(T_COMPLEX[] complexSeq) {
-        com.peaksolution.openatfx.api.Complex[] mapped = new com.peaksolution.openatfx.api.Complex[complexSeq.length];
+    public static com.peaksolution.datamodel.Complex[] mapComplexSeq(T_COMPLEX[] complexSeq) {
+        com.peaksolution.datamodel.Complex[] mapped = new com.peaksolution.datamodel.Complex[complexSeq.length];
         for (int i = 0; i < complexSeq.length; i++) {
             mapped[i] = mapComplex(complexSeq[i]);
         }
         return mapped;
     }
 
-    public static T_COMPLEX[] mapComplexSeq(com.peaksolution.openatfx.api.Complex[] complexSeq) {
+    public static T_COMPLEX[] mapComplexSeq(com.peaksolution.datamodel.Complex[] complexSeq) {
         T_COMPLEX[] mapped = new T_COMPLEX[complexSeq.length];
         for (int i = 0; i < complexSeq.length; i++) {
             mapped[i] = mapComplex(complexSeq[i]);
@@ -3604,23 +3664,23 @@ public abstract class ODSHelper {
         return mapped;
     }
 
-    public static com.peaksolution.openatfx.api.DoubleComplex mapDComplex(T_DCOMPLEX dcomplexVal) {
-        return new com.peaksolution.openatfx.api.DoubleComplex(dcomplexVal.r, dcomplexVal.i);
+    public static com.peaksolution.datamodel.DoubleComplex mapDComplex(T_DCOMPLEX dcomplexVal) {
+        return new com.peaksolution.datamodel.DoubleComplex(dcomplexVal.r, dcomplexVal.i);
     }
 
-    public static T_DCOMPLEX mapDComplex(com.peaksolution.openatfx.api.DoubleComplex dcomplexVal) {
+    public static T_DCOMPLEX mapDComplex(com.peaksolution.datamodel.DoubleComplex dcomplexVal) {
         return new T_DCOMPLEX(dcomplexVal.getR(), dcomplexVal.getI());
     }
 
-    public static com.peaksolution.openatfx.api.DoubleComplex[] mapDComplexSeq(T_DCOMPLEX[] dcomplexSeq) {
-        com.peaksolution.openatfx.api.DoubleComplex[] mapped = new com.peaksolution.openatfx.api.DoubleComplex[dcomplexSeq.length];
+    public static com.peaksolution.datamodel.DoubleComplex[] mapDComplexSeq(T_DCOMPLEX[] dcomplexSeq) {
+        com.peaksolution.datamodel.DoubleComplex[] mapped = new com.peaksolution.datamodel.DoubleComplex[dcomplexSeq.length];
         for (int i = 0; i < dcomplexSeq.length; i++) {
             mapped[i] = mapDComplex(dcomplexSeq[i]);
         }
         return mapped;
     }
 
-    public static T_DCOMPLEX[] mapDComplexSeq(com.peaksolution.openatfx.api.DoubleComplex[] dcomplexSeq) {
+    public static T_DCOMPLEX[] mapDComplexSeq(com.peaksolution.datamodel.DoubleComplex[] dcomplexSeq) {
         T_DCOMPLEX[] mapped = new T_DCOMPLEX[dcomplexSeq.length];
         for (int i = 0; i < dcomplexSeq.length; i++) {
             mapped[i] = mapDComplex(dcomplexSeq[i]);
@@ -3628,24 +3688,24 @@ public abstract class ODSHelper {
         return mapped;
     }
 
-    private static com.peaksolution.openatfx.api.ExternalReference mapExtRef(T_ExternalReference extRefVal) {
-        return new com.peaksolution.openatfx.api.ExternalReference(extRefVal.description, extRefVal.mimeType,
+    private static com.peaksolution.datamodel.ExternalReference mapExtRef(T_ExternalReference extRefVal) {
+        return new com.peaksolution.datamodel.ExternalReference(extRefVal.description, extRefVal.mimeType,
                                                              extRefVal.location);
     }
 
-    private static T_ExternalReference mapExtRef(com.peaksolution.openatfx.api.ExternalReference extRefVal) {
+    private static T_ExternalReference mapExtRef(com.peaksolution.datamodel.ExternalReference extRefVal) {
         return new T_ExternalReference(extRefVal.getDescription(), extRefVal.getMimeType(), extRefVal.getLocation());
     }
 
-    private static com.peaksolution.openatfx.api.ExternalReference[] mapExtRefSeq(T_ExternalReference[] extRefSeq) {
-        com.peaksolution.openatfx.api.ExternalReference[] mapped = new com.peaksolution.openatfx.api.ExternalReference[extRefSeq.length];
+    private static com.peaksolution.datamodel.ExternalReference[] mapExtRefSeq(T_ExternalReference[] extRefSeq) {
+        com.peaksolution.datamodel.ExternalReference[] mapped = new com.peaksolution.datamodel.ExternalReference[extRefSeq.length];
         for (int i = 0; i < extRefSeq.length; i++) {
             mapped[i] = mapExtRef(extRefSeq[i]);
         }
         return mapped;
     }
 
-    private static T_ExternalReference[] mapExtRefSeq(com.peaksolution.openatfx.api.ExternalReference[] extRefSeq) {
+    private static T_ExternalReference[] mapExtRefSeq(com.peaksolution.datamodel.ExternalReference[] extRefSeq) {
         T_ExternalReference[] mapped = new T_ExternalReference[extRefSeq.length];
         for (int i = 0; i < extRefSeq.length; i++) {
             mapped[i] = mapExtRef(extRefSeq[i]);
@@ -3653,38 +3713,38 @@ public abstract class ODSHelper {
         return mapped;
     }
 
-    public static com.peaksolution.openatfx.api.NameValueUnit mapNvu(NameValueUnit nameValueUnit) {
-        return new com.peaksolution.openatfx.api.NameValueUnit(nameValueUnit.valName, mapTSValue(nameValueUnit.value),
+    public static com.peaksolution.datamodel.NameValueUnit mapNvu(NameValueUnit nameValueUnit) {
+        return new com.peaksolution.datamodel.NameValueUnit(nameValueUnit.valName, mapTSValue(nameValueUnit.value),
                                                          nameValueUnit.unit);
     }
 
-    public static NameValueUnit mapNvu(com.peaksolution.openatfx.api.NameValueUnit nameValueUnit) {
+    public static NameValueUnit mapNvu(com.peaksolution.datamodel.NameValueUnit nameValueUnit) {
         String unit = nameValueUnit.getUnit();
         return new NameValueUnit(nameValueUnit.getValName(), mapTSValue(nameValueUnit.getValue()),
                                  unit == null ? "" : unit);
     }
 
-    public static com.peaksolution.openatfx.api.NameValueUnit[] mapNvus(NameValueUnit[] nvus) {
-        com.peaksolution.openatfx.api.NameValueUnit[] mapped = new com.peaksolution.openatfx.api.NameValueUnit[nvus.length];
+    public static com.peaksolution.datamodel.NameValueUnit[] mapNvus(NameValueUnit[] nvus) {
+        com.peaksolution.datamodel.NameValueUnit[] mapped = new com.peaksolution.datamodel.NameValueUnit[nvus.length];
         for (int i = 0; i < nvus.length; i++) {
             mapped[i] = mapNvu(nvus[i]);
         }
         return mapped;
     }
 
-    public static com.peaksolution.openatfx.api.SingleValue mapTSValue(TS_Value value) {
+    public static com.peaksolution.datamodel.SingleValue mapTSValue(TS_Value value) {
         return mapUnion(value);
     }
 
-    public static TS_Value mapTSValue(com.peaksolution.openatfx.api.SingleValue value) {
+    public static TS_Value mapTSValue(com.peaksolution.datamodel.SingleValue value) {
         return new TS_Value(mapUnion(value), value.getFlag());
     }
 
-    private static com.peaksolution.openatfx.api.Blob mapBlob(Blob blobVal) {
+    private static com.peaksolution.datamodel.Blob mapBlob(Blob blobVal) {
         if (blobVal == null) {
             return null;
         }
-        com.peaksolution.openatfx.api.Blob mapped = new com.peaksolution.openatfx.api.Blob();
+        com.peaksolution.datamodel.Blob mapped = new com.peaksolution.datamodel.Blob();
         try {
             mapped.set(blobVal.get(0, blobVal.getLength()));
             mapped.setHeader(blobVal.getHeader());
@@ -3695,14 +3755,14 @@ public abstract class ODSHelper {
         return mapped;
     }
 
-    private static Blob mapBlob(com.peaksolution.openatfx.api.Blob blobVal) {
+    private static Blob mapBlob(com.peaksolution.datamodel.Blob blobVal) {
         LOG.warn("Mapping of Blob to ODS Blob not yet implemented! Value of length {} will be ignored.", blobVal.getLength());
         return null;
     }
 
-    public static com.peaksolution.openatfx.api.SingleValue mapUnion(TS_Value value) {
+    public static com.peaksolution.datamodel.SingleValue mapUnion(TS_Value value) {
         TS_Union union = value.u;
-        com.peaksolution.openatfx.api.SingleValue mappedUnion = new com.peaksolution.openatfx.api.SingleValue(mapDataType(union.discriminator()));
+        com.peaksolution.datamodel.SingleValue mappedUnion = new com.peaksolution.datamodel.SingleValue(mapDataType(union.discriminator()));
 
         switch (union.discriminator().value()) {
             case DataType._DT_BLOB:
@@ -3802,7 +3862,7 @@ public abstract class ODSHelper {
         return mappedUnion;
     }
 
-    public static TS_Union mapUnion(com.peaksolution.openatfx.api.SingleValue union) {
+    public static TS_Union mapUnion(com.peaksolution.datamodel.SingleValue union) {
         TS_Union mappedUnion = new TS_Union();
 
         switch (union.discriminator()) {
@@ -3906,7 +3966,7 @@ public abstract class ODSHelper {
         return mappedUnion;
     }
 
-    public static NameValue convertNvuToNv(com.peaksolution.openatfx.api.NameValueUnit nvu) {
+    public static NameValue convertNvuToNv(com.peaksolution.datamodel.NameValueUnit nvu) {
         switch (nvu.getValue().discriminator()) {
             case DT_STRING:
                 return createStringNV(nvu.getValName(), nvu.getValue().stringVal());
@@ -4001,10 +4061,10 @@ public abstract class ODSHelper {
 
         // datatype
         boolean lcValuesAttr = aa.isLocalColumnValuesAttr();
-        com.peaksolution.openatfx.api.DataType dt = aa.getDataType();
+        com.peaksolution.datamodel.DataType dt = aa.getDataType();
 
         List<TS_Value> list = new ArrayList<>();
-        com.peaksolution.openatfx.api.DataType dtForValuesConsistencyCheck = null;
+        com.peaksolution.datamodel.DataType dtForValuesConsistencyCheck = null;
         for (Instance currentInstance : api.getInstances(aid, iids)) {
             dt = lcValuesAttr ? api.getDataTypeForLocalColumnValues(currentInstance.getIid()) : aa.getDataType();
             if (lcValuesAttr)
@@ -4019,7 +4079,7 @@ public abstract class ODSHelper {
                                                 "Invalid query, please make sure you queried only local column values of the same datatype!");
                 }
             }
-            com.peaksolution.openatfx.api.NameValueUnit nvu = currentInstance.getValue(attrName);
+            com.peaksolution.datamodel.NameValueUnit nvu = currentInstance.getValue(attrName);
             list.add(ODSHelper.mapTSValue(nvu == null ? new SingleValue(dt) : nvu.getValue()));
         }
 

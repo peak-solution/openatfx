@@ -35,12 +35,12 @@ import org.slf4j.LoggerFactory;
 
 import com.peaksolution.openatfx.api.AtfxAttribute;
 import com.peaksolution.openatfx.api.AtfxElement;
-import com.peaksolution.openatfx.api.Attribute;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.Instance;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Instance;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
 import com.peaksolution.openatfx.api.OpenAtfxException;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 import com.peaksolution.openatfx.util.ODSHelper;
 import com.peaksolution.openatfx.util.PatternUtil;
 

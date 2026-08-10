@@ -1,4 +1,12 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.BaseRelation;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +27,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationType;
 import org.asam.ods.SetType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -115,7 +123,7 @@ class AtfxWriterTest {
         // test element
         Element returnedUgElement = api.getElementByName("Role");
         assertThat(returnedUgElement.getType()).isEqualToIgnoringCase("AoUsergroup");
-        Collection<Attribute> ugAttributes = returnedUgElement.getAttributes();
+        Collection<? extends Attribute> ugAttributes = returnedUgElement.getAttributes();
         assertThat(ugAttributes).hasSize(baseModelVersion >= 31 ? 6 : 5);
         
         // test attributes
@@ -161,7 +169,7 @@ class AtfxWriterTest {
         // test relations
         Element returnedUserElement = api.getUniqueElementByBaseType("aouser");
         assertThat(returnedUserElement.getName()).isEqualTo("User");
-        Collection<Relation> userRelations = returnedUserElement.getRelations();
+        Collection<? extends Relation> userRelations = returnedUserElement.getRelations();
         assertThat(userRelations).hasSize(1);
         Collection<String> collectedUserRelationNames = new HashSet<>();
         for (Relation currentRelation : userRelations) {
@@ -185,7 +193,7 @@ class AtfxWriterTest {
         Collection<String> expectedUserRelationNames = Arrays.asList("u2g");
         assertThat(collectedUserRelationNames).containsExactlyInAnyOrderElementsOf(expectedUserRelationNames);
         
-        Collection<Relation> groupRelations = returnedUgElement.getRelations();
+        Collection<? extends Relation> groupRelations = returnedUgElement.getRelations();
         assertThat(groupRelations).hasSize(1);
         Collection<String> collectedGroupRelationNames = new HashSet<>();
         assertThat(groupRelations).hasSize(1);

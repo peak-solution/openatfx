@@ -1,4 +1,12 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.EnumerationDefinition;
+import com.peaksolution.datamodel.Relationship;
+import com.peaksolution.datamodel.DataType;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,7 +24,7 @@ import java.util.List;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
-import org.asam.ods.RelationType;
+import com.peaksolution.datamodel.RelationType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -85,7 +93,7 @@ public class AtfxReaderTest {
     @Test
     void test_model_attributes() {
         Element extCompElement = api.getElementByName("ec");
-        Collection<Attribute> attributes = extCompElement.getAttributes();
+        Collection<? extends Attribute> attributes = extCompElement.getAttributes();
         
         Collection<String> expectedAttributeNames = new ArrayList<>();
         expectedAttributeNames.addAll(Arrays.asList("ec_iid", "iname", "description", "ordinal_number",
@@ -248,7 +256,7 @@ public class AtfxReaderTest {
         // ExternalComponent
         Element extCompElement = api.getElementByName("ec");
         Element lcElement = api.getElementByName("lc");
-        Collection<Relation> ecRelations = extCompElement.getRelations();
+        Collection<? extends Relation> ecRelations = extCompElement.getRelations();
         Collection<String> expectedEcRelationNames = new ArrayList<>();
         expectedEcRelationNames.addAll(Arrays.asList("lc_iid"));
         Collection<String> collectedEcRelationNames = new HashSet<>();
@@ -272,7 +280,7 @@ public class AtfxReaderTest {
         Element matrixElement = api.getElementByName("sm");
         Element meaElement = api.getElementByName("dts");
         Element geometryElement = api.getElementByName("geometry");
-        Collection<Relation> smRelations = matrixElement.getRelations();
+        Collection<? extends Relation> smRelations = matrixElement.getRelations();
         Collection<String> expectedSmRelationNames = new ArrayList<>();
         expectedSmRelationNames.addAll(Arrays.asList("lc_iid", "dts_iid", "x-axis-for-y-axis", "z-axis-for-y-axis",
                                                      "y-axis-for-x-axis", "y-axis-for-z-axis", "geometry"));

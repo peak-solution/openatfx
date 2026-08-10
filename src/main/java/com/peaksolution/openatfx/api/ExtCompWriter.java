@@ -1,4 +1,12 @@
 package com.peaksolution.openatfx.api;
+import com.peaksolution.datamodel.NameValueUnit;
+import com.peaksolution.datamodel.Instance;
+import com.peaksolution.datamodel.Element;
+import com.peaksolution.datamodel.Attribute;
+import com.peaksolution.datamodel.Relation;
+import com.peaksolution.datamodel.DataType;
+
+import com.peaksolution.datamodel.SingleValue;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;

@@ -1,4 +1,5 @@
 package com.peaksolution.openatfx.api.corba;
+import com.peaksolution.datamodel.NameValueUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,10 +31,9 @@ import org.omg.CORBA.ORB;
 import com.peaksolution.openatfx.AoServiceFactory;
 import com.peaksolution.openatfx.GlassfishCorbaExtension;
 import com.peaksolution.openatfx.UnitTestFileHandler;
-import com.peaksolution.openatfx.api.Element;
-import com.peaksolution.openatfx.api.NameValueUnit;
+import com.peaksolution.datamodel.Element;
 import com.peaksolution.openatfx.api.OpenAtfxAPIImplementation;
-import com.peaksolution.openatfx.api.Relation;
+import com.peaksolution.datamodel.Relation;
 import com.peaksolution.openatfx.util.ODSHelper;
 
 @ExtendWith(GlassfishCorbaExtension.class)
@@ -67,8 +67,8 @@ class JoinHelperTest {
         api.renameAttribute(aid1L, "id", idAttrName);
         api.renameAttribute(aid1L, "name", nameAttrName);
         for (Long iid : iids1) {
-            NameValueUnit idNvu = new NameValueUnit(idAttrName, com.peaksolution.openatfx.api.DataType.DT_LONGLONG, iid);
-            NameValueUnit nameNvu = new NameValueUnit(nameAttrName, com.peaksolution.openatfx.api.DataType.DT_STRING, "Name_" + iid);
+            NameValueUnit idNvu = new NameValueUnit(idAttrName, com.peaksolution.datamodel.DataType.DT_LONGLONG, iid);
+            NameValueUnit nameNvu = new NameValueUnit(nameAttrName, com.peaksolution.datamodel.DataType.DT_STRING, "Name_" + iid);
             api.createInstance(aid1L, Arrays.asList(idNvu, nameNvu));
         }
 
@@ -79,8 +79,8 @@ class JoinHelperTest {
         api.renameAttribute(aid2L, "name", nameAttrName);
         int counter = 0;
         for (Long iid : iids2) {
-            NameValueUnit idNvu = new NameValueUnit(idAttrName, com.peaksolution.openatfx.api.DataType.DT_LONGLONG, iid);
-            NameValueUnit nameNvu = new NameValueUnit(nameAttrName, com.peaksolution.openatfx.api.DataType.DT_STRING, names2[counter]);
+            NameValueUnit idNvu = new NameValueUnit(idAttrName, com.peaksolution.datamodel.DataType.DT_LONGLONG, iid);
+            NameValueUnit nameNvu = new NameValueUnit(nameAttrName, com.peaksolution.datamodel.DataType.DT_STRING, names2[counter]);
             api.createInstance(aid2L, Arrays.asList(idNvu, nameNvu));
             counter++;
         }
