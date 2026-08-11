@@ -46,7 +46,10 @@ jobs:
   # ── OWASP dependency-check ──────────────────────────────────────────────────
   # Skipped on pull_request events to keep PR feedback fast; runs on every
   # push to main / development and on manual workflow_dispatch triggers.
+  # Depends on 'test' so it only runs when the build is green, and skips
+  # tests (-DskipTests) to avoid running them a second time on a second runner.
   security:
+    needs: test
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     steps:
@@ -61,7 +64,7 @@ jobs:
           cache: maven
 
       - name: OWASP dependency check
-        run: mvn verify -B -P owasp
+        run: mvn verify -B -P owasp -DskipTests
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
