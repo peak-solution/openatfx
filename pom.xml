@@ -159,19 +159,12 @@
 						<extensions>true</extensions>
 						<configuration>
 							<publishingServerId>central</publishingServerId>
-							<autoPublish>false</autoPublish>
+							<autoPublish>true</autoPublish>
 							<deploymentName>openATFX ${project.version}</deploymentName>
 						</configuration>
 					</plugin>
 				</plugins>
 			</build>
-
-			<distributionManagement>
-				<repository>
-					<id>ossrh</id>
-					<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-				</repository>
-			</distributionManagement>
 		</profile>
 	</profiles>
 
