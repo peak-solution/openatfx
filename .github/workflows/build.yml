@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - development
+  pull_request:
+    branches:
+      - development   # feature-branch PRs; development→main PRs are covered by the push trigger
+  workflow_dispatch:
+
+# Cancel redundant runs on the same ref (e.g. rapid pushes to a branch)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── Build & test ────────────────────────────────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build and test (including license check)
+        run: mvn clean verify -B -P license
+
+      - name: Upload Surefire reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 7
+
+  # ── OWASP dependency-check ──────────────────────────────────────────────────
+  # Skipped on pull_request events to keep PR feedback fast; runs on every
+  # push to main / development and on manual workflow_dispatch triggers.
+  # Depends on 'test' so it only runs when the build is green, and skips
+  # tests (-DskipTests) to avoid running them a second time on a second runner.
+  security:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Compute weekly cache key
+        id: date
+        run: echo "week=$(date +'%Y-%V')" >> $GITHUB_OUTPUT
+
+      - name: Restore OWASP NVD cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.dependency-check/data
+          # Rotate weekly so CVE data stays reasonably fresh;
+          # fall back to any previous cache to avoid a full re-download
+          key: owasp-nvd-${{ runner.os }}-${{ steps.date.outputs.week }}
+          restore-keys: owasp-nvd-${{ runner.os }}-
+
+      - name: OWASP dependency check
+        run: mvn verify -B -P owasp -DskipTests
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Upload OWASP report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: owasp-report
+          path: target/dependency-check-report.html
+          retention-days: 30
