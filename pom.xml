@@ -47,9 +47,11 @@
 						<artifactId>dependency-check-maven</artifactId>
 						<version>13.0.0</version>
 						<configuration>
-							<failBuildOnCVSS>4</failBuildOnCVSS>
-							<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-                            <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+						<failBuildOnCVSS>4</failBuildOnCVSS>
+						<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+						<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+						<!-- Fixed path so the GitHub Actions cache step knows exactly where to look -->
+						<dataDirectory>${user.home}/.dependency-check/data</dataDirectory>
 						</configuration>
 						<executions>
 							<execution>

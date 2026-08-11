@@ -63,6 +63,19 @@ jobs:
           java-version: 17
           cache: maven
 
+      - name: Compute weekly cache key
+        id: date
+        run: echo "week=$(date +'%Y-%V')" >> $GITHUB_OUTPUT
+
+      - name: Restore OWASP NVD cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.dependency-check/data
+          # Rotate weekly so CVE data stays reasonably fresh;
+          # fall back to any previous cache to avoid a full re-download
+          key: owasp-nvd-${{ runner.os }}-${{ steps.date.outputs.week }}
+          restore-keys: owasp-nvd-${{ runner.os }}-
+
       - name: OWASP dependency check
         run: mvn verify -B -P owasp -DskipTests
         env:
