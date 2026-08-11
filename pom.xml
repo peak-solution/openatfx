@@ -49,7 +49,6 @@
 						<configuration>
 							<failBuildOnCVSS>4</failBuildOnCVSS>
 							<assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
-							<ossIndexAnalyzerUrl>https://api.guide.sonatype.com</ossIndexAnalyzerUrl>
                             <nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
 						</configuration>
 						<executions>
