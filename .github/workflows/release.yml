@@ -65,8 +65,8 @@ jobs:
         # no lifecycle binding in the POM; -Prelease activates signing + publishing
         run: mvn clean deploy -B -Prelease assembly:single
         env:
-          MAVEN_USER: ${{ secrets.OSSRH_USERNAME }}
-          MAVEN_PW: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_USER: ${{ secrets.SONATYPE_USER }}
+          MAVEN_PW: ${{ secrets.SONATYPE_PWD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
 
       - name: Create GitHub Release and upload assets
