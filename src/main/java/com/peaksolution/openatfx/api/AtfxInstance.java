@@ -1,26 +1,10 @@
 package com.peaksolution.openatfx.api;
-import com.peaksolution.datamodel.NameValueUnit;
-import com.peaksolution.datamodel.Instance;
-import com.peaksolution.datamodel.Element;
-import com.peaksolution.datamodel.Attribute;
-import com.peaksolution.datamodel.Relation;
-import com.peaksolution.datamodel.Relationship;
-import com.peaksolution.datamodel.DataType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
+import com.peaksolution.datamodel.*;
+import com.peaksolution.openatfx.io.AtfxTagConstants;
 import org.asam.ods.ErrorCode;
 
-import com.peaksolution.openatfx.io.AtfxTagConstants;
+import java.util.*;
 
 
 public class AtfxInstance implements Instance {
@@ -30,9 +14,9 @@ public class AtfxInstance implements Instance {
 
     private long iid;
     private String name = "";
-    private Map<Integer, NameValueUnit> attrValuesByAttrNo = new HashMap<>();
-    private Map<String, NameValueUnit> instanceAttrValues = new HashMap<>();
-    private Map<Relation, Collection<Long>> relationValues = new HashMap<>();
+    private final Map<Integer, NameValueUnit> attrValuesByAttrNo = new HashMap<>();
+    private final Map<String, NameValueUnit> instanceAttrValues = new HashMap<>();
+    private final Map<Relation, Collection<Long>> relationValues = new HashMap<>();
 
     public AtfxInstance(AtfxCache atfxCache, AtfxElement element, Collection<NameValueUnit> values) {
         this.atfxCache = atfxCache;
@@ -91,19 +75,7 @@ public class AtfxInstance implements Instance {
     public void setAttributeValues(Collection<NameValueUnit> values) {
         // trick for 'AoLocalColumn': sort the attribute 'sequence_representation' BEFORE the attribute 'values'. This
         // is needed for the write_mode 'file'.
-        Collection<NameValueUnit> valuesToSet = values;
-        if (element.getType().equalsIgnoreCase("aolocalcolumn")) {
-            List<NameValueUnit> list = new ArrayList<>(values);
-            Collections.sort(list, (NameValueUnit o1, NameValueUnit o2) -> {
-                Attribute currentAttr = element.getAttributeByName(o2.getValName());
-                boolean isSeqRepVal = false;
-                if (currentAttr.getBaseName() != null) {
-                    isSeqRepVal = currentAttr.getBaseName().equalsIgnoreCase("sequence_representation");
-                }
-                return isSeqRepVal ? 1 : 0;
-            });
-            valuesToSet = list;
-        }
+        Collection<NameValueUnit> valuesToSet = getValuesToSet(values);
 
         for (NameValueUnit nvu : valuesToSet) {
             // This method can also be called from the CORBA layer, therefore it cannot be expected that the NVUs contain
@@ -116,6 +88,24 @@ public class AtfxInstance implements Instance {
                 setAttributeValue(nvu);
             }
         }
+    }
+
+    private Collection<NameValueUnit> getValuesToSet(Collection<NameValueUnit> values) {
+        Collection<NameValueUnit> valuesToSet = values;
+        if (element.getType().equalsIgnoreCase("aolocalcolumn")) {
+            List<NameValueUnit> list = new ArrayList<>(values);
+            list.sort((NameValueUnit o1, NameValueUnit o2) -> {
+              Attribute currentAttr = element.getAttributeByName(o2.getValName());
+              boolean isSeqRepVal = false;
+              if (currentAttr.getBaseName() != null) {
+                isSeqRepVal = currentAttr.getBaseName()
+                    .equalsIgnoreCase("sequence_representation");
+              }
+              return isSeqRepVal ? 1 : 0;
+            });
+            valuesToSet = list;
+        }
+        return valuesToSet;
     }
 
     @Override
@@ -216,9 +206,7 @@ public class AtfxInstance implements Instance {
         
         if (attrNo != null) {
             NameValueUnit nvu = attrValuesByAttrNo.get(attrNo);
-            if (nvu != null && nvu.isValid()) {
-                return true;
-            }
+          return nvu != null && nvu.isValid();
         }
         return false;
     }
@@ -248,6 +236,17 @@ public class AtfxInstance implements Instance {
     
     NameValueUnit getValueInternal(int attrNo) {
         return attrValuesByAttrNo.get(attrNo);
+    }
+
+    void cacheValueInternal(int attrNo, NameValueUnit nvu) {
+        if (nvu == null || !nvu.isValid()) {
+            return;
+        }
+        attrValuesByAttrNo.put(attrNo, nvu);
+    }
+
+    private boolean isDeferredLocalColumnBinaryAttribute(Attribute attr) {
+        return attr != null && (attr.isLocalColumnValuesAttr() || attr.isLocalColumnFlagsAttr());
     }
 
     @Override
@@ -304,6 +303,14 @@ public class AtfxInstance implements Instance {
         // only filter the requested attribute values
         Set<String> filteredODSBaseNames = new HashSet<>(Arrays.asList(AtfxTagConstants.BA_ID, AtfxTagConstants.BA_MIME_TYPE));
         for (Attribute currentAttr : element.getAttributes()) {
+            // Defer the expensive LocalColumn values/flags loading until a client explicitly requests them via
+            // getValue(...). Once such a value has been loaded and cached on demand, include it in subsequent bulk
+            // reads without touching the external component again.
+            if (isDeferredLocalColumnBinaryAttribute(currentAttr)
+                    && getValueInternal(currentAttr.getAttrNo()) == null) {
+                continue;
+            }
+
             if (includeAllODSValues || !filteredODSBaseNames.contains(currentAttr.getBaseName())) {
                 nvus.add(getValue(currentAttr.getName()));
             }
@@ -349,7 +356,7 @@ public class AtfxInstance implements Instance {
                                         "Instance attribute '" + oldName + "' not found at " + this);
         }
         // check for empty name
-        if (newName == null || newName.length() < 1) {
+        if (newName == null || newName.isEmpty()) {
             throw new OpenAtfxException(ErrorCode.AO_DUPLICATE_NAME, "Empty instance attribute name is not allowed!");
         }
         // check for existing instance attribute

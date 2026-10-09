@@ -5,7 +5,7 @@
 	<groupId>com.peak-solution</groupId>
 	<artifactId>openatfx</artifactId>
 	<name>openATFX</name>
-	<version>4.0.0</version>
+	<version>4.1.0</version>
 	<description>Open source ASAM ODS ATFX driver</description>
 	<url>https://github.com/peak-solution/openatfx</url>
 
