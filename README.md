@@ -12,6 +12,19 @@ The direct usage of the new Java API is already possible, but it may undergo fur
 
 This project is licensed under the terms of the [Apache License, Version 2.0](LICENSE).
 
+## Working with GitHub Copilot CLI
+
+Launch GitHub Copilot CLI from the repository root with `copilot`.
+Repository-wide guidance is maintained in
+[.github/copilot-instructions.md](.github/copilot-instructions.md), which
+Copilot CLI discovers automatically. It describes the Java 17/Maven setup,
+test commands, API compatibility requirements and workspace safeguards.
+Use `/instructions` in the CLI to view and enable the discovered instructions.
+
+The CLI works with the existing checkout; no conversion of IntelliJ project
+files is required. Keep personal configuration and session histories local
+rather than committing them to this repository.
+
 ## Configuration
 
 openATFX uses context properties to adjust its configuration. In the case of ODS session context (CORBA OO-API) several of the standard-defined properties can be set. Additionally and also for the Java API use, following properties specifically define behaviour of openATFX:

@@ -1,35 +1,15 @@
 package com.peaksolution.openatfx.api;
-import com.peaksolution.datamodel.NameValueUnit;
-import com.peaksolution.datamodel.Instance;
-import com.peaksolution.datamodel.Element;
-import com.peaksolution.datamodel.Attribute;
-import com.peaksolution.datamodel.Relation;
-import com.peaksolution.datamodel.BaseElement;
-import com.peaksolution.datamodel.BaseAttribute;
-import com.peaksolution.datamodel.BaseRelation;
-import com.peaksolution.datamodel.BaseModel;
-import com.peaksolution.datamodel.EnumerationDefinition;
-import com.peaksolution.datamodel.Relationship;
-import com.peaksolution.datamodel.DataType;
 
-import java.io.File;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
+import com.peaksolution.datamodel.*;
+import com.peaksolution.openatfx.util.PatternUtil;
 import org.asam.ods.ErrorCode;
 import org.asam.ods.SetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.peaksolution.openatfx.util.PatternUtil;
+import java.io.File;
+import java.nio.ByteOrder;
+import java.util.*;
 
 
 public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
@@ -234,9 +214,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
 
     @Override
     public Collection<Element> getElements() {
-        Collection<Element> elements = new ArrayList<>();
-        elements.addAll(atfxCache.getElements());
-        return elements;
+      return new ArrayList<>(atfxCache.getElements());
     }
     
     @Override
@@ -339,11 +317,10 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
 
         boolean isBaseAttributeDerived = existingAttribute.getBaseName() != null;
 
-        DataType newDataType = dataType;
-        if (newDataType != DataType.DT_UNKNOWN && existingAttribute.getDataType() != newDataType) {
+      if (dataType != DataType.DT_UNKNOWN && existingAttribute.getDataType() != dataType) {
             DataType oldDataType = existingAttribute.getDataType();
-            existingAttribute.setDataType(newDataType);
-            LOG.debug("Changed DataType of {} from {} to {}", existingAttribute, oldDataType, newDataType);
+            existingAttribute.setDataType(dataType);
+            LOG.debug("Changed DataType of {} from {} to {}", existingAttribute, oldDataType, dataType);
         }
 
         if (obligatory != null && !existingAttribute.isObligatory() == obligatory) {
@@ -584,7 +561,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
     @Override
     public void setRelatedInstances(long aid, long iid, String relName, Collection<Long> instIds, SetType type) {
         // check 'ElemId'
-        if (!this.atfxCache.instanceExists(aid, iid)) {
+        if (this.atfxCache.instanceNotExists(aid, iid)) {
             throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND,
                                         "Instance not found ElemId aid=" + aid + ",iid=" + iid);
         }
@@ -603,7 +580,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
         if (type == SetType.INSERT || type == SetType.UPDATE || type == SetType.APPEND) {
             Collection<Long> otherIidsToSet = new ArrayList<>(instIds.size());
             for (Long otherIid : instIds) {
-                if (!this.atfxCache.instanceExists(otherAid, otherIid)) { // throw not found error
+                if (this.atfxCache.instanceNotExists(otherAid, otherIid)) { // throw not found error
                     String sourceAeName = atfxCache.getElementNameById(aid);
                     String targetAeName = atfxCache.getElementNameById(otherAid);
                     throw new OpenAtfxException(ErrorCode.AO_NOT_FOUND,
@@ -618,9 +595,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
         // remove relations
         else if (type == SetType.REMOVE) {
             Collection<Long> otherIidsToRemove = new ArrayList<>(instIds.size());
-            for (Long otherIid : instIds) {
-                otherIidsToRemove.add(otherIid);
-            }
+          otherIidsToRemove.addAll(instIds);
             this.atfxCache.removeInstanceRelations(aid, iid, applRel, otherIidsToRemove);
         }
     }
@@ -636,7 +611,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
         
         for (Long otherIid : otherIids) {
             Instance otherInstance = getInstanceById(relation.getElement2().getId(), otherIid);
-            otherInstance.removeRelatedIids(relation.getInverseRelation(), Arrays.asList(iid));
+            otherInstance.removeRelatedIids(relation.getInverseRelation(), List.of(iid));
         }
     }
 
@@ -801,9 +776,7 @@ public class OpenAtfxAPIImplementation implements OpenAtfxAPI {
     }
     
     public Collection<AtfxElement> getAtfxElements() {
-        Collection<AtfxElement> elements = new ArrayList<>();
-        elements.addAll(atfxCache.getElements());
-        return elements;
+      return new ArrayList<>(atfxCache.getElements());
     }
     
     public AtfxElement getAtfxElement(long aid) {

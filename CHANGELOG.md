@@ -4,9 +4,17 @@ Changelog of openATFX Java library.
 
 ---
 
+## [4.1.0]
+### CHANGED
+- When Instance.getValues() is called, reading of LocalColumn values and flags attributes is now prevented, which caused long (but in most cases unncessary) reading of those values. These values have to be queried explicitly if required.
+
+---
+
 ## [4.0.0]
 ### CHANGED
-- refactored openatfx to reuse the datamodel and classes of com.peak-solution.datamodel, a shared model library used by other Peak Solution software and available on GitHub or Maven Central. This will require clients to update their result handling to the new classes of this shared model, which should be very similar to the old classes, though.
+- Refactored openatfx to reuse the datamodel and classes of com.peak-solution.datamodel, a shared model library used by other Peak Solution software and available on GitHub or Maven Central. This will require clients to update their result handling to the new classes of this shared model, which should be very similar to the old classes, though.
+
+---
 
 ## [3.2.3]
 ### CHANGED
