@@ -60,10 +60,19 @@ jobs:
         env:
           MAVEN_GPG_KEY: ${{ secrets.GPG_SECRET_KEY }}
 
-      - name: Deploy to Maven Central and build assembly ZIP
-        # assembly:single is called explicitly because the assembly plugin has
-        # no lifecycle binding in the POM; -Prelease activates signing + publishing
-        run: mvn clean deploy -B -Prelease assembly:single
+      - name: Deploy to Maven Central
+        # Disable CycloneDX generation for the deployment invocation so only the
+        # Maven Central publication set is staged and uploaded.
+        run: mvn clean deploy -B -Prelease -Dcyclonedx.skip=true
+        env:
+          MAVEN_USER: ${{ secrets.SONATYPE_USER }}
+          MAVEN_PW: ${{ secrets.SONATYPE_PWD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SECRET_KEY_PASSPHRASE }}
+
+      - name: Build release assets
+        # Generate the assembly ZIP and CycloneDX SBOMs only after deployment so
+        # they cannot become part of the Maven Central upload bundle.
+        run: mvn package -B -DskipTests -Dgpg.skip=true assembly:single
         env:
           MAVEN_USER: ${{ secrets.SONATYPE_USER }}
           MAVEN_PW: ${{ secrets.SONATYPE_PWD }}
