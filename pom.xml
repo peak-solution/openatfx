@@ -292,6 +292,7 @@
 					<outputFormat>all</outputFormat>
 					<outputName>openatfx-${project.version}-cyclonedx</outputName>
 					<includeTestScope>false</includeTestScope>
+					<skipAttach>true</skipAttach>
 				</configuration>
 			</plugin>
 		</plugins>
