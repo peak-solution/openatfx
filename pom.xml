@@ -15,6 +15,7 @@
 		<maven.compiler.release>17</maven.compiler.release>
 		<project.encoding>UTF-8</project.encoding>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<release.gpg.keyname>06C84BD97E83C4FD</release.gpg.keyname>
 	</properties>
 
 	<developers>
@@ -182,7 +183,7 @@
 									<goal>sign</goal>
 								</goals>
 								<configuration>
-									<keyname>06C84BD97E83C4FD</keyname>
+												<keyname>${release.gpg.keyname}</keyname>
 								</configuration>
 							</execution>
 						</executions>
@@ -292,7 +293,6 @@
 					<outputFormat>all</outputFormat>
 					<outputName>openatfx-${project.version}-cyclonedx</outputName>
 					<includeTestScope>false</includeTestScope>
-					<skipAttach>true</skipAttach>
 				</configuration>
 			</plugin>
 		</plugins>
